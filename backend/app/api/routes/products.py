@@ -1,0 +1,140 @@
+﻿from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+from sqlalchemy import func
+
+from app.api.deps import get_db, get_current_user, ensure_company_access, require_company_access
+from app.models.product import Product
+from app.models.stock_quant import StockQuant
+from app.schemas.product import ProductCreate, ProductRead, ProductUpdate, ProductWithStock
+
+router = APIRouter(prefix="/products", tags=["products"])
+
+
+@router.post("", response_model=ProductRead)
+def create_product(
+    payload: ProductCreate,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    ensure_company_access(db, user, payload.company_id)
+    product = Product(**payload.dict())
+    db.add(product)
+    db.commit()
+    db.refresh(product)
+    return product
+
+
+@router.get("", response_model=list[ProductRead])
+def list_products(
+    company_id: int,
+    category_id: int | None = None,
+    search: str | None = None,
+    is_active: bool | None = None,
+    can_be_sold: bool | None = None,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+    _=Depends(require_company_access),
+):
+    query = db.query(Product).filter(Product.company_id == company_id)
+    if category_id:
+        query = query.filter(Product.category_id == category_id)
+    if search:
+        like = f"%{search}%"
+        query = query.filter(
+            Product.name.ilike(like) | 
+            Product.barcode.ilike(like) |
+            Product.reference.ilike(like)
+        )
+    if is_active is not None:
+        query = query.filter(Product.is_active == is_active)
+    if can_be_sold is not None:
+        query = query.filter(Product.can_be_sold == can_be_sold)
+    return query.order_by(Product.name).all()
+
+
+@router.get("/with-stock", response_model=list[ProductWithStock])
+def list_products_with_stock(
+    company_id: int,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+    _=Depends(require_company_access),
+):
+    """List products with their stock quantities."""
+    products = db.query(Product).filter(Product.company_id == company_id).all()
+    result = []
+    for product in products:
+        stock_data = db.query(
+            func.sum(StockQuant.quantity).label("qty"),
+            func.sum(StockQuant.available_quantity).label("available"),
+            func.sum(StockQuant.reserved_quantity).label("reserved"),
+            func.sum(StockQuant.total_value).label("value")
+        ).filter(
+            StockQuant.product_id == product.id,
+            StockQuant.company_id == company_id
+        ).first()
+        
+        product_dict = {
+            **product.__dict__,
+            "quantity_on_hand": stock_data.qty or 0 if stock_data else 0,
+            "quantity_available": stock_data.available or 0 if stock_data else 0,
+            "quantity_reserved": stock_data.reserved or 0 if stock_data else 0,
+            "stock_value": stock_data.value or 0 if stock_data else 0
+        }
+        result.append(ProductWithStock(**product_dict))
+    return result
+
+
+@router.get("/{product_id}", response_model=ProductRead)
+def get_product(
+    product_id: int,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    ensure_company_access(db, user, product.company_id)
+    return product
+
+
+@router.patch("/{product_id}", response_model=ProductRead)
+def update_product(
+    product_id: int,
+    payload: ProductUpdate,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    ensure_company_access(db, user, product.company_id)
+    updates = payload.dict(exclude_unset=True)
+    for field, value in updates.items():
+        setattr(product, field, value)
+    db.commit()
+    db.refresh(product)
+    return product
+
+
+@router.delete("/{product_id}")
+def delete_product(
+    product_id: int,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    ensure_company_access(db, user, product.company_id)
+    
+    # Check if product has stock
+    has_stock = db.query(StockQuant).filter(
+        StockQuant.product_id == product_id,
+        StockQuant.quantity > 0
+    ).first()
+    if has_stock:
+        raise HTTPException(status_code=400, detail="Cannot delete product with stock on hand")
+    
+    db.delete(product)
+    db.commit()
+    return {"status": "deleted"}
