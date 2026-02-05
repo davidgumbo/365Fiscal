@@ -49,3 +49,26 @@ def update_contact(
     db.commit()
     db.refresh(contact)
     return contact
+
+
+@router.put("/{contact_id}", response_model=ContactRead)
+def replace_contact(
+    contact_id: int,
+    payload: ContactUpdate,
+    db: Session = Depends(get_db),
+    user=Depends(require_portal_user),
+):
+    """
+    Full update using PUT. Accepts the same fields as ContactUpdate
+    and applies provided values to the contact record.
+    """
+    contact = db.query(Contact).filter(Contact.id == contact_id).first()
+    if not contact:
+        return None
+    ensure_company_access(db, user, contact.company_id)
+    updates = payload.dict(exclude_unset=True)
+    for field, value in updates.items():
+        setattr(contact, field, value)
+    db.commit()
+    db.refresh(contact)
+    return contact

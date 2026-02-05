@@ -152,12 +152,10 @@ export default function SettingsPage() {
   const [initialSettings, setInitialSettings] = useState<typeof settingsForm | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-  // Redirect non-admin users
+  // Default to General tab for all users; admins will also see Users tab
   useEffect(() => {
-    if (me && !me.is_admin) {
-      navigate("/");
-    }
-  }, [me, navigate]);
+    setActiveTopTab("general");
+  }, []);
 
   // Track changes
   useEffect(() => {
@@ -255,7 +253,7 @@ export default function SettingsPage() {
 
   const saveCompanySettings = async () => {
     if (!companyId) return;
-    const method = companySettings ? "PATCH" : "POST";
+    const method = companySettings ? "PUT" : "POST";
     const url = companySettings ? `/company-settings/${companySettings.id}` : "/company-settings";
     const payload = companySettings
       ? settingsForm
@@ -297,8 +295,10 @@ export default function SettingsPage() {
   }, [companyId]);
 
   useEffect(() => {
-    loadAdmins();
-  }, []);
+    if (me?.is_admin) {
+      loadAdmins();
+    }
+  }, [me?.is_admin]);
 
   const createTax = async () => {
     if (!companyId) return;
@@ -325,7 +325,7 @@ export default function SettingsPage() {
   const saveTax = async () => {
     if (!selectedTax) return;
     await apiFetch(`/tax-settings/${selectedTax.id}`, {
-      method: "PATCH",
+      method: "PUT",
       body: JSON.stringify(selectedTax)
     });
     setStatus("Tax saved");
@@ -357,7 +357,7 @@ export default function SettingsPage() {
 
   const updateAdmin = async (userId: number, payload: Partial<User> & { password?: string }) => {
     await apiFetch(`/users/${userId}`, {
-      method: "PATCH",
+      method: "PUT",
       body: JSON.stringify(payload)
     });
     setStatus("Admin updated");
@@ -380,10 +380,6 @@ export default function SettingsPage() {
 
   if (!me) {
     return <div className="content">Loading...</div>;
-  }
-
-  if (!me.is_admin) {
-    return null;
   }
 
   return (
@@ -505,7 +501,7 @@ export default function SettingsPage() {
             </>
           )}
 
-          {activeTopTab === "users" && (
+          {activeTopTab === "users" && me.is_admin && (
             <>
               <div className="tax-header">
                 <div>
@@ -518,7 +514,7 @@ export default function SettingsPage() {
                   {adminError}
                 </div>
               )}
-              <div className="form-grid" style={{ marginBottom: 16 }}>
+              <div className="settings-user-grid" style={{ marginBottom: 16 }}>
                 <label className="input">
                   Email
                   <input
@@ -604,6 +600,36 @@ export default function SettingsPage() {
                 </tbody>
               </table>
             </>
+          )}
+
+          {activeTopTab === "users" && !me.is_admin && (
+            <section className="settings-section">
+              <div className="settings-section-header">
+                <h4>Users &amp; Companies</h4>
+              </div>
+              <div className="settings-card-grid">
+                <div className="settings-card">
+                  <div className="settings-card-title">Your Account</div>
+                  <div className="settings-card-sub">Portal user settings</div>
+                  <div className="input">
+                    <span>Email</span>
+                    <input type="email" value={me.email} readOnly />
+                  </div>
+                  <p className="page-sub">Contact your administrator to update portal users.</p>
+                </div>
+                <div className="settings-card">
+                  <div className="settings-card-title">Companies</div>
+                  <div className="settings-card-sub">You have access to these companies</div>
+                  <ul style={{ paddingLeft: 16, margin: 0 }}>
+                    {companies.map((c) => (
+                      <li key={c.id} style={{ marginBottom: 6 }}>
+                        <strong>{c.name}</strong> — {c.email || ""}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </section>
           )}
 
         </main>

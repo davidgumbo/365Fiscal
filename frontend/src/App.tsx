@@ -158,28 +158,10 @@ function AppContent() {
           <header className="main-header">
             <div className="topbar" ref={topbarRef}>
               <div className="topbar-left">
-                <button className="app-switcher" onClick={() => setAppMenuOpen((v) => !v)}>
+                <NavLink to="/" className="app-switcher">
                   <span className="app-switcher-icon">▦</span>
                   <span>Apps</span>
-                </button>
-                {appMenuOpen && (
-                  <div className="menu-popover">
-                    <div className="menu-title">Applications</div>
-                    <div className="menu-list">
-                      {navItems.map((item) => (
-                        <NavLink
-                          key={item.to}
-                          to={item.to}
-                          className="menu-item"
-                          onClick={() => setAppMenuOpen(false)}
-                        >
-                          <item.icon />
-                          <span>{item.label}</span>
-                        </NavLink>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                </NavLink>
                 <div className="breadcrumb">
                   {breadcrumb.section && <span className="breadcrumb-section">{breadcrumb.section}</span>}
                   <span className="breadcrumb-sep">/</span>

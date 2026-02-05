@@ -134,8 +134,7 @@ export default function AppLauncherPage() {
     <div className="app-launcher-page">
       <header className="app-launcher-header">
         <div className="app-launcher-logo">
-          <img src="/zimra.png" alt="365 Fiscal" />
-          <span>365 Fiscal</span>
+          <img src="/365.png" alt="365 Fiscal" />
         </div>
         <div className="app-launcher-user">
           <span className="user-name">{displayName}</span>
@@ -167,6 +166,10 @@ export default function AppLauncherPage() {
           ))}
         </div>
       </div>
+
+      <footer className="app-launcher-footer">
+        <img className="footer-logo" src="/geenet.trim.png" alt="GeeNet" />
+      </footer>
     </div>
   );
 }

@@ -213,13 +213,13 @@ export default function CompaniesPage() {
     try {
       setError(null);
       await apiFetch(`/companies/${companyId}`, {
-        method: "PATCH",
+        method: "PUT",
         body: JSON.stringify(editForm)
       });
       // Update or create portal user if email/password provided
       if (editPortalEmail && editPortalPassword) {
         await apiFetch(`/companies/${companyId}/portal-user`, {
-          method: "PATCH",
+          method: "PUT",
           body: JSON.stringify({ email: editPortalEmail, password: editPortalPassword })
         });
       } else if (editPortalUserId && editPortalPassword) {
