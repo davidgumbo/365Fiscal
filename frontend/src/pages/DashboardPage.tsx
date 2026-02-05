@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { NavLink } from "react-router-dom";
 import { apiFetch } from "../api";
-import { useListView } from "../context/ListViewContext";
 import { useMe } from "../hooks/useMe";
 
 interface DashboardMetrics {
@@ -46,472 +46,539 @@ interface DashboardSummary {
   company_status: CompanyStatus[];
 }
 
-interface PortalInvoice {
+interface Invoice {
   id: number;
-  quotation_id: number | null;
   reference: string;
   status: string;
   total_amount: number;
   fiscalized_at?: string | null;
+  created_at?: string;
 }
 
-interface PortalQuotation {
+interface Quotation {
   id: number;
-  customer_id: number;
   reference: string;
   status: string;
+  total_amount?: number;
+  created_at?: string;
 }
 
-interface PortalProduct {
+interface Product {
   id: number;
   name: string;
   sale_price: number;
   purchase_cost: number;
-  reference: string;
 }
 
-interface PortalContact {
+interface Contact {
   id: number;
   name: string;
 }
+
+// SVG Icons
+const BuildingIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/>
+    <path d="M9 22v-4h6v4"/>
+    <path d="M8 6h.01M16 6h.01M12 6h.01M8 10h.01M16 10h.01M12 10h.01M8 14h.01M16 14h.01M12 14h.01"/>
+  </svg>
+);
+
+const MonitorIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+    <line x1="8" y1="21" x2="16" y2="21"/>
+    <line x1="12" y1="17" x2="12" y2="21"/>
+  </svg>
+);
+
+const FileTextIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <polyline points="14 2 14 8 20 8"/>
+    <line x1="16" y1="13" x2="8" y2="13"/>
+    <line x1="16" y1="17" x2="8" y2="17"/>
+    <polyline points="10 9 9 9 8 9"/>
+  </svg>
+);
+
+const AlertTriangleIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+    <line x1="12" y1="9" x2="12" y2="13"/>
+    <line x1="12" y1="17" x2="12.01" y2="17"/>
+  </svg>
+);
+
+const CheckIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12"/>
+  </svg>
+);
+
+const SendIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="22" y1="2" x2="11" y2="13"/>
+    <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+  </svg>
+);
+
+const EditIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+  </svg>
+);
+
+const PlusIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="12" y1="5" x2="12" y2="19"/>
+    <line x1="5" y1="12" x2="19" y2="12"/>
+  </svg>
+);
 
 export default function DashboardPage() {
   const { me } = useMe();
   const isAdmin = Boolean(me?.is_admin);
   const companyId = me?.company_ids?.[0];
-  const { state: listState } = useListView();
+
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [quotations, setQuotations] = useState<Quotation[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [portalInvoices, setPortalInvoices] = useState<PortalInvoice[]>([]);
-  const [portalQuotations, setPortalQuotations] = useState<PortalQuotation[]>([]);
-  const [portalProducts, setPortalProducts] = useState<PortalProduct[]>([]);
-  const [portalContacts, setPortalContacts] = useState<PortalContact[]>([]);
-  const [portalLoading, setPortalLoading] = useState(false);
-  const [portalError, setPortalError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isAdmin) {
-      return;
-    }
-    apiFetch<DashboardSummary>("/dashboard/summary")
-      .then(setSummary)
-      .catch((err) => setError(err.message || "Failed to load dashboard"));
-  }, [isAdmin]);
-
-  useEffect(() => {
-    if (isAdmin) {
-      return;
-    }
+    // Must have a company to load data
     if (!companyId) {
-      setPortalError("No company assigned to this portal user.");
+      setLoading(false);
+      setError("No company assigned to your account.");
       return;
     }
-    setPortalLoading(true);
-    setPortalError(null);
-    const params = new URLSearchParams({ company_id: String(companyId) });
-    listState.filters.forEach((chip) => {
-      Object.entries(chip.params).forEach(([key, value]) => {
-        params.set(key, value as string);
-      });
-    });
 
-    Promise.all([
-      apiFetch<PortalInvoice[]>(`/invoices?${params.toString()}`),
-      apiFetch<PortalQuotation[]>(`/quotations?${params.toString()}`),
-      apiFetch<PortalProduct[]>(`/products?${params.toString()}`),
-      apiFetch<PortalContact[]>(`/contacts?${params.toString()}`)
-    ])
-      .then(([invoices, quotations, products, contacts]) => {
-        setPortalInvoices(invoices);
-        setPortalQuotations(quotations);
-        setPortalProducts(products);
-        setPortalContacts(contacts);
-      })
-      .catch((err) => setPortalError(err.message || "Failed to load portal data"))
-      .finally(() => setPortalLoading(false));
-  }, [companyId, isAdmin, JSON.stringify(listState.filters)]);
-
-  const metrics = useMemo(() => {
-    if (!summary) {
-      return [];
-    }
-    return [
-      { label: "Active Companies", value: summary.metrics.active_companies, delta: "Registered" },
-      {
-        label: "Avg Certificate Days",
-        value: summary.metrics.avg_certificate_days,
-        delta: "Remaining"
-      },
-      {
-        label: "Companies With Errors",
-        value: summary.metrics.companies_with_errors,
-        delta: "Validation required"
-      },
-      {
-        label: "Devices Online",
-        value: `${summary.metrics.devices_online}/${summary.metrics.devices_total}`,
-        delta: summary.metrics.devices_total ? "Active now" : "No devices"
-      }
+    setLoading(true);
+    setError("");
+    
+    const params = `?company_id=${companyId}`;
+    
+    // Build requests - always filter by company
+    const requests: Promise<unknown>[] = [
+      isAdmin ? apiFetch<DashboardSummary>("/dashboard/summary").catch(() => null) : Promise.resolve(null),
+      apiFetch<Invoice[]>(`/invoices${params}`).catch(() => []),
+      apiFetch<Quotation[]>(`/quotations${params}`).catch(() => []),
+      apiFetch<Product[]>(`/products${params}`).catch(() => []),
+      apiFetch<Contact[]>(`/contacts${params}`).catch(() => []),
     ];
-  }, [summary]);
+    
+    Promise.all(requests)
+      .then(([summaryData, invoicesData, quotationsData, productsData, contactsData]) => {
+        setSummary(summaryData as DashboardSummary | null);
+        setInvoices((invoicesData as Invoice[]) || []);
+        setQuotations((quotationsData as Quotation[]) || []);
+        setProducts((productsData as Product[]) || []);
+        setContacts((contactsData as Contact[]) || []);
+      })
+      .catch((err) => setError(err.message || "Failed to load dashboard"))
+      .finally(() => setLoading(false));
+  }, [isAdmin, companyId]);
 
-  const invoiceSeries = summary?.trends.invoices ?? [];
-  const quoteSeries = summary?.trends.quotations ?? [];
-  const deviceSeries = summary
-    ? [
-        { label: "Online", value: summary.device_health.online, color: "#0b57d0" },
-        { label: "Attention", value: summary.device_health.attention, color: "#d12b2b" }
-      ]
-    : [];
+  // Filter company status to only show user's company (for non-admin)
+  const filteredCompanyStatus = useMemo(() => {
+    if (!summary?.company_status) return [];
+    if (isAdmin) return summary.company_status;
+    return summary.company_status.filter(c => c.company_id === companyId);
+  }, [summary, isAdmin, companyId]);
 
-  const maxInvoice = Math.max(1, ...invoiceSeries.map((point) => point.value));
-  const maxQuote = Math.max(1, ...quoteSeries.map((point) => point.value));
-  const contactById = useMemo(() => {
-    return new Map(portalContacts.map((contact) => [contact.id, contact.name]));
-  }, [portalContacts]);
+  // Calculate invoice stats
+  const invoiceStats = useMemo(() => {
+    const total = invoices.reduce((sum, inv) => sum + (inv.total_amount || 0), 0);
+    const fiscalized = invoices.filter((inv) => inv.status === "fiscalized").length;
+    const pending = invoices.filter((inv) => inv.status === "draft" || inv.status === "pending").length;
+    return { total, count: invoices.length, fiscalized, pending };
+  }, [invoices]);
 
-  const quotationById = useMemo(() => {
-    return new Map(portalQuotations.map((quotation) => [quotation.id, quotation]));
-  }, [portalQuotations]);
+  // Calculate quotation stats
+  const quotationStats = useMemo(() => {
+    const confirmed = quotations.filter((q) => q.status === "confirmed").length;
+    const sent = quotations.filter((q) => q.status === "sent").length;
+    const draft = quotations.filter((q) => q.status === "draft").length;
+    return { count: quotations.length, confirmed, sent, draft };
+  }, [quotations]);
 
-  const recentInvoices = portalInvoices.slice(0, 5);
-  const recentQuotations = portalQuotations.slice(0, 4);
-  const inventoryItems = portalProducts.slice(0, 6);
+  // Recent items
+  const recentInvoices = invoices.slice(0, 5);
+  const recentQuotations = quotations.slice(0, 5);
 
-  const portalView = (
-    <div className="content">
-      {portalError ? <div className="card">{portalError}</div> : null}
-      <div className="page-header">
+  // Chart data - Monthly invoices (last 6 months)
+  const monthlyData = useMemo(() => {
+    const months: { [key: string]: number } = {};
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = d.toLocaleString("default", { month: "short" });
+      months[key] = 0;
+    }
+    invoices.forEach((inv) => {
+      if (inv.created_at || inv.fiscalized_at) {
+        const date = new Date(inv.fiscalized_at || inv.created_at!);
+        const key = date.toLocaleString("default", { month: "short" });
+        if (key in months) {
+          months[key] += inv.total_amount || 0;
+        }
+      }
+    });
+    return Object.entries(months).map(([label, value]) => ({ label, value }));
+  }, [invoices]);
+
+  const maxMonthly = Math.max(1, ...monthlyData.map((d) => d.value));
+
+  // Get device stats for user's company
+  const deviceStats = useMemo(() => {
+    if (filteredCompanyStatus.length > 0) {
+      const company = filteredCompanyStatus[0];
+      return { online: company.devices_online, total: company.device_count };
+    }
+    return { online: summary?.metrics.devices_online || 0, total: summary?.metrics.devices_total || 0 };
+  }, [filteredCompanyStatus, summary]);
+
+  if (loading) {
+    return (
+      <div className="dashboard-page">
+        <div className="dashboard-loading">
+          <div className="loading-spinner"></div>
+          <p>Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="dashboard-page">
+      {error && <div className="dashboard-error">{error}</div>}
+      
+      <div className="dashboard-header">
         <div>
-          <h1>PORTAL OVERVIEW</h1>
-          <p className="page-subtitle">Invoices, quotations, and inventory at a glance.</p>
+          <h1>Dashboard</h1>
+          <p className="dashboard-subtitle">Welcome back! Here's an overview of your fiscal operations.</p>
         </div>
-        <div className="header-actions">
-          <button className="primary">NEW QUOTATION</button>
-        </div>
-      </div>
-
-      <div className="card-grid">
-        <div className="card">
-          <h3>INVOICES</h3>
-          <div className="metric-value">{portalInvoices.length}</div>
-          <div className="metric-delta">Total recorded</div>
-        </div>
-        <div className="card">
-          <h3>QUOTATIONS</h3>
-          <div className="metric-value">{portalQuotations.length}</div>
-          <div className="metric-delta">Total recorded</div>
-        </div>
-        <div className="card">
-          <h3>INVENTORY</h3>
-          <div className="metric-value">{portalProducts.length}</div>
-          <div className="metric-delta">Products tracked</div>
-        </div>
-        <div className="card">
-          <h3>REORDER ALERTS</h3>
-          <div className="metric-value">0</div>
-          <div className="metric-delta">Stock thresholds not configured</div>
+        <div className="dashboard-actions">
+          <NavLink to="/invoices" className="btn-primary">
+            <PlusIcon /> New Invoice
+          </NavLink>
         </div>
       </div>
 
-      <div className="card-grid">
-        <div className="card" style={{ gridColumn: "span 2" }}>
-          <div className="page-header" style={{ marginBottom: 12 }}>
-            <div>
-              <h3>RECENT INVOICES</h3>
-              <p className="page-subtitle">Latest customer invoices</p>
-            </div>
-            <button className="outline">VIEW ALL</button>
+      {/* KPI Cards */}
+      <div className="dashboard-kpis">
+        <div className="kpi-card">
+          <div className="kpi-icon blue">
+            <BuildingIcon />
           </div>
-          <table className="table">
+          <div className="kpi-content">
+            <div className="kpi-value">{isAdmin ? summary?.metrics.active_companies || 0 : 1}</div>
+            <div className="kpi-label">{isAdmin ? "Active Companies" : "Your Company"}</div>
+          </div>
+        </div>
+
+        <div className="kpi-card">
+          <div className="kpi-icon green">
+            <MonitorIcon />
+          </div>
+          <div className="kpi-content">
+            <div className="kpi-value">
+              {deviceStats.online}/{deviceStats.total}
+            </div>
+            <div className="kpi-label">Devices Online</div>
+          </div>
+        </div>
+
+        <div className="kpi-card">
+          <div className="kpi-icon purple">
+            <FileTextIcon />
+          </div>
+          <div className="kpi-content">
+            <div className="kpi-value">{invoiceStats.count}</div>
+            <div className="kpi-label">Total Invoices</div>
+          </div>
+          <div className="kpi-badge">
+            ${invoiceStats.total.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+          </div>
+        </div>
+
+        <div className="kpi-card">
+          <div className="kpi-icon orange">
+            <AlertTriangleIcon />
+          </div>
+          <div className="kpi-content">
+            <div className="kpi-value">{invoiceStats.pending}</div>
+            <div className="kpi-label">Pending Invoices</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Charts Row */}
+      <div className="dashboard-charts">
+        <div className="chart-card">
+          <div className="chart-header">
+            <h3>Revenue Overview</h3>
+            <span className="chart-period">Last 6 months</span>
+          </div>
+          <div className="bar-chart">
+            {monthlyData.map((item, index) => (
+              <div key={item.label} className="bar-item">
+                <div className="bar-container">
+                  <div 
+                    className="bar-fill" 
+                    style={{ 
+                      height: `${(item.value / maxMonthly) * 100}%`,
+                      animationDelay: `${index * 0.1}s`
+                    }}
+                  >
+                    {item.value > 0 && (
+                      <span className="bar-value">${(item.value / 1000).toFixed(0)}k</span>
+                    )}
+                  </div>
+                </div>
+                <span className="bar-label">{item.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="chart-card">
+          <div className="chart-header">
+            <h3>Invoice Status</h3>
+            <span className="chart-period">Current period</span>
+          </div>
+          <div className="donut-chart">
+            <svg viewBox="0 0 100 100" className="donut-svg">
+              <circle className="donut-bg" cx="50" cy="50" r="40" />
+              <circle
+                className="donut-segment green"
+                cx="50"
+                cy="50"
+                r="40"
+                strokeDasharray={`${(invoiceStats.fiscalized / Math.max(invoiceStats.count, 1)) * 251.2} 251.2`}
+                strokeDashoffset="0"
+              />
+              <circle
+                className="donut-segment orange"
+                cx="50"
+                cy="50"
+                r="40"
+                strokeDasharray={`${(invoiceStats.pending / Math.max(invoiceStats.count, 1)) * 251.2} 251.2`}
+                strokeDashoffset={`-${(invoiceStats.fiscalized / Math.max(invoiceStats.count, 1)) * 251.2}`}
+              />
+            </svg>
+            <div className="donut-center">
+              <div className="donut-value">{invoiceStats.count}</div>
+              <div className="donut-label">Total</div>
+            </div>
+          </div>
+          <div className="donut-legend">
+            <div className="legend-item">
+              <span className="legend-dot green"></span>
+              <span>Fiscalized ({invoiceStats.fiscalized})</span>
+            </div>
+            <div className="legend-item">
+              <span className="legend-dot orange"></span>
+              <span>Pending ({invoiceStats.pending})</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="chart-card">
+          <div className="chart-header">
+            <h3>Quotations</h3>
+            <span className="chart-period">Pipeline status</span>
+          </div>
+          <div className="stats-list">
+            <div className="stat-row">
+              <div className="stat-icon green"><CheckIcon /></div>
+              <div className="stat-info">
+                <span className="stat-label">Confirmed</span>
+                <span className="stat-value">{quotationStats.confirmed}</span>
+              </div>
+              <div className="stat-bar">
+                <div 
+                  className="stat-fill green" 
+                  style={{ width: `${(quotationStats.confirmed / Math.max(quotationStats.count, 1)) * 100}%` }}
+                ></div>
+              </div>
+            </div>
+            <div className="stat-row">
+              <div className="stat-icon blue"><SendIcon /></div>
+              <div className="stat-info">
+                <span className="stat-label">Sent</span>
+                <span className="stat-value">{quotationStats.sent}</span>
+              </div>
+              <div className="stat-bar">
+                <div 
+                  className="stat-fill blue" 
+                  style={{ width: `${(quotationStats.sent / Math.max(quotationStats.count, 1)) * 100}%` }}
+                ></div>
+              </div>
+            </div>
+            <div className="stat-row">
+              <div className="stat-icon gray"><EditIcon /></div>
+              <div className="stat-info">
+                <span className="stat-label">Draft</span>
+                <span className="stat-value">{quotationStats.draft}</span>
+              </div>
+              <div className="stat-bar">
+                <div 
+                  className="stat-fill gray" 
+                  style={{ width: `${(quotationStats.draft / Math.max(quotationStats.count, 1)) * 100}%` }}
+                ></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tables Row */}
+      <div className="dashboard-tables">
+        <div className="table-card">
+          <div className="table-header">
+            <h3>Recent Invoices</h3>
+            <NavLink to="/invoices" className="view-all-link">View All →</NavLink>
+          </div>
+          <table className="dashboard-table">
             <thead>
               <tr>
-                <th>Invoice</th>
-                <th>Customer</th>
+                <th>Reference</th>
+                <th>Amount</th>
+                <th>Status</th>
                 <th>Date</th>
-                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentInvoices.map((invoice) => (
+                <tr key={invoice.id}>
+                  <td className="ref-cell">{invoice.reference}</td>
+                  <td>${invoice.total_amount?.toLocaleString() || "0"}</td>
+                  <td>
+                    <span className={`status-pill ${invoice.status}`}>
+                      {invoice.status}
+                    </span>
+                  </td>
+                  <td className="date-cell">
+                    {invoice.fiscalized_at 
+                      ? new Date(invoice.fiscalized_at).toLocaleDateString() 
+                      : invoice.created_at 
+                        ? new Date(invoice.created_at).toLocaleDateString()
+                        : "-"}
+                  </td>
+                </tr>
+              ))}
+              {recentInvoices.length === 0 && (
+                <tr><td colSpan={4} className="empty-cell">No invoices yet</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="table-card">
+          <div className="table-header">
+            <h3>Recent Quotations</h3>
+            <NavLink to="/quotations" className="view-all-link">View All →</NavLink>
+          </div>
+          <table className="dashboard-table">
+            <thead>
+              <tr>
+                <th>Reference</th>
                 <th>Status</th>
               </tr>
             </thead>
             <tbody>
-              {recentInvoices.map((invoice) => {
-                const quotation = invoice.quotation_id
-                  ? quotationById.get(invoice.quotation_id)
-                  : undefined;
-                const customerName = quotation
-                  ? contactById.get(quotation.customer_id) ?? "-"
-                  : "-";
-                const dateLabel = invoice.fiscalized_at
-                  ? new Date(invoice.fiscalized_at).toLocaleDateString()
-                  : "-";
-                const amountLabel = invoice.total_amount.toLocaleString(undefined, {
-                  style: "currency",
-                  currency: "USD"
-                });
-                const statusClass = invoice.status === "fiscalized"
-                  ? "success"
-                  : invoice.status === "draft"
-                  ? "neutral"
-                  : "warning";
-                return (
-                  <tr key={invoice.id}>
-                    <td>{invoice.reference}</td>
-                    <td>{customerName}</td>
-                    <td>{dateLabel}</td>
-                    <td>{amountLabel}</td>
-                    <td>
-                      <span className={`status-badge ${statusClass}`}>
-                        {invoice.status}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-              {!portalLoading && recentInvoices.length === 0 ? (
-                <tr>
-                  <td colSpan={5}>No invoices found.</td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="card">
-          <div className="page-header" style={{ marginBottom: 12 }}>
-            <div>
-              <h3>QUOTATIONS PIPELINE</h3>
-              <p className="page-subtitle">Follow-up the pending proposals.</p>
-            </div>
-          </div>
-          <div className="list">
-            {recentQuotations.map((quotation) => {
-              const customerName = contactById.get(quotation.customer_id) ?? "-";
-              const statusClass = quotation.status === "confirmed"
-                ? "success"
-                : quotation.status === "sent"
-                ? "warning"
-                : "neutral";
-              return (
-                <div className="list-row" key={quotation.id}>
-                  <div>
-                    <div style={{ fontWeight: 600 }}>{quotation.reference}</div>
-                    <div style={{ color: "#5b6169" }}>{customerName}</div>
-                  </div>
-                  <div style={{ textAlign: "right" }}>
-                    <span className={`status-badge ${statusClass}`}>{quotation.status}</span>
-                  </div>
-                </div>
-              );
-            })}
-            {!portalLoading && recentQuotations.length === 0 ? (
-              <div className="list-row">
-                <div style={{ color: "#5b6169" }}>No quotations found.</div>
-              </div>
-            ) : null}
-          </div>
-        </div>
-      </div>
-
-      <div className="card-grid">
-        <div className="card" style={{ gridColumn: "span 2" }}>
-          <div className="page-header" style={{ marginBottom: 12 }}>
-            <div>
-              <h3>INVENTORY SNAPSHOT</h3>
-              <p className="page-subtitle">Stock levels.</p>
-            </div>
-            <button className="outline">REPLENISH</button>
-          </div>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th>Reference</th>
-                <th>Sales Price</th>
-                <th>Purchase Cost</th>
-              </tr>
-            </thead>
-            <tbody>
-              {inventoryItems.map((product) => (
-                <tr key={product.id}>
-                  <td>{product.name}</td>
-                  <td>{product.reference || "-"}</td>
+              {recentQuotations.map((quotation) => (
+                <tr key={quotation.id}>
+                  <td className="ref-cell">{quotation.reference}</td>
                   <td>
-                    {product.sale_price.toLocaleString(undefined, {
-                      style: "currency",
-                      currency: "USD"
-                    })}
-                  </td>
-                  <td>
-                    {product.purchase_cost.toLocaleString(undefined, {
-                      style: "currency",
-                      currency: "USD"
-                    })}
+                    <span className={`status-pill ${quotation.status}`}>
+                      {quotation.status}
+                    </span>
                   </td>
                 </tr>
               ))}
-              {!portalLoading && inventoryItems.length === 0 ? (
-                <tr>
-                  <td colSpan={4}>No products found.</td>
-                </tr>
-              ) : null}
+              {recentQuotations.length === 0 && (
+                <tr><td colSpan={2} className="empty-cell">No quotations yet</td></tr>
+              )}
             </tbody>
           </table>
         </div>
       </div>
-    </div>
-  );
 
-  const adminView = (
-    <div className="content">
-      {error ? <div className="card">{error}</div> : null}
-      <div className="card-grid metrics-grid">
-        {metrics.map((metric, index) => (
-          <div className="card" key={metric.label} style={{ animationDelay: `${index * 0.05}s` }}>
-            <h3>{metric.label}</h3>
-            <div className="metric-value">{metric.value}</div>
-            <div className="metric-delta">{metric.delta}</div>
+      {/* Company Status Table */}
+      {filteredCompanyStatus.length > 0 && (
+        <div className="table-card full-width">
+          <div className="table-header">
+            <h3>{isAdmin ? "Company Status Overview" : "Your Company Status"}</h3>
+            {isAdmin && <NavLink to="/companies" className="view-all-link">Manage Companies →</NavLink>}
           </div>
-        ))}
-      </div>
-      <div className="card-grid">
-        <div className="card chart-card" style={{ animationDelay: "0.1s" }}>
-          <div className="chart-header">
-            <div>
-              <h3>Certificate Renewal Trend</h3>
-              <div className="chart-sub">Days remaining per week</div>
-            </div>
-            <div className="mini-stat">
-              <span className="dot blue" />
-              Avg {summary ? summary.metrics.avg_certificate_days : 0} days
-            </div>
-          </div>
-          <svg className="chart-svg" viewBox="0 0 240 100" preserveAspectRatio="none">
-            <polyline
-              className="chart-line"
-              fill="none"
-              stroke="#0b57d0"
-              strokeWidth="3"
-              points={invoiceSeries
-                .map((point, index) => `${index * 20},${100 - (point.value / maxInvoice) * 80}`)
-                .join(" ")}
-            />
-            <polyline
-              fill="rgba(11, 87, 208, 0.12)"
-              stroke="none"
-              points={`0,100 ${invoiceSeries
-                .map((point, index) => `${index * 20},${100 - (point.value / maxInvoice) * 80}`)
-                .join(" ")} 220,100`}
-            />
-          </svg>
-          <div className="chart-legend">
-            <span>Monitoring window</span>
-            <span>{invoiceSeries.length ? invoiceSeries[invoiceSeries.length - 1].label : ""}</span>
-          </div>
-        </div>
-        <div className="card chart-card" style={{ animationDelay: "0.15s" }}>
-          <div className="chart-header">
-            <div>
-              <h3>Validation Alerts</h3>
-              <div className="chart-sub">Companies needing attention</div>
-            </div>
-            <div className="mini-stat">
-              <span className="dot red" />
-              {summary ? `${summary.metrics.companies_with_errors} flagged` : "Loading"}
-            </div>
-          </div>
-          <svg className="chart-svg" viewBox="0 0 240 100" preserveAspectRatio="none">
-            {quoteSeries.map((point, index) => (
-              <rect
-                key={point.label}
-                className="chart-bar"
-                x={index * 20 + 2}
-                y={100 - (point.value / maxQuote) * 80}
-                width={12}
-                height={(point.value / maxQuote) * 80}
-                rx={4}
-                fill="rgba(209, 43, 43, 0.35)"
-              />
-            ))}
-          </svg>
-          <div className="chart-legend">
-            <span>Last 12 weeks</span>
-            <span>{quoteSeries.length ? quoteSeries[quoteSeries.length - 1].label : ""}</span>
-          </div>
-        </div>
-      </div>
-      <div className="card-grid">
-        <div className="card chart-card" style={{ animationDelay: "0.2s" }}>
-          <div className="chart-header">
-            <div>
-              <h3>Device Health</h3>
-              <div className="chart-sub">FDMS connectivity status</div>
-            </div>
-          </div>
-          <div className="device-bars">
-            {deviceSeries.map((item) => (
-              <div key={item.label} className="device-row">
-                <div className="device-label">
-                  <span className="dot" style={{ background: item.color }} />
-                  {item.label}
-                </div>
-                <div className="device-bar">
-                  <span
-                    className="device-fill"
-                    style={{
-                      width: summary
-                        ? `${(item.value / Math.max(summary.metrics.devices_total, 1)) * 100}%`
-                        : "0%",
-                      background: item.color
-                    }}
-                  />
-                </div>
-                <div className="device-value">{item.value}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="card" style={{ animationDelay: "0.25s" }}>
-          <h3>Company Open/Close Status</h3>
-          <table className="table">
+          <table className="dashboard-table">
             <thead>
               <tr>
                 <th>Company</th>
-                <th>Open Day</th>
-                <th>Close Status</th>
                 <th>Devices</th>
+                <th>Fiscal Day</th>
                 <th>Certificate</th>
                 <th>Last Sync</th>
+                <th>Status</th>
               </tr>
             </thead>
             <tbody>
-              {(summary?.company_status ?? []).map((row) => (
-                <tr key={row.company_id}>
-                  <td>{row.company_name}</td>
-                  <td>{row.open_day_status} #{row.last_fiscal_day_no}</td>
-                  <td>{row.close_status}</td>
+              {filteredCompanyStatus.map((company) => (
+                <tr key={company.company_id}>
+                  <td className="company-cell">{company.company_name}</td>
                   <td>
-                    {row.devices_online}/{row.device_count}
+                    <span className={company.devices_online > 0 ? "text-green" : "text-red"}>
+                      {company.devices_online}/{company.device_count}
+                    </span>
+                  </td>
+                  <td>Day #{company.last_fiscal_day_no}</td>
+                  <td>
+                    <span className={`cert-badge ${company.certificate_status.toLowerCase()}`}>
+                      {company.certificate_status}
+                      {company.certificate_days_remaining !== null && (
+                        <span className="cert-days"> ({company.certificate_days_remaining}d)</span>
+                      )}
+                    </span>
+                  </td>
+                  <td className="date-cell">
+                    {company.last_sync ? new Date(company.last_sync).toLocaleString() : "Never"}
                   </td>
                   <td>
-                    {row.certificate_status}
-                    {row.certificate_days_remaining !== null
-                      ? ` (${row.certificate_days_remaining}d)`
-                      : ""}
+                    <span className={`status-pill ${company.open_day_status.toLowerCase()}`}>
+                      {company.open_day_status}
+                    </span>
                   </td>
-                  <td>{row.last_sync ? new Date(row.last_sync).toLocaleString() : "?"}</td>
                 </tr>
               ))}
-              {!summary?.company_status.length ? (
-                <tr>
-                  <td colSpan={6}>No company data available</td>
-                </tr>
-              ) : null}
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* Quick Stats Footer */}
+      <div className="dashboard-footer">
+        <div className="footer-stat">
+          <span className="footer-label">Products</span>
+          <span className="footer-value">{products.length}</span>
+        </div>
+        <div className="footer-stat">
+          <span className="footer-label">Contacts</span>
+          <span className="footer-value">{contacts.length}</span>
+        </div>
+        {filteredCompanyStatus.length > 0 && filteredCompanyStatus[0].certificate_days_remaining !== null && (
+          <div className="footer-stat">
+            <span className="footer-label">Certificate Days</span>
+            <span className="footer-value">{filteredCompanyStatus[0].certificate_days_remaining}</span>
+          </div>
+        )}
       </div>
     </div>
   );
-
-  return isAdmin ? adminView : portalView;
 }

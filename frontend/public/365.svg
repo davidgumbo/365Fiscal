@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="200" viewBox="0 0 600 200" role="img" aria-labelledby="title desc">
+  <title id="title">365 Fiscal</title>
+  <desc id="desc">Wordmark logo for 365 Fiscal with red 365 and blue Fiscal</desc>
+  <!-- Transparent background -->
+  <rect width="100%" height="100%" fill="none" />
+
+  <g font-family="Inter, Segoe UI, Arial, sans-serif" font-weight="700" text-rendering="geometricPrecision">
+    <text x="0" y="140" font-size="120" fill="#e11d48">365</text>
+    <text x="250" y="140" font-size="120" fill="#1e3a8a">Fiscal</text>
+  </g>
+</svg>

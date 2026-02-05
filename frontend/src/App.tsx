@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Routes, Route, NavLink, useLocation } from "react-router-dom";
+import AppLauncherPage from "./pages/AppLauncherPage";
 import DashboardPage from "./pages/DashboardPage";
 import CompaniesPage from "./pages/CompaniesPage";
 import ProductsPage from "./pages/ProductsPage";
@@ -18,7 +19,8 @@ import ListViewContext, { FilterChip, ListViewState, SavedFilter } from "./conte
 import AuthGuard from "./components/AuthGuard";
 
 const adminNav = [
-  { to: "/", label: "Dashboard", icon: DashboardIcon },
+  { to: "/", label: "Home", icon: HomeIcon },
+  { to: "/dashboard", label: "Dashboard", icon: DashboardIcon },
   { to: "/companies", label: "Companies", icon: CompanyIcon },
   { to: "/invoices", label: "Invoices", icon: InvoiceIcon },
   { to: "/products", label: "Products", icon: ProductIcon },
@@ -31,7 +33,8 @@ const adminNav = [
 ];
 
 const portalNav = [
-  { to: "/", label: "Dashboard", icon: DashboardIcon },
+  { to: "/", label: "Home", icon: HomeIcon },
+  { to: "/dashboard", label: "Dashboard", icon: DashboardIcon },
   { to: "/invoices", label: "Invoices", icon: InvoiceIcon },
   { to: "/contacts", label: "Contacts", icon: ContactIcon },
   { to: "/quotations", label: "Quotations", icon: QuoteIcon },
@@ -137,43 +140,20 @@ function AppContent() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
+  const isHomePage = currentPath === "/";
+
+  // If on home page, render the app launcher without sidebar
+  if (isHomePage) {
+    return (
+      <ListViewContext.Provider value={listViewContextValue}>
+        <AppLauncherPage />
+      </ListViewContext.Provider>
+    );
+  }
+
   return (
     <ListViewContext.Provider value={listViewContextValue}>
-      <div className="app-shell">
-        <aside className="sidebar">
-          <div className="brand">
-            <img src="/zimra.png" alt="ZIMRA" className="brand-logo" />
-          </div>
-          <nav className="nav">
-            {navItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
-              >
-                <item.icon />
-                <span>{item.label}</span>
-              </NavLink>
-            ))}
-          </nav>
-          <div className="sidebar-footer">
-            <div className="user-profile">
-              <div className="user-avatar">{initials}</div>
-              <div className="user-info">
-                <span className="user-name">{displayName}</span>
-                <button
-                  className="logout-btn"
-                  onClick={() => {
-                    localStorage.removeItem("access_token");
-                    window.location.href = "/login";
-                  }}
-                >
-                  Log Out
-                </button>
-              </div>
-            </div>
-          </div>
-        </aside>
+      <div className="app-shell no-sidebar">
         <main className="main-content">
           <header className="main-header">
             <div className="topbar" ref={topbarRef}>
@@ -233,7 +213,8 @@ function AppContent() {
           </header>
           <div className="page-content">
             <Routes>
-              <Route path="/" element={<DashboardPage />} />
+              <Route path="/" element={<AppLauncherPage />} />
+              <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/invoices" element={<InvoicesPage />} />
               <Route path="/companies" element={<CompaniesPage />} />
               <Route path="/products" element={<ProductsPage />} />
@@ -357,6 +338,25 @@ function getCustomFields(path: string): CustomField[] {
 }
 
 // --- Icon Components ---
+
+function HomeIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      <polyline points="9 22 9 12 15 12 15 22" />
+    </svg>
+  );
+}
 
 function DashboardIcon() {
   return (

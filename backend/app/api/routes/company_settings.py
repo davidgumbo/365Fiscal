@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_db, ensure_company_access, require_company_access, require_portal_user
+from app.api.deps import get_db, ensure_company_access, require_company_access, get_current_user
 from app.models.company_settings import CompanySettings
 from app.schemas.company_settings import CompanySettingsCreate, CompanySettingsRead, CompanySettingsUpdate
 
@@ -12,7 +12,7 @@ router = APIRouter(prefix="/company-settings", tags=["company-settings"])
 def create_company_settings(
     payload: CompanySettingsCreate,
     db: Session = Depends(get_db),
-    user=Depends(require_portal_user),
+    user=Depends(get_current_user),
 ):
     ensure_company_access(db, user, payload.company_id)
     
@@ -34,7 +34,7 @@ def create_company_settings(
 def get_company_settings(
     company_id: int,
     db: Session = Depends(get_db),
-    user=Depends(require_portal_user),
+    user=Depends(get_current_user),
     _=Depends(require_company_access),
 ):
     settings = db.query(CompanySettings).filter(
@@ -56,7 +56,7 @@ def update_company_settings(
     settings_id: int,
     payload: CompanySettingsUpdate,
     db: Session = Depends(get_db),
-    user=Depends(require_portal_user),
+    user=Depends(get_current_user),
 ):
     settings = db.query(CompanySettings).filter(CompanySettings.id == settings_id).first()
     if not settings:

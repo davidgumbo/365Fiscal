@@ -34,21 +34,41 @@ export default function LoginPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim(), password: password.trim() })
       });
-      
-      const text = await res.text();
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch (e) {
-        console.error("Invalid JSON response:", text);
-        throw new Error("Server Error: Received non-JSON response");
+      // Prefer JSON when available; fall back to text so we can surface
+      // backend error messages even if the response isn't JSON.
+      const contentType = res.headers.get("content-type") || "";
+      let data: any = null;
+      let rawText: string | null = null;
+      if (contentType.includes("application/json")) {
+        try {
+          data = await res.json();
+        } catch (_) {
+          // leave data as null and try text below
+        }
+      }
+      if (!data) {
+        try {
+          rawText = await res.text();
+        } catch (_) {
+          rawText = null;
+        }
       }
 
       if (!res.ok) {
-        throw new Error(data.detail || "Invalid credentials");
+        const serverMsg = (data && (data.detail || data.message || data.error))
+          || rawText
+          || res.statusText
+          || "Authentication failed";
+        throw new Error(serverMsg);
       }
-      
-      localStorage.setItem("access_token", data.access_token);
+
+      const token = data?.access_token;
+      if (!token) {
+        const msg = rawText || "Unexpected server response (missing token)";
+        throw new Error(msg);
+      }
+
+      localStorage.setItem("access_token", token);
       setStatus("Success! Redirecting...");
       setTimeout(() => {
         window.location.href = "/";
@@ -65,84 +85,13 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="login-shell login-split">
-      {/* Left Panel - Branding */}
-      <div className="login-panel">
-        <div className="login-brand">
-          <img 
-            className="brand-logo" 
-            src="/zimra.png" 
-            alt="ZIMRA - Zimbabwe Revenue Authority"
-          />
+    <div className="login-shell login-centered">
+      {/* Centered Login Card */}
+      <div className="login-card login-card-glass">
+        <div className="login-floating-logo">
+          <img src="/365.svg" alt="365 Fiscal" className="logo-365" />
         </div>
-
-        
-
-        <div className="login-features">
-          <div className="login-feature">
-            <div className="feature-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                <line x1="16" y1="2" x2="16" y2="6"/>
-                <line x1="8" y1="2" x2="8" y2="6"/>
-                <line x1="3" y1="10" x2="21" y2="10"/>
-              </svg>
-            </div>
-            <div className="feature-text">
-              <strong>Fiscal Day Management</strong>
-              <span>Open, manage, and close fiscal days with automatic counters</span>
-            </div>
-          </div>
-          <div className="login-feature">
-            <div className="feature-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-                <line x1="16" y1="13" x2="8" y2="13"/>
-                <line x1="16" y1="17" x2="8" y2="17"/>
-                <polyline points="10 9 9 9 8 9"/>
-              </svg>
-            </div>
-            <div className="feature-text">
-              <strong>Real-Time Receipt Submission</strong>
-              <span>Instant fiscalization of invoices and credit notes to ZIMRA</span>
-            </div>
-          </div>
-          <div className="login-feature">
-            <div className="feature-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                <polyline points="9 12 11 14 15 10"/>
-              </svg>
-            </div>
-            <div className="feature-text">
-              <strong>ZIMRA Compliance</strong>
-              <span>Fully certified integration with Zimbabwe Revenue Authority</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="login-footer">
-          <div className="footer-badge">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm-1-11v6h2v-6h-2zm0-4v2h2V7h-2z"/>
-            </svg>
-            Trusted by Businesses Across Zimbabwe
-          </div>
-        </div>
-      </div>
-
-      {/* Right Panel - Login Card */}
-      <div className="login-card">
-        <div className="login-floating-365">
-          <span className="text-365">365</span>
-          <div className="badge-sep"></div>
-          <span className="text-fiscal">Fiscal</span>
-        </div>
-        <div className="login-card-header">
-          <h2 className="login-card-title">Welcome Back</h2>
-          {/* <p className="login-card-sub">Sign in to access your dashboard</p> */}
-        </div>
+        {/* Header removed per request */}
         <div className="login-card-body">
 
           <form className="login-form" onSubmit={signIn}>
@@ -210,7 +159,7 @@ export default function LoginPage() {
         </div>
 
         <div className="login-card-footer">
-          <p>Powered by Geenet</p>
+          <img src="/geenet.trim.png" alt="GeeNet" className="footer-logo" />
         </div>
       </div>
     </div>

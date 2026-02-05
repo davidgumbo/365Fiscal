@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, ForeignKey, String
+from sqlalchemy import Boolean, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -17,6 +17,10 @@ class CompanySettings(Base, TimestampMixin):
     currency_symbol: Mapped[str] = mapped_column(String(10), default="$")
     currency_position: Mapped[str] = mapped_column(String(10), default="before")  # before/after
     decimal_places: Mapped[int] = mapped_column(default=2)
+
+    # Company branding & document layout
+    logo_data: Mapped[str] = mapped_column(Text, default="")
+    document_layout: Mapped[str] = mapped_column(String(100), default="external_layout_standard")
     
     # Invoice settings
     invoice_prefix: Mapped[str] = mapped_column(String(20), default="INV")
@@ -40,5 +44,24 @@ class CompanySettings(Base, TimestampMixin):
     default_sales_tax_id: Mapped[int | None] = mapped_column(ForeignKey("tax_settings.id"), nullable=True)
     default_purchase_tax_id: Mapped[int | None] = mapped_column(ForeignKey("tax_settings.id"), nullable=True)
     tax_included_in_price: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    # Permissions & security
+    customer_account_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    customer_signup_mode: Mapped[str] = mapped_column(String(20), default="invitation")
+    password_reset_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    default_access_rights_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    api_keys_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    customer_api_keys_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    # Import/Export & UX
+    import_export_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    show_effect_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    # Mobile
+    push_notifications_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    disable_mobile_redirect: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    # Inter-company
+    inter_company_transactions: Mapped[bool] = mapped_column(Boolean, default=False)
 
     company = relationship("Company", back_populates="settings")

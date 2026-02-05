@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../api";
 import { useCompanies, Company } from "../hooks/useCompanies";
+import { useMe } from "../hooks/useMe";
 
 const TAX_TYPES = [
   { value: "sales", label: "Sales" },
@@ -14,16 +16,12 @@ const TAX_SCOPES = [
   { value: "all", label: "All" }
 ];
 
-const TAX_CALC_METHODS = [
-  { value: "exclusive", label: "Tax Exclusive" },
-  { value: "inclusive", label: "Tax Inclusive" }
-];
 
 const CURRENCIES = [
   { code: "USD", symbol: "$", name: "US Dollar" },
   { code: "EUR", symbol: "€", name: "Euro" },
   { code: "GBP", symbol: "£", name: "British Pound" },
-  { code: "ZWL", symbol: "Z$", name: "Zimbabwe Dollar" },
+  { code: "ZWL", symbol: "ZWG", name: "Zimbabwe Dollar" },
   { code: "ZAR", symbol: "R", name: "South African Rand" }
 ];
 
@@ -52,12 +50,25 @@ type CompanySettings = {
   company_id: number;
   currency_code: string;
   currency_symbol: string;
+  currency_position: string;
   decimal_places: number;
-  tax_calculation_method: string;
-  default_tax_id: number | null;
+  invoice_prefix: string;
+  quotation_prefix: string;
+  invoice_notes: string;
+  payment_terms_default: string;
+  inventory_valuation: string;
+  auto_reserve_stock: boolean;
+  allow_negative_stock: boolean;
   fiscal_enabled: boolean;
-  zimra_device_id: string;
-  zimra_operator_id: string;
+  fiscal_device_id: number | null;
+  zimra_bp_no: string;
+  zimra_tin: string;
+  fiscal_auto_submit: boolean;
+  default_sales_tax_id: number | null;
+  default_purchase_tax_id: number | null;
+  tax_included_in_price: boolean;
+  logo_data: string;
+  document_layout: string;
 };
 
 // Icon components for professional actions
@@ -82,11 +93,6 @@ const TrashIcon = () => (
   </svg>
 );
 
-const KeyIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
-  </svg>
-);
 
 const CheckIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -101,21 +107,10 @@ const XIcon = () => (
   </svg>
 );
 
-const ToggleOnIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="1" y="5" width="22" height="14" rx="7" ry="7" />
-    <circle cx="16" cy="12" r="3" />
-  </svg>
-);
-
-const ToggleOffIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="1" y="5" width="22" height="14" rx="7" ry="7" />
-    <circle cx="8" cy="12" r="3" />
-  </svg>
-);
 
 export default function SettingsPage() {
+  const navigate = useNavigate();
+  const { me } = useMe();
   const companies = useCompanies();
   const [companyId, setCompanyId] = useState<number | null>(null);
   const [taxes, setTaxes] = useState<TaxSetting[]>([]);
@@ -129,19 +124,48 @@ export default function SettingsPage() {
   const [adminError, setAdminError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<{ email: string; password: string }>({ email: "", password: "" });
-  const [isEditing, setIsEditing] = useState(true);
-  const [activeSection, setActiveSection] = useState<"company" | "taxes" | "admins">("company");
+  const [activeTopTab, setActiveTopTab] = useState<"general" | "users">("general");
   const [companySettings, setCompanySettings] = useState<CompanySettings | null>(null);
   const [settingsForm, setSettingsForm] = useState({
     currency_code: "USD",
     currency_symbol: "$",
+    currency_position: "before",
     decimal_places: 2,
-    tax_calculation_method: "exclusive",
-    default_tax_id: null as number | null,
+    invoice_prefix: "INV",
+    quotation_prefix: "QUO",
+    invoice_notes: "",
+    payment_terms_default: "Due on receipt",
+    inventory_valuation: "fifo",
+    auto_reserve_stock: true,
+    allow_negative_stock: false,
     fiscal_enabled: false,
-    zimra_device_id: "",
-    zimra_operator_id: ""
+    fiscal_device_id: null as number | null,
+    zimra_bp_no: "",
+    zimra_tin: "",
+    fiscal_auto_submit: false,
+    default_sales_tax_id: null as number | null,
+    default_purchase_tax_id: null as number | null,
+    tax_included_in_price: false,
+    logo_data: "",
+    document_layout: "external_layout_standard"
   });
+  const [initialSettings, setInitialSettings] = useState<typeof settingsForm | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // Redirect non-admin users
+  useEffect(() => {
+    if (me && !me.is_admin) {
+      navigate("/");
+    }
+  }, [me, navigate]);
+
+  // Track changes
+  useEffect(() => {
+    if (initialSettings && activeTopTab === "general") {
+      const changed = JSON.stringify(settingsForm) !== JSON.stringify(initialSettings);
+      setHasUnsavedChanges(changed);
+    }
+  }, [settingsForm, initialSettings, activeTopTab]);
 
   useEffect(() => {
     if (companies.length && companyId === null) {
@@ -169,28 +193,70 @@ export default function SettingsPage() {
 
   const loadCompanySettings = async (cid: number) => {
     try {
-      const data = await apiFetch<CompanySettings>(`/company-settings/${cid}`);
+      const data = await apiFetch<CompanySettings>(`/company-settings?company_id=${cid}`);
       setCompanySettings(data);
-      setSettingsForm({
+      const formData = {
         currency_code: data.currency_code || "USD",
         currency_symbol: data.currency_symbol || "$",
+        currency_position: data.currency_position || "before",
         decimal_places: data.decimal_places ?? 2,
-        tax_calculation_method: data.tax_calculation_method || "exclusive",
-        default_tax_id: data.default_tax_id,
+        invoice_prefix: data.invoice_prefix || "INV",
+        quotation_prefix: data.quotation_prefix || "QUO",
+        invoice_notes: data.invoice_notes || "",
+        payment_terms_default: data.payment_terms_default || "Due on receipt",
+        inventory_valuation: data.inventory_valuation || "fifo",
+        auto_reserve_stock: data.auto_reserve_stock ?? true,
+        allow_negative_stock: data.allow_negative_stock ?? false,
         fiscal_enabled: data.fiscal_enabled ?? false,
-        zimra_device_id: data.zimra_device_id || "",
-        zimra_operator_id: data.zimra_operator_id || ""
-      });
+        fiscal_device_id: data.fiscal_device_id ?? null,
+        zimra_bp_no: data.zimra_bp_no || "",
+        zimra_tin: data.zimra_tin || "",
+        fiscal_auto_submit: data.fiscal_auto_submit ?? false,
+        default_sales_tax_id: data.default_sales_tax_id ?? null,
+        default_purchase_tax_id: data.default_purchase_tax_id ?? null,
+        tax_included_in_price: data.tax_included_in_price ?? false,
+        logo_data: data.logo_data || "",
+        document_layout: data.document_layout || "external_layout_standard"
+      };
+      setSettingsForm(formData);
+      setInitialSettings(formData);
+      setHasUnsavedChanges(false);
     } catch (err) {
       // Settings don't exist yet, use defaults
       setCompanySettings(null);
+      const defaults = {
+        currency_code: "USD",
+        currency_symbol: "$",
+        currency_position: "before",
+        decimal_places: 2,
+        invoice_prefix: "INV",
+        quotation_prefix: "QUO",
+        invoice_notes: "",
+        payment_terms_default: "Due on receipt",
+        inventory_valuation: "fifo",
+        auto_reserve_stock: true,
+        allow_negative_stock: false,
+        fiscal_enabled: false,
+        fiscal_device_id: null as number | null,
+        zimra_bp_no: "",
+        zimra_tin: "",
+        fiscal_auto_submit: false,
+        default_sales_tax_id: null as number | null,
+        default_purchase_tax_id: null as number | null,
+        tax_included_in_price: false,
+        logo_data: "",
+        document_layout: "external_layout_standard"
+      };
+      setSettingsForm(defaults);
+      setInitialSettings(defaults);
+      setHasUnsavedChanges(false);
     }
   };
 
   const saveCompanySettings = async () => {
     if (!companyId) return;
     const method = companySettings ? "PATCH" : "POST";
-    const url = companySettings ? `/company-settings/${companyId}` : "/company-settings";
+    const url = companySettings ? `/company-settings/${companySettings.id}` : "/company-settings";
     const payload = companySettings
       ? settingsForm
       : { ...settingsForm, company_id: companyId };
@@ -199,8 +265,28 @@ export default function SettingsPage() {
       method,
       body: JSON.stringify(payload)
     });
-    setStatus("Company settings saved");
+    setStatus("Settings saved successfully");
+    setInitialSettings(settingsForm);
+    setHasUnsavedChanges(false);
+    setTimeout(() => setStatus(null), 3000);
     loadCompanySettings(companyId);
+  };
+
+  const discardChanges = () => {
+    if (initialSettings) {
+      setSettingsForm(initialSettings);
+      setHasUnsavedChanges(false);
+    }
+  };
+
+  const handleLogoChange = (file: File | null) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = typeof reader.result === "string" ? reader.result : "";
+      setSettingsForm((prev) => ({ ...prev, logo_data: result }));
+    };
+    reader.readAsDataURL(file);
   };
 
   useEffect(() => {
@@ -287,228 +373,139 @@ export default function SettingsPage() {
   };
 
   const formattedTaxes = useMemo(() => taxes, [taxes]);
+  const selectedCompany = useMemo(
+    () => companies.find((c) => c.id === companyId) || null,
+    [companies, companyId]
+  );
+
+  if (!me) {
+    return <div className="content">Loading...</div>;
+  }
+
+  if (!me.is_admin) {
+    return null;
+  }
 
   return (
-    <div className="content">
-      <div className="form-view">
-        <div className="form-shell">
-          <div className="form-header">
-            <div>
-              <h3>Settings</h3>
-              <div className="statusbar">
-                <span className={`status-pill ${isEditing ? "active" : ""}`}>Draft</span>
-                <span className={`status-pill ${!isEditing ? "active" : ""}`}>Saved</span>
-              </div>
-            </div>
-            <div className="form-actions">
-              <label className="input" style={{ marginRight: 16 }}>
-                Company
-                <select value={companyId ?? ""} onChange={(e) => setCompanyId(Number(e.target.value))}>
-                  {companies.map((c: Company) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              {isEditing ? (
-                <>
-                  <button className="primary" onClick={activeSection === "company" ? saveCompanySettings : saveTax}>Save</button>
-                  <button className="outline" onClick={() => setIsEditing(false)}>Discard</button>
-                </>
-              ) : (
-                <button className="primary" onClick={() => setIsEditing(true)}>Edit</button>
-              )}
-            </div>
+    <div className="settings-page">
+      {hasUnsavedChanges && activeTopTab === "general" && (
+        <div className="alert alert-warning" style={{ marginBottom: 16 }}>
+          <strong>Unsaved changes</strong> — Don't forget to save your changes.
+          <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
+            <button className="primary" style={{ fontSize: 12, padding: "6px 12px" }} onClick={saveCompanySettings}>
+              Save
+            </button>
+            <button className="outline" style={{ fontSize: 12, padding: "6px 12px" }} onClick={discardChanges}>
+              Discard
+            </button>
           </div>
+        </div>
+      )}
 
-          <div className="tab-row" style={{ marginBottom: 16 }}>
-            <button className={`tab ${activeSection === "company" ? "active" : ""}`} onClick={() => setActiveSection("company")}>Company Settings</button>
-            <button className={`tab ${activeSection === "taxes" ? "active" : ""}`} onClick={() => setActiveSection("taxes")}>Taxes</button>
-            <button className={`tab ${activeSection === "admins" ? "active" : ""}`} onClick={() => setActiveSection("admins")}>Administrators</button>
+      <div className="settings-topbar">
+        <div className="settings-top-left">
+          <div className="settings-title">Settings</div>
+          <div className="settings-top-tabs">
+            <button className={`settings-tab ${activeTopTab === "general" ? "active" : ""}`} onClick={() => setActiveTopTab("general")}>General Settings</button>
+            <button className={`settings-tab ${activeTopTab === "users" ? "active" : ""}`} onClick={() => setActiveTopTab("users")}>Users &amp; Companies</button>
           </div>
+        </div>
+        <div className="settings-top-actions">
+          <button className="primary" onClick={saveCompanySettings} disabled={!hasUnsavedChanges || activeTopTab !== "general"}>Save</button>
+          <button className="outline" onClick={discardChanges} disabled={!hasUnsavedChanges || activeTopTab !== "general"}>Discard</button>
+        </div>
+      </div>
 
+      <div className="settings-toolbar">
+        <div className="settings-search">
+          <input type="text" placeholder="Search..." />
+        </div>
+      </div>
+
+      <div className="settings-body">
+        
+
+        <main className="settings-main">
           {status && (
             <div className="alert alert-success" style={{ marginBottom: 16 }}>
               {status}
-              <button onClick={() => setStatus(null)} style={{ float: "right", border: "none", background: "transparent" }}>×</button>
+              <button onClick={() => setStatus(null)} style={{ float: "right", border: "none", background: "transparent", cursor: "pointer" }}>×</button>
             </div>
           )}
 
-          {activeSection === "company" && (
-            <div className="form-grid">
-              <label className="input">
-                Currency
-                <select
-                  value={settingsForm.currency_code}
-                  onChange={(e) => {
-                    const currency = CURRENCIES.find(c => c.code === e.target.value);
-                    setSettingsForm({
-                      ...settingsForm,
-                      currency_code: e.target.value,
-                      currency_symbol: currency?.symbol || "$"
-                    });
-                  }}
-                  disabled={!isEditing}
-                >
-                  {CURRENCIES.map(c => (
-                    <option key={c.code} value={c.code}>{c.name} ({c.symbol})</option>
-                  ))}
-                </select>
-              </label>
-              <label className="input">
-                Currency Symbol
-                <input
-                  type="text"
-                  value={settingsForm.currency_symbol}
-                  onChange={(e) => setSettingsForm({ ...settingsForm, currency_symbol: e.target.value })}
-                  disabled={!isEditing}
-                />
-              </label>
-              <label className="input">
-                Decimal Places
-                <input
-                  type="number"
-                  min="0"
-                  max="6"
-                  value={settingsForm.decimal_places}
-                  onChange={(e) => setSettingsForm({ ...settingsForm, decimal_places: Number(e.target.value) })}
-                  disabled={!isEditing}
-                />
-              </label>
-              <label className="input">
-                Tax Calculation Method
-                <select
-                  value={settingsForm.tax_calculation_method}
-                  onChange={(e) => setSettingsForm({ ...settingsForm, tax_calculation_method: e.target.value })}
-                  disabled={!isEditing}
-                >
-                  {TAX_CALC_METHODS.map(m => (
-                    <option key={m.value} value={m.value}>{m.label}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="input">
-                Default Tax
-                <select
-                  value={settingsForm.default_tax_id ?? ""}
-                  onChange={(e) => setSettingsForm({ ...settingsForm, default_tax_id: e.target.value ? Number(e.target.value) : null })}
-                  disabled={!isEditing}
-                >
-                  <option value="">No default</option>
-                  {taxes.map(t => (
-                    <option key={t.id} value={t.id}>{t.name} ({t.rate}%)</option>
-                  ))}
-                </select>
-              </label>
-              <div style={{ gridColumn: "span 2", marginTop: 16 }}>
-                <h4>ZIMRA Fiscal Settings</h4>
-              </div>
-              <label className="input checkbox">
-                <input
-                  type="checkbox"
-                  checked={settingsForm.fiscal_enabled}
-                  onChange={(e) => setSettingsForm({ ...settingsForm, fiscal_enabled: e.target.checked })}
-                  disabled={!isEditing}
-                />
-                Enable Fiscal Integration
-              </label>
-              <label className="input">
-                ZIMRA Device ID
-                <input
-                  type="text"
-                  value={settingsForm.zimra_device_id}
-                  onChange={(e) => setSettingsForm({ ...settingsForm, zimra_device_id: e.target.value })}
-                  disabled={!isEditing || !settingsForm.fiscal_enabled}
-                />
-              </label>
-              <label className="input">
-                ZIMRA Operator ID
-                <input
-                  type="text"
-                  value={settingsForm.zimra_operator_id}
-                  onChange={(e) => setSettingsForm({ ...settingsForm, zimra_operator_id: e.target.value })}
-                  disabled={!isEditing || !settingsForm.fiscal_enabled}
-                />
-              </label>
-            </div>
-          )}
-
-          {activeSection === "taxes" && (
+          {activeTopTab === "general" && (
             <>
-              <div className="tax-header">
-                <div>
-                  <h4>Taxes</h4>
-                  <p className="page-sub">Configure taxes for the selected company.</p>
-                </div>
-                <div className="tax-actions">
-                  <button className="primary" onClick={createTax}>
-                    New Tax
-                  </button>
-                </div>
+              <div className="settings-company-select">
+                <label className="input">
+                  Company
+                  <select value={companyId ?? ""} onChange={(e) => setCompanyId(Number(e.target.value))}>
+                    {companies.map((c: Company) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
               </div>
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Tax Name</th>
-              <th>Description</th>
-              <th>Tax Type</th>
-              <th>Tax Scope</th>
-              <th>Label on Invoices</th>
-              <th>Rate</th>
-              <th>Active</th>
-            </tr>
-          </thead>
-          <tbody>
-            {formattedTaxes.map((tax) => (
-              <tr
-                key={tax.id}
-                className={selectedTax?.id === tax.id ? "row-active" : ""}
-                onClick={() => {
-                  setSelectedTax(tax);
-                  setShowForm(true);
-                }}
-              >
-                <td>{tax.name}</td>
-                <td>{tax.description || tax.zimra_code}</td>
-                <td>{TAX_TYPES.find((t) => t.value === tax.tax_type)?.label ?? tax.tax_type}</td>
-                <td>{TAX_SCOPES.find((t) => t.value === tax.tax_scope)?.label ?? tax.tax_scope}</td>
-                <td>{tax.label_on_invoice || `${tax.rate}%`}</td>
-                <td>{tax.rate}%</td>
-                <td>
-                  <label className="switch">
-                    <input
-                      type="checkbox"
-                      checked={tax.is_active}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        setTaxes((prev) =>
-                          prev.map((item) =>
-                            item.id === tax.id ? { ...item, is_active: e.target.checked } : item
-                          )
-                        );
-                        apiFetch(`/tax-settings/${tax.id}`, {
-                          method: "PATCH",
-                          body: JSON.stringify({ is_active: e.target.checked })
-                        });
-                      }}
-                    />
-                    <span className="slider" />
-                  </label>
-                </td>
-              </tr>
-            ))}
-            {!formattedTaxes.length ? (
-              <tr>
-                <td colSpan={7}>No taxes found</td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
+
+              <section className="settings-section">
+                <div className="settings-section-header">
+                  <h4>Companies</h4>
+                  <button className="settings-link" onClick={() => navigate("/companies")}>Manage Companies</button>
+                </div>
+                <div className="settings-card-grid">
+                  <div className="settings-card">
+                    <div className="settings-company">
+                      <div className="settings-company-logo">
+                        {settingsForm.logo_data ? (
+                          <img src={settingsForm.logo_data} alt="Company Logo" />
+                        ) : (
+                          <div className="settings-logo-placeholder">Logo</div>
+                        )}
+                        <label className="settings-logo-upload">
+                          <input type="file" accept="image/*" onChange={(e) => handleLogoChange(e.target.files?.[0] ?? null)} />
+                          Update Logo
+                        </label>
+                      </div>
+                      <div className="settings-company-info">
+                        <div className="settings-company-name">{selectedCompany?.name ?? "—"}</div>
+                        <div className="settings-company-line">{selectedCompany?.address || ""}</div>
+                        <div className="settings-company-line">{selectedCompany?.email || ""}</div>
+                        <div className="settings-company-line">{selectedCompany?.phone || ""}</div>
+                        <div className="settings-company-line">VAT: {selectedCompany?.vat || "—"}</div>
+                        <button className="settings-link" onClick={() => navigate("/companies")}>Update Info</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="settings-card">
+                    <div className="settings-card-title">Document Layout</div>
+                    <div className="settings-card-sub">Choose the layout of your documents</div>
+                    <label className="input">
+                      Layout
+                      <select
+                        value={settingsForm.document_layout}
+                        onChange={(e) => setSettingsForm({ ...settingsForm, document_layout: e.target.value })}
+                      >
+                        <option value="external_layout_standard">Standard</option>
+                        <option value="external_layout_boxed">Boxed</option>
+                        <option value="external_layout_bold">Bold</option>
+                        <option value="external_layout_bubble">Bubble</option>
+                      </select>
+                    </label>
+                    <div className="settings-actions-inline">
+                      <button className="outline" onClick={() => setStatus("Document layout editor coming soon")}>Configure Document Layout</button>
+                      <button className="outline" onClick={() => setStatus("Layout editor coming soon")}>Edit Layout</button>
+                      <button className="outline" onClick={() => setStatus("Preview coming soon")}>Preview Document</button>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
             </>
           )}
 
-          {activeSection === "admins" && (
+          {activeTopTab === "users" && (
             <>
               <div className="tax-header">
                 <div>
@@ -608,10 +605,11 @@ export default function SettingsPage() {
               </table>
             </>
           )}
-        </div>
+
+        </main>
       </div>
 
-      {showForm && selectedTax && activeSection === "taxes" ? (
+      {showForm && selectedTax ? (
         <div className="card">
           <h3>Tax</h3>
           <div className="tab-row">
@@ -671,9 +669,7 @@ export default function SettingsPage() {
               <input
                 type="number"
                 value={selectedTax.rate}
-                onChange={(e) =>
-                  setSelectedTax({ ...selectedTax, rate: Number(e.target.value) })
-                }
+                onChange={(e) => setSelectedTax({ ...selectedTax, rate: Number(e.target.value) })}
               />
             </label>
             <label className="input">
@@ -687,9 +683,7 @@ export default function SettingsPage() {
               Active
               <select
                 value={selectedTax.is_active ? "yes" : "no"}
-                onChange={(e) =>
-                  setSelectedTax({ ...selectedTax, is_active: e.target.value === "yes" })
-                }
+                onChange={(e) => setSelectedTax({ ...selectedTax, is_active: e.target.value === "yes" })}
               >
                 <option value="yes">Yes</option>
                 <option value="no">No</option>
