@@ -3227,11 +3227,13 @@ button.danger:hover {
 .settings-toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 16px;
   padding: 8px 0;
   border-top: 1px solid var(--stroke);
   border-bottom: 1px solid var(--stroke);
+  max-width: 1000px;
+  margin: 0 auto;
 }
 
 .settings-toolbar-title {
@@ -3289,11 +3291,14 @@ button.danger:hover {
   gap: 24px;
   max-width: 1100px;
   margin: 0 auto;
+  justify-items: center;
 }
 
 .settings-company-select {
   display: flex;
-  justify-content: flex-start;
+  justify-content: center;
+  max-width: 1000px;
+  margin: 0 auto;
 }
 
 .settings-section {
@@ -3307,6 +3312,8 @@ button.danger:hover {
   opacity: 0;
   transform: translateY(8px);
   animation: settings-enter 420ms ease-out forwards;
+  max-width: 1000px;
+  margin: 0 auto;
 }
 
 .settings-section-header {
@@ -3326,6 +3333,9 @@ button.danger:hover {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 16px;
+  max-width: 1000px;
+  margin: 0 auto;
+  align-items: stretch;
 }
 
 @media (min-width: 900px) {
@@ -3348,6 +3358,7 @@ button.danger:hover {
   display: grid;
   gap: 12px;
   transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+  height: 100%;
 }
 
 .settings-card-title {
@@ -3393,7 +3404,7 @@ button.danger:hover {
   display: grid;
   grid-template-columns: 120px 1fr;
   gap: 12px;
-  align-items: center;
+  align-items: start;
 }
 
 .settings-company-logo img {

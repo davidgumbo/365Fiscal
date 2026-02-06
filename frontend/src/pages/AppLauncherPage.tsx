@@ -117,6 +117,7 @@ const portalApps: AppItem[] = [
   { to: "/quotations", label: "Quotations", icon: QuoteIcon, color: "#6366f1" },
   { to: "/inventory", label: "Inventory", icon: InventoryIcon, color: "#7c3aed" },
   { to: "/reports", label: "Reports", icon: ReportsIcon, color: "#14b8a6" },
+  { to: "/settings", label: "Settings", icon: SettingsIcon, color: "#f59e0b" },
 ];
 
 export default function AppLauncherPage() {
