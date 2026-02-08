@@ -10,6 +10,24 @@ from app.security.security import hash_password
 router = APIRouter(prefix="/users", tags=["users"])
 
 
+@router.get("/me")
+def read_me(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from app.models.company import Company
+    links = db.query(CompanyUser).filter(CompanyUser.user_id == user.id, CompanyUser.is_active == True).all()
+    company_ids = [link.company_id for link in links]
+    companies = db.query(Company).filter(Company.id.in_(company_ids)).all() if company_ids else []
+    return {
+        "id": user.id,
+        "email": user.email,
+        "is_admin": user.is_admin,
+        "company_ids": company_ids,
+        "companies": [
+            {"id": c.id, "name": c.name, "tin": c.tin, "vat": c.vat, "email": c.email, "phone": c.phone, "address": c.address}
+            for c in companies
+        ],
+    }
+
+
 @router.post("", response_model=UserRead, dependencies=[Depends(require_admin)])
 def create_user(payload: UserCreate, db: Session = Depends(get_db)):
     existing = db.query(User).filter(User.email == payload.email).first()
@@ -59,21 +77,3 @@ def delete_user(user_id: int, db: Session = Depends(get_db), current=Depends(get
     db.delete(user)
     db.commit()
     return {"status": "deleted"}
-
-
-@router.get("/me")
-def read_me(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    from app.models.company import Company
-    links = db.query(CompanyUser).filter(CompanyUser.user_id == user.id, CompanyUser.is_active == True).all()
-    company_ids = [link.company_id for link in links]
-    companies = db.query(Company).filter(Company.id.in_(company_ids)).all() if company_ids else []
-    return {
-        "id": user.id,
-        "email": user.email,
-        "is_admin": user.is_admin,
-        "company_ids": company_ids,
-        "companies": [
-            {"id": c.id, "name": c.name, "tin": c.tin, "vat": c.vat, "email": c.email, "phone": c.phone, "address": c.address}
-            for c in companies
-        ],
-    }

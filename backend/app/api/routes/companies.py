@@ -98,6 +98,22 @@ def apply_company_filters(
     return query
 
 
+@router.get("/values")
+def list_company_values(field: str, q: str | None = None, db: Session = Depends(get_db)):
+    """Return distinct values for a given company field (e.g., 'name', 'tin')."""
+    if field == "name":
+        query = db.query(Company.name.distinct())
+        if q:
+            query = query.filter(Company.name.ilike(f"%{q}%"))
+        return [r[0] for r in query.order_by(Company.name).all() if r[0]]
+    if field == "tin":
+        query = db.query(Company.tin.distinct())
+        if q:
+            query = query.filter(Company.tin.ilike(f"%{q}%"))
+        return [r[0] for r in query.order_by(Company.tin).all() if r[0]]
+    return []
+
+
 @router.post("", response_model=CompanyRead, dependencies=[Depends(require_admin)])
 def create_company(payload: CompanyCreate, db: Session = Depends(get_db)):
     company = Company(
@@ -283,22 +299,6 @@ def list_my_companies(
         date_to,
     )
     return query.all()
-
-
-@router.get("/values")
-def list_company_values(field: str, q: str | None = None, db: Session = Depends(get_db)):
-    """Return distinct values for a given company field (e.g., 'name', 'tin')."""
-    if field == "name":
-        query = db.query(Company.name.distinct())
-        if q:
-            query = query.filter(Company.name.ilike(f"%{q}%"))
-        return [r[0] for r in query.order_by(Company.name).all() if r[0]]
-    if field == "tin":
-        query = db.query(Company.tin.distinct())
-        if q:
-            query = query.filter(Company.tin.ilike(f"%{q}%"))
-        return [r[0] for r in query.order_by(Company.tin).all() if r[0]]
-    return []
 
 
 @router.get("/{company_id}/portal-user")

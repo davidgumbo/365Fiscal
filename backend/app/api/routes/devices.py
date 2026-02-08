@@ -11,6 +11,29 @@ from app.services.fdms import get_status, open_day, close_day, get_config, ping_
 router = APIRouter(prefix="/devices", tags=["devices"], dependencies=[Depends(require_admin)])
 
 
+@router.get("/values")
+def list_device_values(
+    field: str,
+    company_id: int | None = None,
+    q: str | None = None,
+    db: Session = Depends(get_db),
+):
+    """Return distinct values for a given device field (e.g., 'status').
+
+    Optional `company_id` can scope values to a single company.
+    """
+    if field == "status":
+        query = db.query(Device.fiscal_day_status).distinct()
+        if company_id:
+            query = query.filter(Device.company_id == company_id)
+        if q:
+            query = query.filter(Device.fiscal_day_status.ilike(f"%{q}%"))
+        results = [r[0] for r in query.order_by(Device.fiscal_day_status).all() if r[0]]
+        return results
+    # Unknown field -> empty list
+    return []
+
+
 @router.post("", response_model=DeviceRead)
 def create_device(
     payload: DeviceCreate,
@@ -122,29 +145,6 @@ def register(device_id: int, db: Session = Depends(get_db), user=Depends(get_cur
         return None
     ensure_company_access(db, user, device.company_id)
     return register_device(device, db)
-
-
-@router.get("/values")
-def list_device_values(
-    field: str,
-    company_id: int | None = None,
-    q: str | None = None,
-    db: Session = Depends(get_db),
-):
-    """Return distinct values for a given device field (e.g., 'status').
-
-    Optional `company_id` can scope values to a single company.
-    """
-    if field == "status":
-        query = db.query(Device.fiscal_day_status).distinct()
-        if company_id:
-            query = query.filter(Device.company_id == company_id)
-        if q:
-            query = query.filter(Device.fiscal_day_status.ilike(f"%{q}%"))
-        results = [r[0] for r in query.order_by(Device.fiscal_day_status).all() if r[0]]
-        return results
-    # Unknown field -> empty list
-    return []
 
 
 @router.post("/{device_id}/open-day")
