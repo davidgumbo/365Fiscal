@@ -89,7 +89,7 @@ export default function LoginPage() {
       {/* Centered Login Card */}
       <div className="login-card login-card-glass">
         <div className="login-floating-logo">
-          <img src="/365.svg" alt="365 Fiscal" className="logo-365" />
+          <img src="/365.png" alt="365 Fiscal" className="logo-365" />
         </div>
         {/* Header removed per request */}
         <div className="login-card-body">
