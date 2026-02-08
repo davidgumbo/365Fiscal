@@ -2215,6 +2215,16 @@ button.danger:hover {
     animation: none !important;
     transition: none !important;
   }
+
+  .app-launcher-logo img {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .app-tile {
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
 
 /* ===== Admin Pages Professional Styles ===== */
