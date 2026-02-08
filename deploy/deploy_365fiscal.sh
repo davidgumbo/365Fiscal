@@ -36,14 +36,26 @@ echo -e "${YELLOW}Step 1: Updating system packages...${NC}"
 apt update && apt upgrade -y
 
 echo -e "${YELLOW}Step 2: Installing required packages...${NC}"
-apt install -y python3 python3-pip python3-venv postgresql postgresql-contrib nginx curl git nodejs npm
+apt install -y python3 python3-pip python3-venv postgresql postgresql-contrib nginx curl git
 
-# Install Node.js 20.x if not available
+# Install Node.js 20.x (includes npm) from nodesource - avoids Ubuntu npm conflicts
 if ! command -v node &> /dev/null || [[ $(node -v | cut -d'.' -f1 | tr -d 'v') -lt 18 ]]; then
     echo -e "${YELLOW}Installing Node.js 20.x...${NC}"
     curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
     apt install -y nodejs
+else
+    echo -e "${GREEN}Node.js $(node -v) already installed${NC}"
 fi
+
+# Ensure npm is available (comes with nodesource nodejs)
+if ! command -v npm &> /dev/null; then
+    echo -e "${RED}npm not found, reinstalling Node.js...${NC}"
+    curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+    apt install -y nodejs --reinstall
+fi
+
+echo -e "${GREEN}Node.js version: $(node -v)${NC}"
+echo -e "${GREEN}npm version: $(npm -v)${NC}"
 
 echo -e "${YELLOW}Step 3: Setting up PostgreSQL...${NC}"
 # Start PostgreSQL
