@@ -1531,15 +1531,15 @@ textarea {
   justify-content: center;
   width: 170px;
   height: 110px;
-  padding: 10px 16px;
+  padding: 8px 12px;
   border-radius: 999px;
   z-index: 10;
   box-shadow: 0 16px 32px rgba(15, 23, 42, 0.2);
 }
 
 .logo-365 {
-  width: 130px;
-  height: 80px;
+  width: 140px;
+  height: 90px;
   object-fit: contain;
 }
 
@@ -1635,9 +1635,9 @@ textarea {
 }
 
 .footer-logo {
-  height: 40px;
+  height: 28px;
   width: auto;
-  max-width: 240px;
+  max-width: 180px;
   opacity: 0.95;
   display: inline-block;
 }
