@@ -1529,17 +1529,17 @@ textarea {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 88px;
-  height: 88px;
-  padding: 8px;
+  width: 112px;
+  height: 112px;
+  padding: 10px;
   border-radius: 9999px;
   z-index: 10;
   box-shadow: 0 12px 24px rgba(15, 23, 42, 0.16);
 }
 
 .logo-365 {
-  width: 64px;
-  height: 64px;
+  width: 84px;
+  height: 84px;
   object-fit: contain;
 }
 
