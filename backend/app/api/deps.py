@@ -40,8 +40,8 @@ def require_admin(user: User = Depends(get_current_user)) -> User:
 
 
 def require_portal_user(user: User = Depends(get_current_user)) -> User:
-    if user.is_admin:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Portal users only")
+    """Require an authenticated user (portal or admin)."""
+    # Allow both portal users and admins to access these endpoints
     return user
 
 
