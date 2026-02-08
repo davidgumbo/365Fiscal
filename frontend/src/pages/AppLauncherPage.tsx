@@ -93,7 +93,7 @@ const CompanyIcon = () => (
 interface AppItem {
   to: string;
   label: string;
-  icon: React.ComponentType;
+  icon: () => JSX.Element;
   color: string;
   bgColor: string;
 }
@@ -122,7 +122,7 @@ const portalApps: AppItem[] = [
 ];
 
 export default function AppLauncherPage() {
-  const { me } = useMe();
+  const { me, loading } = useMe();
   const isAdmin = Boolean(me?.is_admin);
   const apps = isAdmin ? adminApps : portalApps;
   const displayName = me?.email ?? "User";
@@ -131,6 +131,19 @@ export default function AppLauncherPage() {
     localStorage.removeItem("access_token");
     window.location.href = "/login";
   };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="app-launcher-page">
+        <div className="app-launcher-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ textAlign: 'center', color: '#64748b' }}>
+            <div style={{ fontSize: '18px', fontWeight: 600 }}>Loading...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="app-launcher-page">
@@ -169,7 +182,7 @@ export default function AppLauncherPage() {
                 style={{ backgroundColor: app.bgColor }}
               >
                 <div className="app-tile-icon" style={{ color: app.color }}>
-                  <app.icon />
+                  {app.icon()}
                 </div>
               </div>
               <span className="app-tile-label">{app.label}</span>
