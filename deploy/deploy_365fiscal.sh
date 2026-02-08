@@ -120,6 +120,7 @@ EOF
 echo -e "${YELLOW}Step 7: Running database migrations...${NC}"
 cd ${APP_DIR}/backend
 source venv/bin/activate
+export PYTHONPATH=${APP_DIR}/backend
 alembic upgrade head
 
 echo -e "${YELLOW}Step 8: Building frontend...${NC}"
