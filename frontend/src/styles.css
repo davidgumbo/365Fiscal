@@ -1520,7 +1520,7 @@ textarea {
 
 .login-floating-logo {
   position: absolute;
-  top: -40px;
+  top: -44px;
   left: 50%;
   transform: translateX(-50%);
   background: rgba(255, 255, 255, 0.98);
@@ -1529,17 +1529,17 @@ textarea {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 118px;
-  height: 118px;
-  padding: 6px;
-  border-radius: 9999px;
+  width: 170px;
+  height: 110px;
+  padding: 10px 16px;
+  border-radius: 999px;
   z-index: 10;
-  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.16);
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.2);
 }
 
 .logo-365 {
-  width: 104px;
-  height: 104px;
+  width: 130px;
+  height: 80px;
   object-fit: contain;
 }
 
