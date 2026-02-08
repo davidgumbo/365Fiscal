@@ -133,6 +133,26 @@ def create_invoice(
     return invoice
 
 
+@router.get("/values")
+def invoice_values(field: str, company_id: int | None = None, q: str | None = None, db: Session = Depends(get_db)):
+    """Return distinct values for invoice fields (e.g., status, reference)."""
+    if field == "status":
+        query = db.query(Invoice.status).distinct()
+        if company_id:
+            query = query.filter(Invoice.company_id == company_id)
+        if q:
+            query = query.filter(Invoice.status.ilike(f"%{q}%"))
+        return [r[0] for r in query.order_by(Invoice.status).all() if r[0]]
+    if field == "reference":
+        query = db.query(Invoice.reference.distinct())
+        if company_id:
+            query = query.filter(Invoice.company_id == company_id)
+        if q:
+            query = query.filter(Invoice.reference.ilike(f"%{q}%"))
+        return [r[0] for r in query.order_by(Invoice.reference).all() if r[0]]
+    return []
+
+
 @router.get("", response_model=list[InvoiceRead])
 def list_invoices(
     company_id: int,
@@ -283,26 +303,6 @@ def register_payment(
     db.commit()
     db.refresh(invoice)
     return invoice
-
-
-@router.get("/values")
-def invoice_values(field: str, company_id: int | None = None, q: str | None = None, db: Session = Depends(get_db)):
-    """Return distinct values for invoice fields (e.g., status, reference)."""
-    if field == "status":
-        query = db.query(Invoice.status).distinct()
-        if company_id:
-            query = query.filter(Invoice.company_id == company_id)
-        if q:
-            query = query.filter(Invoice.status.ilike(f"%{q}%"))
-        return [r[0] for r in query.order_by(Invoice.status).all() if r[0]]
-    if field == "reference":
-        query = db.query(Invoice.reference.distinct())
-        if company_id:
-            query = query.filter(Invoice.company_id == company_id)
-        if q:
-            query = query.filter(Invoice.reference.ilike(f"%{q}%"))
-        return [r[0] for r in query.order_by(Invoice.reference).all() if r[0]]
-    return []
 
 
 @router.post("/{invoice_id}/fiscalize", response_model=InvoiceRead)
