@@ -1,7 +1,7 @@
 """add odoo settings fields
 
 Revision ID: f2a1c9b8d0a1
-Revises: 235b5e8194a7
+Revises: a8f3b2c1d4e5
 Create Date: 2026-02-05 00:00:00.000000
 """
 
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "f2a1c9b8d0a1"
-down_revision = "235b5e8194a7"
+down_revision = "a8f3b2c1d4e5"
 branch_labels = None
 depends_on = None
 
