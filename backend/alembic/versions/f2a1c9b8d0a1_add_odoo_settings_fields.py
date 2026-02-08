@@ -19,17 +19,17 @@ depends_on = None
 def upgrade() -> None:
     op.add_column("company_settings", sa.Column("logo_data", sa.Text(), server_default="", nullable=False))
     op.add_column("company_settings", sa.Column("document_layout", sa.String(length=100), server_default="external_layout_standard", nullable=False))
-    op.add_column("company_settings", sa.Column("customer_account_enabled", sa.Boolean(), server_default=sa.text("1"), nullable=False))
+    op.add_column("company_settings", sa.Column("customer_account_enabled", sa.Boolean(), server_default=sa.text("true"), nullable=False))
     op.add_column("company_settings", sa.Column("customer_signup_mode", sa.String(length=20), server_default="invitation", nullable=False))
-    op.add_column("company_settings", sa.Column("password_reset_enabled", sa.Boolean(), server_default=sa.text("1"), nullable=False))
-    op.add_column("company_settings", sa.Column("default_access_rights_enabled", sa.Boolean(), server_default=sa.text("1"), nullable=False))
-    op.add_column("company_settings", sa.Column("api_keys_enabled", sa.Boolean(), server_default=sa.text("0"), nullable=False))
-    op.add_column("company_settings", sa.Column("customer_api_keys_enabled", sa.Boolean(), server_default=sa.text("0"), nullable=False))
-    op.add_column("company_settings", sa.Column("import_export_enabled", sa.Boolean(), server_default=sa.text("1"), nullable=False))
-    op.add_column("company_settings", sa.Column("show_effect_enabled", sa.Boolean(), server_default=sa.text("0"), nullable=False))
-    op.add_column("company_settings", sa.Column("push_notifications_enabled", sa.Boolean(), server_default=sa.text("0"), nullable=False))
-    op.add_column("company_settings", sa.Column("disable_mobile_redirect", sa.Boolean(), server_default=sa.text("0"), nullable=False))
-    op.add_column("company_settings", sa.Column("inter_company_transactions", sa.Boolean(), server_default=sa.text("0"), nullable=False))
+    op.add_column("company_settings", sa.Column("password_reset_enabled", sa.Boolean(), server_default=sa.text("true"), nullable=False))
+    op.add_column("company_settings", sa.Column("default_access_rights_enabled", sa.Boolean(), server_default=sa.text("true"), nullable=False))
+    op.add_column("company_settings", sa.Column("api_keys_enabled", sa.Boolean(), server_default=sa.text("false"), nullable=False))
+    op.add_column("company_settings", sa.Column("customer_api_keys_enabled", sa.Boolean(), server_default=sa.text("false"), nullable=False))
+    op.add_column("company_settings", sa.Column("import_export_enabled", sa.Boolean(), server_default=sa.text("true"), nullable=False))
+    op.add_column("company_settings", sa.Column("show_effect_enabled", sa.Boolean(), server_default=sa.text("false"), nullable=False))
+    op.add_column("company_settings", sa.Column("push_notifications_enabled", sa.Boolean(), server_default=sa.text("false"), nullable=False))
+    op.add_column("company_settings", sa.Column("disable_mobile_redirect", sa.Boolean(), server_default=sa.text("false"), nullable=False))
+    op.add_column("company_settings", sa.Column("inter_company_transactions", sa.Boolean(), server_default=sa.text("false"), nullable=False))
 
 
 def downgrade() -> None:
