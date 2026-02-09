@@ -68,6 +68,13 @@ textarea {
   grid-template-columns: 1fr;
 }
 
+.page-content {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
 .sidebar {
   background: #ffffff;
   color: var(--ink);
@@ -4972,9 +4979,9 @@ tr:hover .o-quick-actions {
    ======================================== */
 
 .dashboard-page {
-  padding: 24px;
-  max-width: 1400px;
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 .dashboard-loading {
