@@ -25,6 +25,7 @@ type Product = {
   is_active: boolean;
   can_be_sold: boolean;
   can_be_purchased: boolean;
+  category_id: number | null;
 };
 
 type Category = {
