@@ -186,13 +186,21 @@ export default function InvoicesPage() {
   const [customerSearch, setCustomerSearch] = useState("");
   const [customerDropdownOpen, setCustomerDropdownOpen] = useState(false);
   const [customerCreating, setCustomerCreating] = useState(false);
+  const [quotationSearch, setQuotationSearch] = useState("");
+  const [quotationDropdownOpen, setQuotationDropdownOpen] = useState(false);
   const customerDropdownRef = useRef<HTMLDivElement>(null);
+  const quotationDropdownRef = useRef<HTMLDivElement>(null);
 
   const filteredContacts = contacts.filter((c) =>
     c.name.toLowerCase().includes(customerSearch.toLowerCase())
   );
   const topContacts = contacts.slice(0, 3);
   const displayContacts = customerSearch.trim() ? filteredContacts : topContacts;
+  const filteredQuotations = quotations.filter((q) =>
+    q.reference.toLowerCase().includes(quotationSearch.toLowerCase())
+  );
+  const topQuotations = quotations.slice(0, 3);
+  const displayQuotations = quotationSearch.trim() ? filteredQuotations : topQuotations;
 
   const selectCustomer = (id: number, name: string, mode: "new" | "edit") => {
     if (mode === "new") {
@@ -234,6 +242,9 @@ export default function InvoicesPage() {
     const handler = (e: MouseEvent) => {
       if (customerDropdownRef.current && !customerDropdownRef.current.contains(e.target as Node)) {
         setCustomerDropdownOpen(false);
+      }
+      if (quotationDropdownRef.current && !quotationDropdownRef.current.contains(e.target as Node)) {
+        setQuotationDropdownOpen(false);
       }
     };
     document.addEventListener("mousedown", handler);
@@ -322,6 +333,9 @@ export default function InvoicesPage() {
     const cust = contacts.find((c) => c.id === selectedInvoice.customer_id);
     setCustomerSearch(cust?.name || "");
     setCustomerDropdownOpen(false);
+    const q = quotations.find((q) => q.id === selectedInvoice.quotation_id);
+    setQuotationSearch(q?.reference || "");
+    setQuotationDropdownOpen(false);
     setEditReference(selectedInvoice.reference ?? "");
     setEditCurrency(selectedInvoice.currency || "USD");
     setEditInvoiceDate(toDateInputValue(selectedInvoice.invoice_date));
@@ -387,6 +401,8 @@ export default function InvoicesPage() {
     setNewCustomerId(contacts[0]?.id ?? null);
     setCustomerSearch(contacts[0]?.name ?? "");
     setCustomerDropdownOpen(false);
+    setQuotationSearch("");
+    setQuotationDropdownOpen(false);
     setNewReference("");
     setNewCurrency("USD");
     setNewInvoiceDate("");
@@ -918,12 +934,40 @@ export default function InvoicesPage() {
                   </div>
                   <div className="col-md-6">
                     <label className="form-label fw-semibold">Quotation</label>
-                    <select className="form-select" value={newQuotationId ?? ""} onChange={(e) => setNewQuotationId(e.target.value ? Number(e.target.value) : null)}>
-                      <option value="">— None —</option>
-                      {quotations.map((q) => (
-                        <option key={q.id} value={q.id}>{q.reference}</option>
-                      ))}
-                    </select>
+                    <div className="position-relative" ref={quotationDropdownRef}>
+                      <input
+                        className="form-control input-underline"
+                        placeholder="Search or select quotation…"
+                        value={quotationSearch}
+                        onChange={(e) => {
+                          setQuotationSearch(e.target.value);
+                          setQuotationDropdownOpen(true);
+                          if (!e.target.value) setNewQuotationId(null);
+                        }}
+                        onFocus={() => setQuotationDropdownOpen(true)}
+                      />
+                      {quotationDropdownOpen && (
+                        <ul className="list-group position-absolute w-100 shadow-sm" style={{ zIndex: 1050, maxHeight: 220, overflowY: "auto" }}>
+                          {displayQuotations.map((q) => (
+                            <li
+                              key={q.id}
+                              className={`list-group-item list-group-item-action${newQuotationId === q.id ? " active" : ""}`}
+                              role="button"
+                              onClick={() => {
+                                setNewQuotationId(q.id);
+                                setQuotationSearch(q.reference);
+                                setQuotationDropdownOpen(false);
+                              }}
+                            >
+                              {q.reference}
+                            </li>
+                          ))}
+                          {!displayQuotations.length && !quotationSearch.trim() && (
+                            <li className="list-group-item text-muted">No quotations</li>
+                          )}
+                        </ul>
+                      )}
+                    </div>
                   </div>
                   <div className="col-md-3">
                     <label className="form-label">Reference</label>
@@ -1156,12 +1200,40 @@ export default function InvoicesPage() {
                   <div className="col-md-4">
                     <label className="form-label">Quotation</label>
                     {canEdit ? (
-                      <select className="form-select input-underline" value={editQuotationId ?? ""} onChange={(e) => setEditQuotationId(e.target.value ? Number(e.target.value) : null)}>
-                        <option value="">— None —</option>
-                        {quotations.map((q) => (
-                          <option key={q.id} value={q.id}>{q.reference}</option>
-                        ))}
-                      </select>
+                      <div className="position-relative" ref={quotationDropdownRef}>
+                        <input
+                          className="form-control input-underline"
+                          placeholder="Search or select quotation…"
+                          value={quotationSearch}
+                          onChange={(e) => {
+                            setQuotationSearch(e.target.value);
+                            setQuotationDropdownOpen(true);
+                            if (!e.target.value) setEditQuotationId(null);
+                          }}
+                          onFocus={() => setQuotationDropdownOpen(true)}
+                        />
+                        {quotationDropdownOpen && (
+                          <ul className="list-group position-absolute w-100 shadow-sm" style={{ zIndex: 1050, maxHeight: 220, overflowY: "auto" }}>
+                            {displayQuotations.map((q) => (
+                              <li
+                                key={q.id}
+                                className={`list-group-item list-group-item-action${editQuotationId === q.id ? " active" : ""}`}
+                                role="button"
+                                onClick={() => {
+                                  setEditQuotationId(q.id);
+                                  setQuotationSearch(q.reference);
+                                  setQuotationDropdownOpen(false);
+                                }}
+                              >
+                                {q.reference}
+                              </li>
+                            ))}
+                            {!displayQuotations.length && !quotationSearch.trim() && (
+                              <li className="list-group-item text-muted">No quotations</li>
+                            )}
+                          </ul>
+                        )}
+                      </div>
                     ) : (
                       <div className="form-control-plaintext">{linkedQuotation?.reference || "—"}</div>
                     )}
