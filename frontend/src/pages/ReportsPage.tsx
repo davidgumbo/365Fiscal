@@ -88,7 +88,7 @@ export default function ReportsPage() {
             { month: "Jun", amount: Math.random() * 10000 }
           ]
         });
-      } else {
+      } else if (activeReport === "stock") {
         // Stock report
         const products = await apiFetch<any[]>(`/products?company_id=${companyId}`);
         const quants = await apiFetch<any[]>(`/stock/quants?company_id=${companyId}`).catch(() => []);
