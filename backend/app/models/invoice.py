@@ -63,7 +63,7 @@ class Invoice(Base, TimestampMixin):
     warehouse_id: Mapped[int | None] = mapped_column(ForeignKey("warehouses.id"), nullable=True)
 
     company = relationship("Company", back_populates="invoices")
-    quotation = relationship("Quotation")
+    quotation = relationship("Quotation", foreign_keys=[quotation_id])
     customer = relationship("Contact")
     device = relationship("Device")
     reversed_invoice = relationship("Invoice", remote_side=[id])

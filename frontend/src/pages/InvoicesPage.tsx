@@ -348,64 +348,81 @@ export default function InvoicesPage() {
 
   const createInvoice = async () => {
     if (!companyId) return;
-    const created = await apiFetch<Invoice>("/invoices", {
-      method: "POST",
-      body: JSON.stringify({
-        company_id: companyId,
-        quotation_id: newQuotationId,
-        customer_id: newCustomerId,
-        reference: newReference || null,
-        currency: newCurrency,
-        invoice_date: fromDateInputValue(newInvoiceDate),
-        due_date: fromDateInputValue(newDueDate),
-        payment_terms: newPaymentTerms,
-        notes: newNotes,
-        device_id: newDeviceId,
-        invoice_type: "invoice",
-        lines: editLines.map((line) => ({
-          product_id: line.product_id,
-          description: line.description || "",
-          quantity: line.quantity || 1,
-          uom: line.uom || "PCS",
-          unit_price: line.unit_price || 0,
-          discount: line.discount || 0,
-          vat_rate: line.vat_rate || 0
-        }))
-      })
-    });
-    setSelectedInvoiceId(created.id);
-    setNewMode(false);
-    setIsEditing(false);
-    await loadAll();
+    setError(null);
+    setLoading(true);
+    try {
+      const created = await apiFetch<Invoice>("/invoices", {
+        method: "POST",
+        body: JSON.stringify({
+          company_id: companyId,
+          quotation_id: newQuotationId,
+          customer_id: newCustomerId,
+          // Let the backend auto-generate the reference
+          reference: null,
+          currency: newCurrency,
+          invoice_date: fromDateInputValue(newInvoiceDate),
+          due_date: fromDateInputValue(newDueDate),
+          payment_terms: newPaymentTerms,
+          notes: newNotes,
+          device_id: newDeviceId,
+          invoice_type: "invoice",
+          lines: editLines.map((line) => ({
+            product_id: line.product_id,
+            description: line.description || "",
+            quantity: line.quantity || 1,
+            uom: line.uom || "PCS",
+            unit_price: line.unit_price || 0,
+            discount: line.discount || 0,
+            vat_rate: line.vat_rate || 0
+          }))
+        })
+      });
+      setSelectedInvoiceId(created.id);
+      setNewMode(false);
+      setIsEditing(false);
+      await loadAll();
+    } catch (err: any) {
+      setError(err.message || "Failed to create invoice");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const saveInvoice = async () => {
     if (!selectedInvoiceId) return;
-    await apiFetch<Invoice>(`/invoices/${selectedInvoiceId}`, {
-      method: "PATCH",
-      body: JSON.stringify({
-        quotation_id: editQuotationId,
-        customer_id: editCustomerId,
-        reference: editReference,
-        currency: editCurrency,
-        invoice_date: fromDateInputValue(editInvoiceDate),
-        due_date: fromDateInputValue(editDueDate),
-        payment_terms: editPaymentTerms,
-        notes: editNotes,
-        device_id: editDeviceId,
-        lines: editLines.map((line) => ({
-          product_id: line.product_id,
-          description: line.description || "",
-          quantity: line.quantity || 1,
-          uom: line.uom || "",
-          unit_price: line.unit_price || 0,
-          discount: line.discount || 0,
-          vat_rate: line.vat_rate || 0
-        }))
-      })
-    });
-    setIsEditing(false);
-    await loadAll();
+    setError(null);
+    setLoading(true);
+    try {
+      await apiFetch<Invoice>(`/invoices/${selectedInvoiceId}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          quotation_id: editQuotationId,
+          customer_id: editCustomerId,
+          reference: editReference,
+          currency: editCurrency,
+          invoice_date: fromDateInputValue(editInvoiceDate),
+          due_date: fromDateInputValue(editDueDate),
+          payment_terms: editPaymentTerms,
+          notes: editNotes,
+          device_id: editDeviceId,
+          lines: editLines.map((line) => ({
+            product_id: line.product_id,
+            description: line.description || "",
+            quantity: line.quantity || 1,
+            uom: line.uom || "",
+            unit_price: line.unit_price || 0,
+            discount: line.discount || 0,
+            vat_rate: line.vat_rate || 0
+          }))
+        })
+      });
+      setIsEditing(false);
+      await loadAll();
+    } catch (err: any) {
+      setError(err.message || "Failed to save invoice");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const postInvoice = async () => {
@@ -626,75 +643,66 @@ export default function InvoicesPage() {
     win.print();
   };
 
+  // Determine which "screen" to show: list, new-form, or detail
+  const showForm = newMode || selectedInvoice;
+
+  const goBackToList = () => {
+    setNewMode(false);
+    setIsEditing(false);
+    setSelectedInvoiceId(null);
+  };
+
   return (
     <div className="container-fluid py-3">
-      {error && <div className="alert alert-danger">{error}</div>}
+      {error && (
+        <div className="alert alert-danger alert-dismissible fade show" role="alert">
+          {error}
+          <button type="button" className="btn-close" onClick={() => setError(null)} />
+        </div>
+      )}
 
-      <div className="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+      {/* ───────────── LIST VIEW ───────────── */}
+      {!showForm && (
         <div>
-          <h3 className="fw-bold mb-1">Invoices</h3>
-          <div className="text-muted">Professional invoicing, payments, taxes, and fiscalization.</div>
-        </div>
-        <div className="d-flex flex-wrap gap-2">
-          <span className={`badge ${statusLabel === "paid" ? "bg-success" : statusLabel === "posted" ? "bg-info" : statusLabel === "fiscalized" ? "bg-primary" : "bg-secondary"}`}>{statusLabel}</span>
-          {isEditing ? (
-            <>
-              <button className="btn btn-primary" onClick={newMode ? createInvoice : saveInvoice}>Save</button>
-              <button className="btn btn-outline-secondary" onClick={() => setIsEditing(false)}>Discard</button>
-            </>
-          ) : (
-            <button className="btn btn-primary" onClick={() => setIsEditing(true)} disabled={!selectedInvoice}>Edit</button>
-          )}
-          <button className="btn btn-outline-secondary" onClick={postInvoice} disabled={statusLabel !== "draft" || !selectedInvoice}>Post</button>
-          <button className="btn btn-outline-primary" onClick={fiscalizeInvoice} disabled={statusLabel !== "posted" || !selectedInvoice || !(editDeviceId ?? selectedInvoice?.device_id)}>
-            Fiscalize
-          </button>
-          <button className="btn btn-outline-secondary" onClick={resetInvoice} disabled={!selectedInvoice || (statusLabel !== "posted" && statusLabel !== "fiscalized")}>Reset</button>
-          <button className="btn btn-outline-dark" onClick={printInvoice} disabled={!selectedInvoice}>Print PDF</button>
-          <button className="btn btn-outline-success" onClick={() => setPaymentOpen(true)} disabled={!selectedInvoice || statusLabel === "draft"}>Register Payment</button>
-          <button className="btn btn-outline-warning" onClick={createCreditNote} disabled={!selectedInvoice || statusLabel === "draft" || isCreditNote}>Create Credit Note</button>
-        </div>
-      </div>
+          <div className="d-flex flex-wrap justify-content-between align-items-center mb-3">
+            <div>
+              <h3 className="fw-bold mb-0">Invoices</h3>
+              <small className="text-muted">Professional invoicing, payments, taxes, and fiscalization.</small>
+            </div>
+            <button className="btn btn-primary" onClick={beginNew}>+ New Invoice</button>
+          </div>
 
-      <div className="row g-3">
-        <div className="col-12 col-xxl-4">
-          <div className="card shadow-sm h-100">
-            <div className="card-body">
-              <div className="d-flex justify-content-between align-items-center mb-3">
-                <h5 className="card-title mb-0">Invoice List</h5>
-                <button className="btn btn-sm btn-primary" onClick={beginNew}>+ New</button>
+          <div className="card shadow-sm">
+            <div className="card-body p-0">
+              <div className="d-flex flex-wrap gap-2 p-3 border-bottom bg-light">
+                <input
+                  className="form-control"
+                  style={{ maxWidth: 280 }}
+                  placeholder="Search by reference or status…"
+                  value={listSearch}
+                  onChange={(e) => setListSearch(e.target.value)}
+                />
+                <select className="form-select" style={{ maxWidth: 160 }} value={listStatus} onChange={(e) => setListStatus(e.target.value)}>
+                  <option value="">All Status</option>
+                  <option value="draft">Draft</option>
+                  <option value="posted">Posted</option>
+                  <option value="paid">Paid</option>
+                  <option value="fiscalized">Fiscalized</option>
+                </select>
+                <select className="form-select" style={{ maxWidth: 160 }} value={listType} onChange={(e) => setListType(e.target.value)}>
+                  <option value="">All Types</option>
+                  <option value="invoice">Invoice</option>
+                  <option value="credit_note">Credit Note</option>
+                </select>
               </div>
-              <div className="row g-2 mb-3">
-                <div className="col-12">
-                  <input
-                    className="form-control"
-                    placeholder="Search by reference or status"
-                    value={listSearch}
-                    onChange={(e) => setListSearch(e.target.value)}
-                  />
-                </div>
-                <div className="col-6">
-                  <select className="form-select" value={listStatus} onChange={(e) => setListStatus(e.target.value)}>
-                    <option value="">All Status</option>
-                    <option value="draft">Draft</option>
-                    <option value="posted">Posted</option>
-                    <option value="paid">Paid</option>
-                    <option value="fiscalized">Fiscalized</option>
-                  </select>
-                </div>
-                <div className="col-6">
-                  <select className="form-select" value={listType} onChange={(e) => setListType(e.target.value)}>
-                    <option value="">All Types</option>
-                    <option value="invoice">Invoice</option>
-                    <option value="credit_note">Credit Note</option>
-                  </select>
-                </div>
-              </div>
-              <div className="table-responsive" style={{ maxHeight: 520 }}>
-                <table className="table table-hover align-middle">
+
+              <div className="table-responsive">
+                <table className="table table-hover align-middle mb-0">
                   <thead className="table-light">
                     <tr>
                       <th>Reference</th>
+                      <th>Customer</th>
+                      <th>Date</th>
                       <th>Status</th>
                       <th>Payment</th>
                       <th className="text-end">Total</th>
@@ -702,150 +710,427 @@ export default function InvoicesPage() {
                   </thead>
                   <tbody>
                     {loading && (
-                      <tr><td colSpan={4} className="text-center py-4">Loading invoices...</td></tr>
+                      <tr><td colSpan={6} className="text-center py-5 text-muted">Loading invoices…</td></tr>
                     )}
                     {!loading && invoices.length === 0 && (
-                      <tr><td colSpan={4} className="text-center py-4">No invoices yet</td></tr>
+                      <tr><td colSpan={6} className="text-center py-5 text-muted">No invoices yet. Click <strong>+ New Invoice</strong> to create one.</td></tr>
                     )}
-                    {invoices.map((inv) => (
-                      <tr
-                        key={inv.id}
-                        role="button"
-                        className={selectedInvoiceId === inv.id ? "table-primary" : ""}
-                        onClick={() => {
-                          setSelectedInvoiceId(inv.id);
-                          setNewMode(false);
-                        }}
-                      >
-                        <td>
-                          <div className="fw-semibold">{inv.reference}</div>
-                          <div className="text-muted small">{inv.invoice_type === "credit_note" ? "Credit Note" : "Invoice"}</div>
-                        </td>
-                        <td><span className={`badge ${inv.status === "paid" ? "bg-success" : inv.status === "posted" ? "bg-info" : inv.status === "fiscalized" ? "bg-primary" : "bg-secondary"}`}>{inv.status}</span></td>
-                        <td><span className={`badge bg-${getPaymentStatus(inv.amount_paid, inv.amount_due) === "Paid" ? "success" : getPaymentStatus(inv.amount_paid, inv.amount_due) === "Partial" ? "warning" : "secondary"}`}>{getPaymentStatus(inv.amount_paid, inv.amount_due)}</span></td>
-                        <td className="text-end">{formatCurrency(inv.total_amount || 0, inv.currency || "USD")}</td>
-                      </tr>
-                    ))}
+                    {invoices.map((inv) => {
+                      const cust = contactById.get(inv.customer_id ?? 0);
+                      return (
+                        <tr
+                          key={inv.id}
+                          role="button"
+                          onClick={() => {
+                            setSelectedInvoiceId(inv.id);
+                            setNewMode(false);
+                            setIsEditing(false);
+                          }}
+                        >
+                          <td>
+                            <div className="fw-semibold">{inv.reference}</div>
+                            <small className="text-muted">{inv.invoice_type === "credit_note" ? "Credit Note" : "Invoice"}</small>
+                          </td>
+                          <td>{cust?.name || "—"}</td>
+                          <td className="text-muted">{inv.invoice_date ? new Date(inv.invoice_date).toLocaleDateString() : "—"}</td>
+                          <td>
+                            <span className={`badge ${inv.status === "paid" ? "bg-success" : inv.status === "posted" ? "bg-info" : inv.status === "fiscalized" ? "bg-primary" : "bg-secondary"}`}>
+                              {inv.status}
+                            </span>
+                          </td>
+                          <td>
+                            <span className={`badge bg-${getPaymentStatus(inv.amount_paid, inv.amount_due) === "Paid" ? "success" : getPaymentStatus(inv.amount_paid, inv.amount_due) === "Partial" ? "warning" : "secondary"}`}>
+                              {getPaymentStatus(inv.amount_paid, inv.amount_due)}
+                            </span>
+                          </td>
+                          <td className="text-end fw-semibold">{formatCurrency(inv.total_amount || 0, inv.currency || "USD")}</td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
             </div>
           </div>
         </div>
+      )}
 
-        <div className="col-12 col-xxl-8">
-          <div className="card shadow-sm">
-            <div className="card-body">
-              {!selectedInvoice && !newMode && (
-                <div className="text-center py-5">
-                  <h5 className="fw-semibold">No invoice selected</h5>
-                  <p className="text-muted">Pick an invoice from the list or create a new one.</p>
-                </div>
+      {/* ───────────── FORM VIEW (New / Detail) ───────────── */}
+      {showForm && (
+        <div>
+          {/* Top toolbar */}
+          <div className="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+            <div className="d-flex align-items-center gap-2">
+              <button className="btn btn-sm btn-light border" onClick={goBackToList}>← Back</button>
+              <h4 className="fw-bold mb-0">
+                {newMode ? "New Invoice" : selectedInvoice?.reference || "Invoice"}
+              </h4>
+              {!newMode && selectedInvoice && (
+                <span className={`badge ms-2 ${statusLabel === "paid" ? "bg-success" : statusLabel === "posted" ? "bg-info" : statusLabel === "fiscalized" ? "bg-primary" : "bg-secondary"}`}>
+                  {statusLabel}
+                </span>
               )}
+            </div>
+            <div className="d-flex flex-wrap gap-1">
+              {newMode ? (
+                <>
+                  <button className="btn btn-sm btn-primary" onClick={createInvoice} disabled={loading}>
+                    {loading ? "Saving…" : "Create Invoice"}
+                  </button>
+                  <button className="btn btn-sm btn-light border" onClick={goBackToList}>Discard</button>
+                </>
+              ) : isEditing ? (
+                <>
+                  <button className="btn btn-sm btn-primary" onClick={saveInvoice} disabled={loading}>
+                    {loading ? "Saving…" : "Save"}
+                  </button>
+                  <button className="btn btn-sm btn-light border" onClick={() => setIsEditing(false)}>Discard</button>
+                </>
+              ) : (
+                <>
+                  {statusLabel === "draft" && (
+                    <button className="btn btn-sm btn-light border" onClick={() => setIsEditing(true)}>Edit</button>
+                  )}
+                  <button className="btn btn-sm btn-light border" onClick={postInvoice} disabled={statusLabel !== "draft"}>Post</button>
+                  <button
+                    className="btn btn-sm btn-light border"
+                    onClick={fiscalizeInvoice}
+                    disabled={statusLabel !== "posted" || !(editDeviceId ?? selectedInvoice?.device_id)}
+                  >
+                    Fiscalize
+                  </button>
+                  <button className="btn btn-sm btn-light border" onClick={resetInvoice} disabled={statusLabel !== "posted" && statusLabel !== "fiscalized"}>Reset</button>
+                  <button className="btn btn-sm btn-light border" onClick={printInvoice}>Print PDF</button>
+                  <button className="btn btn-sm btn-light border" onClick={() => setPaymentOpen(true)} disabled={statusLabel === "draft"}>Register Payment</button>
+                  <button className="btn btn-sm btn-light border" onClick={createCreditNote} disabled={statusLabel === "draft" || isCreditNote}>Credit Note</button>
+                </>
+              )}
+            </div>
+          </div>
 
-              {newMode && (
-                <div>
-                  <h5 className="fw-semibold mb-3">New Invoice</h5>
-                  <div className="row g-3">
-                    <div className="col-md-6">
-                      <label className="form-label">Customer</label>
-                      <select className="form-select" value={newCustomerId ?? ""} onChange={(e) => setNewCustomerId(Number(e.target.value))}>
+          {/* ── New Invoice Form ── */}
+          {newMode && (
+            <div className="card shadow-sm">
+              <div className="card-body">
+                <div className="row g-3">
+                  <div className="col-md-6">
+                    <label className="form-label fw-semibold">Customer <span className="text-danger">*</span></label>
+                    <select className="form-select" value={newCustomerId ?? ""} onChange={(e) => setNewCustomerId(e.target.value ? Number(e.target.value) : null)}>
+                      <option value="">Select customer</option>
+                      {contacts.map((c) => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label fw-semibold">Quotation</label>
+                    <select className="form-select" value={newQuotationId ?? ""} onChange={(e) => setNewQuotationId(e.target.value ? Number(e.target.value) : null)}>
+                      <option value="">— None —</option>
+                      {quotations.map((q) => (
+                        <option key={q.id} value={q.id}>{q.reference}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="col-md-3">
+                    <label className="form-label">Reference</label>
+                    <input className="form-control bg-light" value="Auto-generated" readOnly />
+                  </div>
+                  <div className="col-md-3">
+                    <label className="form-label">Currency</label>
+                    <select className="form-select" value={newCurrency} onChange={(e) => setNewCurrency(e.target.value)}>
+                      {currencyOptions.map((cur) => (
+                        <option key={cur} value={cur}>{cur}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="col-md-3">
+                    <label className="form-label">Invoice Date</label>
+                    <input className="form-control" type="date" value={newInvoiceDate} onChange={(e) => setNewInvoiceDate(e.target.value)} />
+                  </div>
+                  <div className="col-md-3">
+                    <label className="form-label">Due Date</label>
+                    <input className="form-control" type="date" value={newDueDate} onChange={(e) => setNewDueDate(e.target.value)} />
+                  </div>
+                  <div className="col-md-4">
+                    <label className="form-label">Fiscal Device</label>
+                    <select className="form-select" value={newDeviceId ?? ""} onChange={(e) => setNewDeviceId(e.target.value ? Number(e.target.value) : null)}>
+                      <option value="">— None —</option>
+                      {devices.map((d) => (
+                        <option key={d.id} value={d.id}>{d.device_id || d.serial_number || `Device ${d.id}`}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="col-md-4">
+                    <label className="form-label">Payment Terms</label>
+                    <input className="form-control" value={newPaymentTerms} onChange={(e) => setNewPaymentTerms(e.target.value)} placeholder="e.g. Net 30" />
+                  </div>
+                  <div className="col-md-4">
+                    <label className="form-label">Notes</label>
+                    <textarea className="form-control" rows={1} value={newNotes} onChange={(e) => setNewNotes(e.target.value)} />
+                  </div>
+                </div>
+
+                <hr className="my-4" />
+                <div className="d-flex flex-wrap justify-content-between align-items-center mb-2">
+                  <h6 className="fw-semibold mb-0">Invoice Lines</h6>
+                  <div className="d-flex gap-2">
+                    <button className="btn btn-sm btn-light border" onClick={addLine}>+ Add Line</button>
+                    <button className="btn btn-sm btn-light border" onClick={() => setCreateProductOpen(true)}>+ New Product</button>
+                  </div>
+                </div>
+                <div className="table-responsive">
+                  <table className="table table-bordered align-middle mb-0">
+                    <thead className="table-light">
+                      <tr>
+                        <th style={{ minWidth: 160 }}>Product</th>
+                        <th>Description</th>
+                        <th className="text-end" style={{ width: 80 }}>Qty</th>
+                        <th style={{ width: 80 }}>UoM</th>
+                        <th className="text-end" style={{ width: 100 }}>Price</th>
+                        <th className="text-end" style={{ width: 80 }}>Disc %</th>
+                        <th className="text-end" style={{ width: 80 }}>Tax %</th>
+                        <th className="text-end" style={{ width: 80 }}>On Hand</th>
+                        <th className="text-end" style={{ width: 80 }}>Avail</th>
+                        <th className="text-end" style={{ width: 110 }}>Amount</th>
+                        <th style={{ width: 40 }}></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {editLines.map((line, index) => {
+                        const product = line.product_id ? productById.get(line.product_id) : null;
+                        const lineTotal = (line.quantity || 0) * (line.unit_price || 0) * (1 - (line.discount || 0) / 100) * (1 + (line.vat_rate || 0) / 100);
+                        const availableQty = product?.quantity_available ?? 0;
+                        const onHandQty = product?.quantity_on_hand ?? 0;
+                        const exceedsStock = (line.quantity || 0) > availableQty;
+                        return (
+                          <tr key={`new-${index}`}>
+                            <td>
+                              <select
+                                className="form-select form-select-sm"
+                                value={line.product_id ?? ""}
+                                onChange={(e) => {
+                                  const prod = products.find((p) => p.id === Number(e.target.value));
+                                  updateLine(index, {
+                                    product_id: e.target.value ? Number(e.target.value) : null,
+                                    description: prod?.name ?? "",
+                                    unit_price: prod?.sale_price ?? 0,
+                                    vat_rate: prod?.tax_rate ?? 0,
+                                    uom: prod?.uom || "PCS"
+                                  });
+                                }}
+                              >
+                                <option value="">Select product</option>
+                                {products.map((p) => (
+                                  <option key={p.id} value={p.id}>{p.name}</option>
+                                ))}
+                              </select>
+                            </td>
+                            <td><input className="form-control form-control-sm" value={line.description || ""} onChange={(e) => updateLine(index, { description: e.target.value })} /></td>
+                            <td><input className="form-control form-control-sm text-end" type="number" value={line.quantity || 0} onChange={(e) => updateLine(index, { quantity: Number(e.target.value) })} /></td>
+                            <td><input className="form-control form-control-sm bg-light" value={product?.uom || line.uom || ""} readOnly /></td>
+                            <td><input className="form-control form-control-sm text-end" type="number" value={line.unit_price || 0} onChange={(e) => updateLine(index, { unit_price: Number(e.target.value) })} /></td>
+                            <td><input className="form-control form-control-sm text-end" type="number" value={line.discount || 0} onChange={(e) => updateLine(index, { discount: Number(e.target.value) })} /></td>
+                            <td><input className="form-control form-control-sm text-end" type="number" value={line.vat_rate || 0} onChange={(e) => updateLine(index, { vat_rate: Number(e.target.value) })} /></td>
+                            <td className="text-end text-muted">{onHandQty}</td>
+                            <td className={`text-end ${exceedsStock ? "text-danger fw-semibold" : "text-muted"}`}>{availableQty}</td>
+                            <td className="text-end fw-semibold">{formatCurrency(lineTotal, newCurrency)}</td>
+                            <td className="text-center">
+                              <button className="btn btn-sm btn-light border" onClick={() => removeLine(index)} disabled={editLines.length === 1}>✕</button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                      {!editLines.length && (
+                        <tr><td colSpan={11} className="text-center py-4 text-muted">Click <strong>+ Add Line</strong> to add products</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Existing Invoice Detail ── */}
+          {selectedInvoice && !newMode && (
+            <div className="card shadow-sm">
+              <div className="card-body">
+                {/* Summary cards */}
+                <div className="row g-3 mb-4">
+                  <div className="col-md-3">
+                    <div className="card border-0 bg-light h-100">
+                      <div className="card-body py-2">
+                        <small className="text-muted">Total Amount</small>
+                        <div className="fs-5 fw-bold">{formatCurrency(selectedInvoice.total_amount || 0, invoiceCurrency)}</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="col-md-3">
+                    <div className="card border-0 bg-light h-100">
+                      <div className="card-body py-2">
+                        <small className="text-muted">Amount Paid</small>
+                        <div className="fs-5 fw-bold">{formatCurrency(selectedInvoice.amount_paid || 0, invoiceCurrency)}</div>
+                        <span className={`badge bg-${paymentBadge}`}>{paymentStatus}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="col-md-3">
+                    <div className="card border-0 bg-light h-100">
+                      <div className="card-body py-2">
+                        <small className="text-muted">Amount Due</small>
+                        <div className="fs-5 fw-bold">{formatCurrency(selectedInvoice.amount_due || 0, invoiceCurrency)}</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="col-md-3">
+                    <div className="card border-0 bg-light h-100">
+                      <div className="card-body py-2">
+                        <small className="text-muted">Fiscalization</small>
+                        <div className="fw-bold text-uppercase">{selectedInvoice.zimra_status || "not_submitted"}</div>
+                        {selectedInvoice.zimra_verification_code && (
+                          <small className="text-muted">Code: {selectedInvoice.zimra_verification_code}</small>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Fields */}
+                <div className="row g-3 mb-4">
+                  <div className="col-md-6">
+                    <label className="form-label fw-semibold">Customer</label>
+                    {canEdit ? (
+                      <select className="form-select" value={editCustomerId ?? ""} onChange={(e) => setEditCustomerId(e.target.value ? Number(e.target.value) : null)}>
                         <option value="">Select customer</option>
                         {contacts.map((c) => (
                           <option key={c.id} value={c.id}>{c.name}</option>
                         ))}
                       </select>
-                    </div>
-                    <div className="col-md-6">
-                      <label className="form-label">Quotation</label>
-                      <select className="form-select" value={newQuotationId ?? ""} onChange={(e) => setNewQuotationId(Number(e.target.value))}>
-                        <option value="">Select quotation</option>
+                    ) : (
+                      <div className="form-control-plaintext">{customer?.name || "—"}</div>
+                    )}
+                  </div>
+                  <div className="col-md-3">
+                    <label className="form-label fw-semibold">Invoice Date</label>
+                    {canEdit ? (
+                      <input className="form-control" type="date" value={editInvoiceDate} onChange={(e) => setEditInvoiceDate(e.target.value)} />
+                    ) : (
+                      <div className="form-control-plaintext">{invoiceDateLabel}</div>
+                    )}
+                  </div>
+                  <div className="col-md-3">
+                    <label className="form-label fw-semibold">Due Date</label>
+                    {canEdit ? (
+                      <input className="form-control" type="date" value={editDueDate} onChange={(e) => setEditDueDate(e.target.value)} />
+                    ) : (
+                      <div className="form-control-plaintext">{selectedInvoice?.due_date ? new Date(selectedInvoice.due_date).toLocaleDateString() : "—"}</div>
+                    )}
+                  </div>
+                  <div className="col-md-4">
+                    <label className="form-label">Quotation</label>
+                    {canEdit ? (
+                      <select className="form-select" value={editQuotationId ?? ""} onChange={(e) => setEditQuotationId(e.target.value ? Number(e.target.value) : null)}>
+                        <option value="">— None —</option>
                         {quotations.map((q) => (
                           <option key={q.id} value={q.id}>{q.reference}</option>
                         ))}
                       </select>
-                    </div>
-                    <div className="col-md-4">
-                      <label className="form-label">Reference</label>
-                      <input className="form-control" value={newReference} onChange={(e) => setNewReference(e.target.value)} placeholder="INV-2026-0001" />
-                    </div>
-                    <div className="col-md-4">
-                      <label className="form-label">Currency</label>
-                      <select className="form-select" value={newCurrency} onChange={(e) => setNewCurrency(e.target.value)}>
+                    ) : (
+                      <div className="form-control-plaintext">{linkedQuotation?.reference || "—"}</div>
+                    )}
+                  </div>
+                  <div className="col-md-4">
+                    <label className="form-label">Reference</label>
+                    <div className="form-control-plaintext fw-semibold">{selectedInvoice?.reference || "—"}</div>
+                  </div>
+                  <div className="col-md-4">
+                    <label className="form-label">Currency</label>
+                    {canEdit ? (
+                      <select className="form-select" value={editCurrency} onChange={(e) => setEditCurrency(e.target.value)}>
                         {currencyOptions.map((cur) => (
                           <option key={cur} value={cur}>{cur}</option>
                         ))}
                       </select>
-                    </div>
-                    <div className="col-md-4">
-                      <label className="form-label">Fiscal Device</label>
-                      <select className="form-select" value={newDeviceId ?? ""} onChange={(e) => setNewDeviceId(Number(e.target.value))}>
-                        <option value="">Select device</option>
+                    ) : (
+                      <div className="form-control-plaintext">{invoiceCurrency}</div>
+                    )}
+                  </div>
+                  <div className="col-md-4">
+                    <label className="form-label">Fiscal Device</label>
+                    {canEdit ? (
+                      <select className="form-select" value={editDeviceId ?? ""} onChange={(e) => setEditDeviceId(e.target.value ? Number(e.target.value) : null)}>
+                        <option value="">— None —</option>
                         {devices.map((d) => (
                           <option key={d.id} value={d.id}>{d.device_id || d.serial_number || `Device ${d.id}`}</option>
                         ))}
                       </select>
-                    </div>
-                    <div className="col-md-4">
-                      <label className="form-label">Invoice Date</label>
-                      <input className="form-control" type="date" value={newInvoiceDate} onChange={(e) => setNewInvoiceDate(e.target.value)} />
-                    </div>
-                    <div className="col-md-4">
-                      <label className="form-label">Due Date</label>
-                      <input className="form-control" type="date" value={newDueDate} onChange={(e) => setNewDueDate(e.target.value)} />
-                    </div>
-                    <div className="col-md-8">
-                      <label className="form-label">Payment Terms</label>
-                      <input className="form-control" value={newPaymentTerms} onChange={(e) => setNewPaymentTerms(e.target.value)} placeholder="Net 15" />
-                    </div>
-                    <div className="col-12">
-                      <label className="form-label">Notes</label>
-                      <textarea className="form-control" rows={3} value={newNotes} onChange={(e) => setNewNotes(e.target.value)} />
-                    </div>
+                    ) : (
+                      <div className="form-control-plaintext">{devices.find((d) => d.id === selectedInvoice?.device_id)?.device_id || "—"}</div>
+                    )}
                   </div>
-
-                  <div className="d-flex flex-wrap justify-content-between align-items-center mt-4 mb-2">
-                    <h6 className="fw-semibold mb-0">Invoice Lines</h6>
-                    <div className="d-flex gap-2">
-                      <button className="btn btn-outline-secondary" onClick={addLine}>+ Add Line</button>
-                      <button className="btn btn-outline-primary" onClick={() => setCreateProductOpen(true)}>+ New Product</button>
-                    </div>
+                  <div className="col-md-4">
+                    <label className="form-label">Payment Terms</label>
+                    {canEdit ? (
+                      <input className="form-control" value={editPaymentTerms} onChange={(e) => setEditPaymentTerms(e.target.value)} />
+                    ) : (
+                      <div className="form-control-plaintext">{selectedInvoice?.payment_terms || "—"}</div>
+                    )}
                   </div>
+                  <div className="col-md-4">
+                    <label className="form-label">Payment Reference</label>
+                    <div className="form-control-plaintext">{selectedInvoice?.payment_reference || "—"}</div>
+                  </div>
+                  <div className="col-12">
+                    <label className="form-label">Notes</label>
+                    {canEdit ? (
+                      <textarea className="form-control" rows={2} value={editNotes} onChange={(e) => setEditNotes(e.target.value)} />
+                    ) : (
+                      <div className="form-control-plaintext">{selectedInvoice?.notes || "—"}</div>
+                    )}
+                  </div>
+                </div>
 
-                  <div className="table-responsive">
-                    <table className="table table-bordered align-middle">
-                      <thead className="table-light">
-                        <tr>
-                          <th>Product</th>
-                          <th>Description</th>
-                          <th className="text-end">Qty</th>
-                          <th>UoM</th>
-                          <th className="text-end">Price</th>
-                          <th className="text-end">Disc %</th>
-                          <th className="text-end">Tax %</th>
-                          <th className="text-end">On Hand</th>
-                          <th className="text-end">Available</th>
-                          <th className="text-end">Amount</th>
-                          <th></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {editLines.map((line, index) => {
-                          const product = line.product_id ? productById.get(line.product_id) : null;
-                          const lineTotal = (line.quantity || 0) * (line.unit_price || 0) * (1 - (line.discount || 0) / 100) * (1 + (line.vat_rate || 0) / 100);
-                          const availableQty = product?.quantity_available ?? 0;
-                          const onHandQty = product?.quantity_on_hand ?? 0;
-                          const exceedsStock = (line.quantity || 0) > availableQty;
-                          return (
-                            <tr key={`new-${index}`}>
-                              <td>
+                {/* Lines table */}
+                {canEdit && (
+                  <div className="d-flex gap-2 mb-2">
+                    <button className="btn btn-sm btn-light border" onClick={addLine}>+ Add Line</button>
+                    <button className="btn btn-sm btn-light border" onClick={() => setCreateProductOpen(true)}>+ New Product</button>
+                  </div>
+                )}
+                <div className="table-responsive">
+                  <table className="table table-bordered align-middle mb-0">
+                    <thead className="table-light">
+                      <tr>
+                        <th>Product</th>
+                        <th>Description</th>
+                        <th className="text-end">Qty</th>
+                        <th>UoM</th>
+                        <th className="text-end">Price</th>
+                        <th className="text-end">Disc %</th>
+                        <th className="text-end">Tax %</th>
+                        <th className="text-end">On Hand</th>
+                        <th className="text-end">Avail</th>
+                        <th className="text-end">Amount</th>
+                        {canEdit && <th></th>}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {displayLines.map((line, index) => {
+                        const product = line.product_id ? productById.get(line.product_id) : null;
+                        const lineTotal = (line.quantity || 0) * (line.unit_price || 0) * (1 - (line.discount || 0) / 100) * (1 + (line.vat_rate || 0) / 100);
+                        const availableQty = product?.quantity_available ?? 0;
+                        const onHandQty = product?.quantity_on_hand ?? 0;
+                        const exceedsStock = (line.quantity || 0) > availableQty;
+                        return (
+                          <tr key={line.id || `edit-${index}`}>
+                            <td>
+                              {canEdit ? (
                                 <select
-                                  className="form-select"
+                                  className="form-select form-select-sm"
                                   value={line.product_id ?? ""}
                                   onChange={(e) => {
                                     const prod = products.find((p) => p.id === Number(e.target.value));
                                     updateLine(index, {
-                                      product_id: Number(e.target.value),
+                                      product_id: e.target.value ? Number(e.target.value) : null,
                                       description: prod?.name ?? "",
                                       unit_price: prod?.sale_price ?? 0,
                                       vat_rate: prod?.tax_rate ?? 0,
@@ -855,355 +1140,70 @@ export default function InvoicesPage() {
                                 >
                                   <option value="">Select</option>
                                   {products.map((p) => (
-                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                    <option key={p.id} value={p.id}>{p.name} (avail: {p.quantity_available ?? 0})</option>
                                   ))}
                                 </select>
-                              </td>
-                              <td>
-                                <input className="form-control" value={line.description || ""} onChange={(e) => updateLine(index, { description: e.target.value })} />
-                              </td>
-                              <td className="text-end">
-                                <input className="form-control text-end" type="number" value={line.quantity || 0} onChange={(e) => updateLine(index, { quantity: Number(e.target.value) })} />
-                              </td>
-                              <td>
-                                <input className="form-control" value={line.uom || ""} onChange={(e) => updateLine(index, { uom: e.target.value })} />
-                              </td>
-                              <td className="text-end">
-                                <input className="form-control text-end" type="number" value={line.unit_price || 0} onChange={(e) => updateLine(index, { unit_price: Number(e.target.value) })} />
-                              </td>
-                              <td className="text-end">
-                                <input className="form-control text-end" type="number" value={line.discount || 0} onChange={(e) => updateLine(index, { discount: Number(e.target.value) })} />
-                              </td>
-                              <td className="text-end">
-                                <input className="form-control text-end" type="number" value={line.vat_rate || 0} onChange={(e) => updateLine(index, { vat_rate: Number(e.target.value) })} />
-                              </td>
-                              <td className="text-end">{onHandQty}</td>
-                              <td className={`text-end ${exceedsStock ? "text-danger" : ""}`}>{availableQty}</td>
-                              <td className="text-end">{formatCurrency(lineTotal, newCurrency)}</td>
-                              <td className="text-center">
-                                <button className="btn btn-sm btn-outline-danger" onClick={() => removeLine(index)} disabled={editLines.length === 1}>✕</button>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                        {!editLines.length && (
-                          <tr>
-                            <td colSpan={11} className="text-center py-4">Add a line to start</td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <div className="mt-4 text-end">
-                    <span className="text-muted me-3">Total: {amountLabel}</span>
-                    <button className="btn btn-primary" onClick={createInvoice}>Create Invoice</button>
-                  </div>
-                </div>
-              )}
-
-              {selectedInvoice && !newMode && (
-                <div>
-                  <div className="row g-3 mb-4">
-                    <div className="col-md-4">
-                      <div className="card border-0 bg-light h-100">
-                        <div className="card-body">
-                          <div className="text-muted small">Total Amount</div>
-                          <div className="fs-5 fw-bold">{formatCurrency(selectedInvoice.total_amount || 0, invoiceCurrency)}</div>
-                          <div className="text-muted small">{selectedInvoice.invoice_type === "credit_note" ? "Credit Note" : "Invoice"}</div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="col-md-4">
-                      <div className="card border-0 bg-light h-100">
-                        <div className="card-body">
-                          <div className="text-muted small">Amount Paid</div>
-                          <div className="fs-5 fw-bold">{formatCurrency(selectedInvoice.amount_paid || 0, invoiceCurrency)}</div>
-                          <div className="text-muted small">Status: <span className={`badge bg-${paymentBadge}`}>{paymentStatus}</span></div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="col-md-4">
-                      <div className="card border-0 bg-light h-100">
-                        <div className="card-body">
-                          <div className="text-muted small">Amount Due</div>
-                          <div className="fs-5 fw-bold">{formatCurrency(selectedInvoice.amount_due || 0, invoiceCurrency)}</div>
-                          <div className="text-muted small">Currency: {invoiceCurrency}</div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="col-md-4">
-                      <div className="card border-0 bg-light h-100">
-                        <div className="card-body">
-                          <div className="text-muted small">Fiscalization</div>
-                          <div className="fw-bold text-uppercase">{selectedInvoice.zimra_status || "not_submitted"}</div>
-                          {selectedInvoice.zimra_verification_code && (
-                            <div className="text-muted small">Code: {selectedInvoice.zimra_verification_code}</div>
-                          )}
-                          {selectedInvoice.zimra_verification_url && (
-                            <a href={selectedInvoice.zimra_verification_url} target="_blank" rel="noreferrer" className="small">View verification</a>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="row g-3 mb-4">
-                    <div className="col-md-6">
-                      <label className="form-label">Customer</label>
-                      {canEdit ? (
-                        <select className="form-select" value={editCustomerId ?? ""} onChange={(e) => setEditCustomerId(Number(e.target.value))}>
-                          <option value="">Select customer</option>
-                          {contacts.map((c) => (
-                            <option key={c.id} value={c.id}>{c.name}</option>
-                          ))}
-                        </select>
-                      ) : (
-                        <div className="form-control bg-light">{customer?.name || "No customer"}</div>
-                      )}
-                    </div>
-                    <div className="col-md-3">
-                      <label className="form-label">Invoice Date</label>
-                      {canEdit ? (
-                        <input className="form-control" type="date" value={editInvoiceDate} onChange={(e) => setEditInvoiceDate(e.target.value)} />
-                      ) : (
-                        <div className="form-control bg-light">{invoiceDateLabel}</div>
-                      )}
-                    </div>
-                    <div className="col-md-3">
-                      <label className="form-label">Due Date</label>
-                      {canEdit ? (
-                        <input className="form-control" type="date" value={editDueDate} onChange={(e) => setEditDueDate(e.target.value)} />
-                      ) : (
-                        <div className="form-control bg-light">{selectedInvoice?.due_date ? new Date(selectedInvoice.due_date).toLocaleDateString() : "-"}</div>
-                      )}
-                    </div>
-                    <div className="col-md-4">
-                      <label className="form-label">Quotation</label>
-                      {canEdit ? (
-                        <select className="form-select" value={editQuotationId ?? ""} onChange={(e) => setEditQuotationId(Number(e.target.value))}>
-                          <option value="">Select quotation</option>
-                          {quotations.map((q) => (
-                            <option key={q.id} value={q.id}>{q.reference}</option>
-                          ))}
-                        </select>
-                      ) : (
-                        <div className="form-control bg-light">{linkedQuotation?.reference || "-"}</div>
-                      )}
-                    </div>
-                    <div className="col-md-4">
-                      <label className="form-label">Reference</label>
-                      {canEdit ? (
-                        <input className="form-control" value={editReference} onChange={(e) => setEditReference(e.target.value)} />
-                      ) : (
-                        <div className="form-control bg-light">{selectedInvoice?.reference || "-"}</div>
-                      )}
-                    </div>
-                    <div className="col-md-4">
-                      <label className="form-label">Currency</label>
-                      {canEdit ? (
-                        <select className="form-select" value={editCurrency} onChange={(e) => setEditCurrency(e.target.value)}>
-                          {currencyOptions.map((cur) => (
-                            <option key={cur} value={cur}>{cur}</option>
-                          ))}
-                        </select>
-                      ) : (
-                        <div className="form-control bg-light">{invoiceCurrency}</div>
-                      )}
-                    </div>
-                    <div className="col-md-4">
-                      <label className="form-label">Fiscal Device</label>
-                      {canEdit ? (
-                        <select className="form-select" value={editDeviceId ?? ""} onChange={(e) => setEditDeviceId(Number(e.target.value))}>
-                          <option value="">Select device</option>
-                          {devices.map((d) => (
-                            <option key={d.id} value={d.id}>{d.device_id || d.serial_number || `Device ${d.id}`}</option>
-                          ))}
-                        </select>
-                      ) : (
-                        <div className="form-control bg-light">{devices.find((d) => d.id === selectedInvoice?.device_id)?.device_id || "No device"}</div>
-                      )}
-                    </div>
-                    <div className="col-md-6">
-                      <label className="form-label">Payment Terms</label>
-                      {canEdit ? (
-                        <input className="form-control" value={editPaymentTerms} onChange={(e) => setEditPaymentTerms(e.target.value)} />
-                      ) : (
-                        <div className="form-control bg-light">{selectedInvoice?.payment_terms || "-"}</div>
-                      )}
-                    </div>
-                    <div className="col-md-6">
-                      <label className="form-label">Payment Reference</label>
-                      <div className="form-control bg-light">{selectedInvoice?.payment_reference || "-"}</div>
-                    </div>
-                    <div className="col-12">
-                      <label className="form-label">Notes</label>
-                      {canEdit ? (
-                        <textarea className="form-control" rows={3} value={editNotes} onChange={(e) => setEditNotes(e.target.value)} />
-                      ) : (
-                        <div className="form-control bg-light" style={{ minHeight: 88 }}>{selectedInvoice?.notes || "-"}</div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="table-responsive">
-                    <table className="table table-bordered align-middle">
-                      <thead className="table-light">
-                        <tr>
-                          <th>Product</th>
-                          <th>Description</th>
-                          <th className="text-end">Qty</th>
-                          <th>UoM</th>
-                          <th className="text-end">Price</th>
-                          <th className="text-end">Disc %</th>
-                          <th className="text-end">Tax %</th>
-                          <th className="text-end">On Hand</th>
-                          <th className="text-end">Available</th>
-                          <th className="text-end">Amount</th>
-                          {canEdit && <th></th>}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {displayLines.map((line, index) => {
-                          const product = line.product_id ? productById.get(line.product_id) : null;
-                          const lineTotal = (line.quantity || 0) * (line.unit_price || 0) * (1 - (line.discount || 0) / 100) * (1 + (line.vat_rate || 0) / 100);
-                          const availableQty = product?.quantity_available ?? 0;
-                          const onHandQty = product?.quantity_on_hand ?? 0;
-                          const exceedsStock = (line.quantity || 0) > availableQty;
-                          return (
-                            <tr key={line.id || `new-${index}`}>
-                              <td>
-                                {canEdit ? (
-                                  <select
-                                    className="form-select"
-                                    value={line.product_id ?? ""}
-                                    onChange={(e) => {
-                                      const prod = products.find((p) => p.id === Number(e.target.value));
-                                      updateLine(index, {
-                                        product_id: Number(e.target.value),
-                                        description: prod?.name ?? "",
-                                        unit_price: prod?.sale_price ?? 0,
-                                        vat_rate: prod?.tax_rate ?? 0
-                                      });
-                                    }}
-                                  >
-                                    <option value="">Select</option>
-                                        {products.map((p) => (
-                                          <option key={p.id} value={p.id}>
-                                            {p.name} (avail: {p.quantity_available ?? 0})
-                                          </option>
-                                    ))}
-                                  </select>
-                                ) : (
-                                  product?.name ?? "-"
-                                )}
-                              </td>
-                              <td>
-                                {canEdit ? (
-                                  <input className="form-control" value={line.description || ""} onChange={(e) => updateLine(index, { description: e.target.value })} />
-                                ) : (
-                                  line.description || "-"
-                                )}
-                              </td>
-                              <td className="text-end">
-                                {canEdit ? (
-                                  <input className="form-control text-end" type="number" value={line.quantity || 0} onChange={(e) => updateLine(index, { quantity: Number(e.target.value) })} />
-                                ) : (
-                                  line.quantity
-                                )}
-                              </td>
-                              <td>
-                                {canEdit ? (
-                                  <input className="form-control" value={line.uom || ""} onChange={(e) => updateLine(index, { uom: e.target.value })} />
-                                ) : (
-                                  line.uom || "-"
-                                )}
-                              </td>
-                              <td className="text-end">
-                                {canEdit ? (
-                                  <input className="form-control text-end" type="number" value={line.unit_price || 0} onChange={(e) => updateLine(index, { unit_price: Number(e.target.value) })} />
-                                ) : (
-                                  formatCurrency(line.unit_price || 0, invoiceCurrency)
-                                )}
-                              </td>
-                              <td className="text-end">
-                                {canEdit ? (
-                                  <input className="form-control text-end" type="number" value={line.discount || 0} onChange={(e) => updateLine(index, { discount: Number(e.target.value) })} />
-                                ) : (
-                                  line.discount ? `${line.discount}%` : "-"
-                                )}
-                              </td>
-                              <td className="text-end">
-                                {canEdit ? (
-                                  <input className="form-control text-end" type="number" value={line.vat_rate || 0} onChange={(e) => updateLine(index, { vat_rate: Number(e.target.value) })} />
-                                ) : (
-                                  line.vat_rate ? `${line.vat_rate}%` : "-"
-                                )}
-                              </td>
-                              <td className="text-end">{onHandQty}</td>
-                              <td className={`text-end ${exceedsStock ? "text-danger" : ""}`}>
-                                {availableQty}
-                              </td>
-                              <td className="text-end">{formatCurrency(lineTotal, invoiceCurrency)}</td>
-                              {canEdit && (
-                                <td className="text-center">
-                                  <button className="btn btn-sm btn-outline-danger" onClick={() => removeLine(index)} disabled={displayLines.length === 1}>✕</button>
-                                </td>
+                              ) : (
+                                product?.name ?? "—"
                               )}
-                            </tr>
-                          );
-                        })}
-                        {!displayLines.length && (
-                          <tr>
-                            <td colSpan={canEdit ? 11 : 10} className="text-center py-4">No invoice lines</td>
+                            </td>
+                            <td>{canEdit ? <input className="form-control form-control-sm" value={line.description || ""} onChange={(e) => updateLine(index, { description: e.target.value })} /> : (line.description || "—")}</td>
+                            <td className="text-end">{canEdit ? <input className="form-control form-control-sm text-end" type="number" value={line.quantity || 0} onChange={(e) => updateLine(index, { quantity: Number(e.target.value) })} /> : line.quantity}</td>
+                            <td>{canEdit ? <input className="form-control form-control-sm bg-light" value={product?.uom || line.uom || ""} readOnly /> : (line.uom || "—")}</td>
+                            <td className="text-end">{canEdit ? <input className="form-control form-control-sm text-end" type="number" value={line.unit_price || 0} onChange={(e) => updateLine(index, { unit_price: Number(e.target.value) })} /> : formatCurrency(line.unit_price || 0, invoiceCurrency)}</td>
+                            <td className="text-end">{canEdit ? <input className="form-control form-control-sm text-end" type="number" value={line.discount || 0} onChange={(e) => updateLine(index, { discount: Number(e.target.value) })} /> : (line.discount ? `${line.discount}%` : "—")}</td>
+                            <td className="text-end">{canEdit ? <input className="form-control form-control-sm text-end" type="number" value={line.vat_rate || 0} onChange={(e) => updateLine(index, { vat_rate: Number(e.target.value) })} /> : (line.vat_rate ? `${line.vat_rate}%` : "—")}</td>
+                            <td className="text-end text-muted">{onHandQty}</td>
+                            <td className={`text-end ${exceedsStock ? "text-danger fw-semibold" : "text-muted"}`}>{availableQty}</td>
+                            <td className="text-end fw-semibold">{formatCurrency(lineTotal, invoiceCurrency)}</td>
+                            {canEdit && (
+                              <td className="text-center">
+                                <button className="btn btn-sm btn-light border" onClick={() => removeLine(index)} disabled={displayLines.length === 1}>✕</button>
+                              </td>
+                            )}
                           </tr>
-                        )}
-                      </tbody>
-                    </table>
+                        );
+                      })}
+                      {!displayLines.length && (
+                        <tr><td colSpan={canEdit ? 11 : 10} className="text-center py-4 text-muted">No invoice lines</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Totals */}
+                <div className="row g-3 mt-3">
+                  <div className="col-md-6">
+                    <div className="card border-0 bg-light">
+                      <div className="card-body py-2">
+                        <div className="fw-semibold mb-1">Tax Breakdown</div>
+                        {taxBreakdown.length === 0 && <small className="text-muted">No taxes applied</small>}
+                        {taxBreakdown.map(([rate, amt]) => (
+                          <div key={rate} className="d-flex justify-content-between text-muted small">
+                            <span>VAT {rate}%</span>
+                            <span>{formatCurrency(amt, invoiceCurrency)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
-
-                  {canEdit && (
-                    <div className="mb-3">
-                      <div className="d-flex gap-2">
-                        <button className="btn btn-outline-secondary" onClick={addLine}>+ Add Line</button>
-                        <button className="btn btn-outline-primary" onClick={() => setCreateProductOpen(true)}>+ New Product</button>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="row g-3">
-                    <div className="col-md-6">
-                      <div className="card border-0 bg-light">
-                        <div className="card-body">
-                          <div className="fw-semibold mb-2">Tax Breakdown</div>
-                          {taxBreakdown.length === 0 && <div className="text-muted">No taxes applied</div>}
-                          {taxBreakdown.map(([rate, amount]) => (
-                            <div key={rate} className="d-flex justify-content-between text-muted">
-                              <span>VAT {rate}%</span>
-                              <span>{formatCurrency(amount, invoiceCurrency)}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="col-md-6">
-                      <div className="card border-0 bg-light">
-                        <div className="card-body">
-                          <div className="d-flex justify-content-between"><span>Subtotal</span><span>{formatCurrency(selectedInvoice.subtotal || 0, invoiceCurrency)}</span></div>
-                          <div className="d-flex justify-content-between"><span>Discount</span><span>-{formatCurrency(selectedInvoice.discount_amount || 0, invoiceCurrency)}</span></div>
-                          <div className="d-flex justify-content-between"><span>Tax</span><span>{formatCurrency(selectedInvoice.tax_amount || 0, invoiceCurrency)}</span></div>
-                          <hr />
-                          <div className="d-flex justify-content-between fw-bold"><span>Total</span><span>{formatCurrency(selectedInvoice.total_amount || 0, invoiceCurrency)}</span></div>
-                        </div>
+                  <div className="col-md-6">
+                    <div className="card border-0 bg-light">
+                      <div className="card-body py-2">
+                        <div className="d-flex justify-content-between"><span>Subtotal</span><span>{formatCurrency(selectedInvoice.subtotal || 0, invoiceCurrency)}</span></div>
+                        <div className="d-flex justify-content-between"><span>Discount</span><span>-{formatCurrency(selectedInvoice.discount_amount || 0, invoiceCurrency)}</span></div>
+                        <div className="d-flex justify-content-between"><span>Tax</span><span>{formatCurrency(selectedInvoice.tax_amount || 0, invoiceCurrency)}</span></div>
+                        <hr className="my-1" />
+                        <div className="d-flex justify-content-between fw-bold"><span>Total</span><span>{formatCurrency(selectedInvoice.total_amount || 0, invoiceCurrency)}</span></div>
                       </div>
                     </div>
                   </div>
                 </div>
-              )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
-      </div>
+      )}
 
       {paymentOpen && (
         <div>
