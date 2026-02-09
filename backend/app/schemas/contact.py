@@ -21,7 +21,7 @@ class ContactRead(ORMBase):
     vat: str
     tin: str
     phone: str
-    email: EmailStr | None = None
+    email: str | None = None
     reference: str
 
 
