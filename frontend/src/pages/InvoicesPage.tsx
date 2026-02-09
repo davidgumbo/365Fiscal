@@ -185,11 +185,49 @@ export default function InvoicesPage() {
   const [productLocationId, setProductLocationId] = useState<number | null>(null);
   const [customerSearch, setCustomerSearch] = useState("");
   const [customerDropdownOpen, setCustomerDropdownOpen] = useState(false);
+  const [customerCreating, setCustomerCreating] = useState(false);
   const customerDropdownRef = useRef<HTMLDivElement>(null);
 
   const filteredContacts = contacts.filter((c) =>
     c.name.toLowerCase().includes(customerSearch.toLowerCase())
   );
+  const topContacts = contacts.slice(0, 3);
+  const displayContacts = customerSearch.trim() ? filteredContacts : topContacts;
+
+  const selectCustomer = (id: number, name: string, mode: "new" | "edit") => {
+    if (mode === "new") {
+      setNewCustomerId(id);
+    } else {
+      setEditCustomerId(id);
+    }
+    setCustomerSearch(name);
+    setCustomerDropdownOpen(false);
+  };
+
+  const createCustomerFromSearch = async (mode: "new" | "edit") => {
+    if (!companyId) return;
+    const name = customerSearch.trim();
+    if (!name) return;
+    const exists = contacts.some((c) => c.name.toLowerCase() === name.toLowerCase());
+    if (exists) return;
+    setCustomerCreating(true);
+    setError(null);
+    try {
+      const created = await apiFetch<Contact>("/contacts", {
+        method: "POST",
+        body: JSON.stringify({
+          company_id: companyId,
+          name
+        })
+      });
+      setContacts((prev) => [created, ...prev]);
+      selectCustomer(created.id, created.name, mode);
+    } catch (err: any) {
+      setError(err.message || "Failed to create customer");
+    } finally {
+      setCustomerCreating(false);
+    }
+  };
 
   // Close customer dropdown when clicking outside
   useEffect(() => {
@@ -840,7 +878,7 @@ export default function InvoicesPage() {
                     <label className="form-label fw-semibold">Customer <span className="text-danger">*</span></label>
                     <div className="position-relative" ref={customerDropdownRef}>
                       <input
-                        className="form-control"
+                        className="form-control input-underline"
                         placeholder="Search or select customer…"
                         value={customerSearch}
                         onChange={(e) => {
@@ -850,28 +888,31 @@ export default function InvoicesPage() {
                         }}
                         onFocus={() => setCustomerDropdownOpen(true)}
                       />
-                      {customerDropdownOpen && filteredContacts.length > 0 && (
-                        <ul className="list-group position-absolute w-100 shadow-sm" style={{ zIndex: 1050, maxHeight: 200, overflowY: "auto" }}>
-                          {filteredContacts.map((c) => (
+                      {customerDropdownOpen && (
+                        <ul className="list-group position-absolute w-100 shadow-sm" style={{ zIndex: 1050, maxHeight: 220, overflowY: "auto" }}>
+                          {displayContacts.map((c) => (
                             <li
                               key={c.id}
                               className={`list-group-item list-group-item-action${newCustomerId === c.id ? " active" : ""}`}
                               role="button"
-                              onClick={() => {
-                                setNewCustomerId(c.id);
-                                setCustomerSearch(c.name);
-                                setCustomerDropdownOpen(false);
-                              }}
+                              onClick={() => selectCustomer(c.id, c.name, "new")}
                             >
                               {c.name}
                             </li>
                           ))}
+                          {customerSearch.trim() && !filteredContacts.some((c) => c.name.toLowerCase() === customerSearch.trim().toLowerCase()) && (
+                            <li
+                              className="list-group-item list-group-item-action text-primary"
+                              role="button"
+                              onClick={() => createCustomerFromSearch("new")}
+                            >
+                              {customerCreating ? "Creating..." : `Create "${customerSearch.trim()}"`}
+                            </li>
+                          )}
+                          {!displayContacts.length && !customerSearch.trim() && (
+                            <li className="list-group-item text-muted">No customers</li>
+                          )}
                         </ul>
-                      )}
-                      {customerDropdownOpen && customerSearch && filteredContacts.length === 0 && (
-                        <div className="list-group position-absolute w-100 shadow-sm" style={{ zIndex: 1050 }}>
-                          <div className="list-group-item text-muted">No customers found</div>
-                        </div>
                       )}
                     </div>
                   </div>
@@ -1055,7 +1096,7 @@ export default function InvoicesPage() {
                     {canEdit ? (
                       <div className="position-relative" ref={customerDropdownRef}>
                         <input
-                          className="form-control"
+                          className="form-control input-underline"
                           placeholder="Search or select customer…"
                           value={customerSearch}
                           onChange={(e) => {
@@ -1065,28 +1106,31 @@ export default function InvoicesPage() {
                           }}
                           onFocus={() => setCustomerDropdownOpen(true)}
                         />
-                        {customerDropdownOpen && filteredContacts.length > 0 && (
-                          <ul className="list-group position-absolute w-100 shadow-sm" style={{ zIndex: 1050, maxHeight: 200, overflowY: "auto" }}>
-                            {filteredContacts.map((c) => (
+                        {customerDropdownOpen && (
+                          <ul className="list-group position-absolute w-100 shadow-sm" style={{ zIndex: 1050, maxHeight: 220, overflowY: "auto" }}>
+                            {displayContacts.map((c) => (
                               <li
                                 key={c.id}
                                 className={`list-group-item list-group-item-action${editCustomerId === c.id ? " active" : ""}`}
                                 role="button"
-                                onClick={() => {
-                                  setEditCustomerId(c.id);
-                                  setCustomerSearch(c.name);
-                                  setCustomerDropdownOpen(false);
-                                }}
+                                onClick={() => selectCustomer(c.id, c.name, "edit")}
                               >
                                 {c.name}
                               </li>
                             ))}
+                            {customerSearch.trim() && !filteredContacts.some((c) => c.name.toLowerCase() === customerSearch.trim().toLowerCase()) && (
+                              <li
+                                className="list-group-item list-group-item-action text-primary"
+                                role="button"
+                                onClick={() => createCustomerFromSearch("edit")}
+                              >
+                                {customerCreating ? "Creating..." : `Create "${customerSearch.trim()}"`}
+                              </li>
+                            )}
+                            {!displayContacts.length && !customerSearch.trim() && (
+                              <li className="list-group-item text-muted">No customers</li>
+                            )}
                           </ul>
-                        )}
-                        {customerDropdownOpen && customerSearch && filteredContacts.length === 0 && (
-                          <div className="list-group position-absolute w-100 shadow-sm" style={{ zIndex: 1050 }}>
-                            <div className="list-group-item text-muted">No customers found</div>
-                          </div>
                         )}
                       </div>
                     ) : (
