@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 :root {
   font-family: "Inter", "Manrope", system-ui, -apple-system, sans-serif;
   color: #1e293b;

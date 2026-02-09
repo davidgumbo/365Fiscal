@@ -78,6 +78,8 @@ def create_invoice(
         currency=payload.currency,
         payment_terms=payload.payment_terms,
         notes=payload.notes,
+        invoice_type=payload.invoice_type or "invoice",
+        reversed_invoice_id=payload.reversed_invoice_id,
         status="draft",
     )
     db.add(invoice)
@@ -162,6 +164,7 @@ def list_invoices(
     search: str | None = None,
     status: str | None = None,
     customer_id: int | None = None,
+    invoice_type: str | None = None,
 ):
     query = db.query(Invoice).filter(Invoice.company_id == company_id)
     if search:
@@ -171,6 +174,8 @@ def list_invoices(
         query = query.filter(Invoice.status == status)
     if customer_id:
         query = query.filter(Invoice.customer_id == customer_id)
+    if invoice_type:
+        query = query.filter(Invoice.invoice_type == invoice_type)
     return query.order_by(Invoice.created_at.desc()).all()
 
 
@@ -303,6 +308,66 @@ def register_payment(
     db.commit()
     db.refresh(invoice)
     return invoice
+
+
+@router.post("/{invoice_id}/credit-note", response_model=InvoiceRead)
+def create_credit_note(
+    invoice_id: int,
+    db: Session = Depends(get_db),
+    user=Depends(require_portal_user),
+):
+    invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    ensure_company_access(db, user, invoice.company_id)
+
+    credit_reference = next_invoice_reference(db, prefix="CN")
+    credit_note = Invoice(
+        company_id=invoice.company_id,
+        quotation_id=None,
+        customer_id=invoice.customer_id,
+        device_id=invoice.device_id,
+        reference=credit_reference,
+        invoice_date=datetime.utcnow(),
+        due_date=None,
+        currency=invoice.currency,
+        payment_terms=invoice.payment_terms,
+        notes=f"Credit note for {invoice.reference}",
+        invoice_type="credit_note",
+        reversed_invoice_id=invoice.id,
+        status="draft",
+    )
+    db.add(credit_note)
+    db.flush()
+
+    for line in invoice.lines:
+        line_dict = {
+            "quantity": -abs(line.quantity),
+            "unit_price": line.unit_price,
+            "discount": line.discount,
+            "vat_rate": line.vat_rate
+        }
+        subtotal, tax_amount, total_price = calculate_line_amounts(line_dict)
+        db.add(InvoiceLine(
+            invoice_id=credit_note.id,
+            product_id=line.product_id,
+            description=f"Credit: {line.description}",
+            quantity=-abs(line.quantity),
+            uom=line.uom,
+            unit_price=line.unit_price,
+            discount=line.discount,
+            vat_rate=line.vat_rate,
+            subtotal=subtotal,
+            tax_amount=tax_amount,
+            total_price=total_price,
+        ))
+
+    db.flush()
+    db.refresh(credit_note)
+    recalculate_invoice_totals(credit_note)
+    db.commit()
+    db.refresh(credit_note)
+    return credit_note
 
 
 @router.post("/{invoice_id}/fiscalize", response_model=InvoiceRead)

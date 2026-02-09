@@ -15,6 +15,8 @@ class InvoiceCreate(BaseModel):
     currency: str = "USD"
     payment_terms: str = ""
     notes: str = ""
+    invoice_type: str = "invoice"
+    reversed_invoice_id: int | None = None
     lines: list[InvoiceLineCreate] = []
 
 
@@ -30,6 +32,8 @@ class InvoiceUpdate(BaseModel):
     payment_terms: str | None = None
     payment_reference: str | None = None
     notes: str | None = None
+    invoice_type: str | None = None
+    reversed_invoice_id: int | None = None
     amount_paid: float | None = None
     lines: list[InvoiceLineCreate] | None = None
 
@@ -41,6 +45,8 @@ class InvoiceRead(ORMBase):
     customer_id: int | None
     device_id: int | None
     reference: str
+    invoice_type: str
+    reversed_invoice_id: int | None
     status: str
     invoice_date: datetime | None
     due_date: datetime | None
