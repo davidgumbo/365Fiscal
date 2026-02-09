@@ -18,9 +18,19 @@ type Product = {
   uom: string;
   track_inventory: boolean;
   min_stock_quantity: number;
+  max_stock_quantity: number;
+  reorder_point: number;
+  weight: number;
+  weight_uom: string;
   is_active: boolean;
   can_be_sold: boolean;
   can_be_purchased: boolean;
+};
+
+type Category = {
+  id: number;
+  company_id: number;
+  name: string;
 };
 
 const PRODUCT_TYPES = [
@@ -33,6 +43,7 @@ export default function ProductsPage() {
   const companies = useCompanies();
   const [companyId, setCompanyId] = useState<number | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState<"general" | "inventory" | "sales">("general");
@@ -51,6 +62,10 @@ export default function ProductsPage() {
     uom: "PCS",
     track_inventory: true,
     min_stock_quantity: 0,
+    max_stock_quantity: 0,
+    reorder_point: 0,
+    weight: 0,
+    weight_uom: "kg",
     is_active: true,
     can_be_sold: true,
     can_be_purchased: true
@@ -70,7 +85,7 @@ export default function ProductsPage() {
       setSelectedProductId(first.id);
       setForm({
         name: first.name,
-        category_id: null,
+        category_id: first.category_id ?? null,
         description: first.description || "",
         sale_price: first.sale_price,
         tax_rate: first.tax_rate,
@@ -83,6 +98,10 @@ export default function ProductsPage() {
         uom: first.uom || "PCS",
         track_inventory: first.track_inventory ?? true,
         min_stock_quantity: first.min_stock_quantity || 0,
+        max_stock_quantity: first.max_stock_quantity || 0,
+        reorder_point: first.reorder_point || 0,
+        weight: first.weight || 0,
+        weight_uom: first.weight_uom || "kg",
         is_active: first.is_active ?? true,
         can_be_sold: first.can_be_sold ?? true,
         can_be_purchased: first.can_be_purchased ?? true
@@ -90,9 +109,15 @@ export default function ProductsPage() {
     }
   };
 
+  const loadCategories = async (cid: number) => {
+    const data = await apiFetch<Category[]>(`/categories?company_id=${cid}`);
+    setCategories(data);
+  };
+
   useEffect(() => {
     if (companyId) {
       loadProducts(companyId);
+      loadCategories(companyId);
     }
   }, [companyId]);
 
@@ -111,6 +136,10 @@ export default function ProductsPage() {
     uom: "PCS",
     track_inventory: true,
     min_stock_quantity: 0,
+    max_stock_quantity: 0,
+    reorder_point: 0,
+    weight: 0,
+    weight_uom: "kg",
     is_active: true,
     can_be_sold: true,
     can_be_purchased: true
@@ -146,7 +175,7 @@ export default function ProductsPage() {
     setSelectedProductId(product.id);
     setForm({
       name: product.name,
-      category_id: null,
+      category_id: product.category_id ?? null,
       description: product.description || "",
       sale_price: product.sale_price,
       tax_rate: product.tax_rate,
@@ -159,6 +188,10 @@ export default function ProductsPage() {
       uom: product.uom || "PCS",
       track_inventory: product.track_inventory ?? true,
       min_stock_quantity: product.min_stock_quantity || 0,
+      max_stock_quantity: product.max_stock_quantity || 0,
+      reorder_point: product.reorder_point || 0,
+      weight: product.weight || 0,
+      weight_uom: product.weight_uom || "kg",
       is_active: product.is_active ?? true,
       can_be_sold: product.can_be_sold ?? true,
       can_be_purchased: product.can_be_purchased ?? true
@@ -226,6 +259,24 @@ export default function ProductsPage() {
                 />
               </div>
               <div className="input-group">
+                <label className="input-label">Category</label>
+                <select
+                  className="input-field dropdown-select"
+                  value={form.category_id ?? ""}
+                  onChange={(e) =>
+                    setForm({ ...form, category_id: e.target.value === "" ? null : Number(e.target.value) })
+                  }
+                  disabled={!isEditing}
+                >
+                  <option value="">Uncategorized</option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="input-group">
                 <label className="input-label">Product Type</label>
                 <select
                   className="input-field dropdown-select"
@@ -255,6 +306,8 @@ export default function ProductsPage() {
                   className="input-field"
                   type="text"
                   value={form.barcode}
+                  onChange={(e) => setForm({ ...form, barcode: e.target.value })}
+                  disabled={!isEditing}
                   placeholder="e.g., 1234567890123"
                 />
               </div>
@@ -307,12 +360,54 @@ export default function ProductsPage() {
                 />
               </div>
               <div className="input-group">
+                <label className="input-label">Weight</label>
+                <input
+                  className="input-field"
+                  type="number"
+                  step="0.01"
+                  value={form.weight}
+                  onChange={(e) => setForm({ ...form, weight: Number(e.target.value) })}
+                  disabled={!isEditing}
+                />
+              </div>
+              <div className="input-group">
+                <label className="input-label">Weight UOM</label>
+                <input
+                  className="input-field"
+                  type="text"
+                  value={form.weight_uom}
+                  onChange={(e) => setForm({ ...form, weight_uom: e.target.value })}
+                  disabled={!isEditing}
+                  placeholder="kg"
+                />
+              </div>
+              <div className="input-group">
                 <label className="input-label">Minimum Stock Quantity</label>
                 <input
                   className="input-field"
                   type="number"
                   value={form.min_stock_quantity}
                   onChange={(e) => setForm({ ...form, min_stock_quantity: Number(e.target.value) })}
+                  disabled={!isEditing}
+                />
+              </div>
+              <div className="input-group">
+                <label className="input-label">Maximum Stock Quantity</label>
+                <input
+                  className="input-field"
+                  type="number"
+                  value={form.max_stock_quantity}
+                  onChange={(e) => setForm({ ...form, max_stock_quantity: Number(e.target.value) })}
+                  disabled={!isEditing}
+                />
+              </div>
+              <div className="input-group">
+                <label className="input-label">Reorder Point</label>
+                <input
+                  className="input-field"
+                  type="number"
+                  value={form.reorder_point}
+                  onChange={(e) => setForm({ ...form, reorder_point: Number(e.target.value) })}
                   disabled={!isEditing}
                 />
               </div>

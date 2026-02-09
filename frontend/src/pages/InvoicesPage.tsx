@@ -39,6 +39,9 @@ type Invoice = {
   payment_terms: string;
   payment_reference: string;
   notes: string;
+  zimra_status?: string;
+  zimra_verification_code?: string;
+  zimra_verification_url?: string;
   lines: InvoiceLine[];
 };
 
@@ -76,11 +79,20 @@ type Product = {
   name: string;
   sale_price: number;
   tax_rate: number;
+  reference?: string;
+  hs_code?: string;
   uom?: string;
   quantity_on_hand?: number;
   quantity_available?: number;
   quantity_reserved?: number;
   stock_value?: number;
+};
+
+type Device = {
+  id: number;
+  device_id: string;
+  serial_number?: string;
+  model?: string;
 };
 
 type Warehouse = {
@@ -127,6 +139,7 @@ export default function InvoicesPage() {
   const [quotations, setQuotations] = useState<Quotation[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [devices, setDevices] = useState<Device[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<number | null>(null);
@@ -139,6 +152,7 @@ export default function InvoicesPage() {
   const [newDueDate, setNewDueDate] = useState("");
   const [newPaymentTerms, setNewPaymentTerms] = useState("");
   const [newNotes, setNewNotes] = useState("");
+  const [newDeviceId, setNewDeviceId] = useState<number | null>(null);
   const [editQuotationId, setEditQuotationId] = useState<number | null>(null);
   const [editCustomerId, setEditCustomerId] = useState<number | null>(null);
   const [editReference, setEditReference] = useState("");
@@ -147,6 +161,7 @@ export default function InvoicesPage() {
   const [editDueDate, setEditDueDate] = useState("");
   const [editPaymentTerms, setEditPaymentTerms] = useState("");
   const [editNotes, setEditNotes] = useState("");
+  const [editDeviceId, setEditDeviceId] = useState<number | null>(null);
   const [editLines, setEditLines] = useState<Partial<InvoiceLine>[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -161,6 +176,8 @@ export default function InvoicesPage() {
   const [productName, setProductName] = useState("");
   const [productPrice, setProductPrice] = useState("");
   const [productTaxRate, setProductTaxRate] = useState("");
+  const [productReference, setProductReference] = useState("");
+  const [productHsCode, setProductHsCode] = useState("");
   const [productUom, setProductUom] = useState("PCS");
   const [productInitialStock, setProductInitialStock] = useState("");
   const [productWarehouseId, setProductWarehouseId] = useState<number | null>(null);
@@ -177,20 +194,25 @@ export default function InvoicesPage() {
         ...(listStatus ? { status: listStatus } : {}),
         ...(listType ? { invoice_type: listType } : {})
       }).toString();
-      const [invoiceData, quotationData, contactData, productData, warehouseData] = await Promise.all([
+      const [invoiceData, quotationData, contactData, productData, warehouseData, deviceData] = await Promise.all([
         apiFetch<Invoice[]>(`/invoices?${query}`),
         apiFetch<Quotation[]>(`/quotations?company_id=${companyId}`),
         apiFetch<Contact[]>(`/contacts?company_id=${companyId}`),
         apiFetch<Product[]>(`/products/with-stock?company_id=${companyId}`),
-        apiFetch<Warehouse[]>(`/warehouses?company_id=${companyId}`)
+        apiFetch<Warehouse[]>(`/warehouses?company_id=${companyId}`),
+        apiFetch<Device[]>(`/devices?company_id=${companyId}`)
       ]);
       setInvoices(invoiceData);
       setQuotations(quotationData);
       setContacts(contactData);
       setProducts(productData);
+      setDevices(deviceData);
       setWarehouses(warehouseData);
       if (!productWarehouseId && warehouseData.length) {
         setProductWarehouseId(warehouseData[0].id);
+      }
+      if (!newDeviceId && deviceData.length) {
+        setNewDeviceId(deviceData[0].id);
       }
       if (invoiceData.length && !selectedInvoiceId) {
         setSelectedInvoiceId(invoiceData[0].id);
@@ -246,6 +268,7 @@ export default function InvoicesPage() {
     setEditDueDate(toDateInputValue(selectedInvoice.due_date));
     setEditPaymentTerms(selectedInvoice.payment_terms || "");
     setEditNotes(selectedInvoice.notes || "");
+    setEditDeviceId(selectedInvoice.device_id ?? null);
     setEditLines(selectedInvoice.lines?.length ? selectedInvoice.lines.map((l) => ({ ...l })) : []);
   }, [selectedInvoice]);
 
@@ -308,6 +331,7 @@ export default function InvoicesPage() {
     setNewDueDate("");
     setNewPaymentTerms("");
     setNewNotes("");
+    setNewDeviceId(devices[0]?.id ?? null);
     setEditLines([
       {
         product_id: null,
@@ -335,6 +359,7 @@ export default function InvoicesPage() {
         due_date: fromDateInputValue(newDueDate),
         payment_terms: newPaymentTerms,
         notes: newNotes,
+        device_id: newDeviceId,
         invoice_type: "invoice",
         lines: editLines.map((line) => ({
           product_id: line.product_id,
@@ -366,6 +391,7 @@ export default function InvoicesPage() {
         due_date: fromDateInputValue(editDueDate),
         payment_terms: editPaymentTerms,
         notes: editNotes,
+        device_id: editDeviceId,
         lines: editLines.map((line) => ({
           product_id: line.product_id,
           description: line.description || "",
@@ -399,8 +425,17 @@ export default function InvoicesPage() {
 
   const fiscalizeInvoice = async () => {
     if (!selectedInvoiceId) return;
-    await apiFetch<Invoice>(`/invoices/${selectedInvoiceId}/fiscalize`, { method: "POST" });
-    await loadAll();
+    const deviceId = editDeviceId ?? selectedInvoice?.device_id ?? null;
+    if (!deviceId) {
+      setError("Assign a fiscal device before fiscalizing");
+      return;
+    }
+    try {
+      await apiFetch<Invoice>(`/invoices/${selectedInvoiceId}/fiscalize`, { method: "POST" });
+      await loadAll();
+    } catch (err: any) {
+      setError(err.message || "Failed to fiscalize invoice");
+    }
   };
 
   const registerPayment = async () => {
@@ -459,6 +494,8 @@ export default function InvoicesPage() {
       body: JSON.stringify({
         company_id: companyId,
         name: productName.trim(),
+        reference: productReference.trim(),
+        hs_code: productHsCode.trim(),
         sale_price: Number(productPrice) || 0,
         tax_rate: Number(productTaxRate) || 0,
         uom: productUom
@@ -484,6 +521,8 @@ export default function InvoicesPage() {
 
     setCreateProductOpen(false);
     setProductName("");
+    setProductReference("");
+    setProductHsCode("");
     setProductPrice("");
     setProductTaxRate("");
     setProductUom("PCS");
@@ -606,7 +645,9 @@ export default function InvoicesPage() {
             <button className="btn btn-primary" onClick={() => setIsEditing(true)} disabled={!selectedInvoice}>Edit</button>
           )}
           <button className="btn btn-outline-secondary" onClick={postInvoice} disabled={statusLabel !== "draft" || !selectedInvoice}>Post</button>
-          <button className="btn btn-outline-primary" onClick={fiscalizeInvoice} disabled={statusLabel !== "posted" || !selectedInvoice}>Fiscalize</button>
+          <button className="btn btn-outline-primary" onClick={fiscalizeInvoice} disabled={statusLabel !== "posted" || !selectedInvoice || !(editDeviceId ?? selectedInvoice?.device_id)}>
+            Fiscalize
+          </button>
           <button className="btn btn-outline-secondary" onClick={resetInvoice} disabled={!selectedInvoice || (statusLabel !== "posted" && statusLabel !== "fiscalized")}>Reset</button>
           <button className="btn btn-outline-dark" onClick={printInvoice} disabled={!selectedInvoice}>Print PDF</button>
           <button className="btn btn-outline-success" onClick={() => setPaymentOpen(true)} disabled={!selectedInvoice || statusLabel === "draft"}>Register Payment</button>
@@ -732,6 +773,15 @@ export default function InvoicesPage() {
                       <select className="form-select" value={newCurrency} onChange={(e) => setNewCurrency(e.target.value)}>
                         {currencyOptions.map((cur) => (
                           <option key={cur} value={cur}>{cur}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="col-md-4">
+                      <label className="form-label">Fiscal Device</label>
+                      <select className="form-select" value={newDeviceId ?? ""} onChange={(e) => setNewDeviceId(Number(e.target.value))}>
+                        <option value="">Select device</option>
+                        {devices.map((d) => (
+                          <option key={d.id} value={d.id}>{d.device_id || d.serial_number || `Device ${d.id}`}</option>
                         ))}
                       </select>
                     </div>
@@ -881,6 +931,20 @@ export default function InvoicesPage() {
                         </div>
                       </div>
                     </div>
+                    <div className="col-md-4">
+                      <div className="card border-0 bg-light h-100">
+                        <div className="card-body">
+                          <div className="text-muted small">Fiscalization</div>
+                          <div className="fw-bold text-uppercase">{selectedInvoice.zimra_status || "not_submitted"}</div>
+                          {selectedInvoice.zimra_verification_code && (
+                            <div className="text-muted small">Code: {selectedInvoice.zimra_verification_code}</div>
+                          )}
+                          {selectedInvoice.zimra_verification_url && (
+                            <a href={selectedInvoice.zimra_verification_url} target="_blank" rel="noreferrer" className="small">View verification</a>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="row g-3 mb-4">
@@ -944,6 +1008,19 @@ export default function InvoicesPage() {
                         </select>
                       ) : (
                         <div className="form-control bg-light">{invoiceCurrency}</div>
+                      )}
+                    </div>
+                    <div className="col-md-4">
+                      <label className="form-label">Fiscal Device</label>
+                      {canEdit ? (
+                        <select className="form-select" value={editDeviceId ?? ""} onChange={(e) => setEditDeviceId(Number(e.target.value))}>
+                          <option value="">Select device</option>
+                          {devices.map((d) => (
+                            <option key={d.id} value={d.id}>{d.device_id || d.serial_number || `Device ${d.id}`}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <div className="form-control bg-light">{devices.find((d) => d.id === selectedInvoice?.device_id)?.device_id || "No device"}</div>
                       )}
                     </div>
                     <div className="col-md-6">
@@ -1180,6 +1257,14 @@ export default function InvoicesPage() {
                     <div className="col-md-3">
                       <label className="form-label">Tax Rate %</label>
                       <input className="form-control" type="number" value={productTaxRate} onChange={(e) => setProductTaxRate(e.target.value)} />
+                    </div>
+                    <div className="col-md-3">
+                      <label className="form-label">Reference / SKU</label>
+                      <input className="form-control" value={productReference} onChange={(e) => setProductReference(e.target.value)} placeholder="e.g., PROD-001" />
+                    </div>
+                    <div className="col-md-3">
+                      <label className="form-label">HS Code</label>
+                      <input className="form-control" value={productHsCode} onChange={(e) => setProductHsCode(e.target.value)} placeholder="Harmonized code" />
                     </div>
                     <div className="col-md-3">
                       <label className="form-label">UoM</label>

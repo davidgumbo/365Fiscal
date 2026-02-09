@@ -253,7 +253,7 @@ export default function SettingsPage() {
 
   const saveCompanySettings = async () => {
     if (!companyId) return;
-    const method = companySettings ? "PUT" : "POST";
+    const method = companySettings ? "PATCH" : "POST";
     const url = companySettings ? `/company-settings/${companySettings.id}` : "/company-settings";
     const payload = companySettings
       ? settingsForm
@@ -325,7 +325,7 @@ export default function SettingsPage() {
   const saveTax = async () => {
     if (!selectedTax) return;
     await apiFetch(`/tax-settings/${selectedTax.id}`, {
-      method: "PUT",
+      method: "PATCH",
       body: JSON.stringify(selectedTax)
     });
     setStatus("Tax saved");
@@ -357,7 +357,7 @@ export default function SettingsPage() {
 
   const updateAdmin = async (userId: number, payload: Partial<User> & { password?: string }) => {
     await apiFetch(`/users/${userId}`, {
-      method: "PUT",
+      method: "PATCH",
       body: JSON.stringify(payload)
     });
     setStatus("Admin updated");

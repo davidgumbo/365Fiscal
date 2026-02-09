@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { apiFetch } from "../api";
+import { apiFetch, apiRequest } from "../api";
 import { useCompanies, Company } from "../hooks/useCompanies";
 import { useListView } from "../context/ListViewContext";
 
@@ -73,12 +73,9 @@ export default function DevicesPage() {
   const uploadCert = async (deviceId: number, type: "crt" | "key", file: File) => {
     const formData = new FormData();
     formData.append(type, file);
-    const res = await fetch(`http://localhost:8000/api/devices/${deviceId}/${type}`, {
+    const res = await apiRequest(`/devices/${deviceId}/${type}`, {
       method: "POST",
-      body: formData,
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("access_token")}`
-      }
+      body: formData
     });
     if (res.ok && companyId) {
       setActionStatus(`${type.toUpperCase()} uploaded`);
@@ -89,12 +86,7 @@ export default function DevicesPage() {
   };
 
   const runAction = async (deviceId: number, action: string, method: "GET" | "POST" = "GET") => {
-    const res = await fetch(`http://localhost:8000/api/devices/${deviceId}/${action}`, {
-      method,
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("access_token")}`
-      }
-    });
+    const res = await apiRequest(`/devices/${deviceId}/${action}`, { method });
     const text = await res.text();
     setActionStatus(text || `${action} executed`);
     if (companyId) {

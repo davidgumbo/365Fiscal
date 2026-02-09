@@ -7,7 +7,6 @@ type Category = {
   id: number;
   company_id: number;
   name: string;
-  code: string;
 };
 
 type Product = {
@@ -158,11 +157,13 @@ export default function InventoryPage() {
     product_type: "storable",
     uom: "PCS",
     sale_price: 0,
+    sales_cost: 0,
     purchase_cost: 0,
     tax_rate: 15,
     hs_code: "",
     track_inventory: true,
     min_stock_quantity: 0,
+    max_stock_quantity: 0,
     reorder_point: 0,
     weight: 0,
     weight_uom: "kg",
@@ -203,7 +204,7 @@ export default function InventoryPage() {
   // Category form
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
-  const [categoryForm, setCategoryForm] = useState({ name: "", code: "" });
+  const [categoryForm, setCategoryForm] = useState({ name: "" });
 
   // Operations sub-tab
   const [operationsTab, setOperationsTab] = useState<"moves" | "quants">("moves");
@@ -273,11 +274,13 @@ export default function InventoryPage() {
       product_type: "storable",
       uom: "PCS",
       sale_price: 0,
+      sales_cost: 0,
       purchase_cost: 0,
       tax_rate: 15,
       hs_code: "",
       track_inventory: true,
       min_stock_quantity: 0,
+      max_stock_quantity: 0,
       reorder_point: 0,
       weight: 0,
       weight_uom: "kg",
@@ -300,11 +303,13 @@ export default function InventoryPage() {
       product_type: product.product_type,
       uom: product.uom,
       sale_price: product.sale_price,
+      sales_cost: product.sales_cost,
       purchase_cost: product.purchase_cost,
       tax_rate: product.tax_rate,
       hs_code: product.hs_code,
       track_inventory: product.track_inventory,
       min_stock_quantity: product.min_stock_quantity,
+      max_stock_quantity: product.max_stock_quantity,
       reorder_point: product.reorder_point,
       weight: product.weight,
       weight_uom: product.weight_uom,
@@ -549,10 +554,10 @@ export default function InventoryPage() {
   const openCategoryModal = (category?: Category) => {
     if (category) {
       setSelectedCategoryId(category.id);
-      setCategoryForm({ name: category.name, code: "" });
+      setCategoryForm({ name: category.name });
     } else {
       setSelectedCategoryId(null);
-      setCategoryForm({ name: "", code: "" });
+      setCategoryForm({ name: "" });
     }
     setShowCategoryModal(true);
   };
@@ -575,7 +580,7 @@ export default function InventoryPage() {
       await loadAllData();
       setShowCategoryModal(false);
       setSelectedCategoryId(null);
-      setCategoryForm({ name: "", code: "" });
+      setCategoryForm({ name: "" });
     } finally {
       setSaving(false);
     }
@@ -1189,7 +1194,21 @@ export default function InventoryPage() {
                     </div>
 
                     <div className="o-form-group">
-                      <label className="o-form-label">Cost</label>
+                      <label className="o-form-label">Sales Cost</label>
+                      <div className="o-form-field">
+                        <input
+                          type="number"
+                          className="o-form-input"
+                          value={productForm.sales_cost}
+                          onChange={(e) => setProductForm({ ...productForm, sales_cost: Number(e.target.value) })}
+                          step="0.01"
+                          min="0"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="o-form-group">
+                      <label className="o-form-label">Purchase Cost</label>
                       <div className="o-form-field">
                         <input
                           type="number"
@@ -1255,6 +1274,18 @@ export default function InventoryPage() {
                             />
                           </div>
                         </div>
+                        <div className="o-form-group">
+                          <label className="o-form-label">Maximum Stock</label>
+                          <div className="o-form-field">
+                            <input
+                              type="number"
+                              className="o-form-input"
+                              value={productForm.max_stock_quantity}
+                              onChange={(e) => setProductForm({ ...productForm, max_stock_quantity: Number(e.target.value) })}
+                              min="0"
+                            />
+                          </div>
+                        </div>
                       </div>
                       <div>
                         <div className="o-form-group">
@@ -1266,6 +1297,50 @@ export default function InventoryPage() {
                               value={productForm.min_stock_quantity}
                               onChange={(e) => setProductForm({ ...productForm, min_stock_quantity: Number(e.target.value) })}
                               min="0"
+                            />
+                          </div>
+                        </div>
+                        <div className="o-form-group">
+                          <label className="o-form-label">Track Inventory</label>
+                          <div className="o-form-field">
+                            <select
+                              className="o-form-select"
+                              value={productForm.track_inventory ? "yes" : "no"}
+                              onChange={(e) => setProductForm({ ...productForm, track_inventory: e.target.value === "yes" })}
+                            >
+                              <option value="yes">Yes</option>
+                              <option value="no">No</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginTop: 16 }}>
+                      <div>
+                        <div className="o-form-group">
+                          <label className="o-form-label">Weight</label>
+                          <div className="o-form-field">
+                            <input
+                              type="number"
+                              className="o-form-input"
+                              value={productForm.weight}
+                              onChange={(e) => setProductForm({ ...productForm, weight: Number(e.target.value) })}
+                              step="0.01"
+                              min="0"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <div className="o-form-group">
+                          <label className="o-form-label">Weight UOM</label>
+                          <div className="o-form-field">
+                            <input
+                              type="text"
+                              className="o-form-input"
+                              value={productForm.weight_uom}
+                              onChange={(e) => setProductForm({ ...productForm, weight_uom: e.target.value })}
                             />
                           </div>
                         </div>
@@ -1899,19 +1974,6 @@ export default function InventoryPage() {
                 />
               </div>
             </div>
-            {!selectedCategoryId && (
-              <div className="o-form-group">
-                <label className="o-form-label">Code</label>
-                <div className="o-form-field">
-                  <input
-                    type="text"
-                    className="o-form-input"
-                    value={categoryForm.code}
-                    onChange={(e) => setCategoryForm({ ...categoryForm, code: e.target.value.toUpperCase() })}
-                  />
-                </div>
-              </div>
-            )}
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 24 }}>
               <button className="o-btn o-btn-secondary" onClick={() => { setShowCategoryModal(false); setSelectedCategoryId(null); }}>Cancel</button>
               <button className="o-btn o-btn-primary" onClick={saveCategory} disabled={saving}>

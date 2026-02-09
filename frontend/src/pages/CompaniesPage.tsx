@@ -143,15 +143,12 @@ export default function CompaniesPage() {
         body: JSON.stringify(form)
       });
       let portalCreated = false;
+      const portalEmailSnapshot = portalEmail;
       if (portalEmail && portalPassword) {
         try {
-          const user = await apiFetch<{ id: number }>("/users", {
-            method: "POST",
-            body: JSON.stringify({ email: portalEmail, password: portalPassword, is_admin: false })
-          });
-          await apiFetch("/company-users", {
-            method: "POST",
-            body: JSON.stringify({ company_id: company.id, user_id: user.id, role: "portal" })
+          await apiFetch(`/companies/${company.id}/portal-user`, {
+            method: "PATCH",
+            body: JSON.stringify({ email: portalEmail, password: portalPassword })
           });
           portalCreated = true;
         } catch (portalErr: any) {
@@ -163,8 +160,8 @@ export default function CompaniesPage() {
       setForm({ name: "", address: "", email: "", phone: "", tin: "", vat: "" });
       setShowModal(false);
       if (portalCreated) {
-        setStatus(`Company "${company.name}" created successfully! Portal user can now log in at /login with email: ${portalEmail}`);
-      } else if (portalEmail) {
+        setStatus(`Company "${company.name}" created successfully! Portal user can now log in at /login with email: ${portalEmailSnapshot}`);
+      } else if (portalEmailSnapshot) {
         // Error already set above
       } else {
         setStatus("Company created successfully");
@@ -213,13 +210,13 @@ export default function CompaniesPage() {
     try {
       setError(null);
       await apiFetch(`/companies/${companyId}`, {
-        method: "PUT",
+        method: "PATCH",
         body: JSON.stringify(editForm)
       });
       // Update or create portal user if email/password provided
       if (editPortalEmail && editPortalPassword) {
         await apiFetch(`/companies/${companyId}/portal-user`, {
-          method: "PUT",
+          method: "PATCH",
           body: JSON.stringify({ email: editPortalEmail, password: editPortalPassword })
         });
       } else if (editPortalUserId && editPortalPassword) {

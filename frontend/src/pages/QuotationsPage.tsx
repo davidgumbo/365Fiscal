@@ -84,6 +84,11 @@ export default function QuotationsPage() {
     return quotations.find((q) => q.id === selectedQuotationId) ?? null;
   }, [quotations, selectedQuotationId]);
 
+  const selectedCompany = useMemo(
+    () => companies.find((c: Company) => c.id === companyId) ?? null,
+    [companies, companyId]
+  );
+
   useEffect(() => {
     if (!selectedQuotation) return;
     setForm({
@@ -151,6 +156,82 @@ export default function QuotationsPage() {
     line.quantity * line.unit_price * (1 + (line.vat_rate / 100));
   const totalAmount = lines.reduce((sum, line) => sum + lineTotal(line), 0);
 
+  const printQuotation = () => {
+    if (!selectedQuotation) return;
+    const win = window.open("", "_blank");
+    if (!win) return;
+    const company = selectedCompany;
+    const customer = contacts.find((c) => c.id === selectedQuotation.customer_id);
+    const rows = (selectedQuotation.lines || [])
+      .map((line) => {
+        const total = lineTotal(line);
+        return `
+          <tr>
+            <td>${line.description || ""}</td>
+            <td style="text-align:right;">${line.quantity || 0}</td>
+            <td style="text-align:right;">${(line.unit_price || 0).toFixed(2)}</td>
+            <td style="text-align:right;">${(line.vat_rate || 0).toFixed(2)}%</td>
+            <td style="text-align:right;">${total.toFixed(2)}</td>
+          </tr>
+        `;
+      })
+      .join("");
+    const expires = selectedQuotation.expires_at ? new Date(selectedQuotation.expires_at).toLocaleDateString() : "—";
+    const dateLabel = new Date().toLocaleDateString();
+    const html = `
+      <html>
+        <head>
+          <title>${selectedQuotation.reference}</title>
+          <style>
+            body { font-family: Inter, Arial, sans-serif; padding: 32px; color: #0f172a; }
+            h1 { font-size: 20px; margin-bottom: 8px; }
+            .muted { color: #64748b; font-size: 12px; }
+            .section { margin-top: 20px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+            th, td { border-bottom: 1px solid #e2e8f0; padding: 8px; font-size: 12px; }
+            th { text-align: left; background: #f8fafc; }
+            .totals { margin-top: 16px; width: 260px; float: right; }
+            .totals div { display: flex; justify-content: space-between; margin-bottom: 6px; }
+          </style>
+        </head>
+        <body>
+          <h1>${company?.name || "Company"}</h1>
+          <div class="muted">${company?.address || ""}</div>
+          <div class="section">
+            <strong>Quotation</strong>
+            <div class="muted">Reference: ${selectedQuotation.reference}</div>
+            <div class="muted">Date: ${dateLabel}</div>
+            <div class="muted">Customer: ${customer?.name || "-"}</div>
+            <div class="muted">Expires: ${expires}</div>
+          </div>
+          <div class="section">
+            <table>
+              <thead>
+                <tr>
+                  <th>Description</th>
+                  <th style="text-align:right;">Qty</th>
+                  <th style="text-align:right;">Price</th>
+                  <th style="text-align:right;">Tax</th>
+                  <th style="text-align:right;">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rows}
+              </tbody>
+            </table>
+            <div class="totals">
+              <div><strong>Total</strong><strong>${totalAmount.toFixed(2)}</strong></div>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+    win.document.write(html);
+    win.document.close();
+    win.focus();
+    win.print();
+  };
+
   return (
     <div className="content">
       <div className="form-view">
@@ -180,6 +261,7 @@ export default function QuotationsPage() {
                   <button className="outline" onClick={() => setStatus("sent")} disabled={statusLabel !== "draft"}>Send</button>
                   <button className="outline" onClick={() => setStatus("confirmed")} disabled={statusLabel === "confirmed" || statusLabel === "cancelled"}>Confirm</button>
                   <button className="outline" onClick={() => setStatus("cancelled")} disabled={statusLabel === "cancelled"}>Cancel</button>
+                  <button className="outline" onClick={printQuotation}>Print</button>
                 </>
               ) : null}
             </div>

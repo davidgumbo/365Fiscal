@@ -3,12 +3,19 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, UploadFile, File, Query
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_db, get_current_user, ensure_company_access, require_company_access, require_admin
+from app.api.deps import (
+    get_db,
+    get_current_user,
+    ensure_company_access,
+    require_company_access,
+    require_admin,
+    require_portal_user,
+)
 from app.models.device import Device
 from app.schemas.device import DeviceCreate, DeviceRead
 from app.services.fdms import get_status, open_day, close_day, get_config, ping_device, register_device
 
-router = APIRouter(prefix="/devices", tags=["devices"], dependencies=[Depends(require_admin)])
+router = APIRouter(prefix="/devices", tags=["devices"])
 
 
 @router.get("/values")
@@ -38,7 +45,7 @@ def list_device_values(
 def create_device(
     payload: DeviceCreate,
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user=Depends(require_admin),
 ):
     ensure_company_access(db, user, payload.company_id)
     device = Device(**payload.dict())
@@ -52,7 +59,7 @@ def create_device(
 def list_devices(
     company_id: int,
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user=Depends(require_portal_user),
     search: str | None = None,
     status: str | None = None,
     date_from: datetime | None = Query(default=None),
@@ -81,7 +88,7 @@ def upload_crt(
     device_id: int,
     crt: UploadFile = File(...),
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user=Depends(require_admin),
 ):
     device = db.query(Device).filter(Device.id == device_id).first()
     if device:
@@ -98,7 +105,7 @@ def upload_key(
     device_id: int,
     key: UploadFile = File(...),
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user=Depends(require_admin),
 ):
     device = db.query(Device).filter(Device.id == device_id).first()
     if device:
@@ -111,7 +118,7 @@ def upload_key(
 
 
 @router.get("/{device_id}/status")
-def fetch_status(device_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
+def fetch_status(device_id: int, db: Session = Depends(get_db), user=Depends(require_portal_user)):
     device = db.query(Device).filter(Device.id == device_id).first()
     if not device:
         return None
@@ -121,7 +128,7 @@ def fetch_status(device_id: int, db: Session = Depends(get_db), user=Depends(get
 
 
 @router.get("/{device_id}/config")
-def fetch_config(device_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
+def fetch_config(device_id: int, db: Session = Depends(get_db), user=Depends(require_portal_user)):
     device = db.query(Device).filter(Device.id == device_id).first()
     if not device:
         return None
@@ -130,7 +137,7 @@ def fetch_config(device_id: int, db: Session = Depends(get_db), user=Depends(get
 
 
 @router.get("/{device_id}/ping")
-def ping(device_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
+def ping(device_id: int, db: Session = Depends(get_db), user=Depends(require_portal_user)):
     device = db.query(Device).filter(Device.id == device_id).first()
     if not device:
         return None
@@ -139,7 +146,7 @@ def ping(device_id: int, db: Session = Depends(get_db), user=Depends(get_current
 
 
 @router.post("/{device_id}/register")
-def register(device_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
+def register(device_id: int, db: Session = Depends(get_db), user=Depends(require_admin)):
     device = db.query(Device).filter(Device.id == device_id).first()
     if not device:
         return None
@@ -148,7 +155,7 @@ def register(device_id: int, db: Session = Depends(get_db), user=Depends(get_cur
 
 
 @router.post("/{device_id}/open-day")
-def open_fiscal_day(device_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
+def open_fiscal_day(device_id: int, db: Session = Depends(get_db), user=Depends(require_admin)):
     device = db.query(Device).filter(Device.id == device_id).first()
     if not device:
         return None
@@ -162,7 +169,7 @@ def open_fiscal_day(device_id: int, db: Session = Depends(get_db), user=Depends(
 
 
 @router.post("/{device_id}/close-day")
-def close_fiscal_day(device_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
+def close_fiscal_day(device_id: int, db: Session = Depends(get_db), user=Depends(require_admin)):
     device = db.query(Device).filter(Device.id == device_id).first()
     if not device:
         return None

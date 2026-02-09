@@ -144,7 +144,7 @@ def _generate_qr(signature_b64: str, receipt_global_no: int, device_id: str, qr_
     return {"code": code, "url": url}
 
 
-def _build_receipt(invoice: Invoice, quotation: Quotation, lines: list[QuotationLine], device_id_str: str) -> dict:
+def _build_receipt(invoice: Invoice, lines: list[Any], device_id_str: str) -> dict:
     receipt_counter = (invoice.zimra_receipt_counter or 0) or 0
     receipt_global = (invoice.zimra_receipt_global_no or 0) or 0
     receipt_date = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")
@@ -154,9 +154,12 @@ def _build_receipt(invoice: Invoice, quotation: Quotation, lines: list[Quotation
     total_with_tax = Decimal("0.00")
 
     for idx, line in enumerate(lines, start=1):
-        qty = Decimal(str(line.quantity))
-        price = Decimal(str(line.unit_price))
-        vat_rate = Decimal(str(line.vat_rate or 0))
+        qty = Decimal(str(getattr(line, "quantity", 0) or 0))
+        price = Decimal(str(getattr(line, "unit_price", 0) or 0))
+        vat_rate = Decimal(str(getattr(line, "vat_rate", 0) or 0))
+        desc = getattr(line, "description", "") or "Item"
+        uom_val = getattr(line, "uom", "") or "Units"
+
         line_total = (qty * price * (Decimal("1") + vat_rate / Decimal("100"))).quantize(
             Decimal("0.01"), rounding=ROUND_HALF_UP
         )
@@ -166,11 +169,11 @@ def _build_receipt(invoice: Invoice, quotation: Quotation, lines: list[Quotation
             {
                 "receiptLineType": "Sale",
                 "receiptLineNo": idx,
-                "receiptLineName": line.description or "Item",
+                "receiptLineName": desc,
                 "receiptLineQuantity": float(qty),
                 "receiptLinePrice": float(price),
                 "receiptLineTotal": float(line_total),
-                "receiptLineUnit": line.uom or "Units",
+                "receiptLineUnit": uom_val,
                 "taxID": "1",
                 "taxPercent": float(vat_rate),
             }
@@ -205,7 +208,7 @@ def _build_receipt(invoice: Invoice, quotation: Quotation, lines: list[Quotation
     receipt = {
         "deviceID": device_id_str,
         "receiptType": "FiscalInvoice",
-        "receiptCurrency": "USD",
+        "receiptCurrency": (invoice.currency or "USD").upper(),
         "receiptCounter": receipt_counter,
         "receiptGlobalNo": receipt_global,
         "receiptDate": receipt_date,
@@ -228,17 +231,19 @@ def submit_invoice(invoice: Invoice, db) -> dict:
     if not device:
         raise ValueError("Device not found")
 
-    quotation = None
-    lines: list[QuotationLine] = []
-    if invoice.quotation_id:
+    lines: list[Any] = list(invoice.lines) if invoice.lines else []
+    if not lines and invoice.quotation_id:
         quotation = db.query(Quotation).filter(Quotation.id == invoice.quotation_id).first()
         if quotation:
             lines = list(quotation.lines)
 
+    if not lines:
+        raise ValueError("Invoice has no lines to fiscalize")
+
     invoice.zimra_receipt_counter = (device.last_receipt_counter or 0) + 1
     invoice.zimra_receipt_global_no = (device.last_receipt_global_no or 0) + 1
 
-    receipt = _build_receipt(invoice, quotation, lines, str(device.device_id))
+    receipt = _build_receipt(invoice, lines, str(device.device_id))
     if invoice.zimra_receipt_counter > 1 and device.last_receipt_hash:
         receipt["previousReceiptHash"] = device.last_receipt_hash
 
