@@ -1,7 +1,7 @@
 ﻿from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_db, get_current_user, ensure_company_access, require_company_access
+from app.api.deps import get_db, ensure_company_access, require_company_access, require_portal_user
 from app.models.warehouse import Warehouse
 from app.schemas.warehouse import WarehouseCreate, WarehouseUpdate, WarehouseRead
 
@@ -12,7 +12,7 @@ router = APIRouter(prefix="/warehouses", tags=["warehouses"])
 def create_warehouse(
     payload: WarehouseCreate,
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user=Depends(require_portal_user),
 ):
     ensure_company_access(db, user, payload.company_id)
     warehouse = Warehouse(**payload.dict())
@@ -26,7 +26,7 @@ def create_warehouse(
 def list_warehouses(
     company_id: int,
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user=Depends(require_portal_user),
     _=Depends(require_company_access),
 ):
     return db.query(Warehouse).filter(Warehouse.company_id == company_id).all()
@@ -36,7 +36,7 @@ def list_warehouses(
 def get_warehouse(
     warehouse_id: int,
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user=Depends(require_portal_user),
 ):
     warehouse = db.query(Warehouse).filter(Warehouse.id == warehouse_id).first()
     if not warehouse:
@@ -50,7 +50,7 @@ def update_warehouse(
     warehouse_id: int,
     payload: WarehouseUpdate,
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user=Depends(require_portal_user),
 ):
     warehouse = db.query(Warehouse).filter(Warehouse.id == warehouse_id).first()
     if not warehouse:
@@ -70,7 +70,7 @@ def update_warehouse(
 def delete_warehouse(
     warehouse_id: int,
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user=Depends(require_portal_user),
 ):
     warehouse = db.query(Warehouse).filter(Warehouse.id == warehouse_id).first()
     if not warehouse:

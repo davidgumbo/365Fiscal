@@ -1,7 +1,7 @@
 ﻿from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_db, get_current_user, ensure_company_access
+from app.api.deps import get_db, ensure_company_access, require_portal_user
 from app.models.location import Location
 from app.models.warehouse import Warehouse
 from app.schemas.location import LocationCreate, LocationUpdate, LocationRead
@@ -13,7 +13,7 @@ router = APIRouter(prefix="/locations", tags=["locations"])
 def create_location(
     payload: LocationCreate,
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user=Depends(require_portal_user),
 ):
     warehouse = db.query(Warehouse).filter(Warehouse.id == payload.warehouse_id).first()
     if warehouse:
@@ -29,7 +29,7 @@ def create_location(
 def list_locations(
     warehouse_id: int,
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user=Depends(require_portal_user),
 ):
     warehouse = db.query(Warehouse).filter(Warehouse.id == warehouse_id).first()
     if warehouse:
@@ -41,7 +41,7 @@ def list_locations(
 def get_location(
     location_id: int,
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user=Depends(require_portal_user),
 ):
     location = db.query(Location).filter(Location.id == location_id).first()
     if not location:
@@ -57,7 +57,7 @@ def update_location(
     location_id: int,
     payload: LocationUpdate,
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user=Depends(require_portal_user),
 ):
     location = db.query(Location).filter(Location.id == location_id).first()
     if not location:
@@ -79,7 +79,7 @@ def update_location(
 def delete_location(
     location_id: int,
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user=Depends(require_portal_user),
 ):
     location = db.query(Location).filter(Location.id == location_id).first()
     if not location:

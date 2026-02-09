@@ -2,7 +2,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
-from app.api.deps import get_db, get_current_user, ensure_company_access, require_company_access
+from app.api.deps import get_db, ensure_company_access, require_company_access, require_portal_user
 from app.models.product import Product
 from app.models.stock_quant import StockQuant
 from app.schemas.product import ProductCreate, ProductRead, ProductUpdate, ProductWithStock
@@ -14,7 +14,7 @@ router = APIRouter(prefix="/products", tags=["products"])
 def create_product(
     payload: ProductCreate,
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user=Depends(require_portal_user),
 ):
     ensure_company_access(db, user, payload.company_id)
     product = Product(**payload.dict())
@@ -32,7 +32,7 @@ def list_products(
     is_active: bool | None = None,
     can_be_sold: bool | None = None,
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user=Depends(require_portal_user),
     _=Depends(require_company_access),
 ):
     query = db.query(Product).filter(Product.company_id == company_id)
@@ -56,7 +56,7 @@ def list_products(
 def list_products_with_stock(
     company_id: int,
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user=Depends(require_portal_user),
     _=Depends(require_company_access),
 ):
     """List products with their stock quantities."""
@@ -88,7 +88,7 @@ def list_products_with_stock(
 def get_product(
     product_id: int,
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user=Depends(require_portal_user),
 ):
     product = db.query(Product).filter(Product.id == product_id).first()
     if not product:
@@ -102,7 +102,7 @@ def update_product(
     product_id: int,
     payload: ProductUpdate,
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user=Depends(require_portal_user),
 ):
     product = db.query(Product).filter(Product.id == product_id).first()
     if not product:
@@ -120,7 +120,7 @@ def update_product(
 def delete_product(
     product_id: int,
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user=Depends(require_portal_user),
 ):
     product = db.query(Product).filter(Product.id == product_id).first()
     if not product:

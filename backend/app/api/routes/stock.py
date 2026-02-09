@@ -2,7 +2,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_db, get_current_user, ensure_company_access, require_company_access
+from app.api.deps import get_db, ensure_company_access, require_company_access, require_portal_user
 from app.models.stock_move import StockMove
 from app.models.stock_quant import StockQuant
 from app.models.product import Product
@@ -53,7 +53,7 @@ def update_stock_quant(db: Session, move: StockMove):
 def create_stock_move(
     payload: StockMoveCreate,
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user=Depends(require_portal_user),
 ):
     ensure_company_access(db, user, payload.company_id)
     
@@ -82,7 +82,7 @@ def list_stock_moves(
     move_type: str | None = None,
     state: str | None = None,
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user=Depends(require_portal_user),
     _=Depends(require_company_access),
 ):
     query = db.query(StockMove).filter(StockMove.company_id == company_id)
@@ -102,7 +102,7 @@ def update_stock_move(
     move_id: int,
     payload: StockMoveUpdate,
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user=Depends(require_portal_user),
 ):
     move = db.query(StockMove).filter(StockMove.id == move_id).first()
     if not move:
@@ -128,7 +128,7 @@ def update_stock_move(
 def confirm_stock_move(
     move_id: int,
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user=Depends(require_portal_user),
 ):
     move = db.query(StockMove).filter(StockMove.id == move_id).first()
     if not move:
@@ -151,7 +151,7 @@ def confirm_stock_move(
 def cancel_stock_move(
     move_id: int,
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user=Depends(require_portal_user),
 ):
     move = db.query(StockMove).filter(StockMove.id == move_id).first()
     if not move:
@@ -174,7 +174,7 @@ def list_stock_quants(
     warehouse_id: int | None = None,
     location_id: int | None = None,
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user=Depends(require_portal_user),
     _=Depends(require_company_access),
 ):
     query = db.query(StockQuant).filter(StockQuant.company_id == company_id)
@@ -192,7 +192,7 @@ def get_product_stock(
     product_id: int,
     company_id: int,
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user=Depends(require_portal_user),
 ):
     ensure_company_access(db, user, company_id)
     
