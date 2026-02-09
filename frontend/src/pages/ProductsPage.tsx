@@ -500,7 +500,6 @@ export default function ProductsPage() {
           <div style={{ maxHeight: "600px", overflowY: "auto" }}>
             {products.length === 0 ? (
               <div className="empty-state-pro">
-                <p>No products yet</p>
               </div>
             ) : (
               products.map((p) => (

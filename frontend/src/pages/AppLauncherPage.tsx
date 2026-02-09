@@ -49,9 +49,12 @@ const QuoteIcon = () => (
 
 const InventoryIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M5 8h14M5 8a2 2 0 1 1 0-4h14a2 2 0 1 1 0 4M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8" />
-    <line x1="10" y1="12" x2="10" y2="16" />
-    <line x1="14" y1="12" x2="14" y2="16" />
+    <path d="M3 7l9-4 9 4" />
+    <path d="M21 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7" />
+    <path d="M3 7l9 4 9-4" />
+    <path d="M7 11v6" />
+    <path d="M12 12v7" />
+    <path d="M17 11v6" />
   </svg>
 );
 
