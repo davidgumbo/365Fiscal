@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { apiFetch } from "../api";
 import { useMe } from "../hooks/useMe";
 
@@ -183,6 +183,24 @@ export default function InvoicesPage() {
   const [productInitialStock, setProductInitialStock] = useState("");
   const [productWarehouseId, setProductWarehouseId] = useState<number | null>(null);
   const [productLocationId, setProductLocationId] = useState<number | null>(null);
+  const [customerSearch, setCustomerSearch] = useState("");
+  const [customerDropdownOpen, setCustomerDropdownOpen] = useState(false);
+  const customerDropdownRef = useRef<HTMLDivElement>(null);
+
+  const filteredContacts = contacts.filter((c) =>
+    c.name.toLowerCase().includes(customerSearch.toLowerCase())
+  );
+
+  // Close customer dropdown when clicking outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (customerDropdownRef.current && !customerDropdownRef.current.contains(e.target as Node)) {
+        setCustomerDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   const loadAll = async () => {
     if (!companyId) return;
@@ -263,6 +281,9 @@ export default function InvoicesPage() {
     if (!selectedInvoice) return;
     setEditQuotationId(selectedInvoice.quotation_id ?? null);
     setEditCustomerId(selectedInvoice.customer_id ?? null);
+    const cust = contacts.find((c) => c.id === selectedInvoice.customer_id);
+    setCustomerSearch(cust?.name || "");
+    setCustomerDropdownOpen(false);
     setEditReference(selectedInvoice.reference ?? "");
     setEditCurrency(selectedInvoice.currency || "USD");
     setEditInvoiceDate(toDateInputValue(selectedInvoice.invoice_date));
@@ -326,6 +347,8 @@ export default function InvoicesPage() {
     setSelectedInvoiceId(null);
     setNewQuotationId(null);
     setNewCustomerId(contacts[0]?.id ?? null);
+    setCustomerSearch(contacts[0]?.name ?? "");
+    setCustomerDropdownOpen(false);
     setNewReference("");
     setNewCurrency("USD");
     setNewInvoiceDate("");
@@ -815,12 +838,42 @@ export default function InvoicesPage() {
                 <div className="row g-3">
                   <div className="col-md-6">
                     <label className="form-label fw-semibold">Customer <span className="text-danger">*</span></label>
-                    <select className="form-select" value={newCustomerId ?? ""} onChange={(e) => setNewCustomerId(e.target.value ? Number(e.target.value) : null)}>
-                      <option value="">Select customer</option>
-                      {contacts.map((c) => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                      ))}
-                    </select>
+                    <div className="position-relative" ref={customerDropdownRef}>
+                      <input
+                        className="form-control"
+                        placeholder="Search or select customer…"
+                        value={customerSearch}
+                        onChange={(e) => {
+                          setCustomerSearch(e.target.value);
+                          setCustomerDropdownOpen(true);
+                          if (!e.target.value) setNewCustomerId(null);
+                        }}
+                        onFocus={() => setCustomerDropdownOpen(true)}
+                      />
+                      {customerDropdownOpen && filteredContacts.length > 0 && (
+                        <ul className="list-group position-absolute w-100 shadow-sm" style={{ zIndex: 1050, maxHeight: 200, overflowY: "auto" }}>
+                          {filteredContacts.map((c) => (
+                            <li
+                              key={c.id}
+                              className={`list-group-item list-group-item-action${newCustomerId === c.id ? " active" : ""}`}
+                              role="button"
+                              onClick={() => {
+                                setNewCustomerId(c.id);
+                                setCustomerSearch(c.name);
+                                setCustomerDropdownOpen(false);
+                              }}
+                            >
+                              {c.name}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      {customerDropdownOpen && customerSearch && filteredContacts.length === 0 && (
+                        <div className="list-group position-absolute w-100 shadow-sm" style={{ zIndex: 1050 }}>
+                          <div className="list-group-item text-muted">No customers found</div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <div className="col-md-6">
                     <label className="form-label fw-semibold">Quotation</label>
@@ -999,12 +1052,42 @@ export default function InvoicesPage() {
                   <div className="col-md-6">
                     <label className="form-label fw-semibold">Customer</label>
                     {canEdit ? (
-                      <select className="form-select" value={editCustomerId ?? ""} onChange={(e) => setEditCustomerId(e.target.value ? Number(e.target.value) : null)}>
-                        <option value="">Select customer</option>
-                        {contacts.map((c) => (
-                          <option key={c.id} value={c.id}>{c.name}</option>
-                        ))}
-                      </select>
+                      <div className="position-relative" ref={customerDropdownRef}>
+                        <input
+                          className="form-control"
+                          placeholder="Search or select customer…"
+                          value={customerSearch}
+                          onChange={(e) => {
+                            setCustomerSearch(e.target.value);
+                            setCustomerDropdownOpen(true);
+                            if (!e.target.value) setEditCustomerId(null);
+                          }}
+                          onFocus={() => setCustomerDropdownOpen(true)}
+                        />
+                        {customerDropdownOpen && filteredContacts.length > 0 && (
+                          <ul className="list-group position-absolute w-100 shadow-sm" style={{ zIndex: 1050, maxHeight: 200, overflowY: "auto" }}>
+                            {filteredContacts.map((c) => (
+                              <li
+                                key={c.id}
+                                className={`list-group-item list-group-item-action${editCustomerId === c.id ? " active" : ""}`}
+                                role="button"
+                                onClick={() => {
+                                  setEditCustomerId(c.id);
+                                  setCustomerSearch(c.name);
+                                  setCustomerDropdownOpen(false);
+                                }}
+                              >
+                                {c.name}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                        {customerDropdownOpen && customerSearch && filteredContacts.length === 0 && (
+                          <div className="list-group position-absolute w-100 shadow-sm" style={{ zIndex: 1050 }}>
+                            <div className="list-group-item text-muted">No customers found</div>
+                          </div>
+                        )}
+                      </div>
                     ) : (
                       <div className="form-control-plaintext">{customer?.name || "—"}</div>
                     )}
@@ -1238,8 +1321,8 @@ export default function InvoicesPage() {
       {createProductOpen && (
         <div>
           <div className="modal-backdrop show" />
-          <div className="modal show d-block" tabIndex={-1}>
-            <div className="modal-dialog modal-lg">
+          <div className="modal show d-block" tabIndex={-1} style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
+            <div className="modal-dialog modal-lg modal-dialog-centered">
               <div className="modal-content">
                 <div className="modal-header">
                   <h5 className="modal-title">Create Product</h5>
