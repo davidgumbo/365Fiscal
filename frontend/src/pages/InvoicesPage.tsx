@@ -1289,46 +1289,58 @@ export default function InvoicesPage() {
       )}
 
       {paymentOpen && (
-        <div>
-          <div className="modal-backdrop show" />
-          <div className="modal show d-block" tabIndex={-1}>
-            <div className="modal-dialog">
-              <div className="modal-content">
-                <div className="modal-header">
-                  <h5 className="modal-title">Register Payment</h5>
+        <>
+          <div className="modal-backdrop fade show" style={{ zIndex: 1040 }} />
+          <div
+            className="modal fade show"
+            tabIndex={-1}
+            role="dialog"
+            style={{ display: "block", zIndex: 1050 }}
+            onClick={(e) => { if (e.target === e.currentTarget) setPaymentOpen(false); }}
+          >
+            <div className="modal-dialog modal-dialog-centered">
+              <div className="modal-content shadow-lg border-0">
+                <div className="modal-header border-bottom">
+                  <h5 className="modal-title fw-semibold">Register Payment</h5>
                   <button type="button" className="btn-close" onClick={() => setPaymentOpen(false)} />
                 </div>
-                <div className="modal-body">
+                <div className="modal-body py-4">
                   <div className="mb-3">
-                    <label className="form-label">Amount</label>
+                    <label className="form-label fw-semibold">Amount</label>
                     <input className="form-control" type="number" value={paymentAmount} onChange={(e) => setPaymentAmount(e.target.value)} />
                   </div>
                   <div className="mb-3">
-                    <label className="form-label">Payment Reference</label>
+                    <label className="form-label fw-semibold">Payment Reference</label>
                     <input className="form-control" value={paymentReference} onChange={(e) => setPaymentReference(e.target.value)} />
                   </div>
                 </div>
-                <div className="modal-footer">
-                  <button className="btn btn-outline-secondary" onClick={() => setPaymentOpen(false)}>Cancel</button>
+                <div className="modal-footer border-top">
+                  <button className="btn btn-light border" onClick={() => setPaymentOpen(false)}>Cancel</button>
                   <button className="btn btn-primary" onClick={registerPayment}>Confirm Payment</button>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </>
       )}
 
       {createProductOpen && (
-        <div>
-          <div className="modal-backdrop show" />
-          <div className="modal show d-block" tabIndex={-1} style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
+        <>
+          <div className="modal-backdrop fade show" style={{ zIndex: 1040 }} />
+          <div
+            className="modal fade show"
+            tabIndex={-1}
+            role="dialog"
+            style={{ display: "block", zIndex: 1050 }}
+            onClick={(e) => { if (e.target === e.currentTarget) setCreateProductOpen(false); }}
+          >
             <div className="modal-dialog modal-lg modal-dialog-centered">
-              <div className="modal-content">
-                <div className="modal-header">
-                  <h5 className="modal-title">Create Product</h5>
+              <div className="modal-content shadow-lg border-0">
+                <div className="modal-header border-bottom">
+                  <h5 className="modal-title fw-semibold">Create Product</h5>
                   <button type="button" className="btn-close" onClick={() => setCreateProductOpen(false)} />
                 </div>
-                <div className="modal-body">
+                <div className="modal-body py-4">
                   <div className="row g-3">
                     <div className="col-md-6">
                       <label className="form-label">Product Name</label>
@@ -1378,14 +1390,14 @@ export default function InvoicesPage() {
                     </div>
                   </div>
                 </div>
-                <div className="modal-footer">
-                  <button className="btn btn-outline-secondary" onClick={() => setCreateProductOpen(false)}>Cancel</button>
+                <div className="modal-footer border-top">
+                  <button className="btn btn-light border" onClick={() => setCreateProductOpen(false)}>Cancel</button>
                   <button className="btn btn-primary" onClick={createProduct}>Create Product</button>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
