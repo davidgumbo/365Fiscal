@@ -7,9 +7,14 @@ from app.db.session import SessionLocal
 from app.models.user import User
 from app.models.company import Company
 from app.models.company_user import CompanyUser
+from app.models.role import Role, SYSTEM_ROLES
 from app.security.security import hash_password
 
-app = FastAPI(title=settings.app_name)
+app = FastAPI(
+    title=settings.app_name,
+    description="Multi-Company Invoicing & Fiscalization System",
+    version="2.0.0",
+)
 
 origins = [o.strip() for o in settings.cors_origins.split(",") if o.strip()]
 if origins:
@@ -22,6 +27,29 @@ if origins:
     )
 
 app.include_router(api_router, prefix="/api")
+
+
+@app.on_event("startup")
+def ensure_system_roles():
+    """Initialize or update system roles on startup."""
+    db = SessionLocal()
+    try:
+        for role_data in SYSTEM_ROLES:
+            existing = db.query(Role).filter(Role.name == role_data["name"]).first()
+            if existing:
+                # Update existing role
+                for key, value in role_data.items():
+                    setattr(existing, key, value)
+            else:
+                # Create new role
+                role = Role(**role_data)
+                db.add(role)
+        db.commit()
+    except Exception as e:
+        print(f"Error initializing system roles: {e}")
+        db.rollback()
+    finally:
+        db.close()
 
 
 @app.on_event("startup")
@@ -73,13 +101,29 @@ def ensure_default_portal_user():
             user.hashed_password = hash_password(settings.default_portal_password)
             user.is_admin = False
             user.is_active = True
+        
+        # Get company_admin role
+        company_admin_role = db.query(Role).filter(Role.name == "company_admin").first()
+        
         link = (
             db.query(CompanyUser)
             .filter(CompanyUser.company_id == company.id, CompanyUser.user_id == user.id)
             .first()
         )
         if not link:
-            db.add(CompanyUser(company_id=company.id, user_id=user.id, role="portal", is_active=True))
+            db.add(CompanyUser(
+                company_id=company.id, 
+                user_id=user.id, 
+                role="company_admin",
+                role_id=company_admin_role.id if company_admin_role else None,
+                is_active=True,
+                is_company_admin=True,
+            ))
+        else:
+            link.role = "company_admin"
+            link.is_company_admin = True
+            if company_admin_role:
+                link.role_id = company_admin_role.id
         db.commit()
     finally:
         db.close()
@@ -88,3 +132,14 @@ def ensure_default_portal_user():
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/")
+def root():
+    return {
+        "name": settings.app_name,
+        "version": "2.0.0",
+        "description": "Multi-Company Invoicing & Fiscalization System",
+        "docs": "/docs",
+        "health": "/health",
+    }

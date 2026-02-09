@@ -19,7 +19,16 @@ interface StockReportData {
   recent_movements: { product: string; type: string; quantity: number; date: string }[];
 }
 
-type ReportType = "sales" | "stock";
+interface PaymentReportData {
+  total_payments: number;
+  total_amount: number;
+  reconciled_amount: number;
+  pending_amount: number;
+  by_method: { method: string; count: number; amount: number }[];
+  recent_payments: { reference: string; invoice: string; amount: number; date: string; method: string }[];
+}
+
+type ReportType = "sales" | "stock" | "payments";
 
 export default function ReportsPage() {
   const { me } = useMe();
@@ -27,6 +36,7 @@ export default function ReportsPage() {
   const [activeReport, setActiveReport] = useState<ReportType>("sales");
   const [salesData, setSalesData] = useState<SalesReportData | null>(null);
   const [stockData, setStockData] = useState<StockReportData | null>(null);
+  const [paymentData, setPaymentData] = useState<PaymentReportData | null>(null);
   const [loading, setLoading] = useState(false);
   const [dateRange, setDateRange] = useState({ from: "", to: "" });
 
@@ -106,6 +116,39 @@ export default function ReportsPage() {
             date: new Date(Date.now() - i * 86400000).toLocaleDateString()
           }))
         });
+      } else if (activeReport === "payments") {
+        // Payments report
+        const payments = await apiFetch<any[]>(`/payments?company_id=${companyId}`).catch(() => []);
+        
+        const totalAmount = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
+        const reconciledAmount = payments.filter(p => p.is_reconciled).reduce((sum, p) => sum + (p.amount || 0), 0);
+        
+        const methodCounts: Record<string, { count: number; amount: number }> = {};
+        payments.forEach(p => {
+          const method = p.payment_method || 'other';
+          if (!methodCounts[method]) methodCounts[method] = { count: 0, amount: 0 };
+          methodCounts[method].count++;
+          methodCounts[method].amount += p.amount || 0;
+        });
+        
+        setPaymentData({
+          total_payments: payments.length,
+          total_amount: totalAmount,
+          reconciled_amount: reconciledAmount,
+          pending_amount: totalAmount - reconciledAmount,
+          by_method: Object.entries(methodCounts).map(([method, data]) => ({
+            method: method.replace(/_/g, ' '),
+            count: data.count,
+            amount: data.amount
+          })),
+          recent_payments: payments.slice(0, 10).map(p => ({
+            reference: p.reference || '-',
+            invoice: p.invoice_reference || `INV-${p.invoice_id}`,
+            amount: p.amount || 0,
+            date: p.payment_date ? new Date(p.payment_date).toLocaleDateString() : '-',
+            method: (p.payment_method || 'other').replace(/_/g, ' ')
+          }))
+        });
       }
     } catch (err) {
       console.error("Failed to load report:", err);
@@ -156,6 +199,12 @@ export default function ReportsPage() {
             onClick={() => setActiveReport("stock")}
           >
             <StockIcon /> Stock Report
+          </button>
+          <button
+            className={`report-tab ${activeReport === "payments" ? "active" : ""}`}
+            onClick={() => setActiveReport("payments")}
+          >
+            <PaymentIcon /> Payments Report
           </button>
         </div>
         <div className="date-range">
@@ -345,6 +394,77 @@ export default function ReportsPage() {
           </div>
         </div>
       )}
+
+      {!loading && activeReport === "payments" && paymentData && (
+        <div className="report-content">
+          <div className="metrics-row">
+            <div className="metric-card">
+              <div className="metric-label">Total Payments</div>
+              <div className="metric-value">{paymentData.total_payments}</div>
+            </div>
+            <div className="metric-card">
+              <div className="metric-label">Total Amount</div>
+              <div className="metric-value">{formatCurrency(paymentData.total_amount)}</div>
+            </div>
+            <div className="metric-card success">
+              <div className="metric-label">Reconciled</div>
+              <div className="metric-value">{formatCurrency(paymentData.reconciled_amount)}</div>
+            </div>
+            <div className="metric-card warning">
+              <div className="metric-label">Pending</div>
+              <div className="metric-value">{formatCurrency(paymentData.pending_amount)}</div>
+            </div>
+          </div>
+
+          <div className="report-grid">
+            <div className="report-card">
+              <h3>Payments by Method</h3>
+              <table className="report-table">
+                <thead>
+                  <tr>
+                    <th>Method</th>
+                    <th>Count</th>
+                    <th>Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paymentData.by_method.map((item, i) => (
+                    <tr key={i}>
+                      <td style={{ textTransform: 'capitalize' }}>{item.method}</td>
+                      <td>{item.count}</td>
+                      <td>{formatCurrency(item.amount)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="report-card">
+              <h3>Recent Payments</h3>
+              <table className="report-table">
+                <thead>
+                  <tr>
+                    <th>Invoice</th>
+                    <th>Method</th>
+                    <th>Amount</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paymentData.recent_payments.map((payment, i) => (
+                    <tr key={i}>
+                      <td>{payment.invoice}</td>
+                      <td style={{ textTransform: 'capitalize' }}>{payment.method}</td>
+                      <td>{formatCurrency(payment.amount)}</td>
+                      <td>{payment.date}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -374,6 +494,15 @@ function ExportIcon() {
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
       <polyline points="7 10 12 15 17 10" />
       <line x1="12" y1="15" x2="12" y2="3" />
+    </svg>
+  );
+}
+
+function PaymentIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+      <line x1="1" y1="10" x2="23" y2="10"/>
     </svg>
   );
 }

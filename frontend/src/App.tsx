@@ -13,6 +13,9 @@ import PortalLoginPage from "./pages/PortalLoginPage";
 import SettingsPage from "./pages/SettingsPage";
 import DevicesPage from "./pages/DevicesPage";
 import ReportsPage from "./pages/ReportsPage";
+import UsersRolesPage from "./pages/UsersRolesPage";
+import AuditLogsPage from "./pages/AuditLogsPage";
+import PaymentsPage from "./pages/PaymentsPage";
 import { apiFetch } from "./api";
 import { useMe } from "./hooks/useMe";
 import ListViewContext, { FilterChip, ListViewState, SavedFilter } from "./context/ListViewContext";
@@ -28,7 +31,10 @@ const adminNav = [
   { to: "/quotations", label: "Quotations", icon: QuoteIcon },
   { to: "/inventory", label: "Inventory", icon: InventoryIcon },
   { to: "/devices", label: "Devices", icon: DeviceIcon },
+  { to: "/payments", label: "Payments", icon: PaymentIcon },
   { to: "/reports", label: "Reports", icon: ReportsIcon },
+  { to: "/users-roles", label: "Users & Roles", icon: UsersIcon },
+  { to: "/audit-logs", label: "Audit Logs", icon: AuditIcon },
   { to: "/settings", label: "Settings", icon: SettingsIcon }
 ];
 
@@ -206,6 +212,9 @@ function AppContent() {
               <Route path="/reports" element={<ReportsPage />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/devices" element={<DevicesPage />} />
+              <Route path="/users-roles" element={<UsersRolesPage />} />
+              <Route path="/audit-logs" element={<AuditLogsPage />} />
+              <Route path="/payments" element={<PaymentsPage />} />
             </Routes>
           </div>
         </main>
@@ -540,6 +549,64 @@ function InventoryIcon() {
       <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
       <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
       <line x1="12" y1="22.08" x2="12" y2="12" />
+    </svg>
+  );
+}
+
+function UsersIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  );
+}
+
+function AuditIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+    </svg>
+  );
+}
+
+function PaymentIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+      <line x1="1" y1="10" x2="23" y2="10"/>
     </svg>
   );
 }

@@ -1,5 +1,5 @@
 ﻿from datetime import datetime
-from sqlalchemy import DateTime, Float, ForeignKey, String
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -51,6 +51,16 @@ class Invoice(Base, TimestampMixin):
     zimra_verification_url: Mapped[str] = mapped_column(String(255), default="")
     zimra_payload: Mapped[str] = mapped_column(String(10000), default="")
     zimra_errors: Mapped[str] = mapped_column(String(2000), default="")
+    
+    # Audit fields
+    created_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    confirmed_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    fiscalized_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    cancelled_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    
+    # Stock processing
+    stock_processed: Mapped[bool] = mapped_column(default=False)
+    warehouse_id: Mapped[int | None] = mapped_column(ForeignKey("warehouses.id"), nullable=True)
 
     company = relationship("Company", back_populates="invoices")
     quotation = relationship("Quotation")
@@ -58,3 +68,9 @@ class Invoice(Base, TimestampMixin):
     device = relationship("Device")
     reversed_invoice = relationship("Invoice", remote_side=[id])
     lines = relationship("InvoiceLine", back_populates="invoice", cascade="all, delete-orphan")
+    payments = relationship("Payment", back_populates="invoice")
+    warehouse = relationship("Warehouse")
+    created_by = relationship("User", foreign_keys=[created_by_id])
+    confirmed_by = relationship("User", foreign_keys=[confirmed_by_id])
+    fiscalized_by = relationship("User", foreign_keys=[fiscalized_by_id])
+    cancelled_by = relationship("User", foreign_keys=[cancelled_by_id])

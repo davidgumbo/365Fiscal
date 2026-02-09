@@ -51,6 +51,8 @@ interface Invoice {
   reference: string;
   status: string;
   total_amount: number;
+  amount_paid?: number;
+  amount_due?: number;
   fiscalized_at?: string | null;
   created_at?: string;
 }
@@ -73,6 +75,21 @@ interface Product {
 interface Contact {
   id: number;
   name: string;
+}
+
+interface PaymentStats {
+  total_payments: number;
+  total_amount: number;
+  reconciled_count: number;
+  pending_count: number;
+}
+
+interface AuditLog {
+  id: number;
+  action: string;
+  resource_type: string;
+  user_email: string;
+  action_at: string;
 }
 
 // SVG Icons
@@ -147,6 +164,8 @@ export default function DashboardPage() {
   const [quotations, setQuotations] = useState<Quotation[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [paymentStats, setPaymentStats] = useState<PaymentStats | null>(null);
+  const [recentAuditLogs, setRecentAuditLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -170,15 +189,19 @@ export default function DashboardPage() {
       apiFetch<Quotation[]>(`/quotations${params}`).catch(() => []),
       apiFetch<Product[]>(`/products${params}`).catch(() => []),
       apiFetch<Contact[]>(`/contacts${params}`).catch(() => []),
+      apiFetch<PaymentStats>(`/payments/summary${params}`).catch(() => null),
+      apiFetch<AuditLog[]>(`/audit-logs${params}&limit=5`).catch(() => []),
     ];
     
     Promise.all(requests)
-      .then(([summaryData, invoicesData, quotationsData, productsData, contactsData]) => {
+      .then(([summaryData, invoicesData, quotationsData, productsData, contactsData, paymentData, auditData]) => {
         setSummary(summaryData as DashboardSummary | null);
         setInvoices((invoicesData as Invoice[]) || []);
         setQuotations((quotationsData as Quotation[]) || []);
         setProducts((productsData as Product[]) || []);
         setContacts((contactsData as Contact[]) || []);
+        setPaymentStats(paymentData as PaymentStats | null);
+        setRecentAuditLogs((auditData as AuditLog[]) || []);
       })
       .catch((err) => setError(err.message || "Failed to load dashboard"))
       .finally(() => setLoading(false));
@@ -199,13 +222,24 @@ export default function DashboardPage() {
     return { total, count: invoices.length, fiscalized, pending };
   }, [invoices]);
 
-  // Calculate quotation stats
+  // Calculate quotation stats with new workflow states
   const quotationStats = useMemo(() => {
-    const confirmed = quotations.filter((q) => q.status === "confirmed").length;
+    const accepted = quotations.filter((q) => q.status === "accepted").length;
     const sent = quotations.filter((q) => q.status === "sent").length;
     const draft = quotations.filter((q) => q.status === "draft").length;
-    return { count: quotations.length, confirmed, sent, draft };
+    const rejected = quotations.filter((q) => q.status === "rejected").length;
+    const converted = quotations.filter((q) => q.status === "converted").length;
+    return { count: quotations.length, accepted, sent, draft, rejected, converted };
   }, [quotations]);
+
+  // Calculate payment stats from invoice data
+  const invoicePaymentStats = useMemo(() => {
+    const totalPaid = invoices.reduce((sum, inv) => sum + (inv.amount_paid || 0), 0);
+    const totalDue = invoices.reduce((sum, inv) => sum + (inv.amount_due || 0), 0);
+    const paidInvoices = invoices.filter((inv) => (inv.amount_due || 0) <= 0 && (inv.amount_paid || 0) > 0).length;
+    const partialPaid = invoices.filter((inv) => (inv.amount_paid || 0) > 0 && (inv.amount_due || 0) > 0).length;
+    return { totalPaid, totalDue, paidInvoices, partialPaid };
+  }, [invoices]);
 
   // Recent items
   const recentInvoices = invoices.slice(0, 5);
@@ -391,20 +425,20 @@ export default function DashboardPage() {
 
         <div className="chart-card">
           <div className="chart-header">
-            <h3>Quotations</h3>
-            <span className="chart-period">Pipeline status</span>
+            <h3>Quotations Pipeline</h3>
+            <span className="chart-period">Workflow status</span>
           </div>
           <div className="stats-list">
             <div className="stat-row">
               <div className="stat-icon green"><CheckIcon /></div>
               <div className="stat-info">
-                <span className="stat-label">Confirmed</span>
-                <span className="stat-value">{quotationStats.confirmed}</span>
+                <span className="stat-label">Accepted</span>
+                <span className="stat-value">{quotationStats.accepted}</span>
               </div>
               <div className="stat-bar">
                 <div 
                   className="stat-fill green" 
-                  style={{ width: `${(quotationStats.confirmed / Math.max(quotationStats.count, 1)) * 100}%` }}
+                  style={{ width: `${(quotationStats.accepted / Math.max(quotationStats.count, 1)) * 100}%` }}
                 ></div>
               </div>
             </div>
@@ -431,6 +465,19 @@ export default function DashboardPage() {
                 <div 
                   className="stat-fill gray" 
                   style={{ width: `${(quotationStats.draft / Math.max(quotationStats.count, 1)) * 100}%` }}
+                ></div>
+              </div>
+            </div>
+            <div className="stat-row">
+              <div className="stat-icon purple"><FileTextIcon /></div>
+              <div className="stat-info">
+                <span className="stat-label">Converted</span>
+                <span className="stat-value">{quotationStats.converted}</span>
+              </div>
+              <div className="stat-bar">
+                <div 
+                  className="stat-fill purple" 
+                  style={{ width: `${(quotationStats.converted / Math.max(quotationStats.count, 1)) * 100}%` }}
                 ></div>
               </div>
             </div>
@@ -572,6 +619,14 @@ export default function DashboardPage() {
           <span className="footer-label">Contacts</span>
           <span className="footer-value">{contacts.length}</span>
         </div>
+        <div className="footer-stat">
+          <span className="footer-label">Payments</span>
+          <span className="footer-value">{paymentStats?.total_payments || 0}</span>
+        </div>
+        <div className="footer-stat">
+          <span className="footer-label">Amount Collected</span>
+          <span className="footer-value">${invoicePaymentStats.totalPaid.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+        </div>
         {filteredCompanyStatus.length > 0 && filteredCompanyStatus[0].certificate_days_remaining !== null && (
           <div className="footer-stat">
             <span className="footer-label">Certificate Days</span>
@@ -579,6 +634,40 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
+
+      {/* Recent Activity Section */}
+      {recentAuditLogs.length > 0 && (
+        <div className="table-card full-width" style={{ marginTop: 20 }}>
+          <div className="table-header">
+            <h3>Recent Activity</h3>
+            <NavLink to="/audit-logs" className="view-all-link">View All →</NavLink>
+          </div>
+          <table className="dashboard-table">
+            <thead>
+              <tr>
+                <th>Action</th>
+                <th>Resource</th>
+                <th>User</th>
+                <th>Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentAuditLogs.map((log) => (
+                <tr key={log.id}>
+                  <td>
+                    <span className={`action-badge ${log.action.includes('create') ? 'green' : log.action.includes('delete') ? 'red' : 'blue'}`}>
+                      {log.action.replace(/_/g, ' ')}
+                    </span>
+                  </td>
+                  <td>{log.resource_type}</td>
+                  <td>{log.user_email || 'System'}</td>
+                  <td className="date-cell">{new Date(log.action_at).toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

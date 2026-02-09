@@ -17,3 +17,6 @@ from app.models.company_certificate import CompanyCertificate
 from app.models.stock_move import StockMove
 from app.models.stock_quant import StockQuant
 from app.models.company_settings import CompanySettings
+from app.models.role import Role, SYSTEM_ROLES
+from app.models.audit_log import AuditLog, AuditAction, ResourceType
+from app.models.payment import Payment, PaymentMethod

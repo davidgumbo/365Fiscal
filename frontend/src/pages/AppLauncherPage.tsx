@@ -78,6 +78,28 @@ const SettingsIcon = () => (
   </svg>
 );
 
+const UsersIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+    <circle cx="9" cy="7" r="4" />
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+  </svg>
+);
+
+const AuditIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+  </svg>
+);
+
+const PaymentIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+    <line x1="1" y1="10" x2="23" y2="10"/>
+  </svg>
+);
+
 const CompanyIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <path d="M3 21h18" />
@@ -107,7 +129,10 @@ const adminApps: AppItem[] = [
   { to: "/quotations", label: "Quotations", icon: QuoteIcon, color: "#ffffff", bgColor: "#6366f1" },
   { to: "/inventory", label: "Inventory", icon: InventoryIcon, color: "#ffffff", bgColor: "#7c3aed" },
   { to: "/devices", label: "Devices", icon: DeviceIcon, color: "#ffffff", bgColor: "#ec4899" },
+  { to: "/payments", label: "Payments", icon: PaymentIcon, color: "#ffffff", bgColor: "#059669" },
   { to: "/reports", label: "Reports", icon: ReportsIcon, color: "#ffffff", bgColor: "#14b8a6" },
+  { to: "/users-roles", label: "Users & Roles", icon: UsersIcon, color: "#ffffff", bgColor: "#0ea5e9" },
+  { to: "/audit-logs", label: "Audit Logs", icon: AuditIcon, color: "#ffffff", bgColor: "#f43f5e" },
   { to: "/settings", label: "Settings", icon: SettingsIcon, color: "#ffffff", bgColor: "#64748b" },
 ];
 

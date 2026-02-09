@@ -12,8 +12,11 @@ class CompanyUser(Base, TimestampMixin):
     id: Mapped[int] = mapped_column(primary_key=True)
     company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"), index=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
-    role: Mapped[str] = mapped_column(String(50), default="portal")
+    role: Mapped[str] = mapped_column(String(50), default="read_only")  # Maps to Role.name
+    role_id: Mapped[int | None] = mapped_column(ForeignKey("roles.id"), nullable=True, index=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_company_admin: Mapped[bool] = mapped_column(Boolean, default=False)  # Shortcut flag
 
     company = relationship("Company", back_populates="users")
     user = relationship("User", back_populates="company_links")
+    role_obj = relationship("Role", back_populates="company_users")

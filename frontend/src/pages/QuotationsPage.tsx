@@ -142,6 +142,47 @@ export default function QuotationsPage() {
     loadData(companyId);
   };
 
+  const sendQuotation = async () => {
+    if (!companyId || !selectedQuotationId) return;
+    try {
+      await apiFetch(`/quotations/${selectedQuotationId}/send`, { method: "POST" });
+      loadData(companyId);
+    } catch (err: any) {
+      alert(err.message || "Failed to send quotation");
+    }
+  };
+
+  const acceptQuotation = async () => {
+    if (!companyId || !selectedQuotationId) return;
+    try {
+      await apiFetch(`/quotations/${selectedQuotationId}/accept`, { method: "POST" });
+      loadData(companyId);
+    } catch (err: any) {
+      alert(err.message || "Failed to accept quotation");
+    }
+  };
+
+  const rejectQuotation = async () => {
+    if (!companyId || !selectedQuotationId) return;
+    try {
+      await apiFetch(`/quotations/${selectedQuotationId}/reject`, { method: "POST" });
+      loadData(companyId);
+    } catch (err: any) {
+      alert(err.message || "Failed to reject quotation");
+    }
+  };
+
+  const convertToInvoice = async () => {
+    if (!companyId || !selectedQuotationId) return;
+    try {
+      const result = await apiFetch<{ invoice_id: number }>(`/quotations/${selectedQuotationId}/convert`, { method: "POST" });
+      alert(`Invoice created successfully! Invoice ID: ${result.invoice_id}`);
+      loadData(companyId);
+    } catch (err: any) {
+      alert(err.message || "Failed to convert quotation to invoice");
+    }
+  };
+
   const updateLine = (index: number, patch: Partial<QuotationLine>) => {
     setLines((prev) => prev.map((line, idx) => (idx === index ? { ...line, ...patch } : line)));
   };
@@ -242,8 +283,9 @@ export default function QuotationsPage() {
               <div className="statusbar">
                 <span className={`status-pill ${statusLabel === "draft" ? "active" : ""}`}>Draft</span>
                 <span className={`status-pill ${statusLabel === "sent" ? "active" : ""}`}>Sent</span>
-                <span className={`status-pill ${statusLabel === "confirmed" ? "active" : ""}`}>Confirmed</span>
-                <span className={`status-pill ${statusLabel === "cancelled" ? "active" : ""}`}>Cancelled</span>
+                <span className={`status-pill ${statusLabel === "accepted" ? "active" : ""}`}>Accepted</span>
+                <span className={`status-pill ${statusLabel === "rejected" ? "active" : ""}`}>Rejected</span>
+                <span className={`status-pill ${statusLabel === "converted" ? "active" : ""}`}>Invoiced</span>
               </div>
             </div>
             <div className="form-actions">
@@ -258,9 +300,10 @@ export default function QuotationsPage() {
               )}
               {selectedQuotationId ? (
                 <>
-                  <button className="outline" onClick={() => setStatus("sent")} disabled={statusLabel !== "draft"}>Send</button>
-                  <button className="outline" onClick={() => setStatus("confirmed")} disabled={statusLabel === "confirmed" || statusLabel === "cancelled"}>Confirm</button>
-                  <button className="outline" onClick={() => setStatus("cancelled")} disabled={statusLabel === "cancelled"}>Cancel</button>
+                  <button className="outline" onClick={sendQuotation} disabled={statusLabel !== "draft"}>Send</button>
+                  <button className="outline" onClick={acceptQuotation} disabled={statusLabel !== "sent"}>Accept</button>
+                  <button className="outline" onClick={rejectQuotation} disabled={statusLabel !== "draft" && statusLabel !== "sent"}>Reject</button>
+                  <button className="primary" onClick={convertToInvoice} disabled={statusLabel !== "accepted"}>Convert to Invoice</button>
                   <button className="outline" onClick={printQuotation}>Print</button>
                 </>
               ) : null}

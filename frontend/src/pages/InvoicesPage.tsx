@@ -39,6 +39,7 @@ type Invoice = {
   payment_terms: string;
   payment_reference: string;
   notes: string;
+  device_id?: number | null;
   zimra_status?: string;
   zimra_verification_code?: string;
   zimra_verification_url?: string;
