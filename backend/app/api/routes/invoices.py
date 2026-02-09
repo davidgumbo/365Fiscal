@@ -60,7 +60,6 @@ def create_invoice(
     ensure_company_access(db, user, payload.company_id)
     invoice_type = payload.invoice_type or "invoice"
     prefix = "CN" if invoice_type == "credit_note" else "INV"
-    invoice_type: str | None = None,
     reference = payload.reference or next_invoice_reference(db, prefix=prefix)
     
     # Get customer from quotation if not provided
@@ -68,14 +67,10 @@ def create_invoice(
     if not customer_id and payload.quotation_id:
         quotation = db.query(Quotation).filter(Quotation.id == payload.quotation_id).first()
         if quotation:
-    if invoice_type:
-        query = query.filter(Invoice.invoice_type == invoice_type)
             customer_id = quotation.customer_id
     
     invoice = Invoice(
         company_id=payload.company_id,
-        invoice_type=invoice_type,
-        reversed_invoice_id=payload.reversed_invoice_id,
         quotation_id=payload.quotation_id,
         customer_id=customer_id,
         device_id=payload.device_id,
@@ -85,7 +80,7 @@ def create_invoice(
         currency=payload.currency,
         payment_terms=payload.payment_terms,
         notes=payload.notes,
-        invoice_type=payload.invoice_type or "invoice",
+        invoice_type=invoice_type,
         reversed_invoice_id=payload.reversed_invoice_id,
         status="draft",
     )
