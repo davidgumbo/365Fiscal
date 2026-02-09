@@ -76,6 +76,10 @@ type Product = {
   name: string;
   sale_price: number;
   tax_rate: number;
+  quantity_on_hand?: number;
+  quantity_available?: number;
+  quantity_reserved?: number;
+  stock_value?: number;
 };
 
 const currencyOptions = ["USD", "ZWL", "ZAR", "EUR", "GBP", "KES", "UGX", "NGN", "TZS"];
@@ -155,7 +159,7 @@ export default function InvoicesPage() {
         apiFetch<Invoice[]>(`/invoices?${query}`),
         apiFetch<Quotation[]>(`/quotations?company_id=${companyId}`),
         apiFetch<Contact[]>(`/contacts?company_id=${companyId}`),
-        apiFetch<Product[]>(`/products?company_id=${companyId}`)
+        apiFetch<Product[]>(`/products/with-stock?company_id=${companyId}`)
       ]);
       setInvoices(invoiceData);
       setQuotations(quotationData);
@@ -177,6 +181,14 @@ export default function InvoicesPage() {
   useEffect(() => {
     loadAll();
   }, [companyId, listSearch, listStatus, listType]);
+
+  useEffect(() => {
+    if (!newQuotationId) return;
+    const quotation = quotations.find((q) => q.id === newQuotationId);
+    if (quotation?.customer_id) {
+      setNewCustomerId(quotation.customer_id);
+    }
+  }, [newQuotationId, quotations]);
 
   const selectedInvoice = useMemo(() => {
     return invoices.find((inv) => inv.id === selectedInvoiceId) ?? null;
@@ -769,6 +781,8 @@ export default function InvoicesPage() {
                           <th className="text-end">Price</th>
                           <th className="text-end">Disc %</th>
                           <th className="text-end">Tax %</th>
+                          <th className="text-end">On Hand</th>
+                          <th className="text-end">Available</th>
                           <th className="text-end">Amount</th>
                           {canEdit && <th></th>}
                         </tr>
@@ -777,6 +791,9 @@ export default function InvoicesPage() {
                         {displayLines.map((line, index) => {
                           const product = line.product_id ? productById.get(line.product_id) : null;
                           const lineTotal = (line.quantity || 0) * (line.unit_price || 0) * (1 - (line.discount || 0) / 100) * (1 + (line.vat_rate || 0) / 100);
+                          const availableQty = product?.quantity_available ?? 0;
+                          const onHandQty = product?.quantity_on_hand ?? 0;
+                          const exceedsStock = (line.quantity || 0) > availableQty;
                           return (
                             <tr key={line.id || `new-${index}`}>
                               <td>
@@ -795,8 +812,10 @@ export default function InvoicesPage() {
                                     }}
                                   >
                                     <option value="">Select</option>
-                                    {products.map((p) => (
-                                      <option key={p.id} value={p.id}>{p.name}</option>
+                                        {products.map((p) => (
+                                          <option key={p.id} value={p.id}>
+                                            {p.name} (avail: {p.quantity_available ?? 0})
+                                          </option>
                                     ))}
                                   </select>
                                 ) : (
@@ -845,6 +864,10 @@ export default function InvoicesPage() {
                                   line.vat_rate ? `${line.vat_rate}%` : "-"
                                 )}
                               </td>
+                              <td className="text-end">{onHandQty}</td>
+                              <td className={`text-end ${exceedsStock ? "text-danger" : ""}`}>
+                                {availableQty}
+                              </td>
                               <td className="text-end">{formatCurrency(lineTotal, invoiceCurrency)}</td>
                               {canEdit && (
                                 <td className="text-center">
@@ -856,7 +879,7 @@ export default function InvoicesPage() {
                         })}
                         {!displayLines.length && (
                           <tr>
-                            <td colSpan={canEdit ? 9 : 8} className="text-center py-4">No invoice lines</td>
+                            <td colSpan={canEdit ? 11 : 10} className="text-center py-4">No invoice lines</td>
                           </tr>
                         )}
                       </tbody>

@@ -6,6 +6,8 @@ from app.schemas.invoice_line import InvoiceLineCreate, InvoiceLineRead
 
 class InvoiceCreate(BaseModel):
     company_id: int
+    invoice_type: str | None = None
+    reversed_invoice_id: int | None = None
     quotation_id: int | None = None
     customer_id: int | None = None
     device_id: int | None = None
@@ -21,6 +23,8 @@ class InvoiceCreate(BaseModel):
 
 
 class InvoiceUpdate(BaseModel):
+    invoice_type: str | None = None
+    reversed_invoice_id: int | None = None
     quotation_id: int | None = None
     customer_id: int | None = None
     device_id: int | None = None
@@ -41,6 +45,8 @@ class InvoiceUpdate(BaseModel):
 class InvoiceRead(ORMBase):
     id: int
     company_id: int
+    invoice_type: str
+    reversed_invoice_id: int | None
     quotation_id: int | None
     customer_id: int | None
     device_id: int | None
