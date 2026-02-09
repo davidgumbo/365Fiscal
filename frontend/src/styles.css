@@ -392,6 +392,22 @@ textarea {
   box-shadow: none !important;
 }
 
+.invoice-form .input-underline,
+.invoice-form .input-underline.form-select,
+.invoice-form .input-underline.form-control {
+  border: 0 !important;
+  border-bottom: 1px solid var(--stroke) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.invoice-form .input-underline:focus {
+  border-bottom-color: var(--blue-600) !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 .statusbar {
   display: flex;
   gap: 8px;

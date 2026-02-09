@@ -886,11 +886,11 @@ export default function InvoicesPage() {
                   </div>
                   <div className="col-md-3">
                     <label className="form-label">Reference</label>
-                    <input className="form-control bg-light" value="Auto-generated" readOnly />
+                    <input className="form-control input-underline bg-light" value="Auto-generated" readOnly />
                   </div>
                   <div className="col-md-3">
                     <label className="form-label">Currency</label>
-                    <select className="form-select" value={newCurrency} onChange={(e) => setNewCurrency(e.target.value)}>
+                    <select className="form-select input-underline" value={newCurrency} onChange={(e) => setNewCurrency(e.target.value)}>
                       {currencyOptions.map((cur) => (
                         <option key={cur} value={cur}>{cur}</option>
                       ))}
@@ -898,15 +898,15 @@ export default function InvoicesPage() {
                   </div>
                   <div className="col-md-3">
                     <label className="form-label">Invoice Date</label>
-                    <input className="form-control" type="date" value={newInvoiceDate} onChange={(e) => setNewInvoiceDate(e.target.value)} />
+                    <input className="form-control input-underline" type="date" value={newInvoiceDate} onChange={(e) => setNewInvoiceDate(e.target.value)} />
                   </div>
                   <div className="col-md-3">
                     <label className="form-label">Due Date</label>
-                    <input className="form-control" type="date" value={newDueDate} onChange={(e) => setNewDueDate(e.target.value)} />
+                    <input className="form-control input-underline" type="date" value={newDueDate} onChange={(e) => setNewDueDate(e.target.value)} />
                   </div>
-                  <div className="col-md-4">
+                  <div className="col-md-4 d-none">
                     <label className="form-label">Fiscal Device</label>
-                    <select className="form-select" value={newDeviceId ?? ""} onChange={(e) => setNewDeviceId(e.target.value ? Number(e.target.value) : null)}>
+                    <select className="form-select input-underline" value={newDeviceId ?? ""} onChange={(e) => setNewDeviceId(e.target.value ? Number(e.target.value) : null)}>
                       <option value="">— None —</option>
                       {devices.map((d) => (
                         <option key={d.id} value={d.id}>{d.device_id || d.serial_number || `Device ${d.id}`}</option>
@@ -915,11 +915,19 @@ export default function InvoicesPage() {
                   </div>
                   <div className="col-md-4">
                     <label className="form-label">Payment Terms</label>
-                    <input className="form-control" value={newPaymentTerms} onChange={(e) => setNewPaymentTerms(e.target.value)} placeholder="e.g. Net 30" />
+                    <select className="form-select input-underline" value={newPaymentTerms} onChange={(e) => setNewPaymentTerms(e.target.value)}>
+                      <option value="">Select terms</option>
+                      <option value="7 Days">7 Days</option>
+                      <option value="14 Days">14 Days</option>
+                      <option value="30 Days">30 Days</option>
+                      <option value="2 Weeks">2 Weeks</option>
+                      <option value="1 Month">1 Month</option>
+                      <option value="6 Months">6 Months</option>
+                    </select>
                   </div>
                   <div className="col-md-4">
                     <label className="form-label">Notes</label>
-                    <textarea className="form-control" rows={1} value={newNotes} onChange={(e) => setNewNotes(e.target.value)} />
+                    <textarea className="form-control input-underline" rows={1} value={newNotes} onChange={(e) => setNewNotes(e.target.value)} />
                   </div>
                 </div>
 
@@ -1088,7 +1096,7 @@ export default function InvoicesPage() {
                   <div className="col-md-3">
                     <label className="form-label fw-semibold">Invoice Date</label>
                     {canEdit ? (
-                      <input className="form-control" type="date" value={editInvoiceDate} onChange={(e) => setEditInvoiceDate(e.target.value)} />
+                      <input className="form-control input-underline" type="date" value={editInvoiceDate} onChange={(e) => setEditInvoiceDate(e.target.value)} />
                     ) : (
                       <div className="form-control-plaintext">{invoiceDateLabel}</div>
                     )}
@@ -1096,7 +1104,7 @@ export default function InvoicesPage() {
                   <div className="col-md-3">
                     <label className="form-label fw-semibold">Due Date</label>
                     {canEdit ? (
-                      <input className="form-control" type="date" value={editDueDate} onChange={(e) => setEditDueDate(e.target.value)} />
+                      <input className="form-control input-underline" type="date" value={editDueDate} onChange={(e) => setEditDueDate(e.target.value)} />
                     ) : (
                       <div className="form-control-plaintext">{selectedInvoice?.due_date ? new Date(selectedInvoice.due_date).toLocaleDateString() : "—"}</div>
                     )}
@@ -1104,7 +1112,7 @@ export default function InvoicesPage() {
                   <div className="col-md-4">
                     <label className="form-label">Quotation</label>
                     {canEdit ? (
-                      <select className="form-select" value={editQuotationId ?? ""} onChange={(e) => setEditQuotationId(e.target.value ? Number(e.target.value) : null)}>
+                      <select className="form-select input-underline" value={editQuotationId ?? ""} onChange={(e) => setEditQuotationId(e.target.value ? Number(e.target.value) : null)}>
                         <option value="">— None —</option>
                         {quotations.map((q) => (
                           <option key={q.id} value={q.id}>{q.reference}</option>
@@ -1121,7 +1129,7 @@ export default function InvoicesPage() {
                   <div className="col-md-4">
                     <label className="form-label">Currency</label>
                     {canEdit ? (
-                      <select className="form-select" value={editCurrency} onChange={(e) => setEditCurrency(e.target.value)}>
+                      <select className="form-select input-underline" value={editCurrency} onChange={(e) => setEditCurrency(e.target.value)}>
                         {currencyOptions.map((cur) => (
                           <option key={cur} value={cur}>{cur}</option>
                         ))}
@@ -1130,10 +1138,10 @@ export default function InvoicesPage() {
                       <div className="form-control-plaintext">{invoiceCurrency}</div>
                     )}
                   </div>
-                  <div className="col-md-4">
+                  <div className="col-md-4 d-none">
                     <label className="form-label">Fiscal Device</label>
                     {canEdit ? (
-                      <select className="form-select" value={editDeviceId ?? ""} onChange={(e) => setEditDeviceId(e.target.value ? Number(e.target.value) : null)}>
+                      <select className="form-select input-underline" value={editDeviceId ?? ""} onChange={(e) => setEditDeviceId(e.target.value ? Number(e.target.value) : null)}>
                         <option value="">— None —</option>
                         {devices.map((d) => (
                           <option key={d.id} value={d.id}>{d.device_id || d.serial_number || `Device ${d.id}`}</option>
@@ -1146,7 +1154,15 @@ export default function InvoicesPage() {
                   <div className="col-md-4">
                     <label className="form-label">Payment Terms</label>
                     {canEdit ? (
-                      <input className="form-control" value={editPaymentTerms} onChange={(e) => setEditPaymentTerms(e.target.value)} />
+                      <select className="form-select input-underline" value={editPaymentTerms} onChange={(e) => setEditPaymentTerms(e.target.value)}>
+                        <option value="">Select terms</option>
+                        <option value="7 Days">7 Days</option>
+                        <option value="14 Days">14 Days</option>
+                        <option value="30 Days">30 Days</option>
+                        <option value="2 Weeks">2 Weeks</option>
+                        <option value="1 Month">1 Month</option>
+                        <option value="6 Months">6 Months</option>
+                      </select>
                     ) : (
                       <div className="form-control-plaintext">{selectedInvoice?.payment_terms || "—"}</div>
                     )}
@@ -1158,7 +1174,7 @@ export default function InvoicesPage() {
                   <div className="col-12">
                     <label className="form-label">Notes</label>
                     {canEdit ? (
-                      <textarea className="form-control" rows={2} value={editNotes} onChange={(e) => setEditNotes(e.target.value)} />
+                      <textarea className="form-control input-underline" rows={2} value={editNotes} onChange={(e) => setEditNotes(e.target.value)} />
                     ) : (
                       <div className="form-control-plaintext">{selectedInvoice?.notes || "—"}</div>
                     )}
