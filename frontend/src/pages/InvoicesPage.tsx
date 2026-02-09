@@ -1331,10 +1331,10 @@ export default function InvoicesPage() {
             className="modal fade show"
             tabIndex={-1}
             role="dialog"
-            style={{ display: "block", zIndex: 1050 }}
+            style={{ position: "fixed", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem", zIndex: 1050 }}
             onClick={(e) => { if (e.target === e.currentTarget) setCreateProductOpen(false); }}
           >
-            <div className="modal-dialog modal-lg modal-dialog-centered">
+            <div className="modal-dialog modal-lg modal-dialog-centered" style={{ margin: 0, width: "100%", maxWidth: 720 }}>
               <div className="modal-content shadow-lg border-0">
                 <div className="modal-header border-bottom">
                   <h5 className="modal-title fw-semibold">Create Product</h5>
