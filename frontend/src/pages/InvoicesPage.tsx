@@ -76,10 +76,22 @@ type Product = {
   name: string;
   sale_price: number;
   tax_rate: number;
+  uom?: string;
   quantity_on_hand?: number;
   quantity_available?: number;
   quantity_reserved?: number;
   stock_value?: number;
+};
+
+type Warehouse = {
+  id: number;
+  name: string;
+};
+
+type Location = {
+  id: number;
+  name: string;
+  warehouse_id: number;
 };
 
 const currencyOptions = ["USD", "ZWL", "ZAR", "EUR", "GBP", "KES", "UGX", "NGN", "TZS"];
@@ -115,6 +127,8 @@ export default function InvoicesPage() {
   const [quotations, setQuotations] = useState<Quotation[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<number | null>(null);
   const [newMode, setNewMode] = useState(false);
   const [newQuotationId, setNewQuotationId] = useState<number | null>(null);
@@ -143,6 +157,14 @@ export default function InvoicesPage() {
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentReference, setPaymentReference] = useState("");
+  const [createProductOpen, setCreateProductOpen] = useState(false);
+  const [productName, setProductName] = useState("");
+  const [productPrice, setProductPrice] = useState("");
+  const [productTaxRate, setProductTaxRate] = useState("");
+  const [productUom, setProductUom] = useState("PCS");
+  const [productInitialStock, setProductInitialStock] = useState("");
+  const [productWarehouseId, setProductWarehouseId] = useState<number | null>(null);
+  const [productLocationId, setProductLocationId] = useState<number | null>(null);
 
   const loadAll = async () => {
     if (!companyId) return;
@@ -155,16 +177,21 @@ export default function InvoicesPage() {
         ...(listStatus ? { status: listStatus } : {}),
         ...(listType ? { invoice_type: listType } : {})
       }).toString();
-      const [invoiceData, quotationData, contactData, productData] = await Promise.all([
+      const [invoiceData, quotationData, contactData, productData, warehouseData] = await Promise.all([
         apiFetch<Invoice[]>(`/invoices?${query}`),
         apiFetch<Quotation[]>(`/quotations?company_id=${companyId}`),
         apiFetch<Contact[]>(`/contacts?company_id=${companyId}`),
-        apiFetch<Product[]>(`/products/with-stock?company_id=${companyId}`)
+        apiFetch<Product[]>(`/products/with-stock?company_id=${companyId}`),
+        apiFetch<Warehouse[]>(`/warehouses?company_id=${companyId}`)
       ]);
       setInvoices(invoiceData);
       setQuotations(quotationData);
       setContacts(contactData);
       setProducts(productData);
+      setWarehouses(warehouseData);
+      if (!productWarehouseId && warehouseData.length) {
+        setProductWarehouseId(warehouseData[0].id);
+      }
       if (invoiceData.length && !selectedInvoiceId) {
         setSelectedInvoiceId(invoiceData[0].id);
       }
@@ -181,6 +208,21 @@ export default function InvoicesPage() {
   useEffect(() => {
     loadAll();
   }, [companyId, listSearch, listStatus, listType]);
+
+  useEffect(() => {
+    if (!productWarehouseId) {
+      setLocations([]);
+      return;
+    }
+    apiFetch<Location[]>(`/locations?warehouse_id=${productWarehouseId}`)
+      .then((data) => {
+        setLocations(data);
+        if (!productLocationId && data.length) {
+          setProductLocationId(data[0].id);
+        }
+      })
+      .catch(() => setLocations([]));
+  }, [productWarehouseId]);
 
   useEffect(() => {
     if (!newQuotationId) return;
@@ -266,7 +308,17 @@ export default function InvoicesPage() {
     setNewDueDate("");
     setNewPaymentTerms("");
     setNewNotes("");
-    setEditLines([]);
+    setEditLines([
+      {
+        product_id: null,
+        description: "",
+        quantity: 1,
+        uom: "PCS",
+        unit_price: 0,
+        discount: 0,
+        vat_rate: 0
+      }
+    ]);
   };
 
   const createInvoice = async () => {
@@ -283,7 +335,16 @@ export default function InvoicesPage() {
         due_date: fromDateInputValue(newDueDate),
         payment_terms: newPaymentTerms,
         notes: newNotes,
-        invoice_type: "invoice"
+        invoice_type: "invoice",
+        lines: editLines.map((line) => ({
+          product_id: line.product_id,
+          description: line.description || "",
+          quantity: line.quantity || 1,
+          uom: line.uom || "PCS",
+          unit_price: line.unit_price || 0,
+          discount: line.discount || 0,
+          vat_rate: line.vat_rate || 0
+        }))
       })
     });
     setSelectedInvoiceId(created.id);
@@ -383,6 +444,51 @@ export default function InvoicesPage() {
         vat_rate: 0
       }
     ]);
+  };
+
+  const createProduct = async () => {
+    if (!companyId) return;
+    if (!productName.trim()) return;
+    const initialQty = Number(productInitialStock) || 0;
+    if (initialQty > 0 && (!productWarehouseId || !productLocationId)) {
+      setError("Select warehouse and location for initial stock");
+      return;
+    }
+    const created = await apiFetch<Product>("/products", {
+      method: "POST",
+      body: JSON.stringify({
+        company_id: companyId,
+        name: productName.trim(),
+        sale_price: Number(productPrice) || 0,
+        tax_rate: Number(productTaxRate) || 0,
+        uom: productUom
+      })
+    });
+
+    if (initialQty > 0 && productWarehouseId && productLocationId) {
+      const move = await apiFetch<{ id: number }>("/stock/moves", {
+        method: "POST",
+        body: JSON.stringify({
+          company_id: companyId,
+          product_id: created.id,
+          warehouse_id: productWarehouseId,
+          location_id: productLocationId,
+          move_type: "in",
+          quantity: initialQty,
+          unit_cost: created.sale_price || 0,
+          reference: `Init ${created.name}`
+        })
+      });
+      await apiFetch(`/stock/moves/${move.id}/confirm`, { method: "POST" });
+    }
+
+    setCreateProductOpen(false);
+    setProductName("");
+    setProductPrice("");
+    setProductTaxRate("");
+    setProductUom("PCS");
+    setProductInitialStock("");
+    await loadAll();
   };
 
   const removeLine = (index: number) => {
@@ -646,6 +752,98 @@ export default function InvoicesPage() {
                       <textarea className="form-control" rows={3} value={newNotes} onChange={(e) => setNewNotes(e.target.value)} />
                     </div>
                   </div>
+
+                  <div className="d-flex flex-wrap justify-content-between align-items-center mt-4 mb-2">
+                    <h6 className="fw-semibold mb-0">Invoice Lines</h6>
+                    <div className="d-flex gap-2">
+                      <button className="btn btn-outline-secondary" onClick={addLine}>+ Add Line</button>
+                      <button className="btn btn-outline-primary" onClick={() => setCreateProductOpen(true)}>+ New Product</button>
+                    </div>
+                  </div>
+
+                  <div className="table-responsive">
+                    <table className="table table-bordered align-middle">
+                      <thead className="table-light">
+                        <tr>
+                          <th>Product</th>
+                          <th>Description</th>
+                          <th className="text-end">Qty</th>
+                          <th>UoM</th>
+                          <th className="text-end">Price</th>
+                          <th className="text-end">Disc %</th>
+                          <th className="text-end">Tax %</th>
+                          <th className="text-end">On Hand</th>
+                          <th className="text-end">Available</th>
+                          <th className="text-end">Amount</th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {editLines.map((line, index) => {
+                          const product = line.product_id ? productById.get(line.product_id) : null;
+                          const lineTotal = (line.quantity || 0) * (line.unit_price || 0) * (1 - (line.discount || 0) / 100) * (1 + (line.vat_rate || 0) / 100);
+                          const availableQty = product?.quantity_available ?? 0;
+                          const onHandQty = product?.quantity_on_hand ?? 0;
+                          const exceedsStock = (line.quantity || 0) > availableQty;
+                          return (
+                            <tr key={`new-${index}`}>
+                              <td>
+                                <select
+                                  className="form-select"
+                                  value={line.product_id ?? ""}
+                                  onChange={(e) => {
+                                    const prod = products.find((p) => p.id === Number(e.target.value));
+                                    updateLine(index, {
+                                      product_id: Number(e.target.value),
+                                      description: prod?.name ?? "",
+                                      unit_price: prod?.sale_price ?? 0,
+                                      vat_rate: prod?.tax_rate ?? 0,
+                                      uom: prod?.uom || "PCS"
+                                    });
+                                  }}
+                                >
+                                  <option value="">Select</option>
+                                  {products.map((p) => (
+                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                  ))}
+                                </select>
+                              </td>
+                              <td>
+                                <input className="form-control" value={line.description || ""} onChange={(e) => updateLine(index, { description: e.target.value })} />
+                              </td>
+                              <td className="text-end">
+                                <input className="form-control text-end" type="number" value={line.quantity || 0} onChange={(e) => updateLine(index, { quantity: Number(e.target.value) })} />
+                              </td>
+                              <td>
+                                <input className="form-control" value={line.uom || ""} onChange={(e) => updateLine(index, { uom: e.target.value })} />
+                              </td>
+                              <td className="text-end">
+                                <input className="form-control text-end" type="number" value={line.unit_price || 0} onChange={(e) => updateLine(index, { unit_price: Number(e.target.value) })} />
+                              </td>
+                              <td className="text-end">
+                                <input className="form-control text-end" type="number" value={line.discount || 0} onChange={(e) => updateLine(index, { discount: Number(e.target.value) })} />
+                              </td>
+                              <td className="text-end">
+                                <input className="form-control text-end" type="number" value={line.vat_rate || 0} onChange={(e) => updateLine(index, { vat_rate: Number(e.target.value) })} />
+                              </td>
+                              <td className="text-end">{onHandQty}</td>
+                              <td className={`text-end ${exceedsStock ? "text-danger" : ""}`}>{availableQty}</td>
+                              <td className="text-end">{formatCurrency(lineTotal, newCurrency)}</td>
+                              <td className="text-center">
+                                <button className="btn btn-sm btn-outline-danger" onClick={() => removeLine(index)} disabled={editLines.length === 1}>✕</button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                        {!editLines.length && (
+                          <tr>
+                            <td colSpan={11} className="text-center py-4">Add a line to start</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
                   <div className="mt-4 text-end">
                     <span className="text-muted me-3">Total: {amountLabel}</span>
                     <button className="btn btn-primary" onClick={createInvoice}>Create Invoice</button>
@@ -888,7 +1086,10 @@ export default function InvoicesPage() {
 
                   {canEdit && (
                     <div className="mb-3">
-                      <button className="btn btn-outline-secondary" onClick={addLine}>+ Add Line</button>
+                      <div className="d-flex gap-2">
+                        <button className="btn btn-outline-secondary" onClick={addLine}>+ Add Line</button>
+                        <button className="btn btn-outline-primary" onClick={() => setCreateProductOpen(true)}>+ New Product</button>
+                      </div>
                     </div>
                   )}
 
@@ -949,6 +1150,68 @@ export default function InvoicesPage() {
                 <div className="modal-footer">
                   <button className="btn btn-outline-secondary" onClick={() => setPaymentOpen(false)}>Cancel</button>
                   <button className="btn btn-primary" onClick={registerPayment}>Confirm Payment</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {createProductOpen && (
+        <div>
+          <div className="modal-backdrop show" />
+          <div className="modal show d-block" tabIndex={-1}>
+            <div className="modal-dialog modal-lg">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h5 className="modal-title">Create Product</h5>
+                  <button type="button" className="btn-close" onClick={() => setCreateProductOpen(false)} />
+                </div>
+                <div className="modal-body">
+                  <div className="row g-3">
+                    <div className="col-md-6">
+                      <label className="form-label">Product Name</label>
+                      <input className="form-control" value={productName} onChange={(e) => setProductName(e.target.value)} />
+                    </div>
+                    <div className="col-md-3">
+                      <label className="form-label">Sale Price</label>
+                      <input className="form-control" type="number" value={productPrice} onChange={(e) => setProductPrice(e.target.value)} />
+                    </div>
+                    <div className="col-md-3">
+                      <label className="form-label">Tax Rate %</label>
+                      <input className="form-control" type="number" value={productTaxRate} onChange={(e) => setProductTaxRate(e.target.value)} />
+                    </div>
+                    <div className="col-md-3">
+                      <label className="form-label">UoM</label>
+                      <input className="form-control" value={productUom} onChange={(e) => setProductUom(e.target.value)} />
+                    </div>
+                    <div className="col-md-3">
+                      <label className="form-label">Initial Stock</label>
+                      <input className="form-control" type="number" value={productInitialStock} onChange={(e) => setProductInitialStock(e.target.value)} />
+                    </div>
+                    <div className="col-md-3">
+                      <label className="form-label">Warehouse</label>
+                      <select className="form-select" value={productWarehouseId ?? ""} onChange={(e) => setProductWarehouseId(Number(e.target.value))}>
+                        <option value="">Select warehouse</option>
+                        {warehouses.map((w) => (
+                          <option key={w.id} value={w.id}>{w.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="col-md-3">
+                      <label className="form-label">Location</label>
+                      <select className="form-select" value={productLocationId ?? ""} onChange={(e) => setProductLocationId(Number(e.target.value))}>
+                        <option value="">Select location</option>
+                        {locations.map((l) => (
+                          <option key={l.id} value={l.id}>{l.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button className="btn btn-outline-secondary" onClick={() => setCreateProductOpen(false)}>Cancel</button>
+                  <button className="btn btn-primary" onClick={createProduct}>Create Product</button>
                 </div>
               </div>
             </div>
