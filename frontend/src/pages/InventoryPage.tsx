@@ -1028,7 +1028,6 @@ export default function InventoryPage() {
                     {filteredProducts.length === 0 && (
                       <tr>
                         <td colSpan={10} style={{ textAlign: "center", padding: 40 }}>
-                          <div style={{ color: "var(--muted)", marginBottom: 16 }}>No products found</div>
                           <button className="o-btn o-btn-primary" onClick={startNewProduct}>
                             + Create Product
                           </button>
@@ -1091,8 +1090,7 @@ export default function InventoryPage() {
           <div className="o-main" style={{ width: "100%" }}>
             <div className="o-form-view">
               <div className="o-form-sheet">
-                <div style={{ display: "flex", gap: 24, marginBottom: 24 }}>
-                  <div style={{ fontSize: 48, color: "#2563eb", fontWeight: 700 }}>No Products</div>
+                <div style={{ display: "flex", gap: 24, marginBottom: 24, alignItems: "center" }}>
                   <div style={{ flex: 1 }}>
                     <input
                       type="text"
