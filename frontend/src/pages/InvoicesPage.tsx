@@ -361,7 +361,7 @@ export default function InvoicesPage() {
         product_id: null,
         description: "",
         quantity: 1,
-        uom: "PCS",
+        uom: "",
         unit_price: 0,
         discount: 0,
         vat_rate: 0
@@ -514,7 +514,7 @@ export default function InvoicesPage() {
         product_id: null,
         description: "",
         quantity: 1,
-        uom: "PCS",
+        uom: "",
         unit_price: 0,
         discount: 0,
         vat_rate: 0
@@ -834,7 +834,7 @@ export default function InvoicesPage() {
           {/* ── New Invoice Form ── */}
           {newMode && (
             <div className="card shadow-sm">
-              <div className="card-body">
+              <div className="card-body invoice-form">
                 <div className="row g-3">
                   <div className="col-md-6">
                     <label className="form-label fw-semibold">Customer <span className="text-danger">*</span></label>
@@ -942,8 +942,6 @@ export default function InvoicesPage() {
                         <th className="text-end" style={{ width: 100 }}>Price</th>
                         <th className="text-end" style={{ width: 80 }}>Disc %</th>
                         <th className="text-end" style={{ width: 80 }}>Tax %</th>
-                        <th className="text-end" style={{ width: 80 }}>On Hand</th>
-                        <th className="text-end" style={{ width: 80 }}>Avail</th>
                         <th className="text-end" style={{ width: 110 }}>Amount</th>
                         <th style={{ width: 40 }}></th>
                       </tr>
@@ -952,9 +950,6 @@ export default function InvoicesPage() {
                       {editLines.map((line, index) => {
                         const product = line.product_id ? productById.get(line.product_id) : null;
                         const lineTotal = (line.quantity || 0) * (line.unit_price || 0) * (1 - (line.discount || 0) / 100) * (1 + (line.vat_rate || 0) / 100);
-                        const availableQty = product?.quantity_available ?? 0;
-                        const onHandQty = product?.quantity_on_hand ?? 0;
-                        const exceedsStock = (line.quantity || 0) > availableQty;
                         return (
                           <tr key={`new-${index}`}>
                             <td>
@@ -968,7 +963,7 @@ export default function InvoicesPage() {
                                     description: prod?.name ?? "",
                                     unit_price: prod?.sale_price ?? 0,
                                     vat_rate: prod?.tax_rate ?? 0,
-                                    uom: prod?.uom || "PCS"
+                                    uom: prod?.uom || ""
                                   });
                                 }}
                               >
@@ -983,9 +978,7 @@ export default function InvoicesPage() {
                             <td><input className="form-control form-control-sm bg-light" value={product?.uom || line.uom || ""} readOnly /></td>
                             <td><input className="form-control form-control-sm text-end" type="number" value={line.unit_price || 0} onChange={(e) => updateLine(index, { unit_price: Number(e.target.value) })} /></td>
                             <td><input className="form-control form-control-sm text-end" type="number" value={line.discount || 0} onChange={(e) => updateLine(index, { discount: Number(e.target.value) })} /></td>
-                            <td><input className="form-control form-control-sm text-end" type="number" value={line.vat_rate || 0} onChange={(e) => updateLine(index, { vat_rate: Number(e.target.value) })} /></td>
-                            <td className="text-end text-muted">{onHandQty}</td>
-                            <td className={`text-end ${exceedsStock ? "text-danger fw-semibold" : "text-muted"}`}>{availableQty}</td>
+                            <td><input className="form-control form-control-sm text-end input-ghost" type="number" placeholder="Tax %" value={line.vat_rate ?? ""} onChange={(e) => updateLine(index, { vat_rate: Number(e.target.value) })} /></td>
                             <td className="text-end fw-semibold">{formatCurrency(lineTotal, newCurrency)}</td>
                             <td className="text-center">
                               <button className="btn btn-sm btn-light border" onClick={() => removeLine(index)} disabled={editLines.length === 1}>✕</button>
@@ -994,7 +987,7 @@ export default function InvoicesPage() {
                         );
                       })}
                       {!editLines.length && (
-                        <tr><td colSpan={11} className="text-center py-4 text-muted">Click <strong>+ Add Line</strong> to add products</td></tr>
+                        <tr><td colSpan={9} className="text-center py-4 text-muted">Click <strong>+ Add Line</strong> to add products</td></tr>
                       )}
                     </tbody>
                   </table>
@@ -1006,7 +999,7 @@ export default function InvoicesPage() {
           {/* ── Existing Invoice Detail ── */}
           {selectedInvoice && !newMode && (
             <div className="card shadow-sm">
-              <div className="card-body">
+              <div className="card-body invoice-form">
                 {/* Summary cards */}
                 <div className="row g-3 mb-4">
                   <div className="col-md-3">
@@ -1190,8 +1183,6 @@ export default function InvoicesPage() {
                         <th className="text-end">Price</th>
                         <th className="text-end">Disc %</th>
                         <th className="text-end">Tax %</th>
-                        <th className="text-end">On Hand</th>
-                        <th className="text-end">Avail</th>
                         <th className="text-end">Amount</th>
                         {canEdit && <th></th>}
                       </tr>
@@ -1200,9 +1191,6 @@ export default function InvoicesPage() {
                       {displayLines.map((line, index) => {
                         const product = line.product_id ? productById.get(line.product_id) : null;
                         const lineTotal = (line.quantity || 0) * (line.unit_price || 0) * (1 - (line.discount || 0) / 100) * (1 + (line.vat_rate || 0) / 100);
-                        const availableQty = product?.quantity_available ?? 0;
-                        const onHandQty = product?.quantity_on_hand ?? 0;
-                        const exceedsStock = (line.quantity || 0) > availableQty;
                         return (
                           <tr key={line.id || `edit-${index}`}>
                             <td>
@@ -1217,7 +1205,7 @@ export default function InvoicesPage() {
                                       description: prod?.name ?? "",
                                       unit_price: prod?.sale_price ?? 0,
                                       vat_rate: prod?.tax_rate ?? 0,
-                                      uom: prod?.uom || "PCS"
+                                      uom: prod?.uom || ""
                                     });
                                   }}
                                 >
@@ -1235,9 +1223,7 @@ export default function InvoicesPage() {
                             <td>{canEdit ? <input className="form-control form-control-sm bg-light" value={product?.uom || line.uom || ""} readOnly /> : (line.uom || "—")}</td>
                             <td className="text-end">{canEdit ? <input className="form-control form-control-sm text-end" type="number" value={line.unit_price || 0} onChange={(e) => updateLine(index, { unit_price: Number(e.target.value) })} /> : formatCurrency(line.unit_price || 0, invoiceCurrency)}</td>
                             <td className="text-end">{canEdit ? <input className="form-control form-control-sm text-end" type="number" value={line.discount || 0} onChange={(e) => updateLine(index, { discount: Number(e.target.value) })} /> : (line.discount ? `${line.discount}%` : "—")}</td>
-                            <td className="text-end">{canEdit ? <input className="form-control form-control-sm text-end" type="number" value={line.vat_rate || 0} onChange={(e) => updateLine(index, { vat_rate: Number(e.target.value) })} /> : (line.vat_rate ? `${line.vat_rate}%` : "—")}</td>
-                            <td className="text-end text-muted">{onHandQty}</td>
-                            <td className={`text-end ${exceedsStock ? "text-danger fw-semibold" : "text-muted"}`}>{availableQty}</td>
+                            <td className="text-end">{canEdit ? <input className="form-control form-control-sm text-end input-ghost" type="number" placeholder="Tax %" value={line.vat_rate ?? ""} onChange={(e) => updateLine(index, { vat_rate: Number(e.target.value) })} /> : (line.vat_rate ? `${line.vat_rate}%` : "—")}</td>
                             <td className="text-end fw-semibold">{formatCurrency(lineTotal, invoiceCurrency)}</td>
                             {canEdit && (
                               <td className="text-center">
@@ -1248,7 +1234,7 @@ export default function InvoicesPage() {
                         );
                       })}
                       {!displayLines.length && (
-                        <tr><td colSpan={canEdit ? 11 : 10} className="text-center py-4 text-muted">No invoice lines</td></tr>
+                        <tr><td colSpan={canEdit ? 9 : 8} className="text-center py-4 text-muted">No invoice lines</td></tr>
                       )}
                     </tbody>
                   </table>

@@ -352,6 +352,46 @@ textarea {
   margin-bottom: 12px;
 }
 
+/* Invoice form label alignment + ghost inputs */
+@media (min-width: 992px) {
+  .invoice-form .col-md-3,
+  .invoice-form .col-md-4,
+  .invoice-form .col-md-6,
+  .invoice-form .col-md-8,
+  .invoice-form .col-12 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .invoice-form .form-label {
+    margin: 0;
+    min-width: 140px;
+    white-space: nowrap;
+  }
+
+  .invoice-form .form-control,
+  .invoice-form .form-select,
+  .invoice-form .form-control-plaintext,
+  .invoice-form textarea,
+  .invoice-form .position-relative {
+    flex: 1 1 auto;
+  }
+}
+
+.input-ghost {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+}
+
+.input-ghost:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 .statusbar {
   display: flex;
   gap: 8px;
