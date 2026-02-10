@@ -16,10 +16,18 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column("tax_settings", sa.Column("description", sa.String(255), server_default=""))
-    op.add_column("tax_settings", sa.Column("tax_type", sa.String(50), server_default="sales"))
-    op.add_column("tax_settings", sa.Column("tax_scope", sa.String(50), server_default="sales"))
-    op.add_column("tax_settings", sa.Column("label_on_invoice", sa.String(100), server_default=""))
+    conn = op.get_bind()
+    inspector = sa.inspect(conn)
+    existing = [c["name"] for c in inspector.get_columns("tax_settings")]
+
+    if "description" not in existing:
+        op.add_column("tax_settings", sa.Column("description", sa.String(255), server_default=""))
+    if "tax_type" not in existing:
+        op.add_column("tax_settings", sa.Column("tax_type", sa.String(50), server_default="sales"))
+    if "tax_scope" not in existing:
+        op.add_column("tax_settings", sa.Column("tax_scope", sa.String(50), server_default="sales"))
+    if "label_on_invoice" not in existing:
+        op.add_column("tax_settings", sa.Column("label_on_invoice", sa.String(100), server_default=""))
 
 
 def downgrade() -> None:
