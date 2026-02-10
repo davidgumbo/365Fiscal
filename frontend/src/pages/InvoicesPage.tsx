@@ -8,6 +8,7 @@ type InvoiceLine = {
   invoice_id: number;
   product_id: number | null;
   description: string;
+  hs_code?: string | null;
   quantity: number;
   uom: string;
   unit_price: number;
@@ -704,16 +705,18 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
     const logoMarkup = companySettings?.logo_data
       ? `<img class="logo" src="${companySettings.logo_data}" alt="Logo" />`
       : "";
+    const productMap = new Map(products.map((product) => [product.id, product]));
     const rows = lines
       .map((line) => {
         const total = (line.quantity || 0) * (line.unit_price || 0) * (1 - (line.discount || 0) / 100) * (1 + (line.vat_rate || 0) / 100);
+        const hsCode = line.product_id ? productMap.get(line.product_id)?.hs_code || "-" : "-";
+        const qtyLabel = `${(line.quantity || 0).toFixed(2)} ${line.uom || ""}`.trim();
         return `
           <tr>
+            <td style="text-align:left;">${qtyLabel}</td>
             <td>${line.description || ""}</td>
-            <td style="text-align:right;">${line.quantity || 0}</td>
+            <td style="text-align:right;">${hsCode}</td>
             <td style="text-align:right;">${(line.unit_price || 0).toFixed(2)}</td>
-            <td style="text-align:right;">${(line.discount || 0).toFixed(2)}%</td>
-            <td style="text-align:right;">${(line.vat_rate || 0).toFixed(2)}%</td>
             <td style="text-align:right;">${formatCurrency(total, currency)}</td>
           </tr>
         `;
@@ -725,94 +728,109 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
         <head>
           <title>${selectedInvoice.reference}</title>
           <style>
-            body { font-family: Inter, Arial, sans-serif; padding: 32px; color: #0f172a; }
-            h1 { font-size: 22px; margin-bottom: 6px; }
+            body { font-family: Inter, Arial, sans-serif; padding: 0; margin: 0; color: #0f172a; background: #fff; }
             .muted { color: #64748b; font-size: 12px; }
-            .section { margin-top: 20px; }
-            .doc { padding: 24px; border-radius: 16px; position: relative; }
+            .doc { padding: 24px 28px 32px; position: relative; }
             .watermark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 64px; font-weight: 700; color: #94a3b8; opacity: ${companySettings?.document_watermark_opacity || "0.08"}; pointer-events: none; transform: rotate(-25deg); }
             .layout-boxed { border: 1px solid #e2e8f0; }
             .layout-bold h1 { font-size: 26px; font-weight: 800; }
             .layout-bubble { border: 1px solid #e2e8f0; box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08); }
             .layout-standard { }
-            .header { display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; }
-            .logo { height: 48px; max-width: 180px; object-fit: contain; }
-            .company-block { text-align: right; }
-            table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-            th, td { border-bottom: 1px solid #e2e8f0; padding: 8px; font-size: 12px; }
-            th { text-align: left; background: #f8fafc; }
-            .totals { margin-top: 16px; width: 260px; float: right; }
-            .totals div { display: flex; justify-content: space-between; margin-bottom: 6px; }
-            .info-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
-            .info-card { border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; }
+            .header-band { background: #eef3f7; padding: 18px 22px; border-radius: 14px; display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
+            .logo { height: 48px; max-width: 200px; object-fit: contain; background: #fff; padding: 6px 8px; border-radius: 6px; }
+            .company-block { text-align: right; font-size: 12px; line-height: 1.5; }
+            .company-name { font-weight: 700; color: #0f172a; }
+            .invoice-title-row { display: flex; justify-content: space-between; gap: 20px; margin-top: 18px; }
+            .invoice-tag { background: #f5f7fb; border-left: 4px solid #1e6bb8; padding: 10px 16px; border-radius: 12px; text-align: right; min-width: 220px; }
+            .invoice-tag .label { font-size: 13px; color: #1e6bb8; letter-spacing: 0.5px; text-transform: uppercase; font-weight: 700; }
+            .invoice-tag .ref { font-size: 22px; font-weight: 800; color: #0f172a; }
+            .customer-block { font-size: 12px; line-height: 1.5; }
+            .meta-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin-top: 20px; font-size: 12px; }
+            .meta-label { color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; }
+            .meta-value { margin-top: 4px; font-weight: 600; }
+            table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+            th, td { border-bottom: 1px solid #e5e7eb; padding: 8px 10px; font-size: 12px; }
+            th { text-align: left; background: #f8fafc; font-weight: 700; color: #475569; }
+            tr:nth-child(even) td { background: #f6f7f9; }
+            .totals { margin-top: 14px; width: 300px; margin-left: auto; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
+            .totals-row { display: flex; justify-content: space-between; padding: 8px 12px; font-size: 12px; border-bottom: 1px solid #e5e7eb; background: #f8fafc; }
+            .totals-row:last-child { border-bottom: none; background: #f1f5f9; font-weight: 700; color: #0f172a; }
+            .payment-comm { margin-top: 16px; font-size: 12px; }
+            .footer-note { margin-top: 16px; font-size: 12px; color: #64748b; }
           </style>
         </head>
         <body>
           <div class="doc ${layoutKey}">
             ${companySettings?.document_watermark ? `<div class="watermark">${companySettings.document_watermark}</div>` : ""}
-            <div class="header">
-              <div>
-                ${logoMarkup}
-                <h1>${company?.name || "Company"}</h1>
-                <div class="muted">${company?.address || ""}</div>
-              </div>
+            <div class="header-band">
+              <div>${logoMarkup}</div>
               <div class="company-block">
-                <div class="muted">Email: ${company?.email || "-"}</div>
-                <div class="muted">Phone: ${company?.phone || "-"}</div>
-                <div class="muted">VAT: ${company?.vat || "-"}</div>
-                <div class="muted">TIN: ${company?.tin || "-"}</div>
+                <div class="company-name">${company?.name || "Company"}</div>
+                <div>${company?.address || ""}</div>
+                <div>${company?.city || ""}</div>
+                <div>${company?.country || ""}</div>
+                <div>TIN: ${company?.tin || "-"}</div>
+                <div>VAT: ${company?.vat || "-"}</div>
               </div>
             </div>
-            <div class="section">
-              <strong>${selectedInvoice.invoice_type === "credit_note" ? "Credit Note" : "Invoice"}</strong>
-              ${companySettings?.document_header ? `<div class="muted">${companySettings.document_header}</div>` : ""}
-              <div class="muted">Reference: ${selectedInvoice.reference}</div>
-              <div class="muted">Date: ${invoiceDateLabel}</div>
-              <div class="muted">Due: ${selectedInvoice.due_date ? new Date(selectedInvoice.due_date).toLocaleDateString() : "-"}</div>
-              <div class="muted">Currency: ${currency}</div>
-            </div>
-            <div class="info-grid">
-              <div class="info-card">
-                <strong>Customer</strong>
-                <div class="muted">${customer?.name || "-"}</div>
-                <div class="muted">${customer?.address || ""}</div>
-                <div class="muted">Email: ${customer?.email || "-"}</div>
-                <div class="muted">Phone: ${customer?.phone || "-"}</div>
-                <div class="muted">VAT: ${customer?.vat || "-"}</div>
-                <div class="muted">TIN: ${customer?.tin || "-"}</div>
+
+            <div class="invoice-title-row">
+              <div class="customer-block">
+                <div class="muted">Bill To</div>
+                <div><strong>${customer?.name || "-"}</strong></div>
+                <div>${customer?.address || ""}</div>
+                <div>${customer?.city || ""}</div>
+                <div>${customer?.country || ""}</div>
+                <div>TIN: ${customer?.tin || "-"}</div>
+                <div>VAT: ${customer?.vat || "-"}</div>
               </div>
-              <div class="info-card">
-                <strong>Payment</strong>
-                <div class="muted">Terms: ${selectedInvoice.payment_terms || companySettings?.payment_terms_default || "-"}</div>
-                <div class="muted">Reference: ${selectedInvoice.payment_reference || "-"}</div>
-                <div class="muted">Status: ${selectedInvoice.status || "-"}</div>
-                <div class="muted">Notes: ${selectedInvoice.notes || companySettings?.invoice_notes || "-"}</div>
+              <div class="invoice-tag">
+                <div class="label">${selectedInvoice.invoice_type === "credit_note" ? "Credit Note" : "Invoice"}</div>
+                <div class="ref">${selectedInvoice.reference}</div>
               </div>
             </div>
-          <div class="section">
+
+            <div class="meta-row">
+              <div>
+                <div class="meta-label">Invoice Date</div>
+                <div class="meta-value">${invoiceDateLabel}</div>
+              </div>
+              <div>
+                <div class="meta-label">Due Date</div>
+                <div class="meta-value">${selectedInvoice.due_date ? new Date(selectedInvoice.due_date).toLocaleDateString() : "-"}</div>
+              </div>
+              <div>
+                <div class="meta-label">Reference</div>
+                <div class="meta-value">${selectedInvoice.payment_reference || "-"}</div>
+              </div>
+            </div>
+
+            ${companySettings?.document_header ? `<div class="footer-note">${companySettings.document_header}</div>` : ""}
+
             <table>
               <thead>
                 <tr>
+                  <th>Quantity</th>
                   <th>Description</th>
-                  <th style="text-align:right;">Qty</th>
-                  <th style="text-align:right;">Price</th>
-                  <th style="text-align:right;">Disc</th>
-                  <th style="text-align:right;">Tax</th>
-                  <th style="text-align:right;">Amount</th>
+                  <th style="text-align:right;">HS Code</th>
+                  <th style="text-align:right;">Unit Price</th>
+                  <th style="text-align:right;">Total</th>
                 </tr>
               </thead>
               <tbody>
                 ${rows}
               </tbody>
             </table>
+
+            <div class="payment-comm">Payment Communication: <strong>${selectedInvoice.reference}</strong></div>
+
             <div class="totals">
-              <div><span>Subtotal</span><span>${formatCurrency(selectedInvoice.subtotal || 0, currency)}</span></div>
-              <div><span>Discount</span><span>${formatCurrency(selectedInvoice.discount_amount || 0, currency)}</span></div>
-              <div><span>Tax</span><span>${formatCurrency(selectedInvoice.tax_amount || 0, currency)}</span></div>
-              <div><strong>Total</strong><strong>${formatCurrency(selectedInvoice.total_amount || 0, currency)}</strong></div>
+              <div class="totals-row"><span>Untaxed Amount</span><span>${formatCurrency(selectedInvoice.subtotal || 0, currency)}</span></div>
+              <div class="totals-row"><span>VAT</span><span>${formatCurrency(selectedInvoice.tax_amount || 0, currency)}</span></div>
+              <div class="totals-row"><span>Total</span><span>${formatCurrency(selectedInvoice.total_amount || 0, currency)}</span></div>
             </div>
-          </div>
-            ${companySettings?.document_footer ? `<div class="section muted">${companySettings.document_footer}</div>` : ""}
+
+            ${companySettings?.document_footer ? `<div class="footer-note">${companySettings.document_footer}</div>` : ""}
           </div>
         </body>
       </html>
