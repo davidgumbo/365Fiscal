@@ -5,7 +5,11 @@ import { useCompanies, Company } from "../hooks/useCompanies";
 
 type Contact = { id: number; name: string };
 
-type Product = { id: number; name: string; sale_price: number; tax_rate: number };
+type Product = { id: number; name: string; sale_price: number; tax_rate: number; uom?: string };
+
+type Warehouse = { id: number; name: string };
+
+type Location = { id: number; name: string; warehouse_id: number };
 
 type QuotationLine = {
   id?: number;
@@ -47,6 +51,18 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [quotations, setQuotations] = useState<Quotation[]>([]);
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [productWarehouseId, setProductWarehouseId] = useState<number | null>(null);
+  const [productLocationId, setProductLocationId] = useState<number | null>(null);
+  const [createProductOpen, setCreateProductOpen] = useState(false);
+  const [productName, setProductName] = useState("");
+  const [productPrice, setProductPrice] = useState("");
+  const [productTaxRate, setProductTaxRate] = useState("");
+  const [productReference, setProductReference] = useState("");
+  const [productHsCode, setProductHsCode] = useState("");
+  const [productUom, setProductUom] = useState("PCS");
+  const [productInitialStock, setProductInitialStock] = useState("");
   const [selectedQuotationId, setSelectedQuotationId] = useState<number | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [listSearch, setListSearch] = useState("");
@@ -68,14 +84,20 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
   }, [companies, companyId]);
 
   const loadData = async (cid: number) => {
-    const [c, p, q] = await Promise.all([
+    const [c, p, q, w] = await Promise.all([
       apiFetch<Contact[]>(`/contacts?company_id=${cid}`),
-      apiFetch<Product[]>(`/products?company_id=${cid}`),
+      apiFetch<Product[]>(`/products/with-stock?company_id=${cid}`),
       apiFetch<Quotation[]>(`/quotations?company_id=${cid}`)
+      ,
+      apiFetch<Warehouse[]>(`/warehouses?company_id=${cid}`)
     ]);
     setContacts(c);
     setProducts(p);
     setQuotations(q);
+    setWarehouses(w);
+    if (!productWarehouseId && w.length) {
+      setProductWarehouseId(w[0].id);
+    }
   };
 
   useEffect(() => {
@@ -83,6 +105,21 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
       loadData(companyId);
     }
   }, [companyId]);
+
+  useEffect(() => {
+    if (!productWarehouseId) {
+      setLocations([]);
+      return;
+    }
+    apiFetch<Location[]>(`/locations?warehouse_id=${productWarehouseId}`)
+      .then((data) => {
+        setLocations(data);
+        if (!productLocationId && data.length) {
+          setProductLocationId(data[0].id);
+        }
+      })
+      .catch(() => setLocations([]));
+  }, [productWarehouseId]);
 
   useEffect(() => {
     if (mode === "list") {
@@ -321,6 +358,45 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
     win.print();
   };
 
+  const resetProductForm = () => {
+    setProductName("");
+    setProductPrice("");
+    setProductTaxRate("");
+    setProductReference("");
+    setProductHsCode("");
+    setProductUom("PCS");
+    setProductInitialStock("");
+  };
+
+  const createProduct = async () => {
+    if (!companyId) return;
+    const payload = {
+      company_id: companyId,
+      name: productName.trim(),
+      sale_price: Number(productPrice || 0),
+      tax_rate: Number(productTaxRate || 0),
+      reference: productReference.trim() || null,
+      hs_code: productHsCode.trim() || null,
+      uom: productUom.trim() || "PCS",
+      initial_stock: Number(productInitialStock || 0),
+      warehouse_id: productWarehouseId,
+      location_id: productLocationId
+    };
+    try {
+      await apiFetch<Product>("/products", {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
+      resetProductForm();
+      setCreateProductOpen(false);
+      if (companyId) {
+        await loadData(companyId);
+      }
+    } catch (err: any) {
+      alert(err.message || "Failed to create product");
+    }
+  };
+
   const showForm = mode !== "list";
 
   return (
@@ -510,6 +586,7 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
               {canEdit && (
                 <div className="d-flex gap-2 mb-2">
                   <button className="btn btn-sm btn-light border" onClick={addLine}>+ Add Line</button>
+                  <button className="btn btn-sm btn-light border" onClick={() => setCreateProductOpen(true)}>+ New Product</button>
                 </div>
               )}
               <div className="table-responsive">
@@ -541,7 +618,8 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
                                   product_id: Number(e.target.value),
                                   description: selected?.name ?? "",
                                   unit_price: selected?.sale_price ?? 0,
-                                  vat_rate: selected?.tax_rate ?? 0
+                                  vat_rate: selected?.tax_rate ?? 0,
+                                  uom: selected?.uom || ""
                                 });
                               }}
                               disabled={!canEdit}
@@ -616,6 +694,81 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
               </div>
             </div>
           </div>
+          {createProductOpen && (
+            <>
+              <div className="modal-backdrop fade show" style={{ zIndex: 1040 }} />
+              <div
+                className="modal"
+                tabIndex={-1}
+                role="dialog"
+                style={{ position: "fixed", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem", zIndex: 1050, background: "transparent" }}
+                onClick={(e) => { if (e.target === e.currentTarget) setCreateProductOpen(false); }}
+              >
+                <div className="modal-dialog modal-lg modal-dialog-centered" style={{ margin: 0, width: "100%", maxWidth: 720 }}>
+                  <div className="modal-content shadow-lg border-0">
+                    <div className="modal-header border-bottom">
+                      <h5 className="modal-title fw-semibold">Create Product</h5>
+                      <button type="button" className="btn-close" onClick={() => setCreateProductOpen(false)} />
+                    </div>
+                    <div className="modal-body py-4">
+                      <div className="row g-3">
+                        <div className="col-md-6">
+                          <label className="form-label">Product Name</label>
+                          <input className="form-control" value={productName} onChange={(e) => setProductName(e.target.value)} />
+                        </div>
+                        <div className="col-md-3">
+                          <label className="form-label">Sale Price</label>
+                          <input className="form-control" type="number" value={productPrice} onChange={(e) => setProductPrice(e.target.value)} />
+                        </div>
+                        <div className="col-md-3">
+                          <label className="form-label">Tax Rate %</label>
+                          <input className="form-control" type="number" value={productTaxRate} onChange={(e) => setProductTaxRate(e.target.value)} />
+                        </div>
+                        <div className="col-md-3">
+                          <label className="form-label">Reference / SKU</label>
+                          <input className="form-control" value={productReference} onChange={(e) => setProductReference(e.target.value)} placeholder="e.g., PROD-001" />
+                        </div>
+                        <div className="col-md-3">
+                          <label className="form-label">HS Code</label>
+                          <input className="form-control" value={productHsCode} onChange={(e) => setProductHsCode(e.target.value)} placeholder="Harmonized code" />
+                        </div>
+                        <div className="col-md-3">
+                          <label className="form-label">UoM</label>
+                          <input className="form-control" value={productUom} onChange={(e) => setProductUom(e.target.value)} />
+                        </div>
+                        <div className="col-md-3">
+                          <label className="form-label">Initial Stock</label>
+                          <input className="form-control" type="number" value={productInitialStock} onChange={(e) => setProductInitialStock(e.target.value)} />
+                        </div>
+                        <div className="col-md-3">
+                          <label className="form-label">Warehouse</label>
+                          <select className="form-select" value={productWarehouseId ?? ""} onChange={(e) => setProductWarehouseId(Number(e.target.value))}>
+                            <option value="">Select warehouse</option>
+                            {warehouses.map((w) => (
+                              <option key={w.id} value={w.id}>{w.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="col-md-3">
+                          <label className="form-label">Location</label>
+                          <select className="form-select" value={productLocationId ?? ""} onChange={(e) => setProductLocationId(Number(e.target.value))}>
+                            <option value="">Select location</option>
+                            {locations.map((l) => (
+                              <option key={l.id} value={l.id}>{l.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="modal-footer border-top">
+                      <button className="btn btn-light border" onClick={() => setCreateProductOpen(false)}>Cancel</button>
+                      <button className="btn btn-primary" onClick={createProduct}>Create Product</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>
