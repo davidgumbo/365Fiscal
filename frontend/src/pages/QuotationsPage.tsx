@@ -352,7 +352,7 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
             .muted { color: #64748b; font-size: 12px; }
             .section { margin-top: 20px; }
             .doc { padding: 24px; border-radius: 16px; position: relative; }
-            .watermark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 64px; font-weight: 700; color: #94a3b8; opacity: ${companySettings?.document_watermark_opacity || "0.08"}; pointer-events: none; }
+            .watermark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 64px; font-weight: 700; color: #94a3b8; opacity: ${companySettings?.document_watermark_opacity || "0.08"}; pointer-events: none; transform: rotate(-25deg); }
             .layout-boxed { border: 1px solid #e2e8f0; }
             .layout-bold h1 { font-size: 26px; font-weight: 800; }
             .layout-bubble { border: 1px solid #e2e8f0; box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08); }

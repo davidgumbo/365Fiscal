@@ -3286,25 +3286,26 @@ button.danger:hover {
 /* Odoo-style settings layout */
 .settings-page {
   display: grid;
-  gap: 20px;
-  padding: 12px 0;
+  gap: 24px;
+  padding: 16px 0 24px;
 }
 
 .settings-topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 12px 16px;
-  background: var(--card);
+  gap: 18px;
+  padding: 14px 18px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   border: 1px solid var(--stroke);
-  border-radius: 12px;
-  box-shadow: var(--shadow-soft);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
 }
 
 .settings-title {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
+  letter-spacing: 0.2px;
 }
 
 .settings-top-left {
@@ -3315,25 +3316,31 @@ button.danger:hover {
 }
 
 .settings-top-tabs {
-  display: flex;
-  gap: 12px;
+  display: inline-flex;
+  gap: 6px;
   flex-wrap: wrap;
+  padding: 4px;
+  background: #f1f5f9;
+  border-radius: 999px;
 }
 
 .settings-tab {
   border: none;
   background: transparent;
   color: var(--muted);
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 700;
   cursor: pointer;
-  padding: 6px 0;
-  border-bottom: 2px solid transparent;
+  padding: 6px 12px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
 }
 
 .settings-tab.active {
-  color: var(--ink);
-  border-color: var(--blue-600);
+  color: #ffffff;
+  background: var(--blue-600);
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
 }
 
 .settings-top-actions {
@@ -3347,9 +3354,9 @@ button.danger:hover {
   align-items: center;
   justify-content: center;
   gap: 16px;
-  padding: 8px 0;
+  padding: 10px 0 2px;
   border-top: 1px solid var(--stroke);
-  border-bottom: 1px solid var(--stroke);
+  border-bottom: 1px solid transparent;
   max-width: 1000px;
   margin: 0 auto;
 }
@@ -3360,16 +3367,18 @@ button.danger:hover {
 }
 
 .settings-search input {
-  padding: 8px 12px;
+  padding: 10px 14px;
   border: 1px solid var(--stroke);
-  border-radius: 10px;
-  min-width: 280px;
+  border-radius: 12px;
+  min-width: 300px;
+  background: #ffffff;
+  box-shadow: var(--shadow-soft);
 }
 
 .settings-body {
   display: grid;
   grid-template-columns: 220px 1fr;
-  gap: 16px;
+  gap: 18px;
 }
 
 .settings-sidebar {
@@ -3420,13 +3429,13 @@ button.danger:hover {
 }
 
 .settings-section {
-  background: var(--card);
-  border: 1px solid var(--stroke);
-  border-radius: 14px;
-  padding: 18px;
-  box-shadow: var(--shadow-soft);
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: var(--shadow);
   display: grid;
-  gap: 14px;
+  gap: 16px;
   opacity: 0;
   transform: translateY(8px);
   animation: settings-enter 420ms ease-out forwards;
@@ -3443,14 +3452,15 @@ button.danger:hover {
 
 .settings-section-header h4 {
   margin: 0;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
+  letter-spacing: 0.2px;
 }
 
 .settings-card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 16px;
+  gap: 18px;
   max-width: 1000px;
   margin: 0 auto;
   align-items: stretch;
@@ -3469,19 +3479,19 @@ button.danger:hover {
 }
 
 .settings-card {
-  border: 1px solid var(--stroke);
-  border-radius: 14px;
-  padding: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 16px;
+  padding: 18px;
   background: #ffffff;
   display: grid;
-  gap: 12px;
+  gap: 14px;
   transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
   height: 100%;
 }
 
 .settings-card-title {
   font-weight: 700;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .settings-card-sub {
@@ -3490,9 +3500,9 @@ button.danger:hover {
 }
 
 .settings-card:hover {
-  border-color: rgba(11, 87, 208, 0.25);
-  box-shadow: var(--shadow);
-  transform: translateY(-2px);
+  border-color: rgba(37, 99, 235, 0.3);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-3px);
 }
 
 /* Admin user form alignment */
@@ -3507,7 +3517,7 @@ button.danger:hover {
   border: none;
   background: none;
   color: var(--blue-600);
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   padding: 0;
 }
@@ -3515,30 +3525,30 @@ button.danger:hover {
 .settings-actions-inline {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
 }
 
 .settings-company {
   display: grid;
   grid-template-columns: 120px 1fr;
-  gap: 12px;
+  gap: 14px;
   align-items: start;
 }
 
 .settings-company-logo img {
-  width: 110px;
-  height: 110px;
+  width: 112px;
+  height: 112px;
   object-fit: contain;
-  border: 1px solid var(--stroke);
-  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 16px;
   background: #f8fafc;
 }
 
 .settings-logo-placeholder {
-  width: 110px;
-  height: 110px;
-  border: 1px dashed var(--stroke);
-  border-radius: 14px;
+  width: 112px;
+  height: 112px;
+  border: 1px dashed rgba(148, 163, 184, 0.45);
+  border-radius: 16px;
   display: grid;
   place-items: center;
   color: var(--muted);
@@ -3561,7 +3571,7 @@ button.danger:hover {
 
 .settings-company-name {
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .settings-company-line {

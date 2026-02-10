@@ -129,6 +129,8 @@ export default function SettingsPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<{ email: string; password: string }>({ email: "", password: "" });
   const [activeTopTab, setActiveTopTab] = useState<"general" | "users">("general");
+  const [showConfigureLayout, setShowConfigureLayout] = useState(false);
+  const [showEditLayout, setShowEditLayout] = useState(false);
   const [companySettings, setCompanySettings] = useState<CompanySettings | null>(null);
   const [settingsForm, setSettingsForm] = useState({
     currency_code: "USD",
@@ -486,6 +488,80 @@ export default function SettingsPage() {
     win.focus();
   };
 
+  const previewCard = () => (
+    <div className="card shadow-sm" style={{ background: "#f8fafc" }}>
+      <div className="card-body">
+        <div style={{ fontSize: 12, color: "#64748b", marginBottom: 8 }}>Live Preview</div>
+        {(() => {
+          const layout = settingsForm.document_layout || "external_layout_standard";
+          const layoutKey = layout.replace("external_layout_", "");
+          const baseStyle: React.CSSProperties = {
+            background: "#fff",
+            borderRadius: 12,
+            padding: 12,
+            border: layoutKey === "boxed" || layoutKey === "bubble" ? "1px solid #e2e8f0" : "1px solid #e2e8f0",
+            boxShadow: layoutKey === "bubble" ? "0 10px 24px rgba(15, 23, 42, 0.08)" : "none"
+          };
+          return (
+            <div style={{ ...baseStyle, position: "relative", overflow: "hidden" }}>
+              {settingsForm.document_watermark && (
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 42,
+                    fontWeight: 700,
+                    color: "#94a3b8",
+                    opacity: Number(settingsForm.document_watermark_opacity || "0.08"),
+                    transform: "rotate(-25deg)",
+                    pointerEvents: "none"
+                  }}
+                >
+                  {settingsForm.document_watermark}
+                </div>
+              )}
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+            <div>
+              {settingsForm.logo_data && (
+                <img src={settingsForm.logo_data} alt="Logo" style={{ height: 32, maxWidth: 120, objectFit: "contain" }} />
+              )}
+              <div style={{ fontWeight: layoutKey === "bold" ? 800 : 700, fontSize: layoutKey === "bold" ? 16 : 14 }}>
+                {selectedCompany?.name || "Company"}
+              </div>
+              <div style={{ fontSize: 11, color: "#94a3b8" }}>{selectedCompany?.address || ""}</div>
+            </div>
+            <div style={{ textAlign: "right", fontSize: 11, color: "#94a3b8" }}>
+              <div>{selectedCompany?.email || "-"}</div>
+              <div>{selectedCompany?.phone || "-"}</div>
+              <div>VAT: {selectedCompany?.vat || "-"}</div>
+            </div>
+          </div>
+          {settingsForm.document_header && (
+            <div style={{ marginTop: 8, fontSize: 11, color: "#64748b" }}>{settingsForm.document_header}</div>
+          )}
+          <div style={{ marginTop: 8, display: "flex", gap: 8, fontSize: 11 }}>
+            <div style={{ flex: 1, border: "1px solid #e2e8f0", borderRadius: 8, padding: 8 }}>
+              <div style={{ fontWeight: 600 }}>Customer</div>
+              <div style={{ color: "#94a3b8" }}>Acme Corp</div>
+            </div>
+            <div style={{ flex: 1, border: "1px solid #e2e8f0", borderRadius: 8, padding: 8 }}>
+              <div style={{ fontWeight: 600 }}>Payment</div>
+              <div style={{ color: "#94a3b8" }}>Terms: {settingsForm.payment_terms_default || "-"}</div>
+            </div>
+          </div>
+          {settingsForm.document_footer && (
+            <div style={{ marginTop: 8, fontSize: 11, color: "#64748b" }}>{settingsForm.document_footer}</div>
+          )}
+            </div>
+          );
+        })()}
+      </div>
+    </div>
+  );
+
   useEffect(() => {
     if (companyId) {
       loadTaxes(companyId);
@@ -743,8 +819,8 @@ export default function SettingsPage() {
                       />
                     </label>
                     <div className="settings-actions-inline">
-                      <button className="outline" onClick={() => setStatus("Document layout editor coming soon")}>Configure Document Layout</button>
-                      <button className="outline" onClick={() => setStatus("Layout editor coming soon")}>Edit Layout</button>
+                      <button className="outline" onClick={() => setShowConfigureLayout(true)}>Configure Document Layout</button>
+                      <button className="outline" onClick={() => setShowEditLayout(true)}>Edit Layout</button>
                       <button className="outline" onClick={previewDocument}>Preview Document</button>
                     </div>
                   </div>
@@ -758,6 +834,139 @@ export default function SettingsPage() {
             <>
               <div className="tax-header">
                 <div>
+
+        {showConfigureLayout && (
+          <>
+            <div className="modal-backdrop fade show" style={{ zIndex: 1040 }} />
+            <div
+              className="modal"
+              tabIndex={-1}
+              role="dialog"
+              style={{ position: "fixed", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem", zIndex: 1050, background: "transparent" }}
+              onClick={(e) => { if (e.target === e.currentTarget) setShowConfigureLayout(false); }}
+            >
+              <div className="modal-dialog modal-lg modal-dialog-centered" style={{ margin: 0, width: "100%", maxWidth: 720 }}>
+                <div className="modal-content shadow-lg border-0">
+                  <div className="modal-header border-bottom">
+                    <h5 className="modal-title fw-semibold">Configure Document Layout</h5>
+                    <button type="button" className="btn-close" onClick={() => setShowConfigureLayout(false)} />
+                  </div>
+                  <div className="modal-body py-4">
+                    <div className="row g-3">
+                      <div className="col-md-6">
+                        <label className="form-label">Layout</label>
+                        <select
+                          className="form-select"
+                          value={settingsForm.document_layout}
+                          onChange={(e) => setSettingsForm({ ...settingsForm, document_layout: e.target.value })}
+                        >
+                          <option value="external_layout_standard">Standard</option>
+                          <option value="external_layout_boxed">Boxed</option>
+                          <option value="external_layout_bold">Bold</option>
+                          <option value="external_layout_bubble">Bubble</option>
+                        </select>
+                      </div>
+                      <div className="col-md-6">
+                        <label className="form-label">Watermark Text</label>
+                        <input
+                          className="form-control"
+                          value={settingsForm.document_watermark}
+                          onChange={(e) => setSettingsForm({ ...settingsForm, document_watermark: e.target.value })}
+                          placeholder="e.g., PAID, DRAFT"
+                        />
+                      </div>
+                      <div className="col-md-6">
+                        <label className="form-label">Watermark Opacity</label>
+                        <input
+                          className="form-control"
+                          type="number"
+                          min="0.02"
+                          max="0.3"
+                          step="0.01"
+                          value={settingsForm.document_watermark_opacity}
+                          onChange={(e) => setSettingsForm({ ...settingsForm, document_watermark_opacity: e.target.value })}
+                        />
+                      </div>
+                      <div className="col-12">{previewCard()}</div>
+                    </div>
+                  </div>
+                  <div className="modal-footer border-top">
+                    <button className="btn btn-light border" onClick={() => setShowConfigureLayout(false)}>Close</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
+        {showEditLayout && (
+          <>
+            <div className="modal-backdrop fade show" style={{ zIndex: 1040 }} />
+            <div
+              className="modal"
+              tabIndex={-1}
+              role="dialog"
+              style={{ position: "fixed", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem", zIndex: 1050, background: "transparent" }}
+              onClick={(e) => { if (e.target === e.currentTarget) setShowEditLayout(false); }}
+            >
+              <div className="modal-dialog modal-lg modal-dialog-centered" style={{ margin: 0, width: "100%", maxWidth: 720 }}>
+                <div className="modal-content shadow-lg border-0">
+                  <div className="modal-header border-bottom">
+                    <h5 className="modal-title fw-semibold">Edit Document Layout</h5>
+                    <button type="button" className="btn-close" onClick={() => setShowEditLayout(false)} />
+                  </div>
+                  <div className="modal-body py-4">
+                    <div className="row g-3">
+                      <div className="col-12">
+                        <label className="form-label">Document Header</label>
+                        <textarea
+                          className="form-control"
+                          rows={2}
+                          value={settingsForm.document_header}
+                          onChange={(e) => setSettingsForm({ ...settingsForm, document_header: e.target.value })}
+                          placeholder="Header text for invoices/quotations"
+                        />
+                      </div>
+                      <div className="col-12">
+                        <label className="form-label">Document Footer</label>
+                        <textarea
+                          className="form-control"
+                          rows={3}
+                          value={settingsForm.document_footer}
+                          onChange={(e) => setSettingsForm({ ...settingsForm, document_footer: e.target.value })}
+                          placeholder="Footer text for invoices/quotations"
+                        />
+                      </div>
+                      <div className="col-12">
+                        <label className="form-label">Default Payment Terms</label>
+                        <input
+                          className="form-control"
+                          value={settingsForm.payment_terms_default}
+                          onChange={(e) => setSettingsForm({ ...settingsForm, payment_terms_default: e.target.value })}
+                          placeholder="e.g., Due on receipt"
+                        />
+                      </div>
+                      <div className="col-12">
+                        <label className="form-label">Document Notes / Footer</label>
+                        <textarea
+                          className="form-control"
+                          rows={3}
+                          value={settingsForm.invoice_notes}
+                          onChange={(e) => setSettingsForm({ ...settingsForm, invoice_notes: e.target.value })}
+                          placeholder="Notes shown at the bottom of invoices/quotations"
+                        />
+                      </div>
+                      <div className="col-12">{previewCard()}</div>
+                    </div>
+                  </div>
+                  <div className="modal-footer border-top">
+                    <button className="btn btn-light border" onClick={() => setShowEditLayout(false)}>Close</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
                   <h4>Administrators</h4>
                   <p className="page-sub">Manage system administrators.</p>
                 </div>
