@@ -1780,7 +1780,7 @@ thead.table-light th {
   content: "";
   position: absolute;
   inset: 0;
-  background: rgba(15, 23, 42, 0.45);
+  background: rgba(15, 23, 42, 0.55);
   z-index: 0;
 }
 
@@ -2019,15 +2019,15 @@ thead.table-light th {
 .login-card {
   width: 100%;
   max-width: 400px;
-  background: rgba(255, 255, 255, 0.97);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
   border-radius: 20px;
   padding: 0;
   padding-top: 110px;
   margin-top: 50px;
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255,255,255,0.1);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255,255,255,0.1);
   animation: card-fade-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
   animation-delay: 0.15s;
   position: relative;
@@ -2038,9 +2038,9 @@ thead.table-light th {
 }
 
 .login-card-glass {
-  background: rgba(255, 255, 255, 0.97);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
 }
 
 @keyframes card-fade-in {
@@ -2247,8 +2247,8 @@ thead.table-light th {
   font-size: 15px;
   padding: 14px 16px;
   border-radius: 12px;
-  border: 1.5px solid #e2e8f0;
-  background: #fff;
+  border: 1.5px solid rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.85);
   transition: all 0.25s ease;
   color: #1e293b;
 }
@@ -2258,12 +2258,12 @@ thead.table-light th {
 }
 
 .input-group input:hover {
-  border-color: #cbd5e1;
+  border-color: rgba(255, 255, 255, 0.95);
 }
 
 .input-group input:focus {
   border-color: #4f46e5;
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.14);
   outline: none;
 }
 
