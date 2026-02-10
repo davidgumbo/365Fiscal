@@ -98,6 +98,13 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
     }
   }, [mode, isEditing, contacts]);
 
+  useEffect(() => {
+    if (mode !== "new") return;
+    if (form.customer_id !== null) return;
+    if (!contacts.length) return;
+    setForm((prev) => ({ ...prev, customer_id: contacts[0].id }));
+  }, [mode, form.customer_id, contacts]);
+
   const selectedQuotation = useMemo(() => {
     return quotations.find((q) => q.id === selectedQuotationId) ?? null;
   }, [quotations, selectedQuotationId]);
