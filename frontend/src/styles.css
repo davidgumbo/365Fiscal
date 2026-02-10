@@ -1777,7 +1777,11 @@ thead.table-light th {
 }
 
 .login-shell::before {
-  content: none;
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  z-index: 0;
 }
 
 .login-centered {
@@ -2015,15 +2019,15 @@ thead.table-light th {
 .login-card {
   width: 100%;
   max-width: 400px;
-  background: rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border-radius: 20px;
   padding: 0;
   padding-top: 100px;
   margin-top: 40px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255,255,255,0.1);
   animation: card-fade-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
   animation-delay: 0.15s;
   position: relative;
@@ -2034,7 +2038,7 @@ thead.table-light th {
 }
 
 .login-card-glass {
-  background: rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
 }
@@ -2059,9 +2063,7 @@ thead.table-light th {
   top: -44px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2070,8 +2072,8 @@ thead.table-light th {
   padding: 8px 12px;
   border-radius: 999px;
   z-index: 10;
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .logo-365 {
@@ -2182,7 +2184,7 @@ thead.table-light th {
 .login-card h1 {
   font-family: "Fraunces", serif;
   margin: 0 0 8px 0;
-  color: #ffffff;
+  color: #1e293b;
 }
 
 .login-card-title {
@@ -2190,12 +2192,12 @@ thead.table-light th {
   font-size: 26px;
   font-weight: 600;
   margin: 0;
-  color: #ffffff;
+  color: #1e293b;
 }
 
 .login-card-sub {
   margin: 0 0 24px 0;
-  color: rgba(255, 255, 255, 0.7);
+  color: #64748b;
   font-size: 14px;
   line-height: 1.5;
 }
@@ -2233,7 +2235,7 @@ thead.table-light th {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: rgba(255, 255, 255, 0.7);
+  color: #64748b;
 }
 
 .input-label svg {
@@ -2244,31 +2246,29 @@ thead.table-light th {
   width: 100%;
   font-size: 15px;
   padding: 14px 16px;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  background: rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  border: 1.5px solid #e2e8f0;
+  background: #fff;
   transition: all 0.25s ease;
-  color: #ffffff;
+  color: #1e293b;
 }
 
 .input-group input::placeholder {
-  color: rgba(255, 255, 255, 0.5);
+  color: #94a3b8;
 }
 
 .input-group input:hover {
-  border-color: rgba(255, 255, 255, 0.4);
-  background: rgba(255, 255, 255, 0.18);
+  border-color: #cbd5e1;
 }
 
 .input-group input:focus {
-  border-color: rgba(255, 255, 255, 0.6);
-  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1);
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
   outline: none;
-  background: rgba(255, 255, 255, 0.15);
 }
 
 .input-group input:disabled {
-  background: rgba(255, 255, 255, 0.05);
+  background: #f8fafc;
   cursor: not-allowed;
   opacity: 0.7;
 }
@@ -2285,21 +2285,19 @@ thead.table-light th {
   animation: slide-up-fade 0.6s ease both;
   animation-delay: 0.6s;
   color: #fff;
-  background: rgba(67, 97, 238, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 14px;
+  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+  border: none;
+  border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
   margin-top: 8px;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
 }
 
 .login-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-  background: rgba(67, 97, 238, 0.85);
+  box-shadow: 0 8px 25px rgba(79, 70, 229, 0.45);
+  background: linear-gradient(135deg, #4338ca 0%, #5b5fef 100%);
 }
 
 .login-btn:active:not(:disabled) {
@@ -2340,13 +2338,13 @@ thead.table-light th {
   gap: 8px;
   margin-top: 16px;
   padding: 12px 16px;
-  border-radius: 12px;
-  background: rgba(16, 185, 129, 0.2);
-  color: #6ee7b7;
+  border-radius: 10px;
+  background: #ecfdf5;
+  color: #059669;
   font-size: 13px;
   font-weight: 500;
   animation: fade-in 0.3s ease;
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  border: 1px solid #a7f3d0;
 }
 
 .login-error {
@@ -2356,13 +2354,13 @@ thead.table-light th {
   gap: 8px;
   margin-top: 16px;
   padding: 12px 16px;
-  border-radius: 12px;
-  background: rgba(239, 68, 68, 0.2);
-  color: #fca5a5;
+  border-radius: 10px;
+  background: #fef2f2;
+  color: #dc2626;
   font-size: 13px;
   font-weight: 500;
   animation: shake 0.4s ease;
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  border: 1px solid #fecaca;
 }
 
 @keyframes shake {
