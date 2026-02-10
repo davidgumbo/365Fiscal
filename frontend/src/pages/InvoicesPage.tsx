@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { apiFetch } from "../api";
 import { useMe } from "../hooks/useMe";
 
@@ -132,7 +133,12 @@ const getPaymentStatus = (amountPaid: number, amountDue: number) => {
   return "Unpaid";
 };
 
-export default function InvoicesPage() {
+type InvoicesPageMode = "list" | "new" | "detail";
+
+export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMode }) {
+  const navigate = useNavigate();
+  const { invoiceId } = useParams();
+  const routeInvoiceId = invoiceId ? Number(invoiceId) : null;
   const { me } = useMe();
   const companyId = me?.company_ids?.[0];
   const company = me?.companies?.find((c) => c.id === companyId);
@@ -282,11 +288,8 @@ export default function InvoicesPage() {
       if (!newDeviceId && deviceData.length) {
         setNewDeviceId(deviceData[0].id);
       }
-      if (invoiceData.length && !selectedInvoiceId) {
-        setSelectedInvoiceId(invoiceData[0].id);
-      }
       if (selectedInvoiceId && !invoiceData.find((inv) => inv.id === selectedInvoiceId)) {
-        setSelectedInvoiceId(invoiceData[0]?.id ?? null);
+        setSelectedInvoiceId(null);
       }
     } catch (err: any) {
       setError(err.message || "Failed to load invoices");
@@ -298,6 +301,28 @@ export default function InvoicesPage() {
   useEffect(() => {
     loadAll();
   }, [companyId, listSearch, listStatus, listType]);
+
+  useEffect(() => {
+    if (mode === "list") {
+      setNewMode(false);
+      setIsEditing(false);
+      setSelectedInvoiceId(null);
+      return;
+    }
+    if (mode === "detail") {
+      setNewMode(false);
+      setIsEditing(false);
+      if (routeInvoiceId && routeInvoiceId !== selectedInvoiceId) {
+        setSelectedInvoiceId(routeInvoiceId);
+      }
+    }
+  }, [mode, routeInvoiceId]);
+
+  useEffect(() => {
+    if (mode === "new" && !newMode) {
+      beginNew();
+    }
+  }, [mode, newMode, contacts, devices]);
 
   useEffect(() => {
     if (!productWarehouseId) {
@@ -458,6 +483,7 @@ export default function InvoicesPage() {
       setNewMode(false);
       setIsEditing(false);
       await loadAll();
+      navigate(`/invoices/${created.id}`);
     } catch (err: any) {
       setError(err.message || "Failed to create invoice");
     } finally {
@@ -721,12 +747,10 @@ export default function InvoicesPage() {
   };
 
   // Determine which "screen" to show: list, new-form, or detail
-  const showForm = newMode || selectedInvoice;
+  const showForm = mode !== "list";
 
   const goBackToList = () => {
-    setNewMode(false);
-    setIsEditing(false);
-    setSelectedInvoiceId(null);
+    navigate("/invoices");
   };
 
   return (
@@ -746,7 +770,15 @@ export default function InvoicesPage() {
               <h3 className="fw-bold mb-0">Invoices</h3>
               <small className="text-muted">Professional invoicing, payments, taxes, and fiscalization.</small>
             </div>
-            <button className="btn btn-primary" onClick={beginNew}>+ New Invoice</button>
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                beginNew();
+                navigate("/invoices/new");
+              }}
+            >
+              + New Invoice
+            </button>
           </div>
 
           <div className="card shadow-sm">
@@ -798,11 +830,7 @@ export default function InvoicesPage() {
                         <tr
                           key={inv.id}
                           role="button"
-                          onClick={() => {
-                            setSelectedInvoiceId(inv.id);
-                            setNewMode(false);
-                            setIsEditing(false);
-                          }}
+                          onClick={() => navigate(`/invoices/${inv.id}`)}
                         >
                           <td>
                             <div className="fw-semibold">{inv.reference}</div>

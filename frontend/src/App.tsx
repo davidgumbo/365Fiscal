@@ -204,13 +204,17 @@ function AppContent() {
             <Routes>
               <Route path="/" element={<AppLauncherPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/invoices" element={<InvoicesPage />} />
+              <Route path="/invoices" element={<InvoicesPage mode="list" />} />
+              <Route path="/invoices/new" element={<InvoicesPage mode="new" />} />
+              <Route path="/invoices/:invoiceId" element={<InvoicesPage mode="detail" />} />
               <Route path="/companies" element={<CompaniesPage />} />
               <Route path="/products" element={<ProductsPage />} />
               <Route path="/contacts" element={<ContactsPage />} />
               <Route path="/contacts/new" element={<ContactFormPage />} />
               <Route path="/contacts/:contactId" element={<ContactFormPage />} />
-              <Route path="/quotations" element={<QuotationsPage />} />
+              <Route path="/quotations" element={<QuotationsPage mode="list" />} />
+              <Route path="/quotations/new" element={<QuotationsPage mode="new" />} />
+              <Route path="/quotations/:quotationId" element={<QuotationsPage mode="detail" />} />
               <Route path="/inventory" element={<InventoryPage />} />
               <Route path="/reports" element={<ReportsPage />} />
               <Route path="/settings" element={<SettingsPage />} />

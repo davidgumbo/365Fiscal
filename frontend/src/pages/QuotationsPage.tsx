@@ -1,4 +1,5 @@
 ﻿import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { apiFetch } from "../api";
 import { useCompanies, Company } from "../hooks/useCompanies";
 
@@ -35,7 +36,12 @@ const emptyLine = (): QuotationLine => ({
   vat_rate: 0
 });
 
-export default function QuotationsPage() {
+type QuotationsPageMode = "list" | "new" | "detail";
+
+export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPageMode }) {
+  const navigate = useNavigate();
+  const { quotationId } = useParams();
+  const routeQuotationId = quotationId ? Number(quotationId) : null;
   const companies = useCompanies();
   const [companyId, setCompanyId] = useState<number | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -66,12 +72,6 @@ export default function QuotationsPage() {
     setContacts(c);
     setProducts(p);
     setQuotations(q);
-    if (q.length && selectedQuotationId === null) {
-      setSelectedQuotationId(q[0].id);
-    }
-    if (c.length && form.customer_id === null) {
-      setForm((prev) => ({ ...prev, customer_id: c[0].id }));
-    }
   };
 
   useEffect(() => {
@@ -79,6 +79,24 @@ export default function QuotationsPage() {
       loadData(companyId);
     }
   }, [companyId]);
+
+  useEffect(() => {
+    if (mode === "list") {
+      setSelectedQuotationId(null);
+      setIsEditing(false);
+      return;
+    }
+    if (mode === "detail") {
+      setSelectedQuotationId(routeQuotationId ?? null);
+      setIsEditing(false);
+    }
+  }, [mode, routeQuotationId]);
+
+  useEffect(() => {
+    if (mode === "new" && !isEditing) {
+      startNew();
+    }
+  }, [mode, isEditing, contacts]);
 
   const selectedQuotation = useMemo(() => {
     return quotations.find((q) => q.id === selectedQuotationId) ?? null;
@@ -127,6 +145,7 @@ export default function QuotationsPage() {
         body: JSON.stringify({ ...payload, company_id: companyId })
       });
       setSelectedQuotationId(created.id);
+      navigate(`/quotations/${created.id}`);
     }
     await loadData(companyId);
     setIsEditing(false);
@@ -273,212 +292,237 @@ export default function QuotationsPage() {
     win.print();
   };
 
+  const showForm = mode !== "list";
+
   return (
     <div className="content">
-      <div className="form-view">
+      {!showForm && (
         <div className="form-shell">
-          <div className="form-header">
-            <div>
-              <h3>Quotation</h3>
-              <div className="statusbar">
-                <span className={`status-pill ${statusLabel === "draft" ? "active" : ""}`}>Draft</span>
-                <span className={`status-pill ${statusLabel === "sent" ? "active" : ""}`}>Sent</span>
-                <span className={`status-pill ${statusLabel === "accepted" ? "active" : ""}`}>Accepted</span>
-                <span className={`status-pill ${statusLabel === "rejected" ? "active" : ""}`}>Rejected</span>
-                <span className={`status-pill ${statusLabel === "converted" ? "active" : ""}`}>Invoiced</span>
-              </div>
-            </div>
-            <div className="form-actions">
-              <button className="outline" onClick={startNew}>New</button>
-              {isEditing ? (
-                <>
-                  <button className="primary" onClick={saveQuotation} disabled={saving}>Save</button>
-                  <button className="outline" onClick={() => setIsEditing(false)}>Discard</button>
-                </>
-              ) : (
-                <button className="primary" onClick={() => setIsEditing(true)}>Edit</button>
-              )}
-              {selectedQuotationId ? (
-                <>
-                  <button className="outline" onClick={sendQuotation} disabled={statusLabel !== "draft"}>Send</button>
-                  <button className="outline" onClick={acceptQuotation} disabled={statusLabel !== "sent"}>Accept</button>
-                  <button className="outline" onClick={rejectQuotation} disabled={statusLabel !== "draft" && statusLabel !== "sent"}>Reject</button>
-                  <button className="primary" onClick={convertToInvoice} disabled={statusLabel !== "accepted"}>Convert to Invoice</button>
-                  <button className="outline" onClick={printQuotation}>Print</button>
-                </>
-              ) : null}
-            </div>
+          <div className="d-flex flex-wrap justify-content-between align-items-center mb-3">
+            <h3>Quotations</h3>
+            <button
+              className="outline"
+              onClick={() => {
+                startNew();
+                navigate("/quotations/new");
+              }}
+            >
+              New
+            </button>
           </div>
-          <div className="form-grid">
-          <label className="input">
-            Company
-            <select
-              value={companyId ?? ""}
-              onChange={(e) => setCompanyId(Number(e.target.value))}
-              disabled={!canEdit}
-            >
-              {companies.map((c: Company) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="input">
-            Customer
-            <select
-              value={form.customer_id ?? ""}
-              onChange={(e) => setForm((prev) => ({ ...prev, customer_id: Number(e.target.value) }))}
-              disabled={!canEdit}
-            >
-              {contacts.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="input">
-            Payment Terms
-            <input
-              value={form.payment_terms}
-              onChange={(e) => setForm((prev) => ({ ...prev, payment_terms: e.target.value }))}
-              disabled={!canEdit}
-            />
-          </label>
-          <label className="input">
-            Expiration
-            <input
-              type="date"
-              value={form.expires_at}
-              onChange={(e) => setForm((prev) => ({ ...prev, expires_at: e.target.value }))}
-              disabled={!canEdit}
-            />
-          </label>
-        </div>
-        <div className="invoice-lines">
           <table className="table">
             <thead>
               <tr>
-                <th>Product</th>
-                <th>Description</th>
-                <th>Qty</th>
-                <th>UoM</th>
-                <th>Unit Price</th>
-                <th>VAT %</th>
+                <th>Reference</th>
+                <th>Customer</th>
+                <th>Status</th>
                 <th>Total</th>
-                <th />
               </tr>
             </thead>
             <tbody>
-              {lines.map((line, index) => (
-                <tr key={`${index}-${line.product_id ?? "new"}`}>
-                  <td>
-                    <select
-                      value={line.product_id ?? ""}
-                      onChange={(e) => {
-                        const selected = products.find((p) => p.id === Number(e.target.value));
-                        updateLine(index, {
-                          product_id: Number(e.target.value),
-                          description: selected?.name ?? "",
-                          unit_price: selected?.sale_price ?? 0,
-                          vat_rate: selected?.tax_rate ?? 0
-                        });
-                      }}
-                      disabled={!canEdit}
-                    >
-                      <option value="">Select</option>
-                      {products.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td>
-                    <input
-                      value={line.description}
-                      onChange={(e) => updateLine(index, { description: e.target.value })}
-                      disabled={!canEdit}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="number"
-                      value={line.quantity}
-                      onChange={(e) => updateLine(index, { quantity: Number(e.target.value) })}
-                      disabled={!canEdit}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      value={line.uom}
-                      onChange={(e) => updateLine(index, { uom: e.target.value })}
-                      disabled={!canEdit}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="number"
-                      value={line.unit_price}
-                      onChange={(e) => updateLine(index, { unit_price: Number(e.target.value) })}
-                      disabled={!canEdit}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="number"
-                      value={line.vat_rate}
-                      onChange={(e) => updateLine(index, { vat_rate: Number(e.target.value) })}
-                      disabled={!canEdit}
-                    />
-                  </td>
-                  <td>{lineTotal(line).toFixed(2)}</td>
-                  <td>
-                    <button className="outline" onClick={() => removeLine(index)} disabled={!canEdit || lines.length === 1}>
-                      Remove
-                    </button>
-                  </td>
+              {quotations.map((q) => (
+                <tr
+                  key={q.id}
+                  className={selectedQuotationId === q.id ? "row-active" : ""}
+                  onClick={() => navigate(`/quotations/${q.id}`)}
+                >
+                  <td>{q.reference}</td>
+                  <td>{contacts.find((c) => c.id === q.customer_id)?.name ?? ""}</td>
+                  <td>{q.status}</td>
+                  <td>{q.lines?.reduce((sum, line) => sum + lineTotal(line), 0).toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
-          <div className="form-actions" style={{ justifyContent: "space-between", marginTop: 8 }}>
-            <button className="outline" onClick={addLine} disabled={!canEdit}>Add Line</button>
-            <div className="invoice-total">Total: {totalAmount.toFixed(2)}</div>
+        </div>
+      )}
+
+      {showForm && (
+        <div className="form-view">
+          <div className="form-shell">
+            <div className="form-header">
+              <div>
+                <h3>Quotation</h3>
+                <div className="statusbar">
+                  <span className={`status-pill ${statusLabel === "draft" ? "active" : ""}`}>Draft</span>
+                  <span className={`status-pill ${statusLabel === "sent" ? "active" : ""}`}>Sent</span>
+                  <span className={`status-pill ${statusLabel === "accepted" ? "active" : ""}`}>Accepted</span>
+                  <span className={`status-pill ${statusLabel === "rejected" ? "active" : ""}`}>Rejected</span>
+                  <span className={`status-pill ${statusLabel === "converted" ? "active" : ""}`}>Invoiced</span>
+                </div>
+              </div>
+              <div className="form-actions">
+                <button className="outline" onClick={() => navigate("/quotations")}>Back</button>
+                <button
+                  className="outline"
+                  onClick={() => {
+                    startNew();
+                    navigate("/quotations/new");
+                  }}
+                >
+                  New
+                </button>
+                {isEditing ? (
+                  <>
+                    <button className="primary" onClick={saveQuotation} disabled={saving}>Save</button>
+                    <button className="outline" onClick={() => setIsEditing(false)}>Discard</button>
+                  </>
+                ) : (
+                  <button className="primary" onClick={() => setIsEditing(true)}>Edit</button>
+                )}
+                {selectedQuotationId ? (
+                  <>
+                    <button className="outline" onClick={sendQuotation} disabled={statusLabel !== "draft"}>Send</button>
+                    <button className="outline" onClick={acceptQuotation} disabled={statusLabel !== "sent"}>Accept</button>
+                    <button className="outline" onClick={rejectQuotation} disabled={statusLabel !== "draft" && statusLabel !== "sent"}>Reject</button>
+                    <button className="primary" onClick={convertToInvoice} disabled={statusLabel !== "accepted"}>Convert to Invoice</button>
+                    <button className="outline" onClick={printQuotation}>Print</button>
+                  </>
+                ) : null}
+              </div>
+            </div>
+            <div className="form-grid">
+              <label className="input">
+                Company
+                <select
+                  value={companyId ?? ""}
+                  onChange={(e) => setCompanyId(Number(e.target.value))}
+                  disabled={!canEdit}
+                >
+                  {companies.map((c: Company) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="input">
+                Customer
+                <select
+                  value={form.customer_id ?? ""}
+                  onChange={(e) => setForm((prev) => ({ ...prev, customer_id: Number(e.target.value) }))}
+                  disabled={!canEdit}
+                >
+                  {contacts.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="input">
+                Payment Terms
+                <input
+                  value={form.payment_terms}
+                  onChange={(e) => setForm((prev) => ({ ...prev, payment_terms: e.target.value }))}
+                  disabled={!canEdit}
+                />
+              </label>
+              <label className="input">
+                Expiration
+                <input
+                  type="date"
+                  value={form.expires_at}
+                  onChange={(e) => setForm((prev) => ({ ...prev, expires_at: e.target.value }))}
+                  disabled={!canEdit}
+                />
+              </label>
+            </div>
+            <div className="invoice-lines">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Description</th>
+                    <th>Qty</th>
+                    <th>UoM</th>
+                    <th>Unit Price</th>
+                    <th>VAT %</th>
+                    <th>Total</th>
+                    <th />
+                  </tr>
+                </thead>
+                <tbody>
+                  {lines.map((line, index) => (
+                    <tr key={`${index}-${line.product_id ?? "new"}`}>
+                      <td>
+                        <select
+                          value={line.product_id ?? ""}
+                          onChange={(e) => {
+                            const selected = products.find((p) => p.id === Number(e.target.value));
+                            updateLine(index, {
+                              product_id: Number(e.target.value),
+                              description: selected?.name ?? "",
+                              unit_price: selected?.sale_price ?? 0,
+                              vat_rate: selected?.tax_rate ?? 0
+                            });
+                          }}
+                          disabled={!canEdit}
+                        >
+                          <option value="">Select</option>
+                          {products.map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.name}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                      <td>
+                        <input
+                          value={line.description}
+                          onChange={(e) => updateLine(index, { description: e.target.value })}
+                          disabled={!canEdit}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="number"
+                          value={line.quantity}
+                          onChange={(e) => updateLine(index, { quantity: Number(e.target.value) })}
+                          disabled={!canEdit}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          value={line.uom}
+                          onChange={(e) => updateLine(index, { uom: e.target.value })}
+                          disabled={!canEdit}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="number"
+                          value={line.unit_price}
+                          onChange={(e) => updateLine(index, { unit_price: Number(e.target.value) })}
+                          disabled={!canEdit}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="number"
+                          value={line.vat_rate}
+                          onChange={(e) => updateLine(index, { vat_rate: Number(e.target.value) })}
+                          disabled={!canEdit}
+                        />
+                      </td>
+                      <td>{lineTotal(line).toFixed(2)}</td>
+                      <td>
+                        <button className="outline" onClick={() => removeLine(index)} disabled={!canEdit || lines.length === 1}>
+                          Remove
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div className="form-actions" style={{ justifyContent: "space-between", marginTop: 8 }}>
+                <button className="outline" onClick={addLine} disabled={!canEdit}>Add Line</button>
+                <div className="invoice-total">Total: {totalAmount.toFixed(2)}</div>
+              </div>
+            </div>
           </div>
         </div>
-        </div>
-      </div>
-      <div className="form-shell">
-        <h3>Quotations</h3>
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Reference</th>
-              <th>Customer</th>
-              <th>Status</th>
-              <th>Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {quotations.map((q) => (
-              <tr
-                key={q.id}
-                className={selectedQuotationId === q.id ? "row-active" : ""}
-                onClick={() => setSelectedQuotationId(q.id)}
-              >
-                <td>{q.reference}</td>
-                <td>{contacts.find((c) => c.id === q.customer_id)?.name ?? ""}</td>
-                <td>{q.status}</td>
-                <td>
-                  {q.lines?.reduce((sum, line) => sum + lineTotal(line), 0).toFixed(2)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      )}
     </div>
   );
 }
