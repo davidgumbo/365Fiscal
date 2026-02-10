@@ -903,27 +903,123 @@ textarea {
 .table th,
 .table td {
   text-align: left;
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--stroke-light);
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
   font-size: 13px;
+  vertical-align: middle;
 }
 
 .table th {
   font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--muted);
-  font-weight: 600;
-  background: #fafbfc;
+  letter-spacing: 0.6px;
+  color: #64748b;
+  font-weight: 700;
+  background: #f8fafc;
+  border-bottom: 2px solid #e2e8f0;
+  padding: 10px 16px;
+}
+
+.table tbody tr {
+  transition: background-color 0.15s ease;
 }
 
 .table tbody tr:hover {
-  background: var(--blue-50);
+  background: #f8fafc;
+}
+
+.table tbody tr:active {
+  background: #f1f5f9;
+}
+
+.table tbody tr[role="button"] {
+  cursor: pointer;
 }
 
 .table-group td {
   background: #f8fafc;
   font-weight: 600;
+}
+
+/* Bootstrap table overrides for professional look */
+.table-hover > tbody > tr:hover {
+  --bs-table-hover-bg: #f8fafc;
+  background-color: #f8fafc !important;
+}
+
+.table-light,
+thead.table-light {
+  --bs-table-bg: #f8fafc;
+  --bs-table-border-color: #e2e8f0;
+}
+
+thead.table-light th {
+  background: #f8fafc !important;
+  color: #64748b !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.6px !important;
+  border-bottom: 2px solid #e2e8f0 !important;
+  padding: 10px 16px !important;
+}
+
+/* Clean card styling for list views */
+.card.shadow-sm {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* Filter bar styling */
+.card-body .d-flex.flex-wrap.gap-2.p-3.border-bottom.bg-light {
+  background: #f8fafc !important;
+  border-bottom-color: #e2e8f0 !important;
+  padding: 12px 16px !important;
+}
+
+.card-body .form-control,
+.card-body .form-select {
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  font-size: 13px;
+  padding: 8px 12px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.card-body .form-control:focus,
+.card-body .form-select:focus {
+  border-color: var(--blue-500);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  outline: none;
+}
+
+/* Table row reference styling */
+.table td .fw-semibold {
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.table td small.text-muted {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.table td.text-muted {
+  color: #94a3b8 !important;
+}
+
+.table td.text-end.fw-semibold {
+  color: #1e293b;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Empty state in table */
+.table td.text-center.py-5.text-muted {
+  padding: 48px 16px !important;
+  color: #94a3b8 !important;
+  font-size: 14px;
 }
 
 .invoice-header {
@@ -2006,23 +2102,60 @@ textarea {
 
 .badge {
   display: inline-flex;
-  gap: 8px;
   align-items: center;
-  padding: 8px 16px;
-  border-radius: 999px;
-  background: var(--blue-100);
-  color: var(--blue-700);
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.8px;
-  border: 1px solid rgba(11, 87, 208, 0.15);
+  letter-spacing: 0.5px;
+  line-height: 1.4;
+  white-space: nowrap;
+  border: none;
+}
+
+/* ── Professional badge color variants ── */
+.badge.bg-success {
+  background: #ecfdf5 !important;
+  color: #065f46 !important;
+  border: 1px solid #a7f3d0;
+}
+
+.badge.bg-info {
+  background: #eff6ff !important;
+  color: #1e40af !important;
+  border: 1px solid #bfdbfe;
+}
+
+.badge.bg-primary {
+  background: #eef2ff !important;
+  color: #3730a3 !important;
+  border: 1px solid #c7d2fe;
+}
+
+.badge.bg-secondary {
+  background: #f8fafc !important;
+  color: #475569 !important;
+  border: 1px solid #e2e8f0;
+}
+
+.badge.bg-warning {
+  background: #fffbeb !important;
+  color: #92400e !important;
+  border: 1px solid #fde68a;
+}
+
+.badge.bg-danger {
+  background: #fef2f2 !important;
+  color: #991b1b !important;
+  border: 1px solid #fecaca;
 }
 
 .admin-pill {
-  background: rgba(209, 43, 43, 0.12);
-  color: #b81f1f;
-  border: 1px solid rgba(209, 43, 43, 0.2);
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
 }
 
 .splash {
@@ -2196,41 +2329,48 @@ textarea {
   display: inline-flex;
   align-items: center;
   padding: 4px 10px;
-  border-radius: var(--radius-sm);
+  border-radius: 6px;
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.5px;
+  border: 1px solid transparent;
 }
 
 .status-badge.active {
-  background: #dcfce7;
-  color: #166534;
+  background: #ecfdf5;
+  color: #065f46;
+  border-color: #a7f3d0;
 }
 
 .status-badge.inactive {
-  background: #fee2e2;
+  background: #fef2f2;
   color: #991b1b;
+  border-color: #fecaca;
 }
 
 .status-badge.success {
-  background: #dcfce7;
-  color: #166534;
+  background: #ecfdf5;
+  color: #065f46;
+  border-color: #a7f3d0;
 }
 
 .status-badge.warning {
-  background: #fef3c7;
+  background: #fffbeb;
   color: #92400e;
+  border-color: #fde68a;
 }
 
 .status-badge.neutral {
-  background: #f1f5f9;
+  background: #f8fafc;
   color: #475569;
+  border-color: #e2e8f0;
 }
 
 .status-badge.danger {
-  background: #fee2e2;
+  background: #fef2f2;
   color: #991b1b;
+  border-color: #fecaca;
 }
 
 .error-text {
@@ -6210,19 +6350,83 @@ tr:hover .o-quick-actions {
   transition: all 0.2s;
 }
 
+/* ========== Bootstrap Button Overrides ========== */
+.btn {
+  border-radius: 8px !important;
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  transition: all 0.15s ease !important;
+  box-shadow: none !important;
+}
+
+.btn-sm {
+  padding: 6px 14px !important;
+  font-size: 12px !important;
+  border-radius: 6px !important;
+}
+
 .btn-primary {
-  background: var(--blue-600);
-  color: white;
+  background: var(--blue-600) !important;
+  border-color: var(--blue-600) !important;
+  color: white !important;
 }
 
 .btn-primary:hover {
-  background: var(--blue-700);
+  background: var(--blue-700) !important;
+  border-color: var(--blue-700) !important;
+  transform: translateY(-1px);
+}
+
+.btn-light.border {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #475569 !important;
+}
+
+.btn-light.border:hover {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #1e293b !important;
 }
 
 .btn-secondary {
-  background: white;
-  color: var(--ink);
-  border: 1px solid var(--stroke);
+  background: white !important;
+  color: var(--ink) !important;
+  border: 1px solid var(--stroke) !important;
+}
+
+.btn-secondary:hover {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+}
+
+/* ========== Bootstrap Form Overrides ========== */
+.form-label.fw-semibold {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #64748b;
+  font-weight: 600 !important;
+  margin-bottom: 6px;
+}
+
+/* Summary stat cards */
+.card.border-0.bg-light {
+  background: #f8fafc !important;
+  border-radius: 10px !important;
+}
+
+.card.border-0.bg-light .card-body small.text-muted {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  color: #94a3b8 !important;
+}
+
+.card.border-0.bg-light .card-body .fs-5.fw-bold {
+  color: #1e293b;
+  font-variant-numeric: tabular-nums;
 }
 
 .btn-secondary:hover {
