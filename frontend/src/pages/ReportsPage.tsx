@@ -1,211 +1,614 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { apiFetch } from "../api";
 import { useMe } from "../hooks/useMe";
 
-interface SalesReportData {
+/* ── Interfaces ──────────────────────────────────────── */
+
+interface InvoiceLine {
+  id: number;
+  product_id: number | null;
+  description: string;
+  quantity: number;
+  unit_price: number;
+  discount: number;
+  vat_rate: number;
+  subtotal: number;
+  tax_amount: number;
+  total_price: number;
+}
+
+interface Invoice {
+  id: number;
+  reference: string;
+  status: string;
+  invoice_date: string | null;
+  total_amount: number;
+  amount_paid: number;
+  tax_amount: number;
+  subtotal: number;
+  customer_id: number | null;
+  invoice_type: string;
+  lines: InvoiceLine[];
+  created_at: string;
+}
+
+interface Product {
+  id: number;
+  name: string;
+  sale_price: number;
+  purchase_cost: number;
+  category_id: number | null;
+  product_type: string;
+  uom: string;
+  reorder_point: number;
+  is_active: boolean;
+}
+
+interface StockQuant {
+  id: number;
+  product_id: number;
+  quantity: number;
+  available_quantity: number;
+  reserved_quantity: number;
+  unit_cost: number;
+  total_value: number;
+}
+
+interface StockMoveItem {
+  id: number;
+  product_id: number;
+  move_type: string;
+  quantity: number;
+  reference: string;
+  state: string;
+  created_at: string;
+}
+
+interface PaymentItem {
+  id: number;
+  reference: string;
+  invoice_id: number | null;
+  amount: number;
+  payment_method: string;
+  payment_date: string | null;
+  status: string;
+  reconciled_at: string | null;
+  created_at: string;
+}
+
+interface CompanySettings {
+  currency_code?: string;
+  currency_symbol?: string;
+}
+
+/* ── Report data shapes ──────────────────────────────── */
+
+interface TopProduct {
+  name: string;
+  quantity: number;
+  revenue: number;
+}
+
+interface MonthlySales {
+  month: string;
+  amount: number;
+  count: number;
+}
+
+interface SalesReport {
   total_sales: number;
   total_invoices: number;
   paid_invoices: number;
   pending_invoices: number;
-  top_products: { name: string; quantity: number; revenue: number }[];
-  sales_by_month: { month: string; amount: number }[];
+  total_tax: number;
+  average_invoice: number;
+  top_products: TopProduct[];
+  sales_by_month: MonthlySales[];
 }
 
-interface StockReportData {
+interface StockReport {
   total_products: number;
   total_value: number;
-  low_stock_items: { name: string; quantity: number; reorder_level: number }[];
-  stock_by_category: { category: string; count: number; value: number }[];
-  recent_movements: { product: string; type: string; quantity: number; date: string }[];
+  low_stock_items: { name: string; on_hand: number; available: number; reorder: number }[];
+  stock_summary: { name: string; on_hand: number; available: number; reserved: number; value: number }[];
+  recent_movements: { product: string; type: string; quantity: number; reference: string; date: string; state: string }[];
 }
 
-interface PaymentReportData {
+interface PaymentReport {
   total_payments: number;
   total_amount: number;
+  reconciled_count: number;
   reconciled_amount: number;
+  pending_count: number;
   pending_amount: number;
   by_method: { method: string; count: number; amount: number }[];
-  recent_payments: { reference: string; invoice: string; amount: number; date: string; method: string }[];
+  recent_payments: { reference: string; invoice: string; amount: number; date: string; method: string; status: string }[];
 }
 
 type ReportType = "sales" | "stock" | "payments";
 
+const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/* ── Component ───────────────────────────────────────── */
+
 export default function ReportsPage() {
   const { me } = useMe();
   const companyId = me?.company_ids?.[0];
+
   const [activeReport, setActiveReport] = useState<ReportType>("sales");
-  const [salesData, setSalesData] = useState<SalesReportData | null>(null);
-  const [stockData, setStockData] = useState<StockReportData | null>(null);
-  const [paymentData, setPaymentData] = useState<PaymentReportData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [dateRange, setDateRange] = useState({ from: "", to: "" });
 
+  const [salesReport, setSalesReport] = useState<SalesReport | null>(null);
+  const [stockReport, setStockReport] = useState<StockReport | null>(null);
+  const [paymentReport, setPaymentReport] = useState<PaymentReport | null>(null);
+  const [companySettings, setCompanySettings] = useState<CompanySettings | null>(null);
+
+  // Set default date range
+  useEffect(() => {
+    const now = new Date();
+    const first = new Date(now.getFullYear(), now.getMonth(), 1);
+    const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    setDateRange({
+      from: first.toISOString().split("T")[0],
+      to: last.toISOString().split("T")[0],
+    });
+  }, []);
+
+  // Load company settings for currency
   useEffect(() => {
     if (!companyId) return;
-    
-    // Set default date range to current month
-    const now = new Date();
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    setDateRange({
-      from: firstDay.toISOString().split("T")[0],
-      to: lastDay.toISOString().split("T")[0]
+    apiFetch<CompanySettings>(`/company-settings?company_id=${companyId}`)
+      .then(setCompanySettings)
+      .catch(() => {});
+  }, [companyId]);
+
+  const currencySymbol = companySettings?.currency_symbol || "$";
+
+  const formatCurrency = useCallback(
+    (amount: number) => {
+      const abs = Math.abs(amount);
+      const formatted = abs.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      return `${amount < 0 ? "-" : ""}${currencySymbol}${formatted}`;
+    },
+    [currencySymbol]
+  );
+
+  /* ── Data loaders ──────────────────────────────── */
+
+  const loadSalesReport = useCallback(async () => {
+    if (!companyId) return;
+    const [invoices, products] = await Promise.all([
+      apiFetch<Invoice[]>(`/invoices?company_id=${companyId}`),
+      apiFetch<Product[]>(`/products?company_id=${companyId}`),
+    ]);
+
+    const fromDate = dateRange.from ? new Date(dateRange.from) : null;
+    const toDate = dateRange.to ? new Date(dateRange.to + "T23:59:59") : null;
+
+    // Filter invoices by date range — only count actual invoices (not credit notes)
+    const filtered = invoices.filter((inv) => {
+      if (inv.invoice_type === "credit_note") return false;
+      const d = inv.invoice_date ? new Date(inv.invoice_date) : new Date(inv.created_at);
+      if (fromDate && d < fromDate) return false;
+      if (toDate && d > toDate) return false;
+      return true;
+    });
+
+    const totalSales = filtered.reduce((s, i) => s + (i.total_amount || 0), 0);
+    const totalTax = filtered.reduce((s, i) => s + (i.tax_amount || 0), 0);
+    const paidInvoices = filtered.filter(
+      (i) => i.status === "paid" || i.status === "fiscalized" || i.amount_paid >= i.total_amount
+    );
+    const pendingInvoices = filtered.filter(
+      (i) => i.status !== "paid" && i.status !== "fiscalized" && i.status !== "cancelled"
+    );
+
+    // Aggregate top products from real invoice lines
+    const productMap = new Map<number, { name: string; qty: number; revenue: number }>();
+    const prodLookup = new Map(products.map((p) => [p.id, p]));
+
+    for (const inv of filtered) {
+      if (!inv.lines) continue;
+      for (const line of inv.lines) {
+        const pid = line.product_id;
+        if (!pid) continue;
+        const existing = productMap.get(pid);
+        const prodName = prodLookup.get(pid)?.name || line.description || `Product #${pid}`;
+        if (existing) {
+          existing.qty += line.quantity;
+          existing.revenue += line.total_price || line.subtotal || 0;
+        } else {
+          productMap.set(pid, { name: prodName, qty: line.quantity, revenue: line.total_price || line.subtotal || 0 });
+        }
+      }
+    }
+    const topProducts: TopProduct[] = Array.from(productMap.values())
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 10)
+      .map((p) => ({ name: p.name, quantity: Math.round(p.qty * 100) / 100, revenue: p.revenue }));
+
+    // Monthly breakdown
+    const monthlyMap = new Map<string, { amount: number; count: number }>();
+    for (const inv of filtered) {
+      const d = inv.invoice_date ? new Date(inv.invoice_date) : new Date(inv.created_at);
+      const key = `${d.getFullYear()}-${String(d.getMonth()).padStart(2, "0")}`;
+      const existing = monthlyMap.get(key);
+      if (existing) {
+        existing.amount += inv.total_amount || 0;
+        existing.count++;
+      } else {
+        monthlyMap.set(key, { amount: inv.total_amount || 0, count: 1 });
+      }
+    }
+    const salesByMonth: MonthlySales[] = Array.from(monthlyMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, val]) => {
+        const [, m] = key.split("-");
+        return { month: `${MONTH_NAMES[parseInt(m)]}`, amount: val.amount, count: val.count };
+      });
+
+    setSalesReport({
+      total_sales: totalSales,
+      total_invoices: filtered.length,
+      paid_invoices: paidInvoices.length,
+      pending_invoices: pendingInvoices.length,
+      total_tax: totalTax,
+      average_invoice: filtered.length > 0 ? totalSales / filtered.length : 0,
+      top_products: topProducts,
+      sales_by_month: salesByMonth,
+    });
+  }, [companyId, dateRange]);
+
+  const loadStockReport = useCallback(async () => {
+    if (!companyId) return;
+    const [products, quants, moves] = await Promise.all([
+      apiFetch<Product[]>(`/products?company_id=${companyId}`),
+      apiFetch<StockQuant[]>(`/stock/quants?company_id=${companyId}`).catch(() => [] as StockQuant[]),
+      apiFetch<StockMoveItem[]>(`/stock/moves?company_id=${companyId}`).catch(() => [] as StockMoveItem[]),
+    ]);
+
+    const prodLookup = new Map(products.map((p) => [p.id, p]));
+
+    // Build stock summary from quants
+    const stockSummary = quants.map((q) => {
+      const prod = prodLookup.get(q.product_id);
+      return {
+        name: prod?.name || `Product #${q.product_id}`,
+        on_hand: q.quantity,
+        available: q.available_quantity,
+        reserved: q.reserved_quantity,
+        value: q.total_value || q.quantity * q.unit_cost,
+      };
+    });
+
+    const totalValue = stockSummary.reduce((s, i) => s + i.value, 0);
+
+    // Low stock = quantity below reorder point
+    const lowStock = quants
+      .map((q) => {
+        const prod = prodLookup.get(q.product_id);
+        if (!prod) return null;
+        const reorder = prod.reorder_point || 0;
+        if (reorder > 0 && q.available_quantity <= reorder) {
+          return { name: prod.name, on_hand: q.quantity, available: q.available_quantity, reorder };
+        }
+        return null;
+      })
+      .filter(Boolean) as StockReport["low_stock_items"];
+
+    // Recent movements
+    const recentMoves = moves.slice(0, 15).map((m) => {
+      const prod = prodLookup.get(m.product_id);
+      return {
+        product: prod?.name || `Product #${m.product_id}`,
+        type: m.move_type.toUpperCase(),
+        quantity: m.quantity,
+        reference: m.reference,
+        date: new Date(m.created_at).toLocaleDateString(),
+        state: m.state,
+      };
+    });
+
+    setStockReport({
+      total_products: products.filter((p) => p.is_active).length,
+      total_value: totalValue,
+      low_stock_items: lowStock,
+      stock_summary: stockSummary.sort((a, b) => b.value - a.value).slice(0, 20),
+      recent_movements: recentMoves,
     });
   }, [companyId]);
+
+  const loadPaymentReport = useCallback(async () => {
+    if (!companyId) return;
+    const payments = await apiFetch<PaymentItem[]>(`/payments?company_id=${companyId}`).catch(() => [] as PaymentItem[]);
+    const invoices = await apiFetch<Invoice[]>(`/invoices?company_id=${companyId}`).catch(() => [] as Invoice[]);
+
+    const fromDate = dateRange.from ? new Date(dateRange.from) : null;
+    const toDate = dateRange.to ? new Date(dateRange.to + "T23:59:59") : null;
+
+    const filtered = payments.filter((p) => {
+      const d = p.payment_date ? new Date(p.payment_date) : new Date(p.created_at);
+      if (fromDate && d < fromDate) return false;
+      if (toDate && d > toDate) return false;
+      return true;
+    });
+
+    const invLookup = new Map(invoices.map((i) => [i.id, i.reference]));
+
+    const totalAmount = filtered.reduce((s, p) => s + (p.amount || 0), 0);
+    const reconciled = filtered.filter((p) => p.status === "reconciled" || p.reconciled_at);
+    const reconciledAmount = reconciled.reduce((s, p) => s + (p.amount || 0), 0);
+    const pending = filtered.filter((p) => p.status !== "reconciled" && p.status !== "cancelled");
+    const pendingAmount = pending.reduce((s, p) => s + (p.amount || 0), 0);
+
+    // By method
+    const methodMap = new Map<string, { count: number; amount: number }>();
+    for (const p of filtered) {
+      const method = p.payment_method || "other";
+      const existing = methodMap.get(method);
+      if (existing) {
+        existing.count++;
+        existing.amount += p.amount || 0;
+      } else {
+        methodMap.set(method, { count: 1, amount: p.amount || 0 });
+      }
+    }
+
+    setPaymentReport({
+      total_payments: filtered.length,
+      total_amount: totalAmount,
+      reconciled_count: reconciled.length,
+      reconciled_amount: reconciledAmount,
+      pending_count: pending.length,
+      pending_amount: pendingAmount,
+      by_method: Array.from(methodMap.entries())
+        .sort(([, a], [, b]) => b.amount - a.amount)
+        .map(([method, data]) => ({
+          method: method.replace(/_/g, " "),
+          count: data.count,
+          amount: data.amount,
+        })),
+      recent_payments: filtered.slice(0, 15).map((p) => ({
+        reference: p.reference || "-",
+        invoice: p.invoice_id ? invLookup.get(p.invoice_id) || `INV-${p.invoice_id}` : "-",
+        amount: p.amount || 0,
+        date: p.payment_date ? new Date(p.payment_date).toLocaleDateString() : "-",
+        method: (p.payment_method || "other").replace(/_/g, " "),
+        status: p.status,
+      })),
+    });
+  }, [companyId, dateRange]);
+
+  const loadReport = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      if (activeReport === "sales") await loadSalesReport();
+      else if (activeReport === "stock") await loadStockReport();
+      else if (activeReport === "payments") await loadPaymentReport();
+    } catch (err: any) {
+      console.error("Report load error:", err);
+      setError(err?.message || "Failed to load report data");
+    } finally {
+      setLoading(false);
+    }
+  }, [activeReport, loadSalesReport, loadStockReport, loadPaymentReport]);
 
   useEffect(() => {
     if (!companyId || !dateRange.from || !dateRange.to) return;
     loadReport();
-  }, [companyId, activeReport, dateRange]);
+  }, [companyId, activeReport, dateRange.from, dateRange.to]);
 
-  const loadReport = async () => {
-    setLoading(true);
-    try {
-      if (activeReport === "sales") {
-        // For now, generate mock data since backend endpoint may not exist
-        const invoices = await apiFetch<any[]>(`/invoices?company_id=${companyId}`);
-        const products = await apiFetch<any[]>(`/products?company_id=${companyId}`);
-        
-        const totalSales = invoices.reduce((sum, inv) => sum + (inv.total_amount || 0), 0);
-        const paidInvoices = invoices.filter(inv => inv.status === "fiscalized" || inv.status === "paid").length;
-        
-        setSalesData({
-          total_sales: totalSales,
-          total_invoices: invoices.length,
-          paid_invoices: paidInvoices,
-          pending_invoices: invoices.length - paidInvoices,
-          top_products: products.slice(0, 5).map(p => ({
-            name: p.name,
-            quantity: Math.floor(Math.random() * 100) + 10,
-            revenue: p.sale_price * (Math.floor(Math.random() * 50) + 5)
-          })),
-          sales_by_month: [
-            { month: "Jan", amount: Math.random() * 10000 },
-            { month: "Feb", amount: Math.random() * 10000 },
-            { month: "Mar", amount: Math.random() * 10000 },
-            { month: "Apr", amount: Math.random() * 10000 },
-            { month: "May", amount: Math.random() * 10000 },
-            { month: "Jun", amount: Math.random() * 10000 }
-          ]
-        });
-      } else if (activeReport === "stock") {
-        // Stock report
-        const products = await apiFetch<any[]>(`/products?company_id=${companyId}`);
-        const quants = await apiFetch<any[]>(`/stock/quants?company_id=${companyId}`).catch(() => []);
-        
-        const totalValue = products.reduce((sum, p) => sum + (p.purchase_cost || 0) * 10, 0);
-        
-        setStockData({
-          total_products: products.length,
-          total_value: totalValue,
-          low_stock_items: products.slice(0, 5).map(p => ({
-            name: p.name,
-            quantity: Math.floor(Math.random() * 10),
-            reorder_level: 20
-          })),
-          stock_by_category: [
-            { category: "Electronics", count: Math.floor(products.length * 0.3), value: totalValue * 0.4 },
-            { category: "Clothing", count: Math.floor(products.length * 0.25), value: totalValue * 0.25 },
-            { category: "Food", count: Math.floor(products.length * 0.2), value: totalValue * 0.15 },
-            { category: "Other", count: Math.floor(products.length * 0.25), value: totalValue * 0.2 }
-          ],
-          recent_movements: quants.slice(0, 10).map((q, i) => ({
-            product: `Product ${i + 1}`,
-            type: i % 2 === 0 ? "IN" : "OUT",
-            quantity: Math.floor(Math.random() * 50) + 1,
-            date: new Date(Date.now() - i * 86400000).toLocaleDateString()
-          }))
-        });
-      } else if (activeReport === "payments") {
-        // Payments report
-        const payments = await apiFetch<any[]>(`/payments?company_id=${companyId}`).catch(() => []);
-        
-        const totalAmount = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
-        const reconciledAmount = payments.filter(p => p.is_reconciled).reduce((sum, p) => sum + (p.amount || 0), 0);
-        
-        const methodCounts: Record<string, { count: number; amount: number }> = {};
-        payments.forEach(p => {
-          const method = p.payment_method || 'other';
-          if (!methodCounts[method]) methodCounts[method] = { count: 0, amount: 0 };
-          methodCounts[method].count++;
-          methodCounts[method].amount += p.amount || 0;
-        });
-        
-        setPaymentData({
-          total_payments: payments.length,
-          total_amount: totalAmount,
-          reconciled_amount: reconciledAmount,
-          pending_amount: totalAmount - reconciledAmount,
-          by_method: Object.entries(methodCounts).map(([method, data]) => ({
-            method: method.replace(/_/g, ' '),
-            count: data.count,
-            amount: data.amount
-          })),
-          recent_payments: payments.slice(0, 10).map(p => ({
-            reference: p.reference || '-',
-            invoice: p.invoice_reference || `INV-${p.invoice_id}`,
-            amount: p.amount || 0,
-            date: p.payment_date ? new Date(p.payment_date).toLocaleDateString() : '-',
-            method: (p.payment_method || 'other').replace(/_/g, ' ')
-          }))
-        });
+  /* ── Export functions ──────────────────────────── */
+
+  const exportCSV = () => {
+    let rows: string[][] = [];
+    let filename = "report.csv";
+
+    if (activeReport === "sales" && salesReport) {
+      filename = `sales-report-${dateRange.from}-to-${dateRange.to}.csv`;
+      rows.push(["Sales Report", `${dateRange.from} to ${dateRange.to}`]);
+      rows.push([]);
+      rows.push(["Total Sales", salesReport.total_sales.toFixed(2)]);
+      rows.push(["Total Invoices", String(salesReport.total_invoices)]);
+      rows.push(["Paid Invoices", String(salesReport.paid_invoices)]);
+      rows.push(["Pending Invoices", String(salesReport.pending_invoices)]);
+      rows.push(["Total Tax", salesReport.total_tax.toFixed(2)]);
+      rows.push(["Average Invoice", salesReport.average_invoice.toFixed(2)]);
+      rows.push([]);
+      rows.push(["Top Products"]);
+      rows.push(["Product", "Qty Sold", "Revenue"]);
+      salesReport.top_products.forEach((p) => rows.push([p.name, String(p.quantity), p.revenue.toFixed(2)]));
+      rows.push([]);
+      rows.push(["Sales by Month"]);
+      rows.push(["Month", "Amount", "Invoice Count"]);
+      salesReport.sales_by_month.forEach((m) => rows.push([m.month, m.amount.toFixed(2), String(m.count)]));
+    } else if (activeReport === "stock" && stockReport) {
+      filename = `stock-report-${new Date().toISOString().split("T")[0]}.csv`;
+      rows.push(["Stock Report"]);
+      rows.push([]);
+      rows.push(["Total Products", String(stockReport.total_products)]);
+      rows.push(["Total Inventory Value", stockReport.total_value.toFixed(2)]);
+      rows.push([]);
+      rows.push(["Stock Summary"]);
+      rows.push(["Product", "On Hand", "Available", "Reserved", "Value"]);
+      stockReport.stock_summary.forEach((s) =>
+        rows.push([s.name, String(s.on_hand), String(s.available), String(s.reserved), s.value.toFixed(2)])
+      );
+      if (stockReport.low_stock_items.length > 0) {
+        rows.push([]);
+        rows.push(["Low Stock Alerts"]);
+        rows.push(["Product", "On Hand", "Available", "Reorder Level"]);
+        stockReport.low_stock_items.forEach((s) =>
+          rows.push([s.name, String(s.on_hand), String(s.available), String(s.reorder)])
+        );
       }
-    } catch (err) {
-      console.error("Failed to load report:", err);
-    } finally {
-      setLoading(false);
+    } else if (activeReport === "payments" && paymentReport) {
+      filename = `payments-report-${dateRange.from}-to-${dateRange.to}.csv`;
+      rows.push(["Payments Report", `${dateRange.from} to ${dateRange.to}`]);
+      rows.push([]);
+      rows.push(["Total Payments", String(paymentReport.total_payments)]);
+      rows.push(["Total Amount", paymentReport.total_amount.toFixed(2)]);
+      rows.push(["Reconciled", paymentReport.reconciled_amount.toFixed(2)]);
+      rows.push(["Pending", paymentReport.pending_amount.toFixed(2)]);
+      rows.push([]);
+      rows.push(["By Payment Method"]);
+      rows.push(["Method", "Count", "Amount"]);
+      paymentReport.by_method.forEach((m) => rows.push([m.method, String(m.count), m.amount.toFixed(2)]));
+      rows.push([]);
+      rows.push(["Recent Payments"]);
+      rows.push(["Reference", "Invoice", "Amount", "Date", "Method", "Status"]);
+      paymentReport.recent_payments.forEach((p) =>
+        rows.push([p.reference, p.invoice, p.amount.toFixed(2), p.date, p.method, p.status])
+      );
+    }
+
+    const csv = rows.map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(",")).join("\n");
+    downloadBlob(csv, filename, "text/csv");
+  };
+
+  const exportPDF = () => {
+    const title =
+      activeReport === "sales" ? "Sales Report" : activeReport === "stock" ? "Stock Report" : "Payments Report";
+    const period =
+      activeReport === "stock"
+        ? new Date().toLocaleDateString()
+        : `${dateRange.from} to ${dateRange.to}`;
+
+    let bodyHTML = "";
+
+    if (activeReport === "sales" && salesReport) {
+      bodyHTML = `
+        <div class="summary-grid">
+          <div class="summary-box"><div class="label">Total Sales</div><div class="val">${formatCurrency(salesReport.total_sales)}</div></div>
+          <div class="summary-box"><div class="label">Total Invoices</div><div class="val">${salesReport.total_invoices}</div></div>
+          <div class="summary-box"><div class="label">Paid</div><div class="val">${salesReport.paid_invoices}</div></div>
+          <div class="summary-box"><div class="label">Pending</div><div class="val">${salesReport.pending_invoices}</div></div>
+          <div class="summary-box"><div class="label">Total Tax</div><div class="val">${formatCurrency(salesReport.total_tax)}</div></div>
+          <div class="summary-box"><div class="label">Avg Invoice</div><div class="val">${formatCurrency(salesReport.average_invoice)}</div></div>
+        </div>
+        <h3>Top Selling Products</h3>
+        <table><thead><tr><th>Product</th><th style="text-align:right">Qty</th><th style="text-align:right">Revenue</th></tr></thead><tbody>
+          ${salesReport.top_products.map((p) => `<tr><td>${p.name}</td><td style="text-align:right">${p.quantity}</td><td style="text-align:right">${formatCurrency(p.revenue)}</td></tr>`).join("")}
+        </tbody></table>
+        <h3>Monthly Breakdown</h3>
+        <table><thead><tr><th>Month</th><th style="text-align:right">Amount</th><th style="text-align:right">Invoices</th></tr></thead><tbody>
+          ${salesReport.sales_by_month.map((m) => `<tr><td>${m.month}</td><td style="text-align:right">${formatCurrency(m.amount)}</td><td style="text-align:right">${m.count}</td></tr>`).join("")}
+        </tbody></table>`;
+    } else if (activeReport === "stock" && stockReport) {
+      bodyHTML = `
+        <div class="summary-grid">
+          <div class="summary-box"><div class="label">Total Products</div><div class="val">${stockReport.total_products}</div></div>
+          <div class="summary-box"><div class="label">Inventory Value</div><div class="val">${formatCurrency(stockReport.total_value)}</div></div>
+          <div class="summary-box"><div class="label">Low Stock Items</div><div class="val">${stockReport.low_stock_items.length}</div></div>
+        </div>
+        <h3>Stock Summary</h3>
+        <table><thead><tr><th>Product</th><th style="text-align:right">On Hand</th><th style="text-align:right">Available</th><th style="text-align:right">Reserved</th><th style="text-align:right">Value</th></tr></thead><tbody>
+          ${stockReport.stock_summary.map((s) => `<tr><td>${s.name}</td><td style="text-align:right">${s.on_hand}</td><td style="text-align:right">${s.available}</td><td style="text-align:right">${s.reserved}</td><td style="text-align:right">${formatCurrency(s.value)}</td></tr>`).join("")}
+        </tbody></table>
+        ${stockReport.low_stock_items.length > 0 ? `
+        <h3>Low Stock Alerts</h3>
+        <table><thead><tr><th>Product</th><th style="text-align:right">On Hand</th><th style="text-align:right">Available</th><th style="text-align:right">Reorder Level</th></tr></thead><tbody>
+          ${stockReport.low_stock_items.map((s) => `<tr><td>${s.name}</td><td style="text-align:right">${s.on_hand}</td><td style="text-align:right">${s.available}</td><td style="text-align:right">${s.reorder}</td></tr>`).join("")}
+        </tbody></table>` : ""}`;
+    } else if (activeReport === "payments" && paymentReport) {
+      bodyHTML = `
+        <div class="summary-grid">
+          <div class="summary-box"><div class="label">Total Payments</div><div class="val">${paymentReport.total_payments}</div></div>
+          <div class="summary-box"><div class="label">Total Amount</div><div class="val">${formatCurrency(paymentReport.total_amount)}</div></div>
+          <div class="summary-box"><div class="label">Reconciled</div><div class="val">${formatCurrency(paymentReport.reconciled_amount)}</div></div>
+          <div class="summary-box"><div class="label">Pending</div><div class="val">${formatCurrency(paymentReport.pending_amount)}</div></div>
+        </div>
+        <h3>By Payment Method</h3>
+        <table><thead><tr><th>Method</th><th style="text-align:right">Count</th><th style="text-align:right">Amount</th></tr></thead><tbody>
+          ${paymentReport.by_method.map((m) => `<tr><td style="text-transform:capitalize">${m.method}</td><td style="text-align:right">${m.count}</td><td style="text-align:right">${formatCurrency(m.amount)}</td></tr>`).join("")}
+        </tbody></table>
+        <h3>Recent Payments</h3>
+        <table><thead><tr><th>Reference</th><th>Invoice</th><th style="text-align:right">Amount</th><th>Date</th><th>Method</th><th>Status</th></tr></thead><tbody>
+          ${paymentReport.recent_payments.map((p) => `<tr><td>${p.reference}</td><td>${p.invoice}</td><td style="text-align:right">${formatCurrency(p.amount)}</td><td>${p.date}</td><td style="text-transform:capitalize">${p.method}</td><td>${p.status}</td></tr>`).join("")}
+        </tbody></table>`;
+    }
+
+    const html = `<!DOCTYPE html><html><head><title>${title}</title><style>
+      @page { size: A4; margin: 15mm; }
+      body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1a1a2e; margin: 0; padding: 20px; font-size: 12px; }
+      h2 { margin: 0 0 4px; font-size: 20px; }
+      h3 { margin: 24px 0 8px; font-size: 14px; border-bottom: 2px solid #e8ecf1; padding-bottom: 6px; }
+      .period { color: #6c757d; margin-bottom: 20px; }
+      .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 16px 0; }
+      .summary-box { background: #f8f9fb; border: 1px solid #e8ecf1; border-radius: 8px; padding: 12px; }
+      .summary-box .label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #6c757d; margin-bottom: 4px; }
+      .summary-box .val { font-size: 18px; font-weight: 700; }
+      table { width: 100%; border-collapse: collapse; margin: 8px 0 16px; }
+      th { background: #f1f3f5; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 10px; text-align: left; border-bottom: 2px solid #dee2e6; }
+      td { padding: 7px 10px; border-bottom: 1px solid #f0f0f0; }
+      tr:nth-child(even) { background: #fafbfc; }
+      @media print { body { padding: 0; } }
+    </style></head><body>
+      <h2>${title}</h2>
+      <div class="period">${period}</div>
+      ${bodyHTML}
+    </body></html>`;
+
+    const win = window.open("", "_blank", "width=900,height=700");
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+      setTimeout(() => win.print(), 400);
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD"
-    }).format(amount);
+  const downloadBlob = (content: string, filename: string, mimeType: string) => {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
-  const handleExport = (format: "pdf" | "csv") => {
-    // Placeholder for export functionality
-    alert(`Export to ${format.toUpperCase()} coming soon!`);
-  };
+  /* ── Render ────────────────────────────────────── */
+
+  const maxBarValue = salesReport
+    ? Math.max(...(salesReport.sales_by_month.map((m) => m.amount)), 1)
+    : 1;
 
   return (
     <div className="reports-page">
+      {/* Header */}
       <div className="reports-header">
         <div>
           <h1>Reports</h1>
-          <p className="page-subtitle">Sales and stock analytics</p>
+          <p className="page-subtitle">Sales, stock, and payment analytics</p>
         </div>
         <div className="reports-actions">
-          <button className="outline" onClick={() => handleExport("csv")}>
-            <ExportIcon /> Export CSV
+          <button className="outline" onClick={exportCSV} disabled={loading}>
+            <DownloadIcon /> Export CSV
           </button>
-          <button className="outline" onClick={() => handleExport("pdf")}>
-            <ExportIcon /> Export PDF
+          <button className="outline" onClick={exportPDF} disabled={loading}>
+            <DownloadIcon /> Export PDF
           </button>
         </div>
       </div>
 
+      {/* Toolbar */}
       <div className="reports-toolbar">
         <div className="report-tabs">
-          <button
-            className={`report-tab ${activeReport === "sales" ? "active" : ""}`}
-            onClick={() => setActiveReport("sales")}
-          >
-            <SalesIcon /> Sales Report
-          </button>
-          <button
-            className={`report-tab ${activeReport === "stock" ? "active" : ""}`}
-            onClick={() => setActiveReport("stock")}
-          >
-            <StockIcon /> Stock Report
-          </button>
-          <button
-            className={`report-tab ${activeReport === "payments" ? "active" : ""}`}
-            onClick={() => setActiveReport("payments")}
-          >
-            <PaymentIcon /> Payments Report
-          </button>
+          {(["sales", "stock", "payments"] as ReportType[]).map((tab) => (
+            <button
+              key={tab}
+              className={`report-tab ${activeReport === tab ? "active" : ""}`}
+              onClick={() => setActiveReport(tab)}
+            >
+              {tab === "sales" && <SalesIcon />}
+              {tab === "stock" && <StockIcon />}
+              {tab === "payments" && <PaymentIcon />}
+              {tab === "sales" ? "Sales Report" : tab === "stock" ? "Stock Report" : "Payments Report"}
+            </button>
+          ))}
         </div>
         <div className="date-range">
           <label>From:</label>
@@ -220,254 +623,288 @@ export default function ReportsPage() {
             value={dateRange.to}
             onChange={(e) => setDateRange((prev) => ({ ...prev, to: e.target.value }))}
           />
-          <button className="primary" onClick={loadReport}>
-            Refresh
+          <button className="primary" onClick={loadReport} disabled={loading}>
+            {loading ? "Loading..." : "Refresh"}
           </button>
         </div>
       </div>
 
-      {loading && <div className="loading-indicator">Loading report data...</div>}
+      {/* Error */}
+      {error && (
+        <div className="alert alert-danger" style={{ margin: "16px 0" }}>
+          {error}
+          <button onClick={() => setError("")} style={{ float: "right", background: "none", border: "none", cursor: "pointer", fontSize: 18 }}>×</button>
+        </div>
+      )}
 
-      {!loading && activeReport === "sales" && salesData && (
+      {/* Loading */}
+      {loading && (
+        <div style={{ textAlign: "center", padding: "60px 20px", color: "#6c757d" }}>
+          Loading report data...
+        </div>
+      )}
+
+      {/* ─── Sales Report ─── */}
+      {!loading && activeReport === "sales" && salesReport && (
         <div className="report-content">
           <div className="metrics-row">
-            <div className="metric-card">
-              <div className="metric-label">Total Sales</div>
-              <div className="metric-value">{formatCurrency(salesData.total_sales)}</div>
-            </div>
-            <div className="metric-card">
-              <div className="metric-label">Total Invoices</div>
-              <div className="metric-value">{salesData.total_invoices}</div>
-            </div>
-            <div className="metric-card success">
-              <div className="metric-label">Paid Invoices</div>
-              <div className="metric-value">{salesData.paid_invoices}</div>
-            </div>
-            <div className="metric-card warning">
-              <div className="metric-label">Pending Invoices</div>
-              <div className="metric-value">{salesData.pending_invoices}</div>
-            </div>
+            <MetricCard label="Total Sales" value={formatCurrency(salesReport.total_sales)} />
+            <MetricCard label="Total Invoices" value={String(salesReport.total_invoices)} />
+            <MetricCard label="Paid Invoices" value={String(salesReport.paid_invoices)} variant="success" />
+            <MetricCard label="Pending Invoices" value={String(salesReport.pending_invoices)} variant="warning" />
+            <MetricCard label="Total Tax" value={formatCurrency(salesReport.total_tax)} />
+            <MetricCard label="Avg Invoice" value={formatCurrency(salesReport.average_invoice)} />
           </div>
 
           <div className="report-grid">
             <div className="report-card">
               <h3>Top Selling Products</h3>
-              <table className="report-table">
-                <thead>
-                  <tr>
-                    <th>Product</th>
-                    <th>Qty Sold</th>
-                    <th>Revenue</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {salesData.top_products.map((product, i) => (
-                    <tr key={i}>
-                      <td>{product.name}</td>
-                      <td>{product.quantity}</td>
-                      <td>{formatCurrency(product.revenue)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              {salesReport.top_products.length === 0 ? (
+                <p className="empty-state">No product sales in this period.</p>
+              ) : (
+                <table className="report-table">
+                  <thead>
+                    <tr><th>Product</th><th className="text-right">Qty Sold</th><th className="text-right">Revenue</th></tr>
+                  </thead>
+                  <tbody>
+                    {salesReport.top_products.map((p, i) => (
+                      <tr key={i}>
+                        <td>{p.name}</td>
+                        <td className="text-right">{p.quantity}</td>
+                        <td className="text-right">{formatCurrency(p.revenue)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
 
             <div className="report-card">
               <h3>Sales Trend</h3>
-              <div className="chart-container">
-                <div className="bar-chart">
-                  {salesData.sales_by_month.map((item, i) => (
-                    <div key={i} className="bar-item">
-                      <div
-                        className="bar"
-                        style={{
-                          height: `${(item.amount / Math.max(...salesData.sales_by_month.map(m => m.amount))) * 100}%`
-                        }}
-                      />
-                      <span className="bar-label">{item.month}</span>
-                    </div>
-                  ))}
+              {salesReport.sales_by_month.length === 0 ? (
+                <p className="empty-state">No sales data in this period.</p>
+              ) : (
+                <div className="chart-container">
+                  <div className="bar-chart">
+                    {salesReport.sales_by_month.map((item, i) => (
+                      <div key={i} className="bar-item" title={`${item.month}: ${formatCurrency(item.amount)} (${item.count} invoices)`}>
+                        <div className="bar-value">{formatCurrency(item.amount)}</div>
+                        <div
+                          className="bar"
+                          style={{ height: `${(item.amount / maxBarValue) * 100}%` }}
+                        />
+                        <span className="bar-label">{item.month}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
       )}
 
-      {!loading && activeReport === "stock" && stockData && (
+      {/* ─── Stock Report ─── */}
+      {!loading && activeReport === "stock" && stockReport && (
         <div className="report-content">
           <div className="metrics-row">
-            <div className="metric-card">
-              <div className="metric-label">Total Products</div>
-              <div className="metric-value">{stockData.total_products}</div>
-            </div>
-            <div className="metric-card">
-              <div className="metric-label">Total Inventory Value</div>
-              <div className="metric-value">{formatCurrency(stockData.total_value)}</div>
-            </div>
-            <div className="metric-card warning">
-              <div className="metric-label">Low Stock Items</div>
-              <div className="metric-value">{stockData.low_stock_items.length}</div>
-            </div>
-            <div className="metric-card">
-              <div className="metric-label">Categories</div>
-              <div className="metric-value">{stockData.stock_by_category.length}</div>
-            </div>
+            <MetricCard label="Active Products" value={String(stockReport.total_products)} />
+            <MetricCard label="Inventory Value" value={formatCurrency(stockReport.total_value)} />
+            <MetricCard label="Low Stock Items" value={String(stockReport.low_stock_items.length)} variant={stockReport.low_stock_items.length > 0 ? "danger" : "success"} />
+            <MetricCard label="Tracked Items" value={String(stockReport.stock_summary.length)} />
           </div>
 
           <div className="report-grid">
+            {stockReport.low_stock_items.length > 0 && (
+              <div className="report-card">
+                <h3>⚠️ Low Stock Alerts</h3>
+                <table className="report-table">
+                  <thead>
+                    <tr><th>Product</th><th className="text-right">On Hand</th><th className="text-right">Available</th><th className="text-right">Reorder Level</th></tr>
+                  </thead>
+                  <tbody>
+                    {stockReport.low_stock_items.map((item, i) => (
+                      <tr key={i}>
+                        <td>{item.name}</td>
+                        <td className="text-right">{item.on_hand}</td>
+                        <td className="text-right">{item.available}</td>
+                        <td className="text-right">{item.reorder}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
             <div className="report-card">
-              <h3>Low Stock Alerts</h3>
+              <h3>Stock Summary</h3>
+              {stockReport.stock_summary.length === 0 ? (
+                <p className="empty-state">No stock data available.</p>
+              ) : (
+                <table className="report-table">
+                  <thead>
+                    <tr><th>Product</th><th className="text-right">On Hand</th><th className="text-right">Available</th><th className="text-right">Reserved</th><th className="text-right">Value</th></tr>
+                  </thead>
+                  <tbody>
+                    {stockReport.stock_summary.map((s, i) => (
+                      <tr key={i}>
+                        <td>{s.name}</td>
+                        <td className="text-right">{s.on_hand}</td>
+                        <td className="text-right">{s.available}</td>
+                        <td className="text-right">{s.reserved}</td>
+                        <td className="text-right">{formatCurrency(s.value)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+
+          {stockReport.recent_movements.length > 0 && (
+            <div className="report-card full-width">
+              <h3>Recent Stock Movements</h3>
               <table className="report-table">
                 <thead>
-                  <tr>
-                    <th>Product</th>
-                    <th>Current Qty</th>
-                    <th>Reorder Level</th>
-                    <th>Status</th>
-                  </tr>
+                  <tr><th>Product</th><th>Type</th><th className="text-right">Qty</th><th>Reference</th><th>Date</th><th>State</th></tr>
                 </thead>
                 <tbody>
-                  {stockData.low_stock_items.map((item, i) => (
+                  {stockReport.recent_movements.map((m, i) => (
                     <tr key={i}>
-                      <td>{item.name}</td>
-                      <td>{item.quantity}</td>
-                      <td>{item.reorder_level}</td>
+                      <td>{m.product}</td>
                       <td>
-                        <span className="status-badge danger">Low Stock</span>
+                        <span className={`badge ${m.type === "IN" ? "badge-success" : m.type === "OUT" ? "badge-warning" : "badge-info"}`}>
+                          {m.type}
+                        </span>
+                      </td>
+                      <td className="text-right">{m.quantity}</td>
+                      <td>{m.reference}</td>
+                      <td>{m.date}</td>
+                      <td>
+                        <span className={`badge ${m.state === "done" ? "badge-success" : m.state === "cancelled" ? "badge-danger" : "badge-secondary"}`}>
+                          {m.state}
+                        </span>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-
-            <div className="report-card">
-              <h3>Stock by Category</h3>
-              <table className="report-table">
-                <thead>
-                  <tr>
-                    <th>Category</th>
-                    <th>Items</th>
-                    <th>Value</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stockData.stock_by_category.map((cat, i) => (
-                    <tr key={i}>
-                      <td>{cat.category}</td>
-                      <td>{cat.count}</td>
-                      <td>{formatCurrency(cat.value)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div className="report-card full-width">
-            <h3>Recent Stock Movements</h3>
-            <table className="report-table">
-              <thead>
-                <tr>
-                  <th>Product</th>
-                  <th>Type</th>
-                  <th>Quantity</th>
-                  <th>Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {stockData.recent_movements.map((mov, i) => (
-                  <tr key={i}>
-                    <td>{mov.product}</td>
-                    <td>
-                      <span className={`status-badge ${mov.type === "IN" ? "success" : "warning"}`}>
-                        {mov.type}
-                      </span>
-                    </td>
-                    <td>{mov.quantity}</td>
-                    <td>{mov.date}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          )}
         </div>
       )}
 
-      {!loading && activeReport === "payments" && paymentData && (
+      {/* ─── Payments Report ─── */}
+      {!loading && activeReport === "payments" && paymentReport && (
         <div className="report-content">
           <div className="metrics-row">
-            <div className="metric-card">
-              <div className="metric-label">Total Payments</div>
-              <div className="metric-value">{paymentData.total_payments}</div>
-            </div>
-            <div className="metric-card">
-              <div className="metric-label">Total Amount</div>
-              <div className="metric-value">{formatCurrency(paymentData.total_amount)}</div>
-            </div>
-            <div className="metric-card success">
-              <div className="metric-label">Reconciled</div>
-              <div className="metric-value">{formatCurrency(paymentData.reconciled_amount)}</div>
-            </div>
-            <div className="metric-card warning">
-              <div className="metric-label">Pending</div>
-              <div className="metric-value">{formatCurrency(paymentData.pending_amount)}</div>
-            </div>
+            <MetricCard label="Total Payments" value={String(paymentReport.total_payments)} />
+            <MetricCard label="Total Amount" value={formatCurrency(paymentReport.total_amount)} />
+            <MetricCard label="Reconciled" value={`${paymentReport.reconciled_count} (${formatCurrency(paymentReport.reconciled_amount)})`} variant="success" />
+            <MetricCard label="Pending" value={`${paymentReport.pending_count} (${formatCurrency(paymentReport.pending_amount)})`} variant="warning" />
           </div>
 
           <div className="report-grid">
             <div className="report-card">
               <h3>Payments by Method</h3>
-              <table className="report-table">
-                <thead>
-                  <tr>
-                    <th>Method</th>
-                    <th>Count</th>
-                    <th>Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paymentData.by_method.map((item, i) => (
-                    <tr key={i}>
-                      <td style={{ textTransform: 'capitalize' }}>{item.method}</td>
-                      <td>{item.count}</td>
-                      <td>{formatCurrency(item.amount)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              {paymentReport.by_method.length === 0 ? (
+                <p className="empty-state">No payments in this period.</p>
+              ) : (
+                <>
+                  <table className="report-table">
+                    <thead>
+                      <tr><th>Method</th><th className="text-right">Count</th><th className="text-right">Amount</th></tr>
+                    </thead>
+                    <tbody>
+                      {paymentReport.by_method.map((m, i) => (
+                        <tr key={i}>
+                          <td style={{ textTransform: "capitalize" }}>{m.method}</td>
+                          <td className="text-right">{m.count}</td>
+                          <td className="text-right">{formatCurrency(m.amount)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {/* Horizontal bar chart for payment methods */}
+                  <div style={{ marginTop: 16 }}>
+                    {paymentReport.by_method.map((m, i) => {
+                      const maxAmt = Math.max(...paymentReport.by_method.map((x) => x.amount), 1);
+                      const pct = (m.amount / maxAmt) * 100;
+                      return (
+                        <div key={i} style={{ marginBottom: 8 }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 3 }}>
+                            <span style={{ textTransform: "capitalize" }}>{m.method}</span>
+                            <span style={{ fontWeight: 600 }}>{formatCurrency(m.amount)}</span>
+                          </div>
+                          <div style={{ height: 8, background: "#f1f3f5", borderRadius: 4, overflow: "hidden" }}>
+                            <div style={{ width: `${pct}%`, height: "100%", background: "#4361ee", borderRadius: 4, transition: "width 0.5s" }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="report-card">
               <h3>Recent Payments</h3>
-              <table className="report-table">
-                <thead>
-                  <tr>
-                    <th>Invoice</th>
-                    <th>Method</th>
-                    <th>Amount</th>
-                    <th>Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paymentData.recent_payments.map((payment, i) => (
-                    <tr key={i}>
-                      <td>{payment.invoice}</td>
-                      <td style={{ textTransform: 'capitalize' }}>{payment.method}</td>
-                      <td>{formatCurrency(payment.amount)}</td>
-                      <td>{payment.date}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              {paymentReport.recent_payments.length === 0 ? (
+                <p className="empty-state">No payments in this period.</p>
+              ) : (
+                <table className="report-table">
+                  <thead>
+                    <tr><th>Reference</th><th>Invoice</th><th className="text-right">Amount</th><th>Date</th><th>Method</th><th>Status</th></tr>
+                  </thead>
+                  <tbody>
+                    {paymentReport.recent_payments.map((p, i) => (
+                      <tr key={i}>
+                        <td style={{ fontFamily: "monospace", fontSize: 12 }}>{p.reference}</td>
+                        <td style={{ fontFamily: "monospace", fontSize: 12 }}>{p.invoice}</td>
+                        <td className="text-right">{formatCurrency(p.amount)}</td>
+                        <td>{p.date}</td>
+                        <td style={{ textTransform: "capitalize" }}>{p.method}</td>
+                        <td>
+                          <span className={`badge ${p.status === "reconciled" ? "badge-success" : p.status === "posted" ? "badge-info" : p.status === "cancelled" ? "badge-danger" : "badge-secondary"}`}>
+                            {p.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Empty state when no data */}
+      {!loading && !error && (
+        (activeReport === "sales" && !salesReport) ||
+        (activeReport === "stock" && !stockReport) ||
+        (activeReport === "payments" && !paymentReport)
+      ) && (
+        <div style={{ textAlign: "center", padding: "60px 20px", color: "#6c757d" }}>
+          <p>Select a date range and click <strong>Refresh</strong> to load report data.</p>
         </div>
       )}
     </div>
   );
 }
+
+/* ── Sub-components ─────────────────────────────────── */
+
+function MetricCard({ label, value, variant }: { label: string; value: string; variant?: string }) {
+  return (
+    <div className={`metric-card ${variant || ""}`}>
+      <div className="metric-label">{label}</div>
+      <div className="metric-value">{value}</div>
+    </div>
+  );
+}
+
+/* ── Icons ───────────────────────────────────────────── */
 
 function SalesIcon() {
   return (
@@ -488,21 +925,21 @@ function StockIcon() {
   );
 }
 
-function ExportIcon() {
+function PaymentIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+      <line x1="1" y1="10" x2="23" y2="10" />
+    </svg>
+  );
+}
+
+function DownloadIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
       <polyline points="7 10 12 15 17 10" />
       <line x1="12" y1="15" x2="12" y2="3" />
-    </svg>
-  );
-}
-
-function PaymentIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-      <line x1="1" y1="10" x2="23" y2="10"/>
     </svg>
   );
 }

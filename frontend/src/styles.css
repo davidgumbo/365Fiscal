@@ -5179,6 +5179,11 @@ tr:hover .o-quick-actions {
   background: var(--blue-50);
 }
 
+.report-table .text-right,
+.text-right {
+  text-align: right !important;
+}
+
 .chart-container {
   height: 180px;
   display: flex;
