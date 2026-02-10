@@ -131,7 +131,7 @@ export default function ContactsPage() {
   return (
     <div className="content">
       <div className="form-view">
-        <div className="form-shell">
+        <div className="form-shell invoice-form">
           <div className="form-header">
             <div>
               <h3>Customer</h3>
@@ -159,22 +159,22 @@ export default function ContactsPage() {
               <div className="form-grid">
                 <label className="input">
                   Company / Individual
-                  <select value={isCompany ? "company" : "individual"} onChange={(e) => setIsCompany(e.target.value === "company")} disabled={!isEditing}>
+                  <select className="input-underline" value={isCompany ? "company" : "individual"} onChange={(e) => setIsCompany(e.target.value === "company")} disabled={!isEditing}>
                     <option value="company">Company</option>
                     <option value="individual">Individual</option>
                   </select>
                 </label>
                 <label className="input">
                   Display Name
-                  <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} disabled={!isEditing} />
+                  <input className="input-underline" type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} disabled={!isEditing} />
                 </label>
                 <label className="input">
                   Phone
-                  <input type="text" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} disabled={!isEditing} />
+                  <input className="input-underline" type="text" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} disabled={!isEditing} />
                 </label>
                 <label className="input">
                   Email
-                  <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} disabled={!isEditing} />
+                  <input className="input-underline" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} disabled={!isEditing} />
                 </label>
               </div>
             </div>
@@ -184,23 +184,23 @@ export default function ContactsPage() {
               <div className="form-grid">
                 <label className="input">
                   Street
-                  <input type="text" value={street} onChange={(e) => setStreet(e.target.value)} disabled={!isEditing} />
+                  <input className="input-underline" type="text" value={street} onChange={(e) => setStreet(e.target.value)} disabled={!isEditing} />
                 </label>
                 <label className="input">
                   Street 2
-                  <input type="text" value={street2} onChange={(e) => setStreet2(e.target.value)} disabled={!isEditing} />
+                  <input className="input-underline" type="text" value={street2} onChange={(e) => setStreet2(e.target.value)} disabled={!isEditing} />
                 </label>
                 <label className="input">
                   City
-                  <input type="text" value={city} onChange={(e) => setCity(e.target.value)} disabled={!isEditing} />
+                  <input className="input-underline" type="text" value={city} onChange={(e) => setCity(e.target.value)} disabled={!isEditing} />
                 </label>
                 <label className="input">
                   ZIP
-                  <input type="text" value={zip} onChange={(e) => setZip(e.target.value)} disabled={!isEditing} />
+                  <input className="input-underline" type="text" value={zip} onChange={(e) => setZip(e.target.value)} disabled={!isEditing} />
                 </label>
                 <label className="input">
                   Country
-                  <input type="text" value={country} onChange={(e) => setCountry(e.target.value)} disabled={!isEditing} />
+                  <input className="input-underline" type="text" value={country} onChange={(e) => setCountry(e.target.value)} disabled={!isEditing} />
                 </label>
               </div>
             </div>
@@ -210,11 +210,11 @@ export default function ContactsPage() {
               <div className="form-grid">
                 <label className="input">
                   VAT
-                  <input type="text" value={form.vat} onChange={(e) => setForm({ ...form, vat: e.target.value })} disabled={!isEditing} />
+                  <input className="input-underline" type="text" value={form.vat} onChange={(e) => setForm({ ...form, vat: e.target.value })} disabled={!isEditing} />
                 </label>
                 <label className="input">
                   TIN
-                  <input type="text" value={form.tin} onChange={(e) => setForm({ ...form, tin: e.target.value })} disabled={!isEditing} />
+                  <input className="input-underline" type="text" value={form.tin} onChange={(e) => setForm({ ...form, tin: e.target.value })} disabled={!isEditing} />
                 </label>
                 <div>
                   <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>Tags</div>
@@ -242,7 +242,7 @@ export default function ContactsPage() {
 
             <label className="input" style={{ gridColumn: "1 / -1" }}>
               Company
-              <select value={companyId ?? ""} onChange={(e) => setCompanyId(Number(e.target.value))} disabled={!isEditing}>
+              <select className="input-underline" value={companyId ?? ""} onChange={(e) => setCompanyId(Number(e.target.value))} disabled={!isEditing}>
                 {companies.map((c: Company) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
