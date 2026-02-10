@@ -1,4 +1,4 @@
-﻿from datetime import datetime, timedelta
+﻿from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -65,13 +65,13 @@ def create_quotation(
     
     # Calculate expiry date
     validity_days = getattr(payload, 'validity_days', 30) or 30
-    expires_at = payload.expires_at or (datetime.utcnow() + timedelta(days=validity_days))
+    expires_at = payload.expires_at or (datetime.now(timezone.utc) + timedelta(days=validity_days))
     
     quotation = Quotation(
         company_id=payload.company_id,
         customer_id=payload.customer_id,
         reference=reference,
-        quotation_date=datetime.utcnow(),
+        quotation_date=datetime.now(timezone.utc),
         expires_at=expires_at,
         payment_terms=payload.payment_terms,
         validity_days=validity_days,
@@ -272,7 +272,7 @@ def send_quotation(
         raise HTTPException(status_code=400, detail="Cannot send quotation without lines")
     
     quotation.status = "sent"
-    quotation.sent_at = datetime.utcnow()
+    quotation.sent_at = datetime.now(timezone.utc)
     quotation.sent_by_id = user.id
     
     log_audit(
@@ -307,11 +307,11 @@ def accept_quotation(
         raise HTTPException(status_code=400, detail="Can only accept draft or sent quotations")
     
     # Check if expired
-    if quotation.expires_at and quotation.expires_at < datetime.utcnow():
+    if quotation.expires_at and quotation.expires_at < datetime.now(timezone.utc):
         raise HTTPException(status_code=400, detail="Quotation has expired")
     
     quotation.status = "accepted"
-    quotation.accepted_at = datetime.utcnow()
+    quotation.accepted_at = datetime.now(timezone.utc)
     
     log_audit(
         db=db,
@@ -346,7 +346,7 @@ def reject_quotation(
         raise HTTPException(status_code=400, detail="Can only reject draft or sent quotations")
     
     quotation.status = "rejected"
-    quotation.rejected_at = datetime.utcnow()
+    quotation.rejected_at = datetime.now(timezone.utc)
     if reason:
         quotation.notes = f"{quotation.notes}\nRejected: {reason}"
     
@@ -400,8 +400,8 @@ def convert_quotation_to_invoice(
         customer_id=quotation.customer_id,
         reference=invoice_reference,
         invoice_type="invoice",
-        invoice_date=datetime.utcnow(),
-        due_date=datetime.utcnow() + timedelta(days=30),  # Default 30 days
+        invoice_date=datetime.now(timezone.utc),
+        due_date=datetime.now(timezone.utc) + timedelta(days=30),  # Default 30 days
         currency=quotation.currency,
         payment_terms=quotation.payment_terms,
         notes=quotation.notes,
@@ -434,7 +434,7 @@ def convert_quotation_to_invoice(
     # Lock quotation
     quotation.status = "converted"
     quotation.is_locked = True
-    quotation.converted_at = datetime.utcnow()
+    quotation.converted_at = datetime.now(timezone.utc)
     quotation.converted_invoice_id = invoice.id
     
     # Calculate invoice totals
