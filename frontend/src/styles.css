@@ -1426,7 +1426,7 @@ thead.table-light th {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-image: url('/background.jpg');
+  background-image: url('/bg.jpg');
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
@@ -1679,15 +1679,15 @@ thead.table-light th {
 .login-card {
   width: 100%;
   max-width: 400px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border-radius: 20px;
   padding: 0;
   padding-top: 100px;
   margin-top: 40px;
-  border: none;
-  box-shadow: none;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   animation: card-fade-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
   animation-delay: 0.15s;
   position: relative;
@@ -1698,9 +1698,9 @@ thead.table-light th {
 }
 
 .login-card-glass {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
 }
 
 @keyframes card-fade-in {
@@ -1723,9 +1723,9 @@ thead.table-light th {
   top: -44px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1734,7 +1734,8 @@ thead.table-light th {
   padding: 8px 12px;
   border-radius: 999px;
   z-index: 10;
-  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.2);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
 .logo-365 {
@@ -1845,7 +1846,7 @@ thead.table-light th {
 .login-card h1 {
   font-family: "Fraunces", serif;
   margin: 0 0 8px 0;
-  color: #1e293b;
+  color: #ffffff;
 }
 
 .login-card-title {
@@ -1853,12 +1854,12 @@ thead.table-light th {
   font-size: 26px;
   font-weight: 600;
   margin: 0;
-  color: #1e293b;
+  color: #ffffff;
 }
 
 .login-card-sub {
   margin: 0 0 24px 0;
-  color: #64748b;
+  color: rgba(255, 255, 255, 0.7);
   font-size: 14px;
   line-height: 1.5;
 }
@@ -1896,7 +1897,7 @@ thead.table-light th {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--muted);
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .input-label svg {
@@ -1908,28 +1909,30 @@ thead.table-light th {
   font-size: 15px;
   padding: 14px 16px;
   border-radius: 14px;
-  border: 1.5px solid var(--stroke);
-  background: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.12);
   transition: all 0.25s ease;
-  color: var(--ink);
+  color: #ffffff;
 }
 
 .input-group input::placeholder {
-  color: #9ca3af;
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .input-group input:hover {
-  border-color: #cbd5e1;
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.18);
 }
 
 .input-group input:focus {
-  border-color: var(--blue-700);
-  box-shadow: 0 0 0 4px rgba(11, 87, 208, 0.1);
+  border-color: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1);
   outline: none;
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .input-group input:disabled {
-  background: #f8fafc;
+  background: rgba(255, 255, 255, 0.05);
   cursor: not-allowed;
   opacity: 0.7;
 }
@@ -1946,19 +1949,21 @@ thead.table-light th {
   animation: slide-up-fade 0.6s ease both;
   animation-delay: 0.6s;
   color: #fff;
-  background: var(--blue-700);
-  border: none;
+  background: rgba(67, 97, 238, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 14px;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: none;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   margin-top: 8px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .login-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: none;
-  background: #1d4ed8;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  background: rgba(67, 97, 238, 0.85);
 }
 
 .login-btn:active:not(:disabled) {
@@ -2000,11 +2005,12 @@ thead.table-light th {
   margin-top: 16px;
   padding: 12px 16px;
   border-radius: 12px;
-  background: rgba(16, 185, 129, 0.1);
-  color: #059669;
+  background: rgba(16, 185, 129, 0.2);
+  color: #6ee7b7;
   font-size: 13px;
   font-weight: 500;
   animation: fade-in 0.3s ease;
+  border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
 .login-error {
@@ -2015,11 +2021,12 @@ thead.table-light th {
   margin-top: 16px;
   padding: 12px 16px;
   border-radius: 12px;
-  background: rgba(239, 68, 68, 0.1);
-  color: var(--red-600);
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
   font-size: 13px;
   font-weight: 500;
   animation: shake 0.4s ease;
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 @keyframes shake {
