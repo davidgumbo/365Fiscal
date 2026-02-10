@@ -2019,7 +2019,7 @@ thead.table-light th {
 .login-card {
   width: 100%;
   max-width: 400px;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.97);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border-radius: 20px;
@@ -2038,7 +2038,7 @@ thead.table-light th {
 }
 
 .login-card-glass {
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.97);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
 }
@@ -2174,10 +2174,10 @@ thead.table-light th {
 }
 
 .footer-logo {
-  height: 28px;
+  height: 18px;
   width: auto;
-  max-width: 180px;
-  opacity: 0.95;
+  max-width: 120px;
+  opacity: 0.5;
   display: inline-block;
 }
 
