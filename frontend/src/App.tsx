@@ -5,6 +5,7 @@ import DashboardPage from "./pages/DashboardPage";
 import CompaniesPage from "./pages/CompaniesPage";
 import ProductsPage from "./pages/ProductsPage";
 import ContactsPage from "./pages/ContactsPage";
+import ContactFormPage from "./pages/ContactFormPage";
 import QuotationsPage from "./pages/QuotationsPage";
 import InvoicesPage from "./pages/InvoicesPage";
 import InventoryPage from "./pages/InventoryPage";
@@ -207,6 +208,8 @@ function AppContent() {
               <Route path="/companies" element={<CompaniesPage />} />
               <Route path="/products" element={<ProductsPage />} />
               <Route path="/contacts" element={<ContactsPage />} />
+              <Route path="/contacts/new" element={<ContactFormPage />} />
+              <Route path="/contacts/:contactId" element={<ContactFormPage />} />
               <Route path="/quotations" element={<QuotationsPage />} />
               <Route path="/inventory" element={<InventoryPage />} />
               <Route path="/reports" element={<ReportsPage />} />
