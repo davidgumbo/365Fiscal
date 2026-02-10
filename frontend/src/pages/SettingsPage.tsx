@@ -69,6 +69,10 @@ type CompanySettings = {
   tax_included_in_price: boolean;
   logo_data: string;
   document_layout: string;
+  document_header: string;
+  document_footer: string;
+  document_watermark: string;
+  document_watermark_opacity: string;
 };
 
 // Icon components for professional actions

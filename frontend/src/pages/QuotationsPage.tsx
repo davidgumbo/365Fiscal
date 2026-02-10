@@ -3,7 +3,15 @@ import { useNavigate, useParams } from "react-router-dom";
 import { apiFetch } from "../api";
 import { useCompanies, Company } from "../hooks/useCompanies";
 
-type Contact = { id: number; name: string };
+type Contact = {
+  id: number;
+  name: string;
+  address?: string;
+  email?: string | null;
+  phone?: string;
+  vat?: string;
+  tin?: string;
+};
 
 type Product = { id: number; name: string; sale_price: number; tax_rate: number; uom?: string };
 
