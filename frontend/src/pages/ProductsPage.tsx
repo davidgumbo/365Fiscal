@@ -60,7 +60,7 @@ export default function ProductsPage() {
     reference: "",
     barcode: "",
     product_type: "storable",
-    uom: "PCS",
+    uom: "Units",
     track_inventory: true,
     min_stock_quantity: 0,
     max_stock_quantity: 0,
@@ -96,7 +96,7 @@ export default function ProductsPage() {
         reference: first.reference || "",
         barcode: first.barcode || "",
         product_type: first.product_type || "storable",
-        uom: first.uom || "PCS",
+        uom: first.uom || "Units",
         track_inventory: first.track_inventory ?? true,
         min_stock_quantity: first.min_stock_quantity || 0,
         max_stock_quantity: first.max_stock_quantity || 0,
@@ -134,7 +134,7 @@ export default function ProductsPage() {
     reference: "",
     barcode: "",
     product_type: "storable",
-    uom: "PCS",
+    uom: "Units",
     track_inventory: true,
     min_stock_quantity: 0,
     max_stock_quantity: 0,
@@ -186,7 +186,7 @@ export default function ProductsPage() {
       reference: product.reference || "",
       barcode: product.barcode || "",
       product_type: product.product_type || "storable",
-      uom: product.uom || "PCS",
+      uom: product.uom || "Units",
       track_inventory: product.track_inventory ?? true,
       min_stock_quantity: product.min_stock_quantity || 0,
       max_stock_quantity: product.max_stock_quantity || 0,
@@ -357,7 +357,7 @@ export default function ProductsPage() {
                   value={form.uom}
                   onChange={(e) => setForm({ ...form, uom: e.target.value })}
                   disabled={!isEditing}
-                  placeholder="e.g., PCS, KG, L"
+                  placeholder="e.g., Units, KG, L"
                 />
               </div>
               <div className="input-group">

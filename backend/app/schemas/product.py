@@ -15,7 +15,7 @@ class ProductCreate(BaseModel):
     reference: str = ""
     barcode: str = ""
     product_type: str = "storable"
-    uom: str = "PCS"
+    uom: str = "Units"
     track_inventory: bool = True
     min_stock_quantity: float = 0
     max_stock_quantity: float = 0

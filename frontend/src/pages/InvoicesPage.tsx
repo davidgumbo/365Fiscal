@@ -118,6 +118,8 @@ const formatCurrency = (value: number, currency: string) => {
   }
 };
 
+const normalizeUom = (value: string) => (value === "PCS" ? "Units" : value);
+
 const toDateInputValue = (value: string | null) => {
   if (!value) return "";
   const date = new Date(value);
@@ -185,7 +187,7 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
   const [productTaxRate, setProductTaxRate] = useState("");
   const [productReference, setProductReference] = useState("");
   const [productHsCode, setProductHsCode] = useState("");
-  const [productUom, setProductUom] = useState("PCS");
+  const [productUom, setProductUom] = useState("Units");
   const [productInitialStock, setProductInitialStock] = useState("");
   const [productWarehouseId, setProductWarehouseId] = useState<number | null>(null);
   const [productLocationId, setProductLocationId] = useState<number | null>(null);
@@ -482,7 +484,7 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
             product_id: line.product_id,
             description: line.description || "",
             quantity: line.quantity || 1,
-            uom: line.uom || "PCS",
+            uom: line.uom || "Units",
             unit_price: line.unit_price || 0,
             discount: line.discount || 0,
             vat_rate: line.vat_rate || 0
@@ -656,7 +658,7 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
     setProductHsCode("");
     setProductPrice("");
     setProductTaxRate("");
-    setProductUom("PCS");
+    setProductUom("Units");
     setProductInitialStock("");
     await loadAll();
   };
@@ -1081,8 +1083,7 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
                       {editLines.map((line, index) => {
                         const product = line.product_id ? productById.get(line.product_id) : null;
                         const lineTotal = (line.quantity || 0) * (line.unit_price || 0) * (1 - (line.discount || 0) / 100) * (1 + (line.vat_rate || 0) / 100);
-                        const uomLabel = product?.uom || line.uom || "";
-                        const displayUom = uomLabel === "PCS" ? "" : uomLabel;
+                        const displayUom = normalizeUom(product?.uom || line.uom || "Units");
                         return (
                           <tr key={`new-${index}`}>
                             <td>
@@ -1338,12 +1339,15 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
                 </div>
 
                 {/* Lines table */}
-                {canEdit && (
-                  <div className="d-flex gap-2 mb-2">
-                    <button className="btn btn-sm btn-light border" onClick={addLine}>+ Add Line</button>
-                    <button className="btn btn-sm btn-light border" onClick={() => setCreateProductOpen(true)}>+ New Product</button>
-                  </div>
-                )}
+                <div className="d-flex justify-content-between align-items-center mb-2">
+                  <div className="fw-semibold">Invoice Lines</div>
+                  {canEdit && (
+                    <div className="d-flex gap-2">
+                      <button className="btn btn-sm btn-light border" onClick={addLine}>+ Add Line</button>
+                      <button className="btn btn-sm btn-light border" onClick={() => setCreateProductOpen(true)}>+ New Product</button>
+                    </div>
+                  )}
+                </div>
                 <div className="table-responsive">
                   <table className="table table-bordered align-middle mb-0">
                     <thead className="table-light">
@@ -1363,8 +1367,7 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
                       {displayLines.map((line, index) => {
                         const product = line.product_id ? productById.get(line.product_id) : null;
                         const lineTotal = (line.quantity || 0) * (line.unit_price || 0) * (1 - (line.discount || 0) / 100) * (1 + (line.vat_rate || 0) / 100);
-                        const uomLabel = product?.uom || line.uom || "";
-                        const displayUom = uomLabel === "PCS" ? "" : uomLabel;
+                        const displayUom = normalizeUom(product?.uom || line.uom || "");
                         return (
                           <tr key={line.id || `edit-${index}`}>
                             <td>
@@ -1379,7 +1382,7 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
                                       description: prod?.name ?? "",
                                       unit_price: prod?.sale_price ?? 0,
                                       vat_rate: prod?.tax_rate ?? 0,
-                                      uom: prod?.uom || ""
+                                      uom: prod?.uom || "Units"
                                     });
                                   }}
                                 >

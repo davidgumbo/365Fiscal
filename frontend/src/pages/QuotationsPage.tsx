@@ -35,10 +35,12 @@ const emptyLine = (): QuotationLine => ({
   product_id: null,
   description: "",
   quantity: 1,
-  uom: "PCS",
+  uom: "Units",
   unit_price: 0,
   vat_rate: 0
 });
+
+const normalizeUom = (value: string) => (value === "PCS" ? "Units" : value);
 
 type QuotationsPageMode = "list" | "new" | "detail";
 
@@ -61,7 +63,7 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
   const [productTaxRate, setProductTaxRate] = useState("");
   const [productReference, setProductReference] = useState("");
   const [productHsCode, setProductHsCode] = useState("");
-  const [productUom, setProductUom] = useState("PCS");
+  const [productUom, setProductUom] = useState("Units");
   const [productInitialStock, setProductInitialStock] = useState("");
   const [selectedQuotationId, setSelectedQuotationId] = useState<number | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -374,7 +376,7 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
     setProductTaxRate("");
     setProductReference("");
     setProductHsCode("");
-    setProductUom("PCS");
+    setProductUom("Units");
     setProductInitialStock("");
   };
 
@@ -387,7 +389,7 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
       tax_rate: Number(productTaxRate || 0),
       reference: productReference.trim() || null,
       hs_code: productHsCode.trim() || null,
-      uom: productUom.trim() || "PCS",
+      uom: productUom.trim() || "Units",
       initial_stock: Number(productInitialStock || 0),
       warehouse_id: productWarehouseId,
       location_id: productLocationId
@@ -593,12 +595,15 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
                 </div>
               </div>
 
-              {canEdit && (
-                <div className="d-flex gap-2 mb-2">
-                  <button className="btn btn-sm btn-light border" onClick={addLine}>+ Add Line</button>
-                  <button className="btn btn-sm btn-light border" onClick={() => setCreateProductOpen(true)}>+ New Product</button>
-                </div>
-              )}
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <div className="fw-semibold">Quotation Lines</div>
+                {canEdit && (
+                  <div className="d-flex gap-2">
+                    <button className="btn btn-sm btn-light border" onClick={addLine}>+ Add Line</button>
+                    <button className="btn btn-sm btn-light border" onClick={() => setCreateProductOpen(true)}>+ New Product</button>
+                  </div>
+                )}
+              </div>
               <div className="table-responsive">
                 <table className="table table-bordered align-middle mb-0">
                   <thead className="table-light">
@@ -615,7 +620,8 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
                   </thead>
                   <tbody>
                     {lines.map((line, index) => {
-                      const displayUom = line.uom === "PCS" ? "" : line.uom;
+                      const product = products.find((p) => p.id === line.product_id);
+                      const displayUom = normalizeUom(product?.uom || line.uom || "Units");
                       return (
                         <tr key={`${index}-${line.product_id ?? "new"}`}>
                           <td>
@@ -629,7 +635,7 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
                                   description: selected?.name ?? "",
                                   unit_price: selected?.sale_price ?? 0,
                                   vat_rate: selected?.tax_rate ?? 0,
-                                  uom: selected?.uom || ""
+                                  uom: selected?.uom || "Units"
                                 });
                               }}
                               disabled={!canEdit}

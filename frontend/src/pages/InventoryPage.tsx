@@ -110,7 +110,7 @@ const PRODUCT_TYPES = [
 ];
 
 const UOMS = [
-  { value: "PCS", label: "Units" },
+  { value: "Units", label: "Units" },
   { value: "KG", label: "Kilograms" },
   { value: "L", label: "Liters" },
   { value: "M", label: "Meters" },
@@ -155,7 +155,7 @@ export default function InventoryPage() {
     barcode: "",
     category_id: null as number | null,
     product_type: "storable",
-    uom: "PCS",
+    uom: "Units",
     sale_price: 0,
     sales_cost: 0,
     purchase_cost: 0,
@@ -272,7 +272,7 @@ export default function InventoryPage() {
       barcode: "",
       category_id: null,
       product_type: "storable",
-      uom: "PCS",
+      uom: "Units",
       sale_price: 0,
       sales_cost: 0,
       purchase_cost: 0,
@@ -1661,7 +1661,7 @@ export default function InventoryPage() {
                               </span>
                             </td>
                             <td>{warehouse?.name || "-"}</td>
-                            <td style={{ fontWeight: 600 }}>{m.quantity} {product?.uom || "PCS"}</td>
+                            <td style={{ fontWeight: 600 }}>{m.quantity} {(product?.uom === "PCS" ? "Units" : product?.uom) || "Units"}</td>
                             <td className="o-monetary">${m.unit_cost.toFixed(2)}</td>
                             <td className="o-monetary" style={{ fontWeight: 600 }}>${m.total_cost.toFixed(2)}</td>
                             <td>

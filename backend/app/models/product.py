@@ -23,7 +23,7 @@ class Product(Base, TimestampMixin):
     
     # Inventory fields
     product_type: Mapped[str] = mapped_column(String(50), default="storable")  # storable, consumable, service
-    uom: Mapped[str] = mapped_column(String(50), default="PCS")  # unit of measure
+    uom: Mapped[str] = mapped_column(String(50), default="Units")  # unit of measure
     track_inventory: Mapped[bool] = mapped_column(Boolean, default=True)
     min_stock_quantity: Mapped[float] = mapped_column(Float, default=0)
     max_stock_quantity: Mapped[float] = mapped_column(Float, default=0)
