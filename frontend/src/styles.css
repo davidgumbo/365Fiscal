@@ -2024,8 +2024,8 @@ thead.table-light th {
   -webkit-backdrop-filter: blur(24px);
   border-radius: 20px;
   padding: 0;
-  padding-top: 100px;
-  margin-top: 40px;
+  padding-top: 110px;
+  margin-top: 50px;
   border: 1px solid rgba(255, 255, 255, 0.6);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255,255,255,0.1);
   animation: card-fade-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -2060,16 +2060,16 @@ thead.table-light th {
 
 .login-floating-logo {
   position: absolute;
-  top: -44px;
+  top: -60px;
   left: 50%;
   transform: translateX(-50%);
   background: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 170px;
-  height: 110px;
-  padding: 8px 12px;
+  width: 220px;
+  height: 140px;
+  padding: 12px 16px;
   border-radius: 999px;
   z-index: 10;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
@@ -2077,8 +2077,8 @@ thead.table-light th {
 }
 
 .logo-365 {
-  width: 140px;
-  height: 90px;
+  width: 180px;
+  height: 110px;
   object-fit: contain;
 }
 
@@ -2177,7 +2177,7 @@ thead.table-light th {
   height: 18px;
   width: auto;
   max-width: 120px;
-  opacity: 0.5;
+  opacity: 1;
   display: inline-block;
 }
 
