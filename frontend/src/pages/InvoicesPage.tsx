@@ -71,6 +71,8 @@ type Contact = {
   id: number;
   name: string;
   address: string;
+  city?: string;
+  country?: string;
   vat: string;
   tin: string;
   phone: string;

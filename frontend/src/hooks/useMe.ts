@@ -9,6 +9,8 @@ export type MeCompany = {
   email?: string;
   phone: string;
   address: string;
+  city?: string;
+  country?: string;
 };
 
 export type Me = {

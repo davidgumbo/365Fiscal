@@ -7,6 +7,8 @@ type Contact = {
   id: number;
   name: string;
   address?: string;
+  city?: string;
+  country?: string;
   email?: string | null;
   phone?: string;
   vat?: string;
