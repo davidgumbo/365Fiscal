@@ -408,6 +408,45 @@ textarea {
   box-shadow: none !important;
 }
 
+/* Basic, professional invoice styling */
+.invoice-form {
+  color: var(--ink);
+}
+
+.invoice-form .card,
+.invoice-form .table,
+.invoice-form .table-bordered,
+.invoice-form .table-responsive {
+  box-shadow: none !important;
+  border-color: var(--stroke) !important;
+}
+
+.invoice-form .card {
+  border-radius: 12px;
+}
+
+.invoice-form .card.bg-light,
+.invoice-form .card.border-0.bg-light {
+  background: #f8fafc !important;
+}
+
+.invoice-form .btn,
+.invoice-form .btn-sm {
+  border-radius: 8px;
+  box-shadow: none !important;
+}
+
+.invoice-form .table thead th {
+  color: var(--muted);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.invoice-form .form-label {
+  color: var(--ink-light);
+  font-weight: 600;
+}
+
 .statusbar {
   display: flex;
   gap: 8px;

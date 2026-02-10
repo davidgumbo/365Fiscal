@@ -1043,6 +1043,8 @@ export default function InvoicesPage() {
                       {editLines.map((line, index) => {
                         const product = line.product_id ? productById.get(line.product_id) : null;
                         const lineTotal = (line.quantity || 0) * (line.unit_price || 0) * (1 - (line.discount || 0) / 100) * (1 + (line.vat_rate || 0) / 100);
+                        const uomLabel = product?.uom || line.uom || "";
+                        const displayUom = uomLabel === "PCS" ? "" : uomLabel;
                         return (
                           <tr key={`new-${index}`}>
                             <td>
@@ -1068,7 +1070,7 @@ export default function InvoicesPage() {
                             </td>
                             <td><input className="form-control form-control-sm" value={line.description || ""} onChange={(e) => updateLine(index, { description: e.target.value })} /></td>
                             <td><input className="form-control form-control-sm text-end" type="number" value={line.quantity || 0} onChange={(e) => updateLine(index, { quantity: Number(e.target.value) })} /></td>
-                            <td><input className="form-control form-control-sm bg-light" value={product?.uom || line.uom || ""} readOnly /></td>
+                            <td><input className="form-control form-control-sm bg-light" value={displayUom} readOnly /></td>
                             <td><input className="form-control form-control-sm text-end" type="number" value={line.unit_price || 0} onChange={(e) => updateLine(index, { unit_price: Number(e.target.value) })} /></td>
                             <td><input className="form-control form-control-sm text-end" type="number" value={line.discount || 0} onChange={(e) => updateLine(index, { discount: Number(e.target.value) })} /></td>
                             <td><input className="form-control form-control-sm text-end input-ghost" type="number" placeholder="Tax %" value={line.vat_rate ?? ""} onChange={(e) => updateLine(index, { vat_rate: Number(e.target.value) })} /></td>
@@ -1323,6 +1325,8 @@ export default function InvoicesPage() {
                       {displayLines.map((line, index) => {
                         const product = line.product_id ? productById.get(line.product_id) : null;
                         const lineTotal = (line.quantity || 0) * (line.unit_price || 0) * (1 - (line.discount || 0) / 100) * (1 + (line.vat_rate || 0) / 100);
+                        const uomLabel = product?.uom || line.uom || "";
+                        const displayUom = uomLabel === "PCS" ? "" : uomLabel;
                         return (
                           <tr key={line.id || `edit-${index}`}>
                             <td>
@@ -1352,7 +1356,7 @@ export default function InvoicesPage() {
                             </td>
                             <td>{canEdit ? <input className="form-control form-control-sm" value={line.description || ""} onChange={(e) => updateLine(index, { description: e.target.value })} /> : (line.description || "—")}</td>
                             <td className="text-end">{canEdit ? <input className="form-control form-control-sm text-end" type="number" value={line.quantity || 0} onChange={(e) => updateLine(index, { quantity: Number(e.target.value) })} /> : line.quantity}</td>
-                            <td>{canEdit ? <input className="form-control form-control-sm bg-light" value={product?.uom || line.uom || ""} readOnly /> : (line.uom || "—")}</td>
+                            <td>{canEdit ? <input className="form-control form-control-sm bg-light" value={displayUom} readOnly /> : (displayUom || "—")}</td>
                             <td className="text-end">{canEdit ? <input className="form-control form-control-sm text-end" type="number" value={line.unit_price || 0} onChange={(e) => updateLine(index, { unit_price: Number(e.target.value) })} /> : formatCurrency(line.unit_price || 0, invoiceCurrency)}</td>
                             <td className="text-end">{canEdit ? <input className="form-control form-control-sm text-end" type="number" value={line.discount || 0} onChange={(e) => updateLine(index, { discount: Number(e.target.value) })} /> : (line.discount ? `${line.discount}%` : "—")}</td>
                             <td className="text-end">{canEdit ? <input className="form-control form-control-sm text-end input-ghost" type="number" placeholder="Tax %" value={line.vat_rate ?? ""} onChange={(e) => updateLine(index, { vat_rate: Number(e.target.value) })} /> : (line.vat_rate ? `${line.vat_rate}%` : "—")}</td>
