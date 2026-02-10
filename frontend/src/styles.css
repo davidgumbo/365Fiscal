@@ -3432,7 +3432,7 @@ button.danger:hover {
   background: #ffffff;
   border: 1px solid rgba(148, 163, 184, 0.35);
   border-radius: 16px;
-  padding: 20px;
+  padding: 22px;
   box-shadow: var(--shadow);
   display: grid;
   gap: 16px;
@@ -3452,18 +3452,19 @@ button.danger:hover {
 
 .settings-section-header h4 {
   margin: 0;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
-  letter-spacing: 0.2px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
 }
 
 .settings-card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 18px;
+  gap: 20px;
   max-width: 1000px;
   margin: 0 auto;
-  align-items: stretch;
+  align-items: start;
 }
 
 @media (min-width: 900px) {
@@ -3481,10 +3482,10 @@ button.danger:hover {
 .settings-card {
   border: 1px solid rgba(148, 163, 184, 0.35);
   border-radius: 16px;
-  padding: 18px;
+  padding: 20px;
   background: #ffffff;
   display: grid;
-  gap: 14px;
+  gap: 16px;
   transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
   height: 100%;
 }
@@ -3492,11 +3493,13 @@ button.danger:hover {
 .settings-card-title {
   font-weight: 700;
   font-size: 15px;
+  letter-spacing: 0.3px;
 }
 
 .settings-card-sub {
   color: var(--muted);
   font-size: 12px;
+  margin-top: -6px;
 }
 
 .settings-card:hover {
@@ -3526,12 +3529,13 @@ button.danger:hover {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  margin-top: 4px;
 }
 
 .settings-company {
   display: grid;
   grid-template-columns: 120px 1fr;
-  gap: 14px;
+  gap: 16px;
   align-items: start;
 }
 
@@ -3572,17 +3576,67 @@ button.danger:hover {
 .settings-company-name {
   font-size: 16px;
   font-weight: 700;
+  margin-bottom: 4px;
 }
 
 .settings-company-line {
   font-size: 12px;
   color: var(--muted);
+  margin-top: 2px;
 }
 
 @keyframes settings-enter {
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+.settings-card .input {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.settings-card .input input,
+.settings-card .input select,
+.settings-card .input textarea {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--stroke);
+  background: #ffffff;
+  box-shadow: var(--shadow-soft);
+}
+.settings-card .input textarea {
+  resize: vertical;
+}
+
+.settings-layout-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
+}
+
+.settings-subtitle {
+  grid-column: 1 / -1;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding-top: 6px;
+  border-top: 1px solid var(--stroke);
+}
+
+@media (max-width: 900px) {
+  .settings-layout-grid {
+    grid-template-columns: 1fr;
   }
 }
 

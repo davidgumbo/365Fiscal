@@ -752,72 +752,77 @@ export default function SettingsPage() {
                   <div className="settings-card">
                     <div className="settings-card-title">Document Layout</div>
                     <div className="settings-card-sub">Choose the layout of your documents</div>
-                    <label className="input">
-                      Layout
-                      <select
-                        value={settingsForm.document_layout}
-                        onChange={(e) => setSettingsForm({ ...settingsForm, document_layout: e.target.value })}
-                      >
-                        <option value="external_layout_standard">Standard</option>
-                        <option value="external_layout_boxed">Boxed</option>
-                        <option value="external_layout_bold">Bold</option>
-                        <option value="external_layout_bubble">Bubble</option>
-                      </select>
-                    </label>
-                    <label className="input">
-                      Default Payment Terms
-                      <input
-                        value={settingsForm.payment_terms_default}
-                        onChange={(e) => setSettingsForm({ ...settingsForm, payment_terms_default: e.target.value })}
-                        placeholder="e.g., Due on receipt"
-                      />
-                    </label>
-                    <label className="input">
-                      Document Notes / Footer
-                      <textarea
-                        rows={3}
-                        value={settingsForm.invoice_notes}
-                        onChange={(e) => setSettingsForm({ ...settingsForm, invoice_notes: e.target.value })}
-                        placeholder="Notes shown at the bottom of invoices/quotations"
-                      />
-                    </label>
-                    <label className="input">
-                      Document Header
-                      <textarea
-                        rows={2}
-                        value={settingsForm.document_header}
-                        onChange={(e) => setSettingsForm({ ...settingsForm, document_header: e.target.value })}
-                        placeholder="Header text for invoices/quotations"
-                      />
-                    </label>
-                    <label className="input">
-                      Document Footer
-                      <textarea
-                        rows={3}
-                        value={settingsForm.document_footer}
-                        onChange={(e) => setSettingsForm({ ...settingsForm, document_footer: e.target.value })}
-                        placeholder="Footer text for invoices/quotations"
-                      />
-                    </label>
-                    <label className="input">
-                      Watermark Text
-                      <input
-                        value={settingsForm.document_watermark}
-                        onChange={(e) => setSettingsForm({ ...settingsForm, document_watermark: e.target.value })}
-                        placeholder="e.g., PAID, DRAFT"
-                      />
-                    </label>
-                    <label className="input">
-                      Watermark Opacity
-                      <input
-                        type="number"
-                        min="0.02"
-                        max="0.3"
-                        step="0.01"
-                        value={settingsForm.document_watermark_opacity}
-                        onChange={(e) => setSettingsForm({ ...settingsForm, document_watermark_opacity: e.target.value })}
-                      />
-                    </label>
+                    <div className="settings-layout-grid">
+                      <div className="settings-subtitle">Layout</div>
+                      <label className="input">
+                        Layout
+                        <select
+                          value={settingsForm.document_layout}
+                          onChange={(e) => setSettingsForm({ ...settingsForm, document_layout: e.target.value })}
+                        >
+                          <option value="external_layout_standard">Standard</option>
+                          <option value="external_layout_boxed">Boxed</option>
+                          <option value="external_layout_bold">Bold</option>
+                          <option value="external_layout_bubble">Bubble</option>
+                        </select>
+                      </label>
+                      <label className="input">
+                        Default Payment Terms
+                        <input
+                          value={settingsForm.payment_terms_default}
+                          onChange={(e) => setSettingsForm({ ...settingsForm, payment_terms_default: e.target.value })}
+                          placeholder="e.g., Due on receipt"
+                        />
+                      </label>
+                      <div className="settings-subtitle">Header & Notes</div>
+                      <label className="input">
+                        Document Notes / Footer
+                        <textarea
+                          rows={3}
+                          value={settingsForm.invoice_notes}
+                          onChange={(e) => setSettingsForm({ ...settingsForm, invoice_notes: e.target.value })}
+                          placeholder="Notes shown at the bottom of invoices/quotations"
+                        />
+                      </label>
+                      <label className="input">
+                        Document Header
+                        <textarea
+                          rows={2}
+                          value={settingsForm.document_header}
+                          onChange={(e) => setSettingsForm({ ...settingsForm, document_header: e.target.value })}
+                          placeholder="Header text for invoices/quotations"
+                        />
+                      </label>
+                      <label className="input">
+                        Document Footer
+                        <textarea
+                          rows={3}
+                          value={settingsForm.document_footer}
+                          onChange={(e) => setSettingsForm({ ...settingsForm, document_footer: e.target.value })}
+                          placeholder="Footer text for invoices/quotations"
+                        />
+                      </label>
+                      <div className="settings-subtitle">Watermark</div>
+                      <label className="input">
+                        Watermark Text
+                        <input
+                          value={settingsForm.document_watermark}
+                          onChange={(e) => setSettingsForm({ ...settingsForm, document_watermark: e.target.value })}
+                          placeholder="e.g., PAID, DRAFT"
+                        />
+                      </label>
+                      <label className="input">
+                        Watermark Opacity
+                        <input
+                          type="number"
+                          min="0.02"
+                          max="0.3"
+                          step="0.01"
+                          value={settingsForm.document_watermark_opacity}
+                          onChange={(e) => setSettingsForm({ ...settingsForm, document_watermark_opacity: e.target.value })}
+                        />
+                      </label>
+                    </div>
                     <div className="settings-actions-inline">
                       <button className="outline" onClick={() => setShowConfigureLayout(true)}>Configure Document Layout</button>
                       <button className="outline" onClick={() => setShowEditLayout(true)}>Edit Layout</button>
