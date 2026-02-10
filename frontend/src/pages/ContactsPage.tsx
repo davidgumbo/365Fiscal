@@ -21,6 +21,7 @@ export default function ContactsPage() {
   const [selectedContactId, setSelectedContactId] = useState<number | null>(null);
   const [isEditing, setIsEditing] = useState(true);
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
+  const [showForm, setShowForm] = useState(false);
   const [isCompany, setIsCompany] = useState<boolean>(true);
   const [street, setStreet] = useState("");
   const [street2, setStreet2] = useState("");
@@ -106,6 +107,7 @@ export default function ContactsPage() {
     setSelectedContactId(null);
     resetForm();
     setIsEditing(true);
+    setShowForm(true);
   };
 
   const selectContact = (contact: Contact) => {
@@ -126,12 +128,65 @@ export default function ContactsPage() {
     setCountry("");
     setTags((contact.reference || "").split(",").map((t) => t.trim()).filter(Boolean));
     setIsEditing(true);
+    setShowForm(true);
   };
 
   return (
     <div className="content">
-      <div className="form-view">
-        <div className="form-shell invoice-form">
+      <div className="form-shell">
+        <div className="toolbar" style={{ marginBottom: 12 }}>
+          <div className="toolbar-left">
+            <h3>Customers</h3>
+          </div>
+          <div className="toolbar-right">
+            <button className={viewMode === "list" ? "tab active" : "tab"} onClick={() => setViewMode("list")}>List</button>
+            <button className={viewMode === "kanban" ? "tab active" : "tab"} onClick={() => setViewMode("kanban")}>Kanban</button>
+            <button className="primary" onClick={startNew}>New</button>
+          </div>
+        </div>
+        {viewMode === "list" ? (
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>VAT</th>
+                <th>TIN</th>
+                <th>Phone</th>
+                <th>Email</th>
+              </tr>
+            </thead>
+            <tbody>
+              {contacts.map((c) => (
+                <tr key={c.id} className={selectedContactId === c.id ? "row-active" : ""} onClick={() => selectContact(c)}>
+                  <td>{c.name}</td>
+                  <td>{c.vat}</td>
+                  <td>{c.tin}</td>
+                  <td>{c.phone}</td>
+                  <td>{c.email}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <div className="card-grid">
+            {contacts.map((c) => (
+              <div key={c.id} className="card" style={{ cursor: "pointer" }} onClick={() => selectContact(c)}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div className="user-avatar-small">{(c.name || "?").slice(0,1).toUpperCase()}</div>
+                  <div>
+                    <div style={{ fontWeight: 600 }}>{c.name}</div>
+                    <div style={{ fontSize: 12, color: "var(--muted)" }}>{c.email || c.phone}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {showForm && (
+        <div className="form-view">
+          <div className="form-shell invoice-form">
           <div className="form-header">
             <div>
               <h3>Customer</h3>
@@ -141,7 +196,7 @@ export default function ContactsPage() {
               </div>
             </div>
             <div className="form-actions">
-              <button className="outline" onClick={startNew}>New</button>
+              <button className="outline" onClick={() => setShowForm(false)}>Back</button>
               {isEditing ? (
                 <>
                   <button className="primary" onClick={selectedContactId ? updateContact : createContact}>Save</button>
@@ -249,58 +304,9 @@ export default function ContactsPage() {
               </select>
             </label>
           </div>
-        </div>
-      </div>
-
-      <div className="form-shell">
-        <div className="toolbar" style={{ marginBottom: 12 }}>
-          <div className="toolbar-left">
-            <h3>Customers</h3>
-          </div>
-          <div className="toolbar-right">
-            <button className={viewMode === "list" ? "tab active" : "tab"} onClick={() => setViewMode("list")}>List</button>
-            <button className={viewMode === "kanban" ? "tab active" : "tab"} onClick={() => setViewMode("kanban")}>Kanban</button>
           </div>
         </div>
-        {viewMode === "list" ? (
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>VAT</th>
-                <th>TIN</th>
-                <th>Phone</th>
-                <th>Email</th>
-              </tr>
-            </thead>
-            <tbody>
-              {contacts.map((c) => (
-                <tr key={c.id} className={selectedContactId === c.id ? "row-active" : ""} onClick={() => selectContact(c)}>
-                  <td>{c.name}</td>
-                  <td>{c.vat}</td>
-                  <td>{c.tin}</td>
-                  <td>{c.phone}</td>
-                  <td>{c.email}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <div className="card-grid">
-            {contacts.map((c) => (
-              <div key={c.id} className="card" style={{ cursor: "pointer" }} onClick={() => selectContact(c)}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <div className="user-avatar-small">{(c.name || "?").slice(0,1).toUpperCase()}</div>
-                  <div>
-                    <div style={{ fontWeight: 600 }}>{c.name}</div>
-                    <div style={{ fontSize: 12, color: "var(--muted)" }}>{c.email || c.phone}</div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 }
