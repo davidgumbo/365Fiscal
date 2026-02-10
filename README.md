@@ -16,7 +16,7 @@ This document explains how the 365Fiscal system works end-to-end: architecture, 
 - Data layer: SQLAlchemy session + models in `backend/app/db` and `backend/app/models`; migrations in `backend/alembic`.
 - Schemas: Pydantic request/response models in `backend/app/schemas` ensure typed validation.
 - Services: Domain services in `backend/app/services` (e.g., `fdms.py`, `email.py`, `sequence.py`).
-- Security: JWT/OTP and role-based access in `backend/app/security` and `backend/app/api/deps.py`.
+- Security: JWT<!--/OTP--> and role-based access in `backend/app/security` and `backend/app/api/deps.py`.
 - Frontend: SPA that consumes REST endpoints, with contexts/hooks and pages for dashboard and domain entities.
 
 ```
@@ -50,7 +50,7 @@ User browser                            External Services (FDMS)
 ### Auth Flow
 
 - Password login: `POST /api/auth/password-login` returns a JWT access token on success.
-- OTP flow: Generating and verifying one-time codes via `security/otp`.
+<!-- - OTP flow: Generating and verifying one-time codes via `security/otp`. -->
 - Per-request auth: Dependencies in `api/deps.py` decode JWT, attach user, and enforce permissions.
 
 ### Health and Utilities
