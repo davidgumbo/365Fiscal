@@ -85,81 +85,113 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="login-shell login-centered">
-      {/* Centered Login Card */}
-      <div className="login-card login-card-glass">
-        <div className="login-floating-logo">
-          <img src="/365.png" alt="365 Fiscal" className="logo-365" />
+    <div className="login-shell-v2">
+      {/* Background image with overlay */}
+      <div className="login-bg" />
+      <div className="login-bg-overlay" />
+
+      {/* Main content */}
+      <div className="login-container-v2">
+        {/* Left panel — branding */}
+        <div className="login-brand-panel">
+          <div className="login-brand-content">
+            <img src="/365.png" alt="365 Fiscal" className="login-brand-logo" />
+            <h1 className="login-brand-title">365 Fiscal</h1>
+            <p className="login-brand-tagline">
+              Professional invoicing, payments, taxes & fiscalization — all in one platform.
+            </p>
+            <div className="login-brand-features">
+              <div className="login-brand-feature">
+                <div className="login-feature-dot" />
+                <span>Multi-company management</span>
+              </div>
+              <div className="login-brand-feature">
+                <div className="login-feature-dot" />
+                <span>ZIMRA fiscal compliance</span>
+              </div>
+              <div className="login-brand-feature">
+                <div className="login-feature-dot" />
+                <span>Real-time analytics & reports</span>
+              </div>
+            </div>
+          </div>
+          <div className="login-brand-footer">
+            <img src="/geenet.trim.png" alt="GeeNet" className="login-brand-footer-logo" />
+          </div>
         </div>
-        {/* Header removed per request */}
-        <div className="login-card-body">
 
-          <form className="login-form" onSubmit={signIn}>
-            <div className="input-group">
-              <input
-                id="email"
-                type="email"
-                placeholder="Email Address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-                disabled={isLoading}
-              />
+        {/* Right panel — form */}
+        <div className="login-form-panel">
+          <div className="login-form-wrapper">
+            <div className="login-form-header">
+              <h2>Welcome back</h2>
+              <p>Sign in to your account to continue</p>
             </div>
 
-            <div className="input-group">
-              <input
-                id="password"
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="current-password"
-                disabled={isLoading}
-              />
-            </div>
-
-            <button className="login-btn" type="submit" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <span className="spinner"></span>
-                  <span>Signing in...</span>
-                </>
-              ) : (
-                <>
-                  <span>Sign In</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="5" y1="12" x2="19" y2="12"/>
-                    <polyline points="12 5 19 12 12 19"/>
+            <form className="login-form" onSubmit={signIn}>
+              <div className="login-field">
+                <label htmlFor="email">Email</label>
+                <div className="login-input-wrap">
+                  <svg className="login-input-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="4" width="20" height="16" rx="2"/>
+                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
                   </svg>
-                </>
-              )}
-            </button>
-          </form>
+                  <input
+                    id="email"
+                    type="email"
+                    placeholder="you@company.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    autoComplete="email"
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
 
-          {status && !error && (
-            <div className="login-status">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                <polyline points="22 4 12 14.01 9 11.01"/>
-              </svg>
-              {status}
-            </div>
-          )}
-          {error && (
-            <div className="login-error">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="8" x2="12" y2="12"/>
-                <line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
-              {error}
-            </div>
-          )}
-        </div>
+              <div className="login-field">
+                <label htmlFor="password">Password</label>
+                <div className="login-input-wrap">
+                  <svg className="login-input-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                  <input
+                    id="password"
+                    type="password"
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="current-password"
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
 
-        <div className="login-card-footer">
-          <img src="/geenet.trim.png" alt="GeeNet" className="footer-logo" />
+              <button className="login-submit-btn" type="submit" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <span className="spinner"></span>
+                    <span>Signing in...</span>
+                  </>
+                ) : (
+                  <span>Sign In</span>
+                )}
+              </button>
+            </form>
+
+            {status && !error && (
+              <div className="login-msg login-msg-success">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                {status}
+              </div>
+            )}
+            {error && (
+              <div className="login-msg login-msg-error">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                {error}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
