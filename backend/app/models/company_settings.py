@@ -21,6 +21,10 @@ class CompanySettings(Base, TimestampMixin):
     # Company branding & document layout
     logo_data: Mapped[str] = mapped_column(Text, default="")
     document_layout: Mapped[str] = mapped_column(String(100), default="external_layout_standard")
+    document_header: Mapped[str] = mapped_column(Text, default="")
+    document_footer: Mapped[str] = mapped_column(Text, default="")
+    document_watermark: Mapped[str] = mapped_column(Text, default="")
+    document_watermark_opacity: Mapped[str] = mapped_column(String(10), default="0.08")
     
     # Invoice settings
     invoice_prefix: Mapped[str] = mapped_column(String(20), default="INV")

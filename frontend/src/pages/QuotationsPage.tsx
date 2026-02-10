@@ -11,6 +11,17 @@ type Warehouse = { id: number; name: string };
 
 type Location = { id: number; name: string; warehouse_id: number };
 
+type CompanySettings = {
+  logo_data: string;
+  document_layout: string;
+  invoice_notes?: string;
+  payment_terms_default?: string;
+  document_header?: string;
+  document_footer?: string;
+  document_watermark?: string;
+  document_watermark_opacity?: string;
+};
+
 type QuotationLine = {
   id?: number;
   product_id: number | null;
@@ -53,6 +64,7 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [quotations, setQuotations] = useState<Quotation[]>([]);
+  const [companySettings, setCompanySettings] = useState<CompanySettings | null>(null);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [productWarehouseId, setProductWarehouseId] = useState<number | null>(null);
@@ -86,17 +98,19 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
   }, [companies, companyId]);
 
   const loadData = async (cid: number) => {
-    const [c, p, q, w] = await Promise.all([
+    const [c, p, q, w, settingsData] = await Promise.all([
       apiFetch<Contact[]>(`/contacts?company_id=${cid}`),
       apiFetch<Product[]>(`/products/with-stock?company_id=${cid}`),
       apiFetch<Quotation[]>(`/quotations?company_id=${cid}`)
       ,
-      apiFetch<Warehouse[]>(`/warehouses?company_id=${cid}`)
+      apiFetch<Warehouse[]>(`/warehouses?company_id=${cid}`),
+      apiFetch<CompanySettings>(`/company-settings?company_id=${cid}`)
     ]);
     setContacts(c);
     setProducts(p);
     setQuotations(q);
     setWarehouses(w);
+    setCompanySettings(settingsData ?? null);
     if (!productWarehouseId && w.length) {
       setProductWarehouseId(w[0].id);
     }
@@ -300,6 +314,10 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
     if (!win) return;
     const company = selectedCompany;
     const customer = contacts.find((c) => c.id === selectedQuotation.customer_id);
+    const layoutKey = (companySettings?.document_layout || "external_layout_standard").replace("external_layout_", "layout-");
+    const logoMarkup = companySettings?.logo_data
+      ? `<img class="logo" src="${companySettings.logo_data}" alt="Logo" />`
+      : "";
     const rows = (selectedQuotation.lines || [])
       .map((line) => {
         const total = lineTotal(line);
@@ -322,26 +340,67 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
           <title>${selectedQuotation.reference}</title>
           <style>
             body { font-family: Inter, Arial, sans-serif; padding: 32px; color: #0f172a; }
-            h1 { font-size: 20px; margin-bottom: 8px; }
+            h1 { font-size: 22px; margin-bottom: 6px; }
             .muted { color: #64748b; font-size: 12px; }
             .section { margin-top: 20px; }
+            .doc { padding: 24px; border-radius: 16px; position: relative; }
+            .watermark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 64px; font-weight: 700; color: #94a3b8; opacity: ${companySettings?.document_watermark_opacity || "0.08"}; pointer-events: none; }
+            .layout-boxed { border: 1px solid #e2e8f0; }
+            .layout-bold h1 { font-size: 26px; font-weight: 800; }
+            .layout-bubble { border: 1px solid #e2e8f0; box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08); }
+            .layout-standard { }
+            .header { display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; }
+            .logo { height: 48px; max-width: 180px; object-fit: contain; }
+            .company-block { text-align: right; }
             table { width: 100%; border-collapse: collapse; margin-top: 12px; }
             th, td { border-bottom: 1px solid #e2e8f0; padding: 8px; font-size: 12px; }
             th { text-align: left; background: #f8fafc; }
             .totals { margin-top: 16px; width: 260px; float: right; }
             .totals div { display: flex; justify-content: space-between; margin-bottom: 6px; }
+            .info-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+            .info-card { border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; }
           </style>
         </head>
         <body>
-          <h1>${company?.name || "Company"}</h1>
-          <div class="muted">${company?.address || ""}</div>
-          <div class="section">
-            <strong>Quotation</strong>
-            <div class="muted">Reference: ${selectedQuotation.reference}</div>
-            <div class="muted">Date: ${dateLabel}</div>
-            <div class="muted">Customer: ${customer?.name || "-"}</div>
-            <div class="muted">Expires: ${expires}</div>
-          </div>
+          <div class="doc ${layoutKey}">
+            ${companySettings?.document_watermark ? `<div class="watermark">${companySettings.document_watermark}</div>` : ""}
+            <div class="header">
+              <div>
+                ${logoMarkup}
+                <h1>${company?.name || "Company"}</h1>
+                <div class="muted">${company?.address || ""}</div>
+              </div>
+              <div class="company-block">
+                <div class="muted">Email: ${company?.email || "-"}</div>
+                <div class="muted">Phone: ${company?.phone || "-"}</div>
+                <div class="muted">VAT: ${company?.vat || "-"}</div>
+                <div class="muted">TIN: ${company?.tin || "-"}</div>
+              </div>
+            </div>
+            <div class="section">
+              <strong>Quotation</strong>
+              ${companySettings?.document_header ? `<div class="muted">${companySettings.document_header}</div>` : ""}
+              <div class="muted">Reference: ${selectedQuotation.reference}</div>
+              <div class="muted">Date: ${dateLabel}</div>
+              <div class="muted">Expires: ${expires}</div>
+              <div class="muted">Status: ${selectedQuotation.status || "-"}</div>
+            </div>
+            <div class="info-grid">
+              <div class="info-card">
+                <strong>Customer</strong>
+                <div class="muted">${customer?.name || "-"}</div>
+                <div class="muted">${customer?.address || ""}</div>
+                <div class="muted">Email: ${customer?.email || "-"}</div>
+                <div class="muted">Phone: ${customer?.phone || "-"}</div>
+                <div class="muted">VAT: ${customer?.vat || "-"}</div>
+                <div class="muted">TIN: ${customer?.tin || "-"}</div>
+              </div>
+              <div class="info-card">
+                <strong>Payment</strong>
+                <div class="muted">Terms: ${selectedQuotation.payment_terms || companySettings?.payment_terms_default || "-"}</div>
+                <div class="muted">Notes: ${companySettings?.invoice_notes || "-"}</div>
+              </div>
+            </div>
           <div class="section">
             <table>
               <thead>
@@ -360,6 +419,8 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
             <div class="totals">
               <div><strong>Total</strong><strong>${totalAmount.toFixed(2)}</strong></div>
             </div>
+          </div>
+            ${companySettings?.document_footer ? `<div class="section muted">${companySettings.document_footer}</div>` : ""}
           </div>
         </body>
       </html>

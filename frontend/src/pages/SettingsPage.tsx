@@ -147,7 +147,11 @@ export default function SettingsPage() {
     default_purchase_tax_id: null as number | null,
     tax_included_in_price: false,
     logo_data: "",
-    document_layout: "external_layout_standard"
+    document_layout: "external_layout_standard",
+    document_header: "",
+    document_footer: "",
+    document_watermark: "",
+    document_watermark_opacity: "0.08"
   });
   const [initialSettings, setInitialSettings] = useState<typeof settingsForm | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -214,7 +218,11 @@ export default function SettingsPage() {
         default_purchase_tax_id: data.default_purchase_tax_id ?? null,
         tax_included_in_price: data.tax_included_in_price ?? false,
         logo_data: data.logo_data || "",
-        document_layout: data.document_layout || "external_layout_standard"
+        document_layout: data.document_layout || "external_layout_standard",
+        document_header: data.document_header || "",
+        document_footer: data.document_footer || "",
+        document_watermark: data.document_watermark || "",
+        document_watermark_opacity: data.document_watermark_opacity || "0.08"
       };
       setSettingsForm(formData);
       setInitialSettings(formData);
@@ -243,7 +251,11 @@ export default function SettingsPage() {
         default_purchase_tax_id: null as number | null,
         tax_included_in_price: false,
         logo_data: "",
-        document_layout: "external_layout_standard"
+        document_layout: "external_layout_standard",
+        document_header: "",
+        document_footer: "",
+        document_watermark: "",
+        document_watermark_opacity: "0.08"
       };
       setSettingsForm(defaults);
       setInitialSettings(defaults);
@@ -285,6 +297,189 @@ export default function SettingsPage() {
       setSettingsForm((prev) => ({ ...prev, logo_data: result }));
     };
     reader.readAsDataURL(file);
+  };
+
+  const previewDocument = () => {
+    const layoutKey = (settingsForm.document_layout || "external_layout_standard").replace("external_layout_", "layout-");
+    const logoMarkup = settingsForm.logo_data
+      ? `<img class="logo" src="${settingsForm.logo_data}" alt="Logo" />`
+      : "";
+    const company = selectedCompany;
+    const win = window.open("", "_blank");
+    if (!win) return;
+    const html = `
+      <html>
+        <head>
+          <title>Document Preview</title>
+          <style>
+            body { font-family: Inter, Arial, sans-serif; padding: 32px; color: #0f172a; background: #f8fafc; }
+            h1 { font-size: 22px; margin-bottom: 6px; }
+            h2 { font-size: 16px; margin: 0; }
+            .muted { color: #64748b; font-size: 12px; }
+            .section { margin-top: 20px; }
+            .doc { padding: 24px; border-radius: 16px; background: #fff; margin-bottom: 24px; }
+            .layout-boxed { border: 1px solid #e2e8f0; }
+            .layout-bold h1 { font-size: 26px; font-weight: 800; }
+            .layout-bubble { border: 1px solid #e2e8f0; box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08); }
+            .layout-standard { }
+            .header { display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; }
+            .watermark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 64px; font-weight: 700; color: #94a3b8; opacity: ${settingsForm.document_watermark_opacity || "0.08"}; pointer-events: none; }
+            .doc { position: relative; }
+            .logo { height: 48px; max-width: 180px; object-fit: contain; }
+            .company-block { text-align: right; }
+            table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+            th, td { border-bottom: 1px solid #e2e8f0; padding: 8px; font-size: 12px; }
+            th { text-align: left; background: #f8fafc; }
+            .totals { margin-top: 16px; width: 260px; float: right; }
+            .totals div { display: flex; justify-content: space-between; margin-bottom: 6px; }
+            .info-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+            .info-card { border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="doc ${layoutKey}">
+            ${settingsForm.document_watermark ? `<div class="watermark">${settingsForm.document_watermark}</div>` : ""}
+            <div class="header">
+              <div>
+                ${logoMarkup}
+                <h1>${company?.name || "Company"}</h1>
+                <div class="muted">${company?.address || ""}</div>
+              </div>
+              <div class="company-block">
+                <div class="muted">Email: ${company?.email || "-"}</div>
+                <div class="muted">Phone: ${company?.phone || "-"}</div>
+                <div class="muted">VAT: ${company?.vat || "-"}</div>
+                <div class="muted">TIN: ${company?.tin || "-"}</div>
+              </div>
+            </div>
+            <div class="section">
+              <strong>Invoice</strong>
+              ${settingsForm.document_header ? `<div class="muted">${settingsForm.document_header}</div>` : ""}
+              <div class="muted">Reference: INV-0001</div>
+              <div class="muted">Date: ${new Date().toLocaleDateString()}</div>
+              <div class="muted">Due: ${new Date().toLocaleDateString()}</div>
+              <div class="muted">Currency: ${settingsForm.currency_code}</div>
+            </div>
+            <div class="info-grid">
+              <div class="info-card">
+                <strong>Customer</strong>
+                <div class="muted">Acme Corp</div>
+                <div class="muted">123 Sample Street</div>
+                <div class="muted">Email: info@acme.test</div>
+                <div class="muted">Phone: 000-000-000</div>
+                <div class="muted">VAT: 0000</div>
+                <div class="muted">TIN: 0000</div>
+              </div>
+              <div class="info-card">
+                <strong>Payment</strong>
+                <div class="muted">Terms: ${settingsForm.payment_terms_default || "-"}</div>
+                <div class="muted">Reference: PAY-0001</div>
+                <div class="muted">Status: Draft</div>
+                <div class="muted">Notes: ${settingsForm.invoice_notes || "-"}</div>
+              </div>
+            </div>
+            <div class="section">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Description</th>
+                    <th style="text-align:right;">Qty</th>
+                    <th style="text-align:right;">Price</th>
+                    <th style="text-align:right;">Tax</th>
+                    <th style="text-align:right;">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Sample Item</td>
+                    <td style="text-align:right;">2</td>
+                    <td style="text-align:right;">100.00</td>
+                    <td style="text-align:right;">15%</td>
+                    <td style="text-align:right;">230.00</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="totals">
+                <div><span>Subtotal</span><span>200.00</span></div>
+                <div><span>Tax</span><span>30.00</span></div>
+                <div><strong>Total</strong><strong>230.00</strong></div>
+              </div>
+            </div>
+            ${settingsForm.document_footer ? `<div class="section muted">${settingsForm.document_footer}</div>` : ""}
+          </div>
+
+          <div class="doc ${layoutKey}">
+            ${settingsForm.document_watermark ? `<div class="watermark">${settingsForm.document_watermark}</div>` : ""}
+            <div class="header">
+              <div>
+                ${logoMarkup}
+                <h1>${company?.name || "Company"}</h1>
+                <div class="muted">${company?.address || ""}</div>
+              </div>
+              <div class="company-block">
+                <div class="muted">Email: ${company?.email || "-"}</div>
+                <div class="muted">Phone: ${company?.phone || "-"}</div>
+                <div class="muted">VAT: ${company?.vat || "-"}</div>
+                <div class="muted">TIN: ${company?.tin || "-"}</div>
+              </div>
+            </div>
+            <div class="section">
+              <strong>Quotation</strong>
+              ${settingsForm.document_header ? `<div class="muted">${settingsForm.document_header}</div>` : ""}
+              <div class="muted">Reference: QUO-0001</div>
+              <div class="muted">Date: ${new Date().toLocaleDateString()}</div>
+              <div class="muted">Expires: ${new Date().toLocaleDateString()}</div>
+              <div class="muted">Status: Draft</div>
+            </div>
+            <div class="info-grid">
+              <div class="info-card">
+                <strong>Customer</strong>
+                <div class="muted">Acme Corp</div>
+                <div class="muted">123 Sample Street</div>
+                <div class="muted">Email: info@acme.test</div>
+                <div class="muted">Phone: 000-000-000</div>
+                <div class="muted">VAT: 0000</div>
+                <div class="muted">TIN: 0000</div>
+              </div>
+              <div class="info-card">
+                <strong>Payment</strong>
+                <div class="muted">Terms: ${settingsForm.payment_terms_default || "-"}</div>
+                <div class="muted">Notes: -</div>
+              </div>
+            </div>
+            <div class="section">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Description</th>
+                    <th style="text-align:right;">Qty</th>
+                    <th style="text-align:right;">Price</th>
+                    <th style="text-align:right;">Tax</th>
+                    <th style="text-align:right;">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Sample Item</td>
+                    <td style="text-align:right;">1</td>
+                    <td style="text-align:right;">100.00</td>
+                    <td style="text-align:right;">15%</td>
+                    <td style="text-align:right;">115.00</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="totals">
+                <div><strong>Total</strong><strong>115.00</strong></div>
+              </div>
+            </div>
+            ${settingsForm.document_footer ? `<div class="section muted">${settingsForm.document_footer}</div>` : ""}
+          </div>
+        </body>
+      </html>
+    `;
+    win.document.write(html);
+    win.document.close();
+    win.focus();
   };
 
   useEffect(() => {
@@ -489,10 +684,64 @@ export default function SettingsPage() {
                         <option value="external_layout_bubble">Bubble</option>
                       </select>
                     </label>
+                    <label className="input">
+                      Default Payment Terms
+                      <input
+                        value={settingsForm.payment_terms_default}
+                        onChange={(e) => setSettingsForm({ ...settingsForm, payment_terms_default: e.target.value })}
+                        placeholder="e.g., Due on receipt"
+                      />
+                    </label>
+                    <label className="input">
+                      Document Notes / Footer
+                      <textarea
+                        rows={3}
+                        value={settingsForm.invoice_notes}
+                        onChange={(e) => setSettingsForm({ ...settingsForm, invoice_notes: e.target.value })}
+                        placeholder="Notes shown at the bottom of invoices/quotations"
+                      />
+                    </label>
+                    <label className="input">
+                      Document Header
+                      <textarea
+                        rows={2}
+                        value={settingsForm.document_header}
+                        onChange={(e) => setSettingsForm({ ...settingsForm, document_header: e.target.value })}
+                        placeholder="Header text for invoices/quotations"
+                      />
+                    </label>
+                    <label className="input">
+                      Document Footer
+                      <textarea
+                        rows={3}
+                        value={settingsForm.document_footer}
+                        onChange={(e) => setSettingsForm({ ...settingsForm, document_footer: e.target.value })}
+                        placeholder="Footer text for invoices/quotations"
+                      />
+                    </label>
+                    <label className="input">
+                      Watermark Text
+                      <input
+                        value={settingsForm.document_watermark}
+                        onChange={(e) => setSettingsForm({ ...settingsForm, document_watermark: e.target.value })}
+                        placeholder="e.g., PAID, DRAFT"
+                      />
+                    </label>
+                    <label className="input">
+                      Watermark Opacity
+                      <input
+                        type="number"
+                        min="0.02"
+                        max="0.3"
+                        step="0.01"
+                        value={settingsForm.document_watermark_opacity}
+                        onChange={(e) => setSettingsForm({ ...settingsForm, document_watermark_opacity: e.target.value })}
+                      />
+                    </label>
                     <div className="settings-actions-inline">
                       <button className="outline" onClick={() => setStatus("Document layout editor coming soon")}>Configure Document Layout</button>
                       <button className="outline" onClick={() => setStatus("Layout editor coming soon")}>Edit Layout</button>
-                      <button className="outline" onClick={() => setStatus("Preview coming soon")}>Preview Document</button>
+                      <button className="outline" onClick={previewDocument}>Preview Document</button>
                     </div>
                   </div>
                 </div>

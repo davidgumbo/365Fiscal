@@ -10,6 +10,10 @@ class CompanySettingsCreate(BaseModel):
     decimal_places: int = 2
     logo_data: str = ""
     document_layout: str = "external_layout_standard"
+    document_header: str = ""
+    document_footer: str = ""
+    document_watermark: str = ""
+    document_watermark_opacity: str = "0.08"
     invoice_prefix: str = "INV"
     quotation_prefix: str = "QUO"
     invoice_notes: str = ""
@@ -45,6 +49,10 @@ class CompanySettingsUpdate(BaseModel):
     decimal_places: int | None = None
     logo_data: str | None = None
     document_layout: str | None = None
+    document_header: str | None = None
+    document_footer: str | None = None
+    document_watermark: str | None = None
+    document_watermark_opacity: str | None = None
     invoice_prefix: str | None = None
     quotation_prefix: str | None = None
     invoice_notes: str | None = None
@@ -82,6 +90,10 @@ class CompanySettingsRead(ORMBase):
     decimal_places: int
     logo_data: str
     document_layout: str
+    document_header: str
+    document_footer: str
+    document_watermark: str
+    document_watermark_opacity: str
     invoice_prefix: str
     quotation_prefix: str
     invoice_notes: str
