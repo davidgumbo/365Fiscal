@@ -2060,16 +2060,16 @@ thead.table-light th {
 
 .login-floating-logo {
   position: absolute;
-  top: -60px;
+  top: -65px;
   left: 50%;
   transform: translateX(-50%);
   background: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 220px;
-  height: 140px;
-  padding: 12px 16px;
+  width: 240px;
+  height: 130px;
+  padding: 4px;
   border-radius: 999px;
   z-index: 10;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
@@ -2077,8 +2077,8 @@ thead.table-light th {
 }
 
 .logo-365 {
-  width: 180px;
-  height: 110px;
+  width: 210px;
+  height: 120px;
   object-fit: contain;
 }
 
