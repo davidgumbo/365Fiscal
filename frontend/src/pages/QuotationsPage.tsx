@@ -180,9 +180,19 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
       payment_terms: selectedQuotation.payment_terms || "Cash",
       expires_at: selectedQuotation.expires_at ? selectedQuotation.expires_at.split("T")[0] : ""
     });
-    setLines(selectedQuotation.lines?.length ? selectedQuotation.lines.map((line) => ({ ...line })) : [emptyLine()]);
+    setLines(
+      selectedQuotation.lines?.length
+        ? selectedQuotation.lines.map((line) => {
+            const product = products.find((p) => p.id === line.product_id);
+            return {
+              ...line,
+              uom: line.uom || product?.uom || ""
+            };
+          })
+        : [emptyLine()]
+    );
     setIsEditing(false);
-  }, [selectedQuotation]);
+  }, [selectedQuotation, products]);
 
   const startNew = () => {
     setSelectedQuotationId(null);

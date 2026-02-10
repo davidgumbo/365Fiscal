@@ -368,9 +368,19 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
     setEditPaymentTerms(selectedInvoice.payment_terms || "");
     setEditNotes(selectedInvoice.notes || "");
     setEditDeviceId(selectedInvoice.device_id ?? null);
-    setEditLines(selectedInvoice.lines?.length ? selectedInvoice.lines.map((l) => ({ ...l })) : []);
-  }, [selectedInvoice]);
-
+    setEditLines(
+      selectedInvoice.lines?.length
+        ? selectedInvoice.lines.map((line) => {
+            const product = products.find((p) => p.id === line.product_id);
+            return {
+              ...line,
+              uom: line.uom || product?.uom || ""
+            };
+          })
+        : []
+    );
+    setIsEditing(false);
+  }, [selectedInvoice, products]);
   const quotationById = useMemo(() => {
     return new Map(quotations.map((q) => [q.id, q]));
   }, [quotations]);
