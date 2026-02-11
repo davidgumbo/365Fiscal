@@ -295,6 +295,7 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
     const vendor = contacts.find((c) => c.id === selectedOrder.vendor_id);
     const lineRows = (selectedOrder.lines || []).map((line) => {
       const product = products.find((p) => p.id === line.product_id);
+      const totals = lineTotals(line);
       return {
         name: product?.name || line.description || "-",
         description: line.description || product?.name || "-",
@@ -303,8 +304,8 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
         uom: line.uom || product?.uom || "Units",
         unit_price: line.unit_price,
         vat_rate: line.vat_rate,
-        subtotal: line.subtotal,
-        total: line.total_price,
+        subtotal: line.subtotal ?? totals.subtotal,
+        total: line.total_price ?? totals.total,
       };
     });
 
