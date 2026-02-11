@@ -1,4 +1,5 @@
 ﻿import { useEffect, useMemo, useState } from "react";
+import html2pdf from "html2pdf.js";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiFetch } from "../api";
 import { useCompanies, Company } from "../hooks/useCompanies";
@@ -321,8 +322,6 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
 
   const printQuotation = () => {
     if (!selectedQuotation) return;
-    const win = window.open("", "_blank");
-    if (!win) return;
     const company = selectedCompany;
     const customer = contacts.find((c) => c.id === selectedQuotation.customer_id);
     const layoutKey = (companySettings?.document_layout || "external_layout_standard").replace("external_layout_", "layout-");
@@ -426,7 +425,7 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
               </div>
               <div>
                 <div class="meta-label">Status</div>
-                <div class="meta-value">${selectedQuotation.status || "-"}</div>
+                <div class="meta-value">${selectedQuotation.status === "converted" ? "Sale Order" : selectedQuotation.status || "-"}</div>
               </div>
             </div>
 
@@ -458,10 +457,22 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
         </body>
       </html>
     `;
-    win.document.write(html);
-    win.document.close();
-    win.focus();
-    win.print();
+    const container = document.createElement("div");
+    container.innerHTML = html;
+    document.body.appendChild(container);
+    html2pdf()
+      .set({
+        margin: [10, 10, 10, 10],
+        filename: `${selectedQuotation.reference}.pdf`,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      })
+      .from(container)
+      .save()
+      .finally(() => {
+        document.body.removeChild(container);
+      });
   };
 
   const resetProductForm = () => {
@@ -545,7 +556,7 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
                   <option value="sent">Sent</option>
                   <option value="accepted">Accepted</option>
                   <option value="rejected">Rejected</option>
-                  <option value="converted">Invoiced</option>
+                  <option value="converted">Sale Order</option>
                 </select>
                 <input
                   className="form-control"
@@ -581,7 +592,7 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
                         <td>{contacts.find((c) => c.id === q.customer_id)?.name ?? ""}</td>
                         <td>
                           <span className={`badge ${q.status === "accepted" ? "bg-success" : q.status === "sent" ? "bg-info" : q.status === "rejected" ? "bg-danger" : q.status === "converted" ? "bg-primary" : "bg-secondary"}`}>
-                            {q.status}
+                            {q.status === "converted" ? "sale order" : q.status}
                           </span>
                         </td>
                         <td className="text-end fw-semibold">{q.lines?.reduce((sum, line) => sum + lineTotal(line), 0).toFixed(2)}</td>
@@ -602,7 +613,7 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
               <button className="btn btn-sm btn-light border" onClick={() => navigate("/quotations")}>← Back</button>
               <h4 className="fw-bold mb-0">{mode === "new" ? "New Quotation" : selectedQuotation?.reference || "Quotation"}</h4>
               <span className={`badge ms-2 ${statusLabel === "accepted" ? "bg-success" : statusLabel === "sent" ? "bg-info" : statusLabel === "rejected" ? "bg-danger" : statusLabel === "converted" ? "bg-primary" : "bg-secondary"}`}>
-                {statusLabel}
+                {statusLabel === "converted" ? "Sale Order" : statusLabel}
               </span>
             </div>
             <div className="d-flex flex-wrap gap-1">
@@ -628,7 +639,7 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
                   <button className="btn btn-sm btn-light border" onClick={sendQuotation} disabled={statusLabel !== "draft"}>Send</button>
                   <button className="btn btn-sm btn-light border" onClick={acceptQuotation} disabled={statusLabel !== "sent"}>Accept</button>
                   <button className="btn btn-sm btn-light border" onClick={rejectQuotation} disabled={statusLabel !== "draft" && statusLabel !== "sent"}>Reject</button>
-                  <button className="btn btn-sm btn-primary" onClick={convertToInvoice} disabled={statusLabel !== "accepted"}>Convert to Invoice</button>
+                  <button className="btn btn-sm btn-primary" onClick={convertToInvoice} disabled={statusLabel !== "accepted"}>Create Sale Order</button>
                   <button className="btn btn-sm btn-light border" onClick={printQuotation}>Print</button>
                 </>
               ) : null}

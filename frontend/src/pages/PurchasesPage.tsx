@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import html2pdf from "html2pdf.js";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiFetch } from "../api";
 import { useMe } from "../hooks/useMe";
@@ -409,13 +410,22 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
         <div>${footerText || "Powered by 365 Fiscal"}</div>
       </div>
     </body></html>`;
-
-    const win = window.open("", "_blank", "width=900,height=700");
-    if (win) {
-      win.document.write(html);
-      win.document.close();
-      setTimeout(() => win.print(), 400);
-    }
+    const container = document.createElement("div");
+    container.innerHTML = html;
+    document.body.appendChild(container);
+    html2pdf()
+      .set({
+        margin: [10, 10, 10, 10],
+        filename: `${selectedOrder.reference}.pdf`,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      })
+      .from(container)
+      .save()
+      .finally(() => {
+        document.body.removeChild(container);
+      });
   };
 
   const saveOrder = async () => {

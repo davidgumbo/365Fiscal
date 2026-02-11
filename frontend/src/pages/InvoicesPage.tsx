@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import html2pdf from "html2pdf.js";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiFetch } from "../api";
 import { useMe } from "../hooks/useMe";
@@ -772,10 +773,12 @@ export default function InvoicesPage({
 
   const printInvoice = () => {
     if (!selectedInvoice) return;
-    const win = window.open("", "_blank");
-    if (!win) return;
     const lines = selectedInvoice.lines || [];
     const currency = selectedInvoice.currency || "USD";
+    const title =
+      selectedInvoice.invoice_type === "credit_note"
+        ? "Credit Note"
+        : "Invoice";
     const layoutKey = (
       companySettings?.document_layout || "external_layout_standard"
     ).replace("external_layout_", "layout-");
@@ -787,11 +790,12 @@ export default function InvoicesPage({
     );
     const rows = lines
       .map((line) => {
-        const total =
+        const subtotal =
           (line.quantity || 0) *
           (line.unit_price || 0) *
-          (1 - (line.discount || 0) / 100) *
-          (1 + (line.vat_rate || 0) / 100);
+          (1 - (line.discount || 0) / 100);
+        const tax = subtotal * ((line.vat_rate || 0) / 100);
+        const total = subtotal + tax;
         const hsCode = line.product_id
           ? productMap.get(line.product_id)?.hs_code || "-"
           : "-";
@@ -799,10 +803,12 @@ export default function InvoicesPage({
           `${(line.quantity || 0).toFixed(2)} ${line.uom || ""}`.trim();
         return `
           <tr>
-            <td style="text-align:left;">${qtyLabel}</td>
             <td>${line.description || ""}</td>
-            <td style="text-align:right;">${hsCode}</td>
+            <td style="text-align:left;">${qtyLabel}</td>
             <td style="text-align:right;">${(line.unit_price || 0).toFixed(2)}</td>
+            <td style="text-align:right;">${(line.discount || 0).toFixed(2)}</td>
+            <td style="text-align:right;">${(line.vat_rate || 0).toFixed(2)}</td>
+            <td style="text-align:right;">${hsCode}</td>
             <td style="text-align:right;">${formatCurrency(total, currency)}</td>
           </tr>
         `;
@@ -814,35 +820,38 @@ export default function InvoicesPage({
         <head>
           <title>${selectedInvoice.reference}</title>
           <style>
-            body { font-family: Inter, Arial, sans-serif; padding: 0; margin: 0; color: #0f172a; background: #fff; }
-            .muted { color: #64748b; font-size: 12px; }
+            :root { --ink: #0f172a; --muted: #64748b; --line: #e2e8f0; --soft: #f8fafc; --accent: #2563eb; }
+            body { font-family: Inter, Arial, sans-serif; padding: 0; margin: 0; color: var(--ink); background: #fff; }
+            .muted { color: var(--muted); font-size: 12px; }
             .doc { padding: 24px 28px 32px; position: relative; }
             .watermark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 64px; font-weight: 700; color: #94a3b8; opacity: ${companySettings?.document_watermark_opacity || "0.08"}; pointer-events: none; transform: rotate(-25deg); }
-            .layout-boxed { border: 1px solid #e2e8f0; }
+            .layout-boxed { border: 1px solid var(--line); }
             .layout-bold h1 { font-size: 26px; font-weight: 800; }
-            .layout-bubble { border: 1px solid #e2e8f0; box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08); }
+            .layout-bubble { border: 1px solid var(--line); box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08); }
             .layout-standard { }
             .header-band { background: #eef3f7; padding: 18px 22px; border-radius: 14px; display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
-            .logo { height: 48px; max-width: 200px; object-fit: contain; background: #fff; padding: 6px 8px; border-radius: 6px; }
+            .logo { height: 52px; max-width: 220px; object-fit: contain; background: #fff; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line); }
             .company-block { text-align: right; font-size: 12px; line-height: 1.5; }
-            .company-name { font-weight: 700; color: #0f172a; }
+            .company-name { font-weight: 700; color: var(--ink); }
             .invoice-title-row { display: flex; justify-content: space-between; gap: 20px; margin-top: 18px; }
-            .invoice-tag { background: #f5f7fb; border-left: 4px solid #1e6bb8; padding: 10px 16px; border-radius: 12px; text-align: right; min-width: 220px; }
-            .invoice-tag .label { font-size: 13px; color: #1e6bb8; letter-spacing: 0.5px; text-transform: uppercase; font-weight: 700; }
-            .invoice-tag .ref { font-size: 22px; font-weight: 800; color: #0f172a; }
+            .invoice-tag { background: #f5f7fb; border-left: 4px solid var(--accent); padding: 10px 16px; border-radius: 12px; text-align: right; min-width: 240px; }
+            .invoice-tag .label { font-size: 12px; color: var(--accent); letter-spacing: 0.5px; text-transform: uppercase; font-weight: 700; }
+            .invoice-tag .ref { font-size: 22px; font-weight: 800; color: var(--ink); }
+            .invoice-tag .status { font-size: 11px; color: var(--muted); margin-top: 4px; }
             .customer-block { font-size: 12px; line-height: 1.5; }
-            .meta-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin-top: 20px; font-size: 12px; }
+            .meta-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 18px; font-size: 12px; }
             .meta-label { color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; }
             .meta-value { margin-top: 4px; font-weight: 600; }
             table { width: 100%; border-collapse: collapse; margin-top: 16px; }
             th, td { border-bottom: 1px solid #e5e7eb; padding: 8px 10px; font-size: 12px; }
-            th { text-align: left; background: #f8fafc; font-weight: 700; color: #475569; }
+            th { text-align: left; background: var(--soft); font-weight: 700; color: #475569; }
             tr:nth-child(even) td { background: #f6f7f9; }
-            .totals { margin-top: 14px; width: 300px; margin-left: auto; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
+            .totals { margin-top: 14px; width: 320px; margin-left: auto; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; }
             .totals-row { display: flex; justify-content: space-between; padding: 8px 12px; font-size: 12px; border-bottom: 1px solid #e5e7eb; background: #f8fafc; }
-            .totals-row:last-child { border-bottom: none; background: #f1f5f9; font-weight: 700; color: #0f172a; }
+            .totals-row strong { color: var(--ink); }
+            .totals-row:last-child { border-bottom: none; background: #f1f5f9; font-weight: 700; color: var(--ink); }
             .payment-comm { margin-top: 16px; font-size: 12px; }
-            .footer-note { margin-top: 16px; font-size: 12px; color: #64748b; }
+            .footer-note { margin-top: 16px; font-size: 12px; color: var(--muted); }
           </style>
         </head>
         <body>
@@ -871,8 +880,9 @@ export default function InvoicesPage({
                 <div>VAT: ${customer?.vat || "-"}</div>
               </div>
               <div class="invoice-tag">
-                <div class="label">${selectedInvoice.invoice_type === "credit_note" ? "Credit Note" : "Invoice"}</div>
+                <div class="label">${title}</div>
                 <div class="ref">${selectedInvoice.reference}</div>
+                <div class="status">Status: ${statusLabel}</div>
               </div>
             </div>
 
@@ -886,7 +896,11 @@ export default function InvoicesPage({
                 <div class="meta-value">${selectedInvoice.due_date ? new Date(selectedInvoice.due_date).toLocaleDateString() : "-"}</div>
               </div>
               <div>
-                <div class="meta-label">Reference</div>
+                <div class="meta-label">Payment Terms</div>
+                <div class="meta-value">${selectedInvoice.payment_terms || "-"}</div>
+              </div>
+              <div>
+                <div class="meta-label">Payment Reference</div>
                 <div class="meta-value">${selectedInvoice.payment_reference || "-"}</div>
               </div>
             </div>
@@ -896,11 +910,13 @@ export default function InvoicesPage({
             <table>
               <thead>
                 <tr>
-                  <th>Quantity</th>
                   <th>Description</th>
-                  <th style="text-align:right;">HS Code</th>
+                  <th style="text-align:left;">Qty</th>
                   <th style="text-align:right;">Unit Price</th>
-                  <th style="text-align:right;">Total</th>
+                  <th style="text-align:right;">Disc %</th>
+                  <th style="text-align:right;">VAT %</th>
+                  <th style="text-align:right;">HS Code</th>
+                  <th style="text-align:right;">Amount</th>
                 </tr>
               </thead>
               <tbody>
@@ -912,8 +928,11 @@ export default function InvoicesPage({
 
             <div class="totals">
               <div class="totals-row"><span>Untaxed Amount</span><span>${formatCurrency(selectedInvoice.subtotal || 0, currency)}</span></div>
+              <div class="totals-row"><span>Discount</span><span>${formatCurrency(selectedInvoice.discount_amount || 0, currency)}</span></div>
               <div class="totals-row"><span>VAT</span><span>${formatCurrency(selectedInvoice.tax_amount || 0, currency)}</span></div>
               <div class="totals-row"><span>Total</span><span>${formatCurrency(selectedInvoice.total_amount || 0, currency)}</span></div>
+              <div class="totals-row"><span>Amount Paid</span><span>${formatCurrency(selectedInvoice.amount_paid || 0, currency)}</span></div>
+              <div class="totals-row"><strong>Balance Due</strong><strong>${formatCurrency(selectedInvoice.amount_due || 0, currency)}</strong></div>
             </div>
 
             ${companySettings?.document_footer ? `<div class="footer-note">${companySettings.document_footer}</div>` : ""}
@@ -921,10 +940,22 @@ export default function InvoicesPage({
         </body>
       </html>
     `;
-    win.document.write(html);
-    win.document.close();
-    win.focus();
-    win.print();
+    const container = document.createElement("div");
+    container.innerHTML = html;
+    document.body.appendChild(container);
+    html2pdf()
+      .set({
+        margin: [10, 10, 10, 10],
+        filename: `${selectedInvoice.reference}.pdf`,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      })
+      .from(container)
+      .save()
+      .finally(() => {
+        document.body.removeChild(container);
+      });
   };
 
   // Determine which "screen" to show: list, new-form, or detail
