@@ -569,9 +569,65 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
           <p className="page-subtitle">Manage purchase orders and receipts</p>
         </div>
         <div className="header-actions">
-          {mode === "list" ? (
+          {mode !== "list" && (
+            <button className="outline" onClick={() => navigate("/purchases")}>Back to List</button>
+          )}
+        </div>
+      </div>
+
+      {mode === "list" && (
+        <div className="two-panel">
+          <div className="card shadow-sm">
+            <div className="card-body">
+              <div className="table-responsive">
+                <table className="table table-hover align-middle">
+                  <thead>
+                    <tr>
+                      <th>Reference</th>
+                      <th>Vendor</th>
+                      <th>Status</th>
+                      <th>Order Date</th>
+                      <th className="text-end">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredOrders.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="text-center text-muted py-4">
+                          {loadingData ? "Loading purchases..." : "No purchase orders found."}
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredOrders.map((order) => (
+                        <tr
+                          key={order.id}
+                          style={{ cursor: "pointer" }}
+                          onClick={() => navigate(`/purchases/${order.id}`)}
+                        >
+                          <td style={{ fontFamily: "monospace", fontSize: 12 }}>
+                            {order.reference}
+                          </td>
+                          <td>{contacts.find((c) => c.id === order.vendor_id)?.name || "-"}</td>
+                          <td>
+                            <span className={`badge ${order.status === "received" ? "badge-success" : order.status === "confirmed" ? "badge-info" : order.status === "cancelled" ? "badge-danger" : "badge-secondary"}`}>
+                              {order.status}
+                            </span>
+                          </td>
+                          <td>{toDateInputValue(order.order_date)}</td>
+                          <td className="text-end">{formatMoney(order.total_amount, currencySymbol)}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <aside className="sidebar-panel filter-sidebar">
+            <div className="filter-sidebar-title">Filters</div>
             <button
-              className="primary"
+              className="btn btn-primary w-100 mb-3"
               onClick={() => {
                 startNew();
                 navigate("/purchases/new");
@@ -579,28 +635,21 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
             >
               New Purchase
             </button>
-          ) : (
-            <button className="outline" onClick={() => navigate("/purchases")}>Back to List</button>
-          )}
-        </div>
-      </div>
-
-      {mode === "list" && (
-        <div className="card shadow-sm">
-          <div className="card-body">
-            <div className="d-flex flex-wrap gap-2 align-items-center mb-3">
+            <div className="filter-group">
+              <label className="filter-label">Search</label>
               <input
                 className="form-control"
-                placeholder="Search reference or vendor..."
+                placeholder="Reference or vendor"
                 value={listSearch}
                 onChange={(e) => setListSearch(e.target.value)}
-                style={{ maxWidth: 240 }}
               />
+            </div>
+            <div className="filter-group">
+              <label className="filter-label">Status</label>
               <select
                 className="form-select"
                 value={listStatus}
                 onChange={(e) => setListStatus(e.target.value)}
-                style={{ maxWidth: 180 }}
               >
                 <option value="">All Status</option>
                 <option value="draft">Draft</option>
@@ -608,65 +657,39 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
                 <option value="received">Received</option>
                 <option value="cancelled">Cancelled</option>
               </select>
+            </div>
+            <div className="filter-group">
+              <label className="filter-label">From</label>
               <input
                 type="date"
                 className="form-control"
                 value={listFrom}
                 onChange={(e) => setListFrom(e.target.value)}
-                style={{ maxWidth: 170 }}
               />
+            </div>
+            <div className="filter-group">
+              <label className="filter-label">To</label>
               <input
                 type="date"
                 className="form-control"
                 value={listTo}
                 onChange={(e) => setListTo(e.target.value)}
-                style={{ maxWidth: 170 }}
               />
             </div>
-
-            <div className="table-responsive">
-              <table className="table table-hover align-middle">
-                <thead>
-                  <tr>
-                    <th>Reference</th>
-                    <th>Vendor</th>
-                    <th>Status</th>
-                    <th>Order Date</th>
-                    <th className="text-end">Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredOrders.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="text-center text-muted py-4">
-                        {loadingData ? "Loading purchases..." : "No purchase orders found."}
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredOrders.map((order) => (
-                      <tr
-                        key={order.id}
-                        style={{ cursor: "pointer" }}
-                        onClick={() => navigate(`/purchases/${order.id}`)}
-                      >
-                        <td style={{ fontFamily: "monospace", fontSize: 12 }}>
-                          {order.reference}
-                        </td>
-                        <td>{contacts.find((c) => c.id === order.vendor_id)?.name || "-"}</td>
-                        <td>
-                          <span className={`badge ${order.status === "received" ? "badge-success" : order.status === "confirmed" ? "badge-info" : order.status === "cancelled" ? "badge-danger" : "badge-secondary"}`}>
-                            {order.status}
-                          </span>
-                        </td>
-                        <td>{toDateInputValue(order.order_date)}</td>
-                        <td className="text-end">{formatMoney(order.total_amount, currencySymbol)}</td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+            <div className="filter-actions">
+              <button
+                className="btn btn-light border w-100"
+                onClick={() => {
+                  setListSearch("");
+                  setListStatus("");
+                  setListFrom("");
+                  setListTo("");
+                }}
+              >
+                Clear Filters
+              </button>
             </div>
-          </div>
+          </aside>
         </div>
       )}
 

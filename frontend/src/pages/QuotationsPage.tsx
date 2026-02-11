@@ -543,14 +543,52 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
   return (
     <div className="container-fluid py-3">
       {!showForm && (
-        <div>
-          <div className="d-flex flex-wrap justify-content-between align-items-center mb-3">
-            <div>
-              <h3 className="fw-bold mb-0">Quotations</h3>
-              <small className="text-muted">Prepare and manage customer quotations.</small>
+        <div className="two-panel">
+          <div>
+            <div className="d-flex flex-wrap justify-content-between align-items-center mb-3">
+              <div>
+                <h3 className="fw-bold mb-0">Quotations</h3>
+                <small className="text-muted">Prepare and manage customer quotations.</small>
+              </div>
             </div>
+            <div className="card shadow-sm">
+              <div className="card-body p-0">
+                <div className="table-responsive">
+                  <table className="table table-hover align-middle mb-0">
+                    <thead className="table-light">
+                      <tr>
+                        <th>Reference</th>
+                        <th>Customer</th>
+                        <th>Status</th>
+                        <th className="text-end">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredQuotations.map((q) => (
+                        <tr key={q.id} role="button" onClick={() => navigate(`/quotations/${q.id}`)}>
+                          <td>
+                            <div className="fw-semibold">{q.reference}</div>
+                          </td>
+                          <td>{contacts.find((c) => c.id === q.customer_id)?.name ?? ""}</td>
+                          <td>
+                            <span className={`badge ${q.status === "accepted" ? "bg-success" : q.status === "sent" ? "bg-info" : q.status === "rejected" ? "bg-danger" : q.status === "converted" ? "bg-primary" : "bg-secondary"}`}>
+                              {q.status === "converted" ? "sale order" : q.status}
+                            </span>
+                          </td>
+                          <td className="text-end fw-semibold">{q.lines?.reduce((sum, line) => sum + lineTotal(line), 0).toFixed(2)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <aside className="sidebar-panel filter-sidebar">
+            <div className="filter-sidebar-title">Filters</div>
             <button
-              className="btn btn-primary"
+              className="btn btn-primary w-100 mb-3"
               onClick={() => {
                 startNew();
                 navigate("/quotations/new");
@@ -558,75 +596,62 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
             >
               + New Quotation
             </button>
-          </div>
-          <div className="card shadow-sm">
-            <div className="card-body p-0">
-              <div className="d-flex flex-wrap gap-2 p-3 border-bottom bg-light">
-                <input
-                  className="form-control"
-                  style={{ maxWidth: 280 }}
-                  placeholder="Search by reference or customer…"
-                  value={listSearch}
-                  onChange={(e) => setListSearch(e.target.value)}
-                />
-                <select
-                  className="form-select"
-                  style={{ maxWidth: 160 }}
-                  value={listStatus}
-                  onChange={(e) => setListStatus(e.target.value)}
-                >
-                  <option value="">All Status</option>
-                  <option value="draft">Draft</option>
-                  <option value="sent">Sent</option>
-                  <option value="accepted">Accepted</option>
-                  <option value="rejected">Rejected</option>
-                  <option value="converted">Sale Order</option>
-                </select>
-                <input
-                  className="form-control"
-                  style={{ maxWidth: 160 }}
-                  type="date"
-                  value={listFrom}
-                  onChange={(e) => setListFrom(e.target.value)}
-                />
-                <input
-                  className="form-control"
-                  style={{ maxWidth: 160 }}
-                  type="date"
-                  value={listTo}
-                  onChange={(e) => setListTo(e.target.value)}
-                />
-              </div>
-              <div className="table-responsive">
-                <table className="table table-hover align-middle mb-0">
-                  <thead className="table-light">
-                    <tr>
-                      <th>Reference</th>
-                      <th>Customer</th>
-                      <th>Status</th>
-                      <th className="text-end">Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredQuotations.map((q) => (
-                      <tr key={q.id} role="button" onClick={() => navigate(`/quotations/${q.id}`)}>
-                        <td>
-                          <div className="fw-semibold">{q.reference}</div>
-                        </td>
-                        <td>{contacts.find((c) => c.id === q.customer_id)?.name ?? ""}</td>
-                        <td>
-                          <span className={`badge ${q.status === "accepted" ? "bg-success" : q.status === "sent" ? "bg-info" : q.status === "rejected" ? "bg-danger" : q.status === "converted" ? "bg-primary" : "bg-secondary"}`}>
-                            {q.status === "converted" ? "sale order" : q.status}
-                          </span>
-                        </td>
-                        <td className="text-end fw-semibold">{q.lines?.reduce((sum, line) => sum + lineTotal(line), 0).toFixed(2)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+            <div className="filter-group">
+              <label className="filter-label">Search</label>
+              <input
+                className="form-control"
+                placeholder="Reference or customer"
+                value={listSearch}
+                onChange={(e) => setListSearch(e.target.value)}
+              />
             </div>
-          </div>
+            <div className="filter-group">
+              <label className="filter-label">Status</label>
+              <select
+                className="form-select"
+                value={listStatus}
+                onChange={(e) => setListStatus(e.target.value)}
+              >
+                <option value="">All Status</option>
+                <option value="draft">Draft</option>
+                <option value="sent">Sent</option>
+                <option value="accepted">Accepted</option>
+                <option value="rejected">Rejected</option>
+                <option value="converted">Sale Order</option>
+              </select>
+            </div>
+            <div className="filter-group">
+              <label className="filter-label">From</label>
+              <input
+                className="form-control"
+                type="date"
+                value={listFrom}
+                onChange={(e) => setListFrom(e.target.value)}
+              />
+            </div>
+            <div className="filter-group">
+              <label className="filter-label">To</label>
+              <input
+                className="form-control"
+                type="date"
+                value={listTo}
+                onChange={(e) => setListTo(e.target.value)}
+              />
+            </div>
+            <div className="filter-actions">
+              <button
+                className="btn btn-light border w-100"
+                onClick={() => {
+                  setListSearch("");
+                  setListStatus("");
+                  setListFrom("");
+                  setListTo("");
+                }}
+              >
+                Clear Filters
+              </button>
+            </div>
+          </aside>
         </div>
       )}
 
