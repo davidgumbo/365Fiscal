@@ -48,3 +48,12 @@ class PurchaseOrderRead(ORMBase):
     warehouse_id: int | None
     location_id: int | None
     lines: list[PurchaseOrderLineRead] = []
+
+
+class PurchaseOrderReceiveLine(BaseModel):
+    id: int
+    received_quantity: float
+
+
+class PurchaseOrderReceive(BaseModel):
+    lines: list[PurchaseOrderReceiveLine] = []

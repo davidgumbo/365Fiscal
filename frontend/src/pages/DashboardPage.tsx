@@ -50,6 +50,7 @@ interface Invoice {
   id: number;
   reference: string;
   status: string;
+  invoice_type?: string;
   total_amount: number;
   amount_paid?: number;
   amount_due?: number;
@@ -63,6 +64,14 @@ interface Quotation {
   status: string;
   total_amount?: number;
   created_at?: string;
+}
+
+interface PurchaseOrder {
+  id: number;
+  reference: string;
+  status: string;
+  total_amount: number;
+  order_date?: string | null;
 }
 
 interface Product {
@@ -234,12 +243,24 @@ export default function DashboardPage() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [quotations, setQuotations] = useState<Quotation[]>([]);
+  const [purchases, setPurchases] = useState<PurchaseOrder[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [paymentStats, setPaymentStats] = useState<PaymentStats | null>(null);
   const [recentAuditLogs, setRecentAuditLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [dateRange, setDateRange] = useState({ from: "", to: "" });
+
+  useEffect(() => {
+    const now = new Date();
+    const first = new Date(now.getFullYear(), now.getMonth(), 1);
+    const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    setDateRange({
+      from: first.toISOString().split("T")[0],
+      to: last.toISOString().split("T")[0],
+    });
+  }, []);
 
   useEffect(() => {
     // Must have a company to load data
@@ -261,6 +282,7 @@ export default function DashboardPage() {
         : Promise.resolve(null),
       apiFetch<Invoice[]>(`/invoices${params}`).catch(() => []),
       apiFetch<Quotation[]>(`/quotations${params}`).catch(() => []),
+      apiFetch<PurchaseOrder[]>(`/purchases${params}`).catch(() => []),
       apiFetch<Product[]>(`/products${params}`).catch(() => []),
       apiFetch<Contact[]>(`/contacts${params}`).catch(() => []),
       apiFetch<PaymentStats>(`/payments/summary${params}`).catch(() => null),
@@ -273,6 +295,7 @@ export default function DashboardPage() {
           summaryData,
           invoicesData,
           quotationsData,
+          purchasesData,
           productsData,
           contactsData,
           paymentData,
@@ -281,6 +304,7 @@ export default function DashboardPage() {
           setSummary(summaryData as DashboardSummary | null);
           setInvoices((invoicesData as Invoice[]) || []);
           setQuotations((quotationsData as Quotation[]) || []);
+          setPurchases((purchasesData as PurchaseOrder[]) || []);
           setProducts((productsData as Product[]) || []);
           setContacts((contactsData as Contact[]) || []);
           setPaymentStats(paymentData as PaymentStats | null);
@@ -299,19 +323,59 @@ export default function DashboardPage() {
   }, [summary, isAdmin, companyId]);
 
   // Calculate invoice stats
+  const filteredInvoices = useMemo(() => {
+    const fromDate = dateRange.from ? new Date(dateRange.from) : null;
+    const toDate = dateRange.to ? new Date(`${dateRange.to}T23:59:59`) : null;
+    return invoices.filter((inv) => {
+      if (inv.status === "cancelled" || inv.invoice_type === "credit_note") {
+        return false;
+      }
+      const d = inv.fiscalized_at
+        ? new Date(inv.fiscalized_at)
+        : inv.created_at
+          ? new Date(inv.created_at)
+          : null;
+      if (fromDate && d && d < fromDate) return false;
+      if (toDate && d && d > toDate) return false;
+      return true;
+    });
+  }, [invoices, dateRange]);
+
   const invoiceStats = useMemo(() => {
-    const total = invoices.reduce(
+    const total = filteredInvoices.reduce(
       (sum, inv) => sum + (inv.total_amount || 0),
       0,
     );
-    const fiscalized = invoices.filter(
+    const fiscalized = filteredInvoices.filter(
       (inv) => inv.status === "fiscalized",
     ).length;
-    const pending = invoices.filter(
+    const pending = filteredInvoices.filter(
       (inv) => inv.status === "draft" || inv.status === "pending",
     ).length;
-    return { total, count: invoices.length, fiscalized, pending };
-  }, [invoices]);
+    return { total, count: filteredInvoices.length, fiscalized, pending };
+  }, [filteredInvoices]);
+
+  const filteredPurchases = useMemo(() => {
+    const fromDate = dateRange.from ? new Date(dateRange.from) : null;
+    const toDate = dateRange.to ? new Date(`${dateRange.to}T23:59:59`) : null;
+    return purchases.filter((po) => {
+      if (po.status === "cancelled") return false;
+      const d = po.order_date ? new Date(po.order_date) : null;
+      if (fromDate && d && d < fromDate) return false;
+      if (toDate && d && d > toDate) return false;
+      return true;
+    });
+  }, [purchases, dateRange]);
+
+  const purchaseStats = useMemo(() => {
+    const total = filteredPurchases.reduce(
+      (sum, po) => sum + (po.total_amount || 0),
+      0,
+    );
+    return { total, count: filteredPurchases.length };
+  }, [filteredPurchases]);
+
+  const profitTotal = invoiceStats.total - purchaseStats.total;
 
   // Calculate quotation stats with new workflow states
   const quotationStats = useMemo(() => {
@@ -411,6 +475,24 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="dashboard-actions">
+          <div className="date-range">
+            <label>From:</label>
+            <input
+              type="date"
+              value={dateRange.from}
+              onChange={(e) =>
+                setDateRange((prev) => ({ ...prev, from: e.target.value }))
+              }
+            />
+            <label>To:</label>
+            <input
+              type="date"
+              value={dateRange.to}
+              onChange={(e) =>
+                setDateRange((prev) => ({ ...prev, to: e.target.value }))
+              }
+            />
+          </div>
           <NavLink to="/invoices" className="btn-primary">
             <PlusIcon /> New Invoice
           </NavLink>
@@ -469,6 +551,27 @@ export default function DashboardPage() {
           <div className="kpi-content">
             <div className="kpi-value">{invoiceStats.pending}</div>
             <div className="kpi-label">Pending Invoices</div>
+          </div>
+        </div>
+
+        <div className="kpi-card card-bg-shadow">
+          <div className={`kpi-icon ${profitTotal >= 0 ? "green" : "red"}`}>
+            <FileTextIcon />
+          </div>
+          <div className="kpi-content">
+            <div className="kpi-value">
+              ${profitTotal.toLocaleString(undefined, {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+              })}
+            </div>
+            <div className="kpi-label">Profit</div>
+          </div>
+          <div className="kpi-badge">
+            Sales ${invoiceStats.total.toLocaleString(undefined, {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0,
+            })}
           </div>
         </div>
       </div>

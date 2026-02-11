@@ -11,7 +11,12 @@ from app.models.stock_move import StockMove
 from app.models.stock_quant import StockQuant
 from app.models.warehouse import Warehouse
 from app.models.location import Location
-from app.schemas.purchase_order import PurchaseOrderCreate, PurchaseOrderRead, PurchaseOrderUpdate
+from app.schemas.purchase_order import (
+    PurchaseOrderCreate,
+    PurchaseOrderRead,
+    PurchaseOrderUpdate,
+    PurchaseOrderReceive,
+)
 
 router = APIRouter(prefix="/purchases", tags=["purchases"])
 
@@ -125,6 +130,7 @@ def create_purchase_order(
             product_id=line_data.product_id,
             description=line_data.description,
             quantity=line_data.quantity,
+            received_quantity=line_data.received_quantity,
             uom=line_data.uom,
             unit_price=line_data.unit_price,
             discount=line_data.discount,
@@ -225,6 +231,7 @@ def update_purchase_order(
                 product_id=line_data.product_id,
                 description=line_data.description,
                 quantity=line_data.quantity,
+                received_quantity=line_data.received_quantity,
                 uom=line_data.uom,
                 unit_price=line_data.unit_price,
                 discount=line_data.discount,
@@ -267,6 +274,7 @@ def confirm_purchase_order(
 @router.post("/{order_id}/receive", response_model=PurchaseOrderRead)
 def receive_purchase_order(
     order_id: int,
+    payload: PurchaseOrderReceive | None = None,
     db: Session = Depends(get_db),
     user=Depends(require_portal_user),
 ):
@@ -296,8 +304,20 @@ def receive_purchase_order(
     if not location:
         raise HTTPException(status_code=400, detail="No location available")
 
+    receive_map = {}
+    if payload:
+        receive_map = {line.id: line.received_quantity for line in payload.lines}
+
     for line in order.lines:
         if not line.product_id:
+            continue
+        if line.id in receive_map:
+            quantity_to_receive = receive_map[line.id]
+        else:
+            quantity_to_receive = line.received_quantity or line.quantity
+        quantity_to_receive = max(quantity_to_receive, 0)
+        line.received_quantity = quantity_to_receive
+        if quantity_to_receive <= 0:
             continue
         product = db.query(Product).filter(Product.id == line.product_id).first()
         if not product or product.product_type != "storable":
@@ -310,9 +330,9 @@ def receive_purchase_order(
             location_id=location.id,
             reference=order.reference,
             move_type="in",
-            quantity=line.quantity,
+            quantity=quantity_to_receive,
             unit_cost=line.unit_price,
-            total_cost=line.quantity * line.unit_price,
+            total_cost=quantity_to_receive * line.unit_price,
             source_document=order.reference,
             state="done",
             done_date=datetime.utcnow(),

@@ -176,6 +176,7 @@ interface PaymentReport {
 interface VatReport {
   sales_total: number;
   purchases_total: number;
+  profit: number;
   output_tax: number;
   input_tax: number;
   net_tax: number;
@@ -566,6 +567,7 @@ export default function ReportsPage() {
     setVatReport({
       sales_total: salesTotal,
       purchases_total: purchasesTotal,
+      profit: salesTotal - purchasesTotal,
       output_tax: outputTax,
       input_tax: inputTax,
       net_tax: outputTax - inputTax,
@@ -687,6 +689,7 @@ export default function ReportsPage() {
       rows.push([]);
       rows.push(["Sales Total", vatReport.sales_total.toFixed(2)]);
       rows.push(["Purchases Total", vatReport.purchases_total.toFixed(2)]);
+      rows.push(["Profit", vatReport.profit.toFixed(2)]);
       rows.push(["Output VAT", vatReport.output_tax.toFixed(2)]);
       rows.push(["Input VAT", vatReport.input_tax.toFixed(2)]);
       rows.push(["Net VAT", vatReport.net_tax.toFixed(2)]);
@@ -776,6 +779,7 @@ export default function ReportsPage() {
         <div class="summary-grid">
           <div class="summary-box"><div class="label">Sales Total</div><div class="val">${formatCurrency(vatReport.sales_total)}</div></div>
           <div class="summary-box"><div class="label">Purchases Total</div><div class="val">${formatCurrency(vatReport.purchases_total)}</div></div>
+          <div class="summary-box"><div class="label">Profit</div><div class="val">${formatCurrency(vatReport.profit)}</div></div>
           <div class="summary-box"><div class="label">Output VAT</div><div class="val">${formatCurrency(vatReport.output_tax)}</div></div>
           <div class="summary-box"><div class="label">Input VAT</div><div class="val">${formatCurrency(vatReport.input_tax)}</div></div>
           <div class="summary-box"><div class="label">Net VAT</div><div class="val">${formatCurrency(vatReport.net_tax)}</div></div>
@@ -1319,6 +1323,11 @@ export default function ReportsPage() {
             <MetricCard
               label="Purchases Total"
               value={formatCurrency(vatReport.purchases_total)}
+            />
+            <MetricCard
+              label="Profit"
+              value={formatCurrency(vatReport.profit)}
+              variant={vatReport.profit >= 0 ? "success" : "danger"}
             />
             <MetricCard
               label="Output VAT"

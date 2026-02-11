@@ -6,6 +6,7 @@ class PurchaseOrderLineCreate(BaseModel):
     product_id: int | None = None
     description: str = ""
     quantity: float = 1
+    received_quantity: float = 0
     uom: str = ""
     unit_price: float = 0
     discount: float = 0
@@ -18,6 +19,7 @@ class PurchaseOrderLineRead(ORMBase):
     product_id: int | None
     description: str
     quantity: float
+    received_quantity: float
     uom: str
     unit_price: float
     discount: float

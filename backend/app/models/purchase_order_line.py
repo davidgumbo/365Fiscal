@@ -20,6 +20,7 @@ class PurchaseOrderLine(Base, TimestampMixin):
     subtotal: Mapped[float] = mapped_column(Float, default=0)
     tax_amount: Mapped[float] = mapped_column(Float, default=0)
     total_price: Mapped[float] = mapped_column(Float, default=0)
+    received_quantity: Mapped[float] = mapped_column(Float, default=0)
 
     purchase_order = relationship("PurchaseOrder", back_populates="lines")
     product = relationship("Product")

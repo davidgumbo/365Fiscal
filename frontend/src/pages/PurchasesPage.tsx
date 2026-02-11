@@ -40,6 +40,7 @@ type PurchaseOrderLine = {
   product_id: number | null;
   description: string;
   quantity: number;
+  received_quantity: number;
   uom: string;
   unit_price: number;
   discount: number;
@@ -71,6 +72,7 @@ const emptyLine = (): PurchaseOrderLine => ({
   product_id: null,
   description: "",
   quantity: 1,
+  received_quantity: 0,
   uom: "Units",
   unit_price: 0,
   discount: 0,
@@ -219,6 +221,10 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
             const product = products.find((p) => p.id === line.product_id);
             return {
               ...line,
+              received_quantity:
+                line.received_quantity && line.received_quantity > 0
+                  ? line.received_quantity
+                  : line.quantity,
               uom: line.uom || product?.uom || "Units",
             };
           })
@@ -330,8 +336,20 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
 
   const receiveOrder = async () => {
     if (!selectedOrderId || !companyId) return;
+    const payload = {
+      lines: lines
+        .filter((line) => line.id)
+        .map((line) => ({
+          id: line.id as number,
+          received_quantity:
+            line.received_quantity > 0
+              ? line.received_quantity
+              : line.quantity,
+        })),
+    };
     await apiFetch<PurchaseOrder>(`/purchases/${selectedOrderId}/receive`, {
       method: "POST",
+      body: JSON.stringify(payload),
     });
     const updated = await apiFetch<PurchaseOrder[]>(
       `/purchases?company_id=${companyId}`
@@ -616,6 +634,7 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
                         <th style={{ minWidth: 180 }}>Product</th>
                         <th>Description</th>
                         <th className="text-end">Qty</th>
+                        <th className="text-end">Received Qty</th>
                         <th>UoM</th>
                         <th className="text-end">Unit Price</th>
                         <th className="text-end">Discount %</th>
@@ -659,6 +678,20 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
                                 value={line.quantity}
                                 onChange={(e) => updateLine(index, { quantity: Number(e.target.value) || 0 })}
                                 disabled={!canEdit}
+                              />
+                            </td>
+                            <td className="text-end">
+                              <input
+                                className="form-control form-control-sm text-end input-ghost"
+                                type="number"
+                                min="0"
+                                value={line.received_quantity}
+                                onChange={(e) =>
+                                  updateLine(index, {
+                                    received_quantity: Number(e.target.value) || 0,
+                                  })
+                                }
+                                disabled={currentStatus !== "confirmed"}
                               />
                             </td>
                             <td>
