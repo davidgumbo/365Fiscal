@@ -835,7 +835,7 @@ export default function InvoicesPage({
             .invoice-title h1 { margin: 0; font-size: 26px; letter-spacing: 0.6px; }
             .invoice-meta { margin-top: 10px; display: grid; gap: 6px; font-size: 12px; color: var(--muted); }
             .divider { border-top: 1px solid var(--line); margin: 16px 0; }
-            .addresses { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; font-size: 12px; }
+            .addresses { display: grid; grid-template-columns: 1fr; gap: 22px; font-size: 12px; }
             .addresses h4 { margin: 0 0 6px; font-size: 11px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--accent); }
             .addresses .block { line-height: 1.5; }
             .ship-grid { margin-top: 12px; display: grid; grid-template-columns: 1.1fr 1fr; gap: 22px; font-size: 12px; color: var(--muted); }
@@ -861,7 +861,9 @@ export default function InvoicesPage({
                   <strong>${company?.name || "Your Company"}</strong><br />
                   ${company?.address || ""}<br />
                   ${company?.city || ""} ${company?.country || ""}<br />
-                  ${company?.email || ""}
+                  ${company?.email || ""}<br />
+                  ${company?.phone || ""}<br />
+                  TIN: ${company?.tin || "-"} | VAT: ${company?.vat || "-"}
                 </div>
               </div>
               <div class="invoice-title">
@@ -884,29 +886,18 @@ export default function InvoicesPage({
                 ${customer?.address || ""}<br />
                 ${customer?.city || ""} ${customer?.country || ""}<br />
                 ${customer?.phone || ""}<br />
-                ${customer?.email || ""}
-              </div>
-              <div class="block">
-                <h4>Ship To</h4>
-                <strong>${customer?.name || "-"}</strong><br />
-                ${customer?.address || ""}<br />
-                ${customer?.city || ""} ${customer?.country || ""}<br />
-                ${customer?.phone || ""}
+                ${customer?.email || ""}<br />
+                TIN: ${customer?.tin || "-"}<br />
+                VAT: ${customer?.vat || "-"}
               </div>
             </div>
 
             <div class="ship-grid">
               <div>
-                <h4>Shipment Information</h4>
+                <h4>Additional</h4>
                 <div>P.O #: ${selectedInvoice.payment_reference || "-"}</div>
                 <div>Currency: ${currency}</div>
                 <div>Payment Terms: ${selectedInvoice.payment_terms || "-"}</div>
-              </div>
-              <div>
-                <h4>Additional</h4>
-                <div>Invoice Type: ${title}</div>
-                <div>VAT Reg: ${company?.vat || "-"}</div>
-                <div>TIN: ${company?.tin || "-"}</div>
               </div>
             </div>
 

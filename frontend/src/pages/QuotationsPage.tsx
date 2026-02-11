@@ -328,18 +328,16 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
     const logoMarkup = companySettings?.logo_data
       ? `<img class="logo" src="${companySettings.logo_data}" alt="Logo" />`
       : "";
-    const productMap = new Map(products.map((product) => [product.id, product]));
     const rows = (selectedQuotation.lines || [])
       .map((line) => {
         const total = lineTotal(line);
-        const hsCode = line.product_id ? productMap.get(line.product_id)?.hs_code || "-" : "-";
         const qtyLabel = `${(line.quantity || 0).toFixed(2)} ${line.uom || ""}`.trim();
         return `
           <tr>
-            <td style="text-align:left;">${qtyLabel}</td>
             <td>${line.description || ""}</td>
-            <td style="text-align:right;">${hsCode}</td>
+            <td style="text-align:right;">${qtyLabel}</td>
             <td style="text-align:right;">${(line.unit_price || 0).toFixed(2)}</td>
+            <td style="text-align:right;">${(line.vat_rate || 0).toFixed(2)}</td>
             <td style="text-align:right;">${total.toFixed(2)}</td>
           </tr>
         `;
@@ -352,92 +350,103 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
         <head>
           <title>${selectedQuotation.reference}</title>
           <style>
-            body { font-family: Inter, Arial, sans-serif; padding: 0; margin: 0; color: #0f172a; background: #fff; }
-            .muted { color: #64748b; font-size: 12px; }
-            .doc { padding: 24px 28px 32px; position: relative; }
+            :root { --ink: #0f172a; --muted: #6b7280; --line: #e5e7eb; --soft: #f8fafc; --accent: #1e4f9b; }
+            * { box-sizing: border-box; }
+            body { font-family: "Segoe UI", Inter, Arial, sans-serif; padding: 0; margin: 0; color: var(--ink); background: #fff; }
+            .doc { padding: 26px 30px 34px; position: relative; }
             .watermark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 64px; font-weight: 700; color: #94a3b8; opacity: ${companySettings?.document_watermark_opacity || "0.08"}; pointer-events: none; transform: rotate(-25deg); }
-            .layout-boxed { border: 1px solid #e2e8f0; }
-            .layout-bold h1 { font-size: 26px; font-weight: 800; }
-            .layout-bubble { border: 1px solid #e2e8f0; box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08); }
-            .layout-standard { }
-            .header-band { background: #eef3f7; padding: 18px 22px; border-radius: 14px; display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
-            .logo { height: 48px; max-width: 200px; object-fit: contain; background: #fff; padding: 6px 8px; border-radius: 6px; }
-            .company-block { text-align: right; font-size: 12px; line-height: 1.5; }
-            .company-name { font-weight: 700; color: #0f172a; }
-            .invoice-title-row { display: flex; justify-content: space-between; gap: 20px; margin-top: 18px; }
-            .invoice-tag { background: #f5f7fb; border-left: 4px solid #1e6bb8; padding: 10px 16px; border-radius: 12px; text-align: right; min-width: 220px; }
-            .invoice-tag .label { font-size: 13px; color: #1e6bb8; letter-spacing: 0.5px; text-transform: uppercase; font-weight: 700; }
-            .invoice-tag .ref { font-size: 22px; font-weight: 800; color: #0f172a; }
-            .customer-block { font-size: 12px; line-height: 1.5; }
-            .meta-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin-top: 20px; font-size: 12px; }
-            .meta-label { color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; }
-            .meta-value { margin-top: 4px; font-weight: 600; }
-            table { width: 100%; border-collapse: collapse; margin-top: 16px; }
-            th, td { border-bottom: 1px solid #e5e7eb; padding: 8px 10px; font-size: 12px; }
-            th { text-align: left; background: #f8fafc; font-weight: 700; color: #475569; }
-            tr:nth-child(even) td { background: #f6f7f9; }
-            .totals { margin-top: 14px; width: 300px; margin-left: auto; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
-            .totals-row { display: flex; justify-content: space-between; padding: 8px 12px; font-size: 12px; border-bottom: 1px solid #e5e7eb; background: #f8fafc; }
-            .totals-row:last-child { border-bottom: none; background: #f1f5f9; font-weight: 700; color: #0f172a; }
-            .payment-comm { margin-top: 16px; font-size: 12px; }
-            .footer-note { margin-top: 16px; font-size: 12px; color: #64748b; }
+            .layout-boxed { border: 1px solid var(--line); }
+            .layout-bubble { border: 1px solid var(--line); box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08); }
+            .header-row { display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; }
+            .brand { display: flex; align-items: center; gap: 14px; }
+            .logo { width: 56px; height: 56px; object-fit: contain; border-radius: 50%; border: 2px solid var(--accent); background: #fff; padding: 6px; }
+            .brand-details { font-size: 12px; line-height: 1.5; color: var(--muted); }
+            .brand-details strong { color: var(--ink); }
+            .invoice-title { text-align: right; }
+            .invoice-title h1 { margin: 0; font-size: 26px; letter-spacing: 0.6px; }
+            .invoice-meta { margin-top: 10px; display: grid; gap: 6px; font-size: 12px; color: var(--muted); }
+            .divider { border-top: 1px solid var(--line); margin: 16px 0; }
+            .addresses { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; font-size: 12px; }
+            .addresses h4 { margin: 0 0 6px; font-size: 11px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--accent); }
+            .addresses .block { line-height: 1.5; }
+            .ship-grid { margin-top: 12px; display: grid; grid-template-columns: 1.1fr 1fr; gap: 22px; font-size: 12px; color: var(--muted); }
+            .ship-grid h4 { margin: 0 0 6px; font-size: 11px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--accent); }
+            table { width: 100%; border-collapse: collapse; margin-top: 18px; font-size: 12px; }
+            thead th { background: var(--accent); color: #fff; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 10px; text-align: left; }
+            tbody td { padding: 8px 10px; border-bottom: 1px solid var(--line); }
+            tbody tr:nth-child(even) td { background: #f9fafb; }
+            .totals { margin-top: 16px; display: grid; grid-template-columns: 1fr 280px; gap: 16px; }
+            .notes { font-size: 12px; color: var(--muted); }
+            .totals-card { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+            .totals-row { display: flex; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 12px; }
+            .totals-row:last-child { border-bottom: none; font-weight: 700; background: #f8fafc; }
           </style>
         </head>
         <body>
           <div class="doc ${layoutKey}">
             ${companySettings?.document_watermark ? `<div class="watermark">${companySettings.document_watermark}</div>` : ""}
-            <div class="header-band">
-              <div>${logoMarkup}</div>
-              <div class="company-block">
-                <div class="company-name">${company?.name || "Company"}</div>
-                <div>${company?.address || ""}</div>
-                <div>${company?.city || ""}</div>
-                <div>${company?.country || ""}</div>
+            <div class="header-row">
+              <div class="brand">
+                ${logoMarkup || `<div class="logo"></div>`}
+                <div class="brand-details">
+                  <strong>${company?.name || "Your Company"}</strong><br />
+                  ${company?.address || ""}<br />
+                  ${company?.city || ""} ${company?.country || ""}<br />
+                  ${company?.email || ""}
+                </div>
+              </div>
+              <div class="invoice-title">
+                <h1>QUOTATION</h1>
+                <div class="invoice-meta">
+                  <div><strong>Issue Date:</strong> ${dateLabel}</div>
+                  <div><strong>Expiry Date:</strong> ${expires}</div>
+                  <div><strong>Quotation #:</strong> ${selectedQuotation.reference}</div>
+                  <div><strong>Status:</strong> ${selectedQuotation.status === "converted" ? "Sale Order" : selectedQuotation.status || "-"}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="addresses">
+              <div class="block">
+                <h4>Bill To</h4>
+                <strong>${customer?.name || "-"}</strong><br />
+                ${customer?.address || ""}<br />
+                ${customer?.city || ""} ${customer?.country || ""}<br />
+                ${customer?.phone || ""}<br />
+                ${customer?.email || ""}
+              </div>
+              <div class="block">
+                <h4>Ship To</h4>
+                <strong>${customer?.name || "-"}</strong><br />
+                ${customer?.address || ""}<br />
+                ${customer?.city || ""} ${customer?.country || ""}<br />
+                ${customer?.phone || ""}
+              </div>
+            </div>
+
+            <div class="ship-grid">
+              <div>
+                <h4>Shipment Information</h4>
+                <div>Payment Terms: ${form.payment_terms || "-"}</div>
+                <div>Currency: ${"USD"}</div>
+              </div>
+              <div>
+                <h4>Additional</h4>
+                <div>Quotation Type: Standard</div>
+                <div>VAT Reg: ${company?.vat || "-"}</div>
                 <div>TIN: ${company?.tin || "-"}</div>
-                <div>VAT: ${company?.vat || "-"}</div>
               </div>
             </div>
-
-            <div class="invoice-title-row">
-              <div class="customer-block">
-                <div class="muted">Bill To</div>
-                <div><strong>${customer?.name || "-"}</strong></div>
-                <div>${customer?.address || ""}</div>
-                <div>${customer?.city || ""}</div>
-                <div>${customer?.country || ""}</div>
-                <div>TIN: ${customer?.tin || "-"}</div>
-                <div>VAT: ${customer?.vat || "-"}</div>
-              </div>
-              <div class="invoice-tag">
-                <div class="label">Quotation</div>
-                <div class="ref">${selectedQuotation.reference}</div>
-              </div>
-            </div>
-
-            <div class="meta-row">
-              <div>
-                <div class="meta-label">Quotation Date</div>
-                <div class="meta-value">${dateLabel}</div>
-              </div>
-              <div>
-                <div class="meta-label">Expires</div>
-                <div class="meta-value">${expires}</div>
-              </div>
-              <div>
-                <div class="meta-label">Status</div>
-                <div class="meta-value">${selectedQuotation.status === "converted" ? "Sale Order" : selectedQuotation.status || "-"}</div>
-              </div>
-            </div>
-
-            ${companySettings?.document_header ? `<div class="footer-note">${companySettings.document_header}</div>` : ""}
 
             <table>
               <thead>
                 <tr>
-                  <th>Quantity</th>
-                  <th>Description</th>
-                  <th style="text-align:right;">HS Code</th>
-                  <th style="text-align:right;">Unit Price</th>
+                  <th>Item</th>
+                  <th style="text-align:right;">Quantity</th>
+                  <th style="text-align:right;">Price</th>
+                  <th style="text-align:right;">VAT %</th>
                   <th style="text-align:right;">Total</th>
                 </tr>
               </thead>
@@ -446,13 +455,16 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
               </tbody>
             </table>
 
-            <div class="payment-comm">Payment Communication: <strong>${selectedQuotation.reference}</strong></div>
-
             <div class="totals">
-              <div class="totals-row"><span>Total</span><span>${totalAmount.toFixed(2)}</span></div>
+              <div class="notes">
+                ${companySettings?.document_header || "Special notes, terms of sale."}
+              </div>
+              <div class="totals-card">
+                <div class="totals-row"><span>Total</span><span>${totalAmount.toFixed(2)}</span></div>
+              </div>
             </div>
 
-            ${companySettings?.document_footer ? `<div class="footer-note">${companySettings.document_footer}</div>` : ""}
+            ${companySettings?.document_footer ? `<div class="notes" style="margin-top:12px;">${companySettings.document_footer}</div>` : ""}
           </div>
         </body>
       </html>
