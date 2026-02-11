@@ -359,7 +359,7 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
             .layout-bubble { border: 1px solid var(--line); box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08); }
             .header-row { display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; }
             .brand { display: flex; align-items: center; gap: 14px; }
-            .logo { width: 56px; height: 56px; object-fit: contain; border-radius: 50%; border: 2px solid var(--accent); background: #fff; padding: 6px; }
+            .logo { width: 86px; height: 86px; object-fit: contain; border-radius: 0; border: none; background: transparent; padding: 0; }
             .brand-details { font-size: 12px; line-height: 1.5; color: var(--muted); }
             .brand-details strong { color: var(--ink); }
             .company-details { text-align: right; font-size: 12px; line-height: 1.5; color: var(--muted); }
