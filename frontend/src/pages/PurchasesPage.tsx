@@ -48,6 +48,8 @@ type PurchaseOrderLine = {
   unit_price: number;
   discount: number;
   vat_rate: number;
+  subtotal?: number;
+  total_price?: number;
 };
 
 type PurchaseOrder = {
