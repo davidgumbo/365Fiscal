@@ -5978,7 +5978,7 @@ tr:hover .o-quick-actions {
 /* KPI Cards */
 .dashboard-kpis {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 20px;
   margin-bottom: 24px;
 }
@@ -5989,7 +5989,7 @@ tr:hover .o-quick-actions {
   padding: 20px;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 1rem;
   border: 1px solid var(--stroke);
 }
 
