@@ -5600,7 +5600,7 @@ tr:hover .o-quick-actions {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 18px 24px;
+  /* padding: 18px 24px; */
   background: transparent;
   backdrop-filter: none;
   border-bottom: none;
@@ -5621,8 +5621,9 @@ tr:hover .o-quick-actions {
   width: 260px;
   object-fit: contain;
   clip-path: inset(10px 0 0 0);
+  padding-top: 5px;
   opacity: 0;
-  transform: translateY(-8px) scale(0.98);
+  transform: translateY(-36px) scale(0.98);
   animation: logo-enter 600ms ease-out forwards;
   transition: transform 200ms ease, filter 200ms ease;
 }
@@ -5650,6 +5651,7 @@ tr:hover .o-quick-actions {
   display: flex;
   align-items: center;
   gap: 12px;
+  padding: 2rem 4rem;  
 }
 
 .app-launcher-user .user-name {

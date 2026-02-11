@@ -292,9 +292,9 @@ export default function App() {
       <Route
         path="/*"
         element={
-          <AuthGuard>
-            <AppContent />
-          </AuthGuard>
+          // <AuthGuard>
+          <AppContent />
+          // </AuthGuard>
         }
       />
     </Routes>
