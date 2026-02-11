@@ -144,13 +144,15 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
       setLoadingData(true);
       const [c, p, o, w, settingsData] = await Promise.all([
         apiFetch<Contact[]>(`/contacts?company_id=${companyId}`),
-        apiFetch<Product[]>(`/products?company_id=${companyId}`),
+        apiFetch<Product[]>(`/products/with-stock?company_id=${companyId}`),
         apiFetch<PurchaseOrder[]>(`/purchases?company_id=${companyId}`),
         apiFetch<Warehouse[]>(`/warehouses?company_id=${companyId}`),
         apiFetch<CompanySettings>(`/company-settings?company_id=${companyId}`),
       ]);
       setContacts(c);
-      setProducts(p.filter((prod) => prod.is_active && prod.can_be_purchased !== false));
+      setProducts(
+        p.filter((prod) => prod.is_active && prod.can_be_purchased === true),
+      );
       setOrders(o);
       setWarehouses(w);
       setCompanySettings(settingsData ?? null);
