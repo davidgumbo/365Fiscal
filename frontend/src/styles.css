@@ -4980,14 +4980,15 @@ button.danger:hover {
 .o-form-sheet {
   background: #fff;
   border: 1px solid var(--stroke);
-  border-radius: 6px;
-  padding: 16px;
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  box-shadow: var(--shadow-soft);
   margin-bottom: 16px;
 }
 
 .o-form-group {
   display: grid;
-  grid-template-columns: 140px 1fr;
+  grid-template-columns: 140px minmax(0, 1fr);
   gap: 6px;
   align-items: start;
   margin-bottom: 12px;
@@ -4998,13 +4999,13 @@ button.danger:hover {
   font-weight: 600;
   color: var(--ink);
   padding-top: 10px;
-  text-align: right;
-  padding-right: 16px;
+  text-align: left;
+  padding-right: 6px;
 }
 
 .o-form-field {
   width: 100%;
-  max-width: 400px;
+  max-width: 520px;
 }
 
 .o-form-input {

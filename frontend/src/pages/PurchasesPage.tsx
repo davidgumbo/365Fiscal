@@ -23,6 +23,7 @@ type Product = {
   uom?: string;
   product_type?: string;
   can_be_purchased?: boolean;
+  is_active?: boolean;
 };
 
 type Warehouse = { id: number; name: string };
@@ -113,6 +114,7 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [companySettings, setCompanySettings] = useState<CompanySettings | null>(null);
+  const [loadingData, setLoadingData] = useState(false);
 
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -139,6 +141,7 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
   useEffect(() => {
     if (!companyId) return;
     const loadData = async () => {
+      setLoadingData(true);
       const [c, p, o, w, settingsData] = await Promise.all([
         apiFetch<Contact[]>(`/contacts?company_id=${companyId}`),
         apiFetch<Product[]>(`/products?company_id=${companyId}`),
@@ -147,13 +150,14 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
         apiFetch<CompanySettings>(`/company-settings?company_id=${companyId}`),
       ]);
       setContacts(c);
-      setProducts(p);
+      setProducts(p.filter((prod) => prod.is_active && prod.can_be_purchased !== false));
       setOrders(o);
       setWarehouses(w);
       setCompanySettings(settingsData ?? null);
       if (!form.warehouse_id && w.length) {
         setForm((prev) => ({ ...prev, warehouse_id: w[0].id }));
       }
+      setLoadingData(false);
     };
     loadData();
   }, [companyId]);
@@ -363,7 +367,7 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
   const canEdit = isEditing || mode === "new" || currentStatus === "draft";
 
   return (
-    <div className="purchases-page">
+    <div className="purchases-page invoice-form">
       <div className="page-header">
         <div>
           <h1>Purchases</h1>
@@ -440,7 +444,7 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
                   {filteredOrders.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="text-center text-muted py-4">
-                        No purchase orders found.
+                        {loadingData ? "Loading purchases..." : "No purchase orders found."}
                       </td>
                     </tr>
                   ) : (
@@ -478,20 +482,20 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
               {selectedOrder?.reference || "New Purchase"}
             </h2>
             <div className="o-form-status">
-              <div className="o-statusbar">
+              <div className="statusbar">
                 {["draft", "confirmed", "received"].map((step) => (
-                  <div
+                  <span
                     key={step}
-                    className={`o-statusbar-item ${currentStatus === step ? "active" : currentStatus === "received" && step !== "draft" ? "done" : ""}`}
+                    className={`status-pill ${currentStatus === step ? "active" : currentStatus === "received" && step !== "draft" ? "active" : ""}`}
                   >
                     {step}
-                  </div>
+                  </span>
                 ))}
               </div>
             </div>
           </div>
 
-          <div className="d-flex gap-2 flex-wrap mb-3">
+          <div className="form-actions">
             {canEdit && (
               <button className="primary" onClick={saveOrder} disabled={saving}>
                 {saving ? "Saving..." : "Save"}
