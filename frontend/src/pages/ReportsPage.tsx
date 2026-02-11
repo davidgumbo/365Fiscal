@@ -839,6 +839,11 @@ export default function ReportsPage() {
   const maxBarValue = salesReport
     ? Math.max(...salesReport.sales_by_month.map((m) => m.amount), 1)
     : 1;
+  const netVatStatus = vatReport
+    ? vatReport.net_tax >= 0
+      ? "Payable"
+      : "Refund"
+    : "";
 
   return (
     <div className="reports-page">
@@ -1347,14 +1352,8 @@ export default function ReportsPage() {
 
           <div className="report-grid">
             <div className="report-card">
-              <h3>Document Counts</h3>
+              <h3>Summary</h3>
               <table className="report-table">
-                <thead>
-                  <tr>
-                    <th>Type</th>
-                    <th className="text-right">Count</th>
-                  </tr>
-                </thead>
                 <tbody>
                   <tr>
                     <td>Invoices</td>
@@ -1363,6 +1362,24 @@ export default function ReportsPage() {
                   <tr>
                     <td>Purchases</td>
                     <td className="text-right">{vatReport.purchases_count}</td>
+                  </tr>
+                  <tr>
+                    <td>Sales Total</td>
+                    <td className="text-right">
+                      {formatCurrency(vatReport.sales_total)}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Purchases Total</td>
+                    <td className="text-right">
+                      {formatCurrency(vatReport.purchases_total)}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Profit</td>
+                    <td className="text-right">
+                      {formatCurrency(vatReport.profit)}
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -1394,6 +1411,10 @@ export default function ReportsPage() {
                     <td className="text-right">
                       {formatCurrency(vatReport.net_tax)}
                     </td>
+                  </tr>
+                  <tr>
+                    <td>VAT Status</td>
+                    <td className="text-right">{netVatStatus}</td>
                   </tr>
                 </tbody>
               </table>
