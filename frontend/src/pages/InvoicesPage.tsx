@@ -804,11 +804,10 @@ export default function InvoicesPage({
         return `
           <tr>
             <td>${line.description || ""}</td>
-            <td style="text-align:left;">${qtyLabel}</td>
+            <td style="text-align:right;">${qtyLabel}</td>
             <td style="text-align:right;">${(line.unit_price || 0).toFixed(2)}</td>
             <td style="text-align:right;">${(line.discount || 0).toFixed(2)}</td>
             <td style="text-align:right;">${(line.vat_rate || 0).toFixed(2)}</td>
-            <td style="text-align:right;">${hsCode}</td>
             <td style="text-align:right;">${formatCurrency(total, currency)}</td>
           </tr>
         `;
@@ -820,103 +819,106 @@ export default function InvoicesPage({
         <head>
           <title>${selectedInvoice.reference}</title>
           <style>
-            :root { --ink: #0f172a; --muted: #64748b; --line: #e2e8f0; --soft: #f8fafc; --accent: #2563eb; }
-            body { font-family: Inter, Arial, sans-serif; padding: 0; margin: 0; color: var(--ink); background: #fff; }
-            .muted { color: var(--muted); font-size: 12px; }
-            .doc { padding: 24px 28px 32px; position: relative; }
+            :root { --ink: #0f172a; --muted: #6b7280; --line: #e5e7eb; --soft: #f8fafc; --accent: #1e4f9b; }
+            * { box-sizing: border-box; }
+            body { font-family: "Segoe UI", Inter, Arial, sans-serif; padding: 0; margin: 0; color: var(--ink); background: #fff; }
+            .doc { padding: 26px 30px 34px; position: relative; }
             .watermark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 64px; font-weight: 700; color: #94a3b8; opacity: ${companySettings?.document_watermark_opacity || "0.08"}; pointer-events: none; transform: rotate(-25deg); }
             .layout-boxed { border: 1px solid var(--line); }
-            .layout-bold h1 { font-size: 26px; font-weight: 800; }
             .layout-bubble { border: 1px solid var(--line); box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08); }
-            .layout-standard { }
-            .header-band { background: #eef3f7; padding: 18px 22px; border-radius: 14px; display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
-            .logo { height: 52px; max-width: 220px; object-fit: contain; background: #fff; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line); }
-            .company-block { text-align: right; font-size: 12px; line-height: 1.5; }
-            .company-name { font-weight: 700; color: var(--ink); }
-            .invoice-title-row { display: flex; justify-content: space-between; gap: 20px; margin-top: 18px; }
-            .invoice-tag { background: #f5f7fb; border-left: 4px solid var(--accent); padding: 10px 16px; border-radius: 12px; text-align: right; min-width: 240px; }
-            .invoice-tag .label { font-size: 12px; color: var(--accent); letter-spacing: 0.5px; text-transform: uppercase; font-weight: 700; }
-            .invoice-tag .ref { font-size: 22px; font-weight: 800; color: var(--ink); }
-            .invoice-tag .status { font-size: 11px; color: var(--muted); margin-top: 4px; }
-            .customer-block { font-size: 12px; line-height: 1.5; }
-            .meta-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 18px; font-size: 12px; }
-            .meta-label { color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; }
-            .meta-value { margin-top: 4px; font-weight: 600; }
-            table { width: 100%; border-collapse: collapse; margin-top: 16px; }
-            th, td { border-bottom: 1px solid #e5e7eb; padding: 8px 10px; font-size: 12px; }
-            th { text-align: left; background: var(--soft); font-weight: 700; color: #475569; }
-            tr:nth-child(even) td { background: #f6f7f9; }
-            .totals { margin-top: 14px; width: 320px; margin-left: auto; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; }
-            .totals-row { display: flex; justify-content: space-between; padding: 8px 12px; font-size: 12px; border-bottom: 1px solid #e5e7eb; background: #f8fafc; }
-            .totals-row strong { color: var(--ink); }
-            .totals-row:last-child { border-bottom: none; background: #f1f5f9; font-weight: 700; color: var(--ink); }
-            .payment-comm { margin-top: 16px; font-size: 12px; }
-            .footer-note { margin-top: 16px; font-size: 12px; color: var(--muted); }
+            .header-row { display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; }
+            .brand { display: flex; align-items: center; gap: 14px; }
+            .logo { width: 56px; height: 56px; object-fit: contain; border-radius: 50%; border: 2px solid var(--accent); background: #fff; padding: 6px; }
+            .brand-details { font-size: 12px; line-height: 1.5; color: var(--muted); }
+            .brand-details strong { color: var(--ink); }
+            .invoice-title { text-align: right; }
+            .invoice-title h1 { margin: 0; font-size: 26px; letter-spacing: 0.6px; }
+            .invoice-meta { margin-top: 10px; display: grid; gap: 6px; font-size: 12px; color: var(--muted); }
+            .divider { border-top: 1px solid var(--line); margin: 16px 0; }
+            .addresses { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; font-size: 12px; }
+            .addresses h4 { margin: 0 0 6px; font-size: 11px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--accent); }
+            .addresses .block { line-height: 1.5; }
+            .ship-grid { margin-top: 12px; display: grid; grid-template-columns: 1.1fr 1fr; gap: 22px; font-size: 12px; color: var(--muted); }
+            .ship-grid h4 { margin: 0 0 6px; font-size: 11px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--accent); }
+            table { width: 100%; border-collapse: collapse; margin-top: 18px; font-size: 12px; }
+            thead th { background: var(--accent); color: #fff; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 10px; text-align: left; }
+            tbody td { padding: 8px 10px; border-bottom: 1px solid var(--line); }
+            tbody tr:nth-child(even) td { background: #f9fafb; }
+            .totals { margin-top: 16px; display: grid; grid-template-columns: 1fr 280px; gap: 16px; }
+            .notes { font-size: 12px; color: var(--muted); }
+            .totals-card { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+            .totals-row { display: flex; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 12px; }
+            .totals-row:last-child { border-bottom: none; font-weight: 700; background: #f8fafc; }
           </style>
         </head>
         <body>
           <div class="doc ${layoutKey}">
             ${companySettings?.document_watermark ? `<div class="watermark">${companySettings.document_watermark}</div>` : ""}
-            <div class="header-band">
-              <div>${logoMarkup}</div>
-              <div class="company-block">
-                <div class="company-name">${company?.name || "Company"}</div>
-                <div>${company?.address || ""}</div>
-                <div>${company?.city || ""}</div>
-                <div>${company?.country || ""}</div>
+            <div class="header-row">
+              <div class="brand">
+                ${logoMarkup || `<div class="logo"></div>`}
+                <div class="brand-details">
+                  <strong>${company?.name || "Your Company"}</strong><br />
+                  ${company?.address || ""}<br />
+                  ${company?.city || ""} ${company?.country || ""}<br />
+                  ${company?.email || ""}
+                </div>
+              </div>
+              <div class="invoice-title">
+                <h1>${title.toUpperCase()}</h1>
+                <div class="invoice-meta">
+                  <div><strong>Issue Date:</strong> ${invoiceDateLabel}</div>
+                  <div><strong>Due Date:</strong> ${selectedInvoice.due_date ? new Date(selectedInvoice.due_date).toLocaleDateString() : "-"}</div>
+                  <div><strong>Invoice #:</strong> ${selectedInvoice.reference}</div>
+                  <div><strong>Status:</strong> ${statusLabel}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="addresses">
+              <div class="block">
+                <h4>Bill To</h4>
+                <strong>${customer?.name || "-"}</strong><br />
+                ${customer?.address || ""}<br />
+                ${customer?.city || ""} ${customer?.country || ""}<br />
+                ${customer?.phone || ""}<br />
+                ${customer?.email || ""}
+              </div>
+              <div class="block">
+                <h4>Ship To</h4>
+                <strong>${customer?.name || "-"}</strong><br />
+                ${customer?.address || ""}<br />
+                ${customer?.city || ""} ${customer?.country || ""}<br />
+                ${customer?.phone || ""}
+              </div>
+            </div>
+
+            <div class="ship-grid">
+              <div>
+                <h4>Shipment Information</h4>
+                <div>P.O #: ${selectedInvoice.payment_reference || "-"}</div>
+                <div>Currency: ${currency}</div>
+                <div>Payment Terms: ${selectedInvoice.payment_terms || "-"}</div>
+              </div>
+              <div>
+                <h4>Additional</h4>
+                <div>Invoice Type: ${title}</div>
+                <div>VAT Reg: ${company?.vat || "-"}</div>
                 <div>TIN: ${company?.tin || "-"}</div>
-                <div>VAT: ${company?.vat || "-"}</div>
               </div>
             </div>
-
-            <div class="invoice-title-row">
-              <div class="customer-block">
-                <div class="muted">Bill To</div>
-                <div><strong>${customer?.name || "-"}</strong></div>
-                <div>${customer?.address || ""}</div>
-                <div>${customer?.city || ""}</div>
-                <div>${customer?.country || ""}</div>
-                <div>TIN: ${customer?.tin || "-"}</div>
-                <div>VAT: ${customer?.vat || "-"}</div>
-              </div>
-              <div class="invoice-tag">
-                <div class="label">${title}</div>
-                <div class="ref">${selectedInvoice.reference}</div>
-                <div class="status">Status: ${statusLabel}</div>
-              </div>
-            </div>
-
-            <div class="meta-row">
-              <div>
-                <div class="meta-label">Invoice Date</div>
-                <div class="meta-value">${invoiceDateLabel}</div>
-              </div>
-              <div>
-                <div class="meta-label">Due Date</div>
-                <div class="meta-value">${selectedInvoice.due_date ? new Date(selectedInvoice.due_date).toLocaleDateString() : "-"}</div>
-              </div>
-              <div>
-                <div class="meta-label">Payment Terms</div>
-                <div class="meta-value">${selectedInvoice.payment_terms || "-"}</div>
-              </div>
-              <div>
-                <div class="meta-label">Payment Reference</div>
-                <div class="meta-value">${selectedInvoice.payment_reference || "-"}</div>
-              </div>
-            </div>
-
-            ${companySettings?.document_header ? `<div class="footer-note">${companySettings.document_header}</div>` : ""}
 
             <table>
               <thead>
                 <tr>
-                  <th>Description</th>
-                  <th style="text-align:left;">Qty</th>
-                  <th style="text-align:right;">Unit Price</th>
+                  <th>Item</th>
+                  <th style="text-align:right;">Quantity</th>
+                  <th style="text-align:right;">Price</th>
                   <th style="text-align:right;">Disc %</th>
                   <th style="text-align:right;">VAT %</th>
-                  <th style="text-align:right;">HS Code</th>
-                  <th style="text-align:right;">Amount</th>
+                  <th style="text-align:right;">Total</th>
                 </tr>
               </thead>
               <tbody>
@@ -924,18 +926,21 @@ export default function InvoicesPage({
               </tbody>
             </table>
 
-            <div class="payment-comm">Payment Communication: <strong>${selectedInvoice.reference}</strong></div>
-
             <div class="totals">
-              <div class="totals-row"><span>Untaxed Amount</span><span>${formatCurrency(selectedInvoice.subtotal || 0, currency)}</span></div>
-              <div class="totals-row"><span>Discount</span><span>${formatCurrency(selectedInvoice.discount_amount || 0, currency)}</span></div>
-              <div class="totals-row"><span>VAT</span><span>${formatCurrency(selectedInvoice.tax_amount || 0, currency)}</span></div>
-              <div class="totals-row"><span>Total</span><span>${formatCurrency(selectedInvoice.total_amount || 0, currency)}</span></div>
-              <div class="totals-row"><span>Amount Paid</span><span>${formatCurrency(selectedInvoice.amount_paid || 0, currency)}</span></div>
-              <div class="totals-row"><strong>Balance Due</strong><strong>${formatCurrency(selectedInvoice.amount_due || 0, currency)}</strong></div>
+              <div class="notes">
+                ${companySettings?.document_header || "Special notes, terms of sale."}
+              </div>
+              <div class="totals-card">
+                <div class="totals-row"><span>Subtotal</span><span>${formatCurrency(selectedInvoice.subtotal || 0, currency)}</span></div>
+                <div class="totals-row"><span>Discount</span><span>${formatCurrency(selectedInvoice.discount_amount || 0, currency)}</span></div>
+                <div class="totals-row"><span>VAT</span><span>${formatCurrency(selectedInvoice.tax_amount || 0, currency)}</span></div>
+                <div class="totals-row"><span>Total</span><span>${formatCurrency(selectedInvoice.total_amount || 0, currency)}</span></div>
+                <div class="totals-row"><span>Amount Paid</span><span>${formatCurrency(selectedInvoice.amount_paid || 0, currency)}</span></div>
+                <div class="totals-row"><strong>Balance Due</strong><strong>${formatCurrency(selectedInvoice.amount_due || 0, currency)}</strong></div>
+              </div>
             </div>
 
-            ${companySettings?.document_footer ? `<div class="footer-note">${companySettings.document_footer}</div>` : ""}
+            ${companySettings?.document_footer ? `<div class="notes" style="margin-top:12px;">${companySettings.document_footer}</div>` : ""}
           </div>
         </body>
       </html>
