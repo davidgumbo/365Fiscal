@@ -502,7 +502,7 @@ export default function DashboardPage() {
       {/* KPI Cards */}
       <div className="dashboard-kpis">
         <div className="kpi-card card-bg-shadow">
-          <div className="kpi-icon blue">
+          <div className="kpi-icon bg-blue-200">
             <BuildingIcon />
           </div>
           <div className="kpi-content">
@@ -516,7 +516,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="kpi-card card-bg-shadow">
-          <div className="kpi-icon green">
+          <div className="kpi-icon bg-teal-200">
             <MonitorIcon />
           </div>
           <div className="kpi-content">
@@ -528,7 +528,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="kpi-card card-bg-shadow">
-          <div className="kpi-icon purple">
+          <div className="kpi-icon bg-purple-200">
             <FileTextIcon />
           </div>
           <div className="kpi-content">
@@ -545,7 +545,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="kpi-card card-bg-shadow">
-          <div className="kpi-icon orange">
+          <div className="kpi-icon bg-orange-200">
             <AlertTriangleIcon />
           </div>
           <div className="kpi-content">
@@ -555,12 +555,15 @@ export default function DashboardPage() {
         </div>
 
         <div className="kpi-card card-bg-shadow">
-          <div className={`kpi-icon ${profitTotal >= 0 ? "green" : "red"}`}>
+          <div
+            className={`kpi-icon ${profitTotal >= 0 ? "bg-red-200" : "bg-green-200"}`}
+          >
             <FileTextIcon />
           </div>
           <div className="kpi-content">
             <div className="kpi-value">
-              ${profitTotal.toLocaleString(undefined, {
+              $
+              {profitTotal.toLocaleString(undefined, {
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 0,
               })}
@@ -568,7 +571,8 @@ export default function DashboardPage() {
             <div className="kpi-label">Profit</div>
           </div>
           <div className="kpi-badge">
-            Sales ${invoiceStats.total.toLocaleString(undefined, {
+            Sales $
+            {invoiceStats.total.toLocaleString(undefined, {
               minimumFractionDigits: 0,
               maximumFractionDigits: 0,
             })}
@@ -580,7 +584,9 @@ export default function DashboardPage() {
       <div className="dashboard-charts ">
         <div className="chart-card card-bg-shadow">
           <div className="chart-header">
-            <h3>Revenue Overview</h3>
+            <h3 className="bg-gray-200 py-1 px-2 rounded-lg">
+              Revenue Overview
+            </h3>
             <span className="chart-period">Last 6 months</span>
           </div>
           <div className="bar-chart">
@@ -609,7 +615,7 @@ export default function DashboardPage() {
 
         <div className="chart-card card-bg-shadow">
           <div className="chart-header">
-            <h3>Invoice Status</h3>
+            <h3 className="bg-gray-200 py-1 px-2 rounded-lg">Invoice Status</h3>
             <span className="chart-period">Current period</span>
           </div>
           <div className="donut-chart">
@@ -651,7 +657,9 @@ export default function DashboardPage() {
 
         <div className="chart-card card-bg-shadow">
           <div className="chart-header">
-            <h3>Quotations Pipeline</h3>
+            <h3 className="bg-gray-200 py-1 px-2 rounded-lg">
+              Quotations Pipeline
+            </h3>
             <span className="chart-period">Workflow status</span>
           </div>
           <div className="stats-list">
@@ -731,7 +739,9 @@ export default function DashboardPage() {
       <div className="dashboard-tables">
         <div className="table-card card-bg-shadow">
           <div className="table-header">
-            <h3>Recent Invoices</h3>
+            <h3 className="bg-gray-200 py-1 px-2 rounded-lg">
+              Recent Invoices
+            </h3>
             <NavLink to="/invoices" className="view-all-link">
               View All →
             </NavLink>
@@ -777,7 +787,9 @@ export default function DashboardPage() {
 
         <div className="table-card card-bg-shadow">
           <div className="table-header">
-            <h3>Recent Quotations</h3>
+            <h3 className="bg-gray-200 py-1 px-2 rounded-lg">
+              Recent Quotations
+            </h3>
             <NavLink to="/quotations" className="view-all-link">
               View All →
             </NavLink>
