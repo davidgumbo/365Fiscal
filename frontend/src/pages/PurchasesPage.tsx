@@ -323,21 +323,20 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
       .logo { width: 56px; height: 56px; object-fit: contain; border-radius: 50%; border: 2px solid var(--accent); background: #fff; padding: 6px; }
       .brand-details { font-size: 12px; line-height: 1.5; color: var(--muted); }
       .brand-details strong { color: var(--ink); }
-      .title-block { text-align: right; }
-      .title-block h1 { margin: 0; font-size: 26px; letter-spacing: 0.6px; }
-      .title-meta { margin-top: 10px; display: grid; gap: 6px; font-size: 12px; color: var(--muted); }
+      .company-details { text-align: right; font-size: 12px; line-height: 1.5; color: var(--muted); }
+      .company-details strong { color: var(--ink); }
+      .title-block { text-align: left; }
+      .title-block h1 { margin: 0 0 8px; font-size: 26px; letter-spacing: 0.6px; }
+      .title-meta { display: grid; gap: 6px; font-size: 12px; color: var(--muted); }
       .divider { border-top: 1px solid var(--line); margin: 16px 0; }
       .addresses { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; font-size: 12px; }
       .addresses h4 { margin: 0 0 6px; font-size: 11px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--accent); }
       .addresses .block { line-height: 1.5; }
-      .ship-grid { margin-top: 12px; display: grid; grid-template-columns: 1.1fr 1fr; gap: 22px; font-size: 12px; color: var(--muted); }
-      .ship-grid h4 { margin: 0 0 6px; font-size: 11px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--accent); }
       table { width: 100%; border-collapse: collapse; margin-top: 18px; font-size: 12px; }
       thead th { background: var(--accent); color: #fff; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 10px; text-align: left; }
       tbody td { padding: 8px 10px; border-bottom: 1px solid var(--line); }
       tbody tr:nth-child(even) td { background: #f9fafb; }
-      .totals { margin-top: 16px; display: grid; grid-template-columns: 1fr 280px; gap: 16px; }
-      .notes { font-size: 12px; color: var(--muted); }
+      .totals { margin-top: 16px; display: flex; justify-content: flex-end; }
       .totals-card { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
       .totals-row { display: flex; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 12px; }
       .totals-row:last-child { border-bottom: none; font-weight: 700; background: #f8fafc; }
@@ -351,14 +350,11 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
               ${vendor?.name || "-"}
             </div>
           </div>
-          <div class="title-block">
-            <h1>PURCHASE ORDER</h1>
-            <div class="title-meta">
-              <div><strong>Issue Date:</strong> ${toDateInputValue(selectedOrder.order_date)}</div>
-              <div><strong>Expected Date:</strong> ${toDateInputValue(selectedOrder.expected_date)}</div>
-              <div><strong>PO #:</strong> ${selectedOrder.reference}</div>
-              <div><strong>Status:</strong> ${selectedOrder.status}</div>
-            </div>
+          <div class="company-details">
+            <strong>${headerText || "Purchase Order"}</strong><br />
+            ${vendor?.address || ""}<br />
+            ${vendor?.city || ""} ${vendor?.country || ""}<br />
+            ${vendor?.phone || ""}
           </div>
         </div>
 
@@ -372,26 +368,17 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
             ${vendor?.city || ""} ${vendor?.country || ""}<br />
             ${vendor?.phone || ""}
           </div>
-          <div class="block">
-            <h4>Ship To</h4>
-            <strong>${warehouses.find((w) => w.id === selectedOrder.warehouse_id)?.name || "-"}</strong><br />
-            ${locations.find((l) => l.id === selectedOrder.location_id)?.name || ""}<br />
-            ${selectedOrder.currency || "USD"}
+          <div class="block title-block">
+            <h1>PURCHASE ORDER</h1>
+            <div class="title-meta">
+              <div><strong>Issue Date:</strong> ${toDateInputValue(selectedOrder.order_date)}</div>
+              <div><strong>Expected Date:</strong> ${toDateInputValue(selectedOrder.expected_date)}</div>
+              <div><strong>PO #:</strong> ${selectedOrder.reference}</div>
+              <div><strong>Status:</strong> ${selectedOrder.status}</div>
+            </div>
           </div>
         </div>
 
-        <div class="ship-grid">
-          <div>
-            <h4>Shipment Information</h4>
-            <div>Received: ${selectedOrder.received_at ? toDateInputValue(selectedOrder.received_at) : "-"}</div>
-            <div>Currency: ${selectedOrder.currency || "USD"}</div>
-          </div>
-          <div>
-            <h4>Additional</h4>
-            <div>Warehouse: ${warehouses.find((w) => w.id === selectedOrder.warehouse_id)?.name || "-"}</div>
-            <div>Location: ${locations.find((l) => l.id === selectedOrder.location_id)?.name || "-"}</div>
-          </div>
-        </div>
 
         <table>
           <thead>
@@ -420,9 +407,6 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
         </table>
 
         <div class="totals">
-          <div class="notes">
-            ${selectedOrder.notes || footerText || "Special notes, terms of sale."}
-          </div>
           <div class="totals-card">
             <div class="totals-row"><span>Subtotal</span><span>${formatMoney(selectedOrder.subtotal, currencySymbol)}</span></div>
             <div class="totals-row"><span>VAT</span><span>${formatMoney(selectedOrder.tax_amount, currencySymbol)}</span></div>
