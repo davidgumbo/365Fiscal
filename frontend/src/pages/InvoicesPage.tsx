@@ -22,161 +22,140 @@ type InvoiceLine = {
 
 type Invoice = {
   id: number;
-      {!showForm && (
-        <div className="two-panel">
-          <div>
-            <div className="d-flex flex-wrap justify-content-between align-items-center mb-3">
-              <div>
-                <h3 className="fw-bold mb-0">Invoices</h3>
-                <small className="text-muted">
-                  Professional invoicing, payments, taxes, and fiscalization.
-                </small>
-              </div>
-            </div>
+  company_id: number;
+  quotation_id: number | null;
+  customer_id: number | null;
+  reference: string;
+  invoice_type: string;
+  reversed_invoice_id: number | null;
+  status: string;
+  invoice_date: string | null;
+  due_date: string | null;
+  fiscalized_at: string | null;
+  subtotal: number;
+  discount_amount: number;
+  tax_amount: number;
+  total_amount: number;
+  amount_paid: number;
+  amount_due: number;
+  currency: string;
+  payment_terms: string;
+  payment_reference: string;
+  notes: string;
+  device_id?: number | null;
+  zimra_status?: string;
+  zimra_verification_code?: string;
+  zimra_verification_url?: string;
+  lines: InvoiceLine[];
+};
 
-            <div className="card shadow-sm card-bg-shadow">
-              <div className="card-body p-0">
-                <div className="table-responsive">
-                  <table className="table table-hover align-middle mb-0">
-                    <thead className="table-light">
-                      <tr>
-                        <th>Reference</th>
-                        <th>Customer</th>
-                        <th>Date</th>
-                        <th>Status</th>
-                        <th>Payment</th>
-                        <th className="text-end">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {loading && (
-                        <tr>
-                          <td colSpan={6} className="text-center py-5 text-muted">
-                            Loading invoices…
-                          </td>
-                        </tr>
-                      )}
-                      {!loading && invoices.length === 0 && (
-                        <tr>
-                          <td colSpan={6} className="text-center py-5 text-muted">
-                            No invoices yet. Click <strong>+ New Invoice</strong>{" "}
-                            to create one.
-                          </td>
-                        </tr>
-                      )}
-                      {invoices.map((inv) => {
-                        const cust = contactById.get(inv.customer_id ?? 0);
-                        return (
-                          <tr
-                            key={inv.id}
-                            role="button"
-                            onClick={() => navigate(`/invoices/${inv.id}`)}
-                          >
-                            <td>
-                              <div className="fw-semibold">{inv.reference}</div>
-                              <small className="text-muted">
-                                {inv.invoice_type === "credit_note"
-                                  ? "Credit Note"
-                                  : "Invoice"}
-                              </small>
-                            </td>
-                            <td>{cust?.name || "—"}</td>
-                            <td className="text-muted">
-                              {inv.invoice_date
-                                ? new Date(inv.invoice_date).toLocaleDateString()
-                                : "—"}
-                            </td>
-                            <td>
-                              <span
-                                className={`badge ${inv.status === "paid" ? "bg-success" : inv.status === "posted" ? "bg-info" : inv.status === "fiscalized" ? "bg-primary" : "bg-secondary"}`}
-                              >
-                                {inv.status}
-                              </span>
-                            </td>
-                            <td>
-                              <span
-                                className={`badge bg-${getPaymentStatus(inv.amount_paid, inv.amount_due) === "Paid" ? "success" : getPaymentStatus(inv.amount_paid, inv.amount_due) === "Partial" ? "warning" : "secondary"}`}
-                              >
-                                {getPaymentStatus(
-                                  inv.amount_paid,
-                                  inv.amount_due,
-                                )}
-                              </span>
-                            </td>
-                            <td className="text-end fw-semibold">
-                              {formatCurrency(inv.total_amount, inv.currency)}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
+type QuotationLine = {
+  id: number;
+  product_id: number | null;
+  description: string;
+  quantity: number;
+  uom: string;
+  unit_price: number;
+  vat_rate: number;
+  total_price: number;
+};
 
-          <aside className="sidebar-panel filter-sidebar">
-            <div className="filter-sidebar-title">Filters</div>
-            <button
-              className="btn btn-primary w-100 mb-3"
-              onClick={() => {
-                beginNew();
-                navigate("/invoices/new");
-              }}
-            >
-              + New Invoice
-            </button>
-            <div className="filter-group">
-              <label className="filter-label">Search</label>
-              <input
-                className="form-control"
-                placeholder="Reference or status"
-                value={listSearch}
-                onChange={(e) => setListSearch(e.target.value)}
-              />
-            </div>
-            <div className="filter-group">
-              <label className="filter-label">Status</label>
-              <select
-                className="form-select"
-                value={listStatus}
-                onChange={(e) => setListStatus(e.target.value)}
-              >
-                <option value="">All Status</option>
-                <option value="draft">Draft</option>
-                <option value="posted">Posted</option>
-                <option value="paid">Paid</option>
-                <option value="fiscalized">Fiscalized</option>
-              </select>
-            </div>
-            <div className="filter-group">
-              <label className="filter-label">Type</label>
-              <select
-                className="form-select"
-                value={listType}
-                onChange={(e) => setListType(e.target.value)}
-              >
-                <option value="">All Types</option>
-                <option value="invoice">Invoice</option>
-                <option value="credit_note">Credit Note</option>
-              </select>
-            </div>
-            <div className="filter-actions">
-              <button
-                className="btn btn-light border w-100"
-                onClick={() => {
-                  setListSearch("");
-                  setListStatus("");
-                  setListType("");
-                }}
-              >
-                Clear Filters
-              </button>
-            </div>
-          </aside>
-        </div>
-      )}
+type Quotation = {
+  id: number;
+  customer_id: number;
+  reference: string;
+  status: string;
+  lines: QuotationLine[];
+};
+
+type Contact = {
+  id: number;
+  name: string;
+  address: string;
+  city?: string;
+  country?: string;
+  vat: string;
+  tin: string;
+  phone: string;
+  email?: string | null;
+};
+
+type Product = {
+  id: number;
+  name: string;
+  sale_price: number;
+  tax_rate: number;
+  reference?: string;
+  hs_code?: string;
+  uom?: string;
+  quantity_on_hand?: number;
+  quantity_available?: number;
+  quantity_reserved?: number;
+  stock_value?: number;
+};
+
+type Device = {
+  id: number;
+  device_id: string;
+  serial_number?: string;
+  model?: string;
+};
+
+type Warehouse = {
+  id: number;
+  name: string;
+};
+
+type Location = {
+  id: number;
+  name: string;
+  warehouse_id: number;
+};
+
+type CompanySettings = {
+  logo_data: string;
+  document_layout: string;
+  invoice_notes?: string;
+  payment_terms_default?: string;
+  document_header?: string;
+  document_footer?: string;
+  document_watermark?: string;
+  document_watermark_opacity?: string;
+};
+
+const currencyOptions = [
+  "USD",
+  "ZWL",
+  "ZAR",
+  "EUR",
+  "GBP",
+  "KES",
+  "UGX",
+  "NGN",
+  "TZS",
+];
+
+const formatCurrency = (value: number, currency: string) => {
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency,
+    }).format(value || 0);
+  } catch {
+    return `${currency} ${(value || 0).toFixed(2)}`;
+  }
+};
+
+const normalizeUom = (value: string) => (value === "PCS" ? "Units" : value);
+
+const toDateInputValue = (value: string | null) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toISOString().split("T")[0];
+};
+
+const fromDateInputValue = (value: string) =>
   value ? new Date(value).toISOString() : null;
 
 const getPaymentStatus = (amountPaid: number, amountDue: number) => {
@@ -1020,16 +999,106 @@ export default function InvoicesPage({
 
       {/* ───────────── LIST VIEW ───────────── */}
       {!showForm && (
-        <div>
-          <div className="d-flex flex-wrap justify-content-between align-items-center mb-3">
-            <div>
-              <h3 className="fw-bold mb-0">Invoices</h3>
-              <small className="text-muted">
-                Professional invoicing, payments, taxes, and fiscalization.
-              </small>
+        <div className="two-panel">
+          <div>
+            <div className="d-flex flex-wrap justify-content-between align-items-center mb-3">
+              <div>
+                <h3 className="fw-bold mb-0">Invoices</h3>
+                <small className="text-muted">
+                  Professional invoicing, payments, taxes, and fiscalization.
+                </small>
+              </div>
             </div>
+
+            <div className="card shadow-sm card-bg-shadow">
+              <div className="card-body p-0">
+                <div className="table-responsive">
+                  <table className="table table-hover align-middle mb-0">
+                    <thead className="table-light">
+                      <tr>
+                        <th>Reference</th>
+                        <th>Customer</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Payment</th>
+                        <th className="text-end">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {loading && (
+                        <tr>
+                          <td colSpan={6} className="text-center py-5 text-muted">
+                            Loading invoices…
+                          </td>
+                        </tr>
+                      )}
+                      {!loading && invoices.length === 0 && (
+                        <tr>
+                          <td colSpan={6} className="text-center py-5 text-muted">
+                            No invoices yet. Click <strong>+ New Invoice</strong>{" "}
+                            to create one.
+                          </td>
+                        </tr>
+                      )}
+                      {invoices.map((inv) => {
+                        const cust = contactById.get(inv.customer_id ?? 0);
+                        return (
+                          <tr
+                            key={inv.id}
+                            role="button"
+                            onClick={() => navigate(`/invoices/${inv.id}`)}
+                          >
+                            <td>
+                              <div className="fw-semibold">{inv.reference}</div>
+                              <small className="text-muted">
+                                {inv.invoice_type === "credit_note"
+                                  ? "Credit Note"
+                                  : "Invoice"}
+                              </small>
+                            </td>
+                            <td>{cust?.name || "—"}</td>
+                            <td className="text-muted">
+                              {inv.invoice_date
+                                ? new Date(inv.invoice_date).toLocaleDateString()
+                                : "—"}
+                            </td>
+                            <td>
+                              <span
+                                className={`badge ${inv.status === "paid" ? "bg-success" : inv.status === "posted" ? "bg-info" : inv.status === "fiscalized" ? "bg-primary" : "bg-secondary"}`}
+                              >
+                                {inv.status}
+                              </span>
+                            </td>
+                            <td>
+                              <span
+                                className={`badge bg-${getPaymentStatus(inv.amount_paid, inv.amount_due) === "Paid" ? "success" : getPaymentStatus(inv.amount_paid, inv.amount_due) === "Partial" ? "warning" : "secondary"}`}
+                              >
+                                {getPaymentStatus(
+                                  inv.amount_paid,
+                                  inv.amount_due,
+                                )}
+                              </span>
+                            </td>
+                            <td className="text-end fw-semibold">
+                              {formatCurrency(
+                                inv.total_amount || 0,
+                                inv.currency || "USD",
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <aside className="sidebar-panel filter-sidebar">
+            <div className="filter-sidebar-title">Filters</div>
             <button
-              className="btn btn-primary"
+              className="btn btn-primary w-100 mb-3"
               onClick={() => {
                 beginNew();
                 navigate("/invoices/new");
@@ -1037,123 +1106,54 @@ export default function InvoicesPage({
             >
               + New Invoice
             </button>
-          </div>
-
-          <div className="card shadow-sm card-bg-shadow">
-            <div className="card-body p-0">
-              <div className="d-flex flex-wrap gap-2 p-3 border-bottom bg-light">
-                <input
-                  className="form-control"
-                  style={{ maxWidth: 280 }}
-                  placeholder="Search by reference or status…"
-                  value={listSearch}
-                  onChange={(e) => setListSearch(e.target.value)}
-                />
-                <select
-                  className="form-select"
-                  style={{ maxWidth: 160 }}
-                  value={listStatus}
-                  onChange={(e) => setListStatus(e.target.value)}
-                >
-                  <option value="">All Status</option>
-                  <option value="draft">Draft</option>
-                  <option value="posted">Posted</option>
-                  <option value="paid">Paid</option>
-                  <option value="fiscalized">Fiscalized</option>
-                </select>
-                <select
-                  className="form-select"
-                  style={{ maxWidth: 160 }}
-                  value={listType}
-                  onChange={(e) => setListType(e.target.value)}
-                >
-                  <option value="">All Types</option>
-                  <option value="invoice">Invoice</option>
-                  <option value="credit_note">Credit Note</option>
-                </select>
-              </div>
-
-              <div className="table-responsive">
-                <table className="table table-hover align-middle mb-0">
-                  <thead className="table-light">
-                    <tr>
-                      <th>Reference</th>
-                      <th>Customer</th>
-                      <th>Date</th>
-                      <th>Status</th>
-                      <th>Payment</th>
-                      <th className="text-end">Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {loading && (
-                      <tr>
-                        <td colSpan={6} className="text-center py-5 text-muted">
-                          Loading invoices…
-                        </td>
-                      </tr>
-                    )}
-                    {!loading && invoices.length === 0 && (
-                      <tr>
-                        <td colSpan={6} className="text-center py-5 text-muted">
-                          No invoices yet. Click <strong>+ New Invoice</strong>{" "}
-                          to create one.
-                        </td>
-                      </tr>
-                    )}
-                    {invoices.map((inv) => {
-                      const cust = contactById.get(inv.customer_id ?? 0);
-                      return (
-                        <tr
-                          key={inv.id}
-                          role="button"
-                          onClick={() => navigate(`/invoices/${inv.id}`)}
-                        >
-                          <td>
-                            <div className="fw-semibold">{inv.reference}</div>
-                            <small className="text-muted">
-                              {inv.invoice_type === "credit_note"
-                                ? "Credit Note"
-                                : "Invoice"}
-                            </small>
-                          </td>
-                          <td>{cust?.name || "—"}</td>
-                          <td className="text-muted">
-                            {inv.invoice_date
-                              ? new Date(inv.invoice_date).toLocaleDateString()
-                              : "—"}
-                          </td>
-                          <td>
-                            <span
-                              className={`badge ${inv.status === "paid" ? "bg-success" : inv.status === "posted" ? "bg-info" : inv.status === "fiscalized" ? "bg-primary" : "bg-secondary"}`}
-                            >
-                              {inv.status}
-                            </span>
-                          </td>
-                          <td>
-                            <span
-                              className={`badge bg-${getPaymentStatus(inv.amount_paid, inv.amount_due) === "Paid" ? "success" : getPaymentStatus(inv.amount_paid, inv.amount_due) === "Partial" ? "warning" : "secondary"}`}
-                            >
-                              {getPaymentStatus(
-                                inv.amount_paid,
-                                inv.amount_due,
-                              )}
-                            </span>
-                          </td>
-                          <td className="text-end fw-semibold">
-                            {formatCurrency(
-                              inv.total_amount || 0,
-                              inv.currency || "USD",
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+            <div className="filter-group">
+              <label className="filter-label">Search</label>
+              <input
+                className="form-control"
+                placeholder="Reference or status"
+                value={listSearch}
+                onChange={(e) => setListSearch(e.target.value)}
+              />
             </div>
-          </div>
+            <div className="filter-group">
+              <label className="filter-label">Status</label>
+              <select
+                className="form-select"
+                value={listStatus}
+                onChange={(e) => setListStatus(e.target.value)}
+              >
+                <option value="">All Status</option>
+                <option value="draft">Draft</option>
+                <option value="posted">Posted</option>
+                <option value="paid">Paid</option>
+                <option value="fiscalized">Fiscalized</option>
+              </select>
+            </div>
+            <div className="filter-group">
+              <label className="filter-label">Type</label>
+              <select
+                className="form-select"
+                value={listType}
+                onChange={(e) => setListType(e.target.value)}
+              >
+                <option value="">All Types</option>
+                <option value="invoice">Invoice</option>
+                <option value="credit_note">Credit Note</option>
+              </select>
+            </div>
+            <div className="filter-actions">
+              <button
+                className="btn btn-light border w-100"
+                onClick={() => {
+                  setListSearch("");
+                  setListStatus("");
+                  setListType("");
+                }}
+              >
+                Clear Filters
+              </button>
+            </div>
+          </aside>
         </div>
       )}
 
