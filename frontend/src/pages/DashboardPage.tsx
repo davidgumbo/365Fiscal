@@ -94,63 +94,135 @@ interface AuditLog {
 
 // SVG Icons
 const BuildingIcon = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/>
-    <path d="M9 22v-4h6v4"/>
-    <path d="M8 6h.01M16 6h.01M12 6h.01M8 10h.01M16 10h.01M12 10h.01M8 14h.01M16 14h.01M12 14h.01"/>
+  <svg
+    width="22"
+    height="22"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
+    <path d="M9 22v-4h6v4" />
+    <path d="M8 6h.01M16 6h.01M12 6h.01M8 10h.01M16 10h.01M12 10h.01M8 14h.01M16 14h.01M12 14h.01" />
   </svg>
 );
 
 const MonitorIcon = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
-    <line x1="8" y1="21" x2="16" y2="21"/>
-    <line x1="12" y1="17" x2="12" y2="21"/>
+  <svg
+    width="22"
+    height="22"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+    <line x1="8" y1="21" x2="16" y2="21" />
+    <line x1="12" y1="17" x2="12" y2="21" />
   </svg>
 );
 
 const FileTextIcon = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-    <polyline points="14 2 14 8 20 8"/>
-    <line x1="16" y1="13" x2="8" y2="13"/>
-    <line x1="16" y1="17" x2="8" y2="17"/>
-    <polyline points="10 9 9 9 8 9"/>
+  <svg
+    width="22"
+    height="22"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+    <polyline points="14 2 14 8 20 8" />
+    <line x1="16" y1="13" x2="8" y2="13" />
+    <line x1="16" y1="17" x2="8" y2="17" />
+    <polyline points="10 9 9 9 8 9" />
   </svg>
 );
 
 const AlertTriangleIcon = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-    <line x1="12" y1="9" x2="12" y2="13"/>
-    <line x1="12" y1="17" x2="12.01" y2="17"/>
+  <svg
+    width="22"
+    height="22"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+    <line x1="12" y1="9" x2="12" y2="13" />
+    <line x1="12" y1="17" x2="12.01" y2="17" />
   </svg>
 );
 
 const CheckIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="20 6 9 17 4 12"/>
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <polyline points="20 6 9 17 4 12" />
   </svg>
 );
 
 const SendIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="22" y1="2" x2="11" y2="13"/>
-    <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <line x1="22" y1="2" x2="11" y2="13" />
+    <polygon points="22 2 15 22 11 13 2 9 22 2" />
   </svg>
 );
 
 const EditIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
   </svg>
 );
 
 const PlusIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="12" y1="5" x2="12" y2="19"/>
-    <line x1="5" y1="12" x2="19" y2="12"/>
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <line x1="12" y1="5" x2="12" y2="19" />
+    <line x1="5" y1="12" x2="19" y2="12" />
   </svg>
 );
 
@@ -179,12 +251,14 @@ export default function DashboardPage() {
 
     setLoading(true);
     setError("");
-    
+
     const params = `?company_id=${companyId}`;
-    
+
     // Build requests - always filter by company
     const requests: Promise<unknown>[] = [
-      isAdmin ? apiFetch<DashboardSummary>("/dashboard/summary").catch(() => null) : Promise.resolve(null),
+      isAdmin
+        ? apiFetch<DashboardSummary>("/dashboard/summary").catch(() => null)
+        : Promise.resolve(null),
       apiFetch<Invoice[]>(`/invoices${params}`).catch(() => []),
       apiFetch<Quotation[]>(`/quotations${params}`).catch(() => []),
       apiFetch<Product[]>(`/products${params}`).catch(() => []),
@@ -192,17 +266,27 @@ export default function DashboardPage() {
       apiFetch<PaymentStats>(`/payments/summary${params}`).catch(() => null),
       apiFetch<AuditLog[]>(`/audit-logs${params}&limit=5`).catch(() => []),
     ];
-    
+
     Promise.all(requests)
-      .then(([summaryData, invoicesData, quotationsData, productsData, contactsData, paymentData, auditData]) => {
-        setSummary(summaryData as DashboardSummary | null);
-        setInvoices((invoicesData as Invoice[]) || []);
-        setQuotations((quotationsData as Quotation[]) || []);
-        setProducts((productsData as Product[]) || []);
-        setContacts((contactsData as Contact[]) || []);
-        setPaymentStats(paymentData as PaymentStats | null);
-        setRecentAuditLogs((auditData as AuditLog[]) || []);
-      })
+      .then(
+        ([
+          summaryData,
+          invoicesData,
+          quotationsData,
+          productsData,
+          contactsData,
+          paymentData,
+          auditData,
+        ]) => {
+          setSummary(summaryData as DashboardSummary | null);
+          setInvoices((invoicesData as Invoice[]) || []);
+          setQuotations((quotationsData as Quotation[]) || []);
+          setProducts((productsData as Product[]) || []);
+          setContacts((contactsData as Contact[]) || []);
+          setPaymentStats(paymentData as PaymentStats | null);
+          setRecentAuditLogs((auditData as AuditLog[]) || []);
+        },
+      )
       .catch((err) => setError(err.message || "Failed to load dashboard"))
       .finally(() => setLoading(false));
   }, [isAdmin, companyId]);
@@ -211,14 +295,21 @@ export default function DashboardPage() {
   const filteredCompanyStatus = useMemo(() => {
     if (!summary?.company_status) return [];
     if (isAdmin) return summary.company_status;
-    return summary.company_status.filter(c => c.company_id === companyId);
+    return summary.company_status.filter((c) => c.company_id === companyId);
   }, [summary, isAdmin, companyId]);
 
   // Calculate invoice stats
   const invoiceStats = useMemo(() => {
-    const total = invoices.reduce((sum, inv) => sum + (inv.total_amount || 0), 0);
-    const fiscalized = invoices.filter((inv) => inv.status === "fiscalized").length;
-    const pending = invoices.filter((inv) => inv.status === "draft" || inv.status === "pending").length;
+    const total = invoices.reduce(
+      (sum, inv) => sum + (inv.total_amount || 0),
+      0,
+    );
+    const fiscalized = invoices.filter(
+      (inv) => inv.status === "fiscalized",
+    ).length;
+    const pending = invoices.filter(
+      (inv) => inv.status === "draft" || inv.status === "pending",
+    ).length;
     return { total, count: invoices.length, fiscalized, pending };
   }, [invoices]);
 
@@ -229,15 +320,32 @@ export default function DashboardPage() {
     const draft = quotations.filter((q) => q.status === "draft").length;
     const rejected = quotations.filter((q) => q.status === "rejected").length;
     const converted = quotations.filter((q) => q.status === "converted").length;
-    return { count: quotations.length, accepted, sent, draft, rejected, converted };
+    return {
+      count: quotations.length,
+      accepted,
+      sent,
+      draft,
+      rejected,
+      converted,
+    };
   }, [quotations]);
 
   // Calculate payment stats from invoice data
   const invoicePaymentStats = useMemo(() => {
-    const totalPaid = invoices.reduce((sum, inv) => sum + (inv.amount_paid || 0), 0);
-    const totalDue = invoices.reduce((sum, inv) => sum + (inv.amount_due || 0), 0);
-    const paidInvoices = invoices.filter((inv) => (inv.amount_due || 0) <= 0 && (inv.amount_paid || 0) > 0).length;
-    const partialPaid = invoices.filter((inv) => (inv.amount_paid || 0) > 0 && (inv.amount_due || 0) > 0).length;
+    const totalPaid = invoices.reduce(
+      (sum, inv) => sum + (inv.amount_paid || 0),
+      0,
+    );
+    const totalDue = invoices.reduce(
+      (sum, inv) => sum + (inv.amount_due || 0),
+      0,
+    );
+    const paidInvoices = invoices.filter(
+      (inv) => (inv.amount_due || 0) <= 0 && (inv.amount_paid || 0) > 0,
+    ).length;
+    const partialPaid = invoices.filter(
+      (inv) => (inv.amount_paid || 0) > 0 && (inv.amount_due || 0) > 0,
+    ).length;
     return { totalPaid, totalDue, paidInvoices, partialPaid };
   }, [invoices]);
 
@@ -274,7 +382,10 @@ export default function DashboardPage() {
       const company = filteredCompanyStatus[0];
       return { online: company.devices_online, total: company.device_count };
     }
-    return { online: summary?.metrics.devices_online || 0, total: summary?.metrics.devices_total || 0 };
+    return {
+      online: summary?.metrics.devices_online || 0,
+      total: summary?.metrics.devices_total || 0,
+    };
   }, [filteredCompanyStatus, summary]);
 
   if (loading) {
@@ -291,11 +402,13 @@ export default function DashboardPage() {
   return (
     <div className="dashboard-page">
       {error && <div className="dashboard-error">{error}</div>}
-      
+
       <div className="dashboard-header">
         <div>
           <h1>Dashboard</h1>
-          <p className="dashboard-subtitle">Welcome back! Here's an overview of your fiscal operations.</p>
+          <p className="dashboard-subtitle">
+            Welcome back! Here's an overview of your fiscal operations.
+          </p>
         </div>
         <div className="dashboard-actions">
           <NavLink to="/invoices" className="btn-primary">
@@ -306,17 +419,21 @@ export default function DashboardPage() {
 
       {/* KPI Cards */}
       <div className="dashboard-kpis">
-        <div className="kpi-card">
+        <div className="kpi-card card-bg-shadow">
           <div className="kpi-icon blue">
             <BuildingIcon />
           </div>
           <div className="kpi-content">
-            <div className="kpi-value">{isAdmin ? summary?.metrics.active_companies || 0 : 1}</div>
-            <div className="kpi-label">{isAdmin ? "Active Companies" : "Your Company"}</div>
+            <div className="kpi-value">
+              {isAdmin ? summary?.metrics.active_companies || 0 : 1}
+            </div>
+            <div className="kpi-label">
+              {isAdmin ? "Active Companies" : "Your Company"}
+            </div>
           </div>
         </div>
 
-        <div className="kpi-card">
+        <div className="kpi-card card-bg-shadow">
           <div className="kpi-icon green">
             <MonitorIcon />
           </div>
@@ -328,7 +445,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="kpi-card">
+        <div className="kpi-card card-bg-shadow">
           <div className="kpi-icon purple">
             <FileTextIcon />
           </div>
@@ -337,11 +454,15 @@ export default function DashboardPage() {
             <div className="kpi-label">Total Invoices</div>
           </div>
           <div className="kpi-badge">
-            ${invoiceStats.total.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+            $
+            {invoiceStats.total.toLocaleString(undefined, {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0,
+            })}
           </div>
         </div>
 
-        <div className="kpi-card">
+        <div className="kpi-card card-bg-shadow">
           <div className="kpi-icon orange">
             <AlertTriangleIcon />
           </div>
@@ -353,8 +474,8 @@ export default function DashboardPage() {
       </div>
 
       {/* Charts Row */}
-      <div className="dashboard-charts">
-        <div className="chart-card">
+      <div className="dashboard-charts ">
+        <div className="chart-card card-bg-shadow">
           <div className="chart-header">
             <h3>Revenue Overview</h3>
             <span className="chart-period">Last 6 months</span>
@@ -363,15 +484,17 @@ export default function DashboardPage() {
             {monthlyData.map((item, index) => (
               <div key={item.label} className="bar-item">
                 <div className="bar-container">
-                  <div 
-                    className="bar-fill" 
-                    style={{ 
+                  <div
+                    className="bar-fill"
+                    style={{
                       height: `${(item.value / maxMonthly) * 100}%`,
-                      animationDelay: `${index * 0.1}s`
+                      animationDelay: `${index * 0.1}s`,
                     }}
                   >
                     {item.value > 0 && (
-                      <span className="bar-value">${(item.value / 1000).toFixed(0)}k</span>
+                      <span className="bar-value">
+                        ${(item.value / 1000).toFixed(0)}k
+                      </span>
                     )}
                   </div>
                 </div>
@@ -381,7 +504,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="chart-card">
+        <div className="chart-card card-bg-shadow">
           <div className="chart-header">
             <h3>Invoice Status</h3>
             <span className="chart-period">Current period</span>
@@ -423,61 +546,77 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="chart-card">
+        <div className="chart-card card-bg-shadow">
           <div className="chart-header">
             <h3>Quotations Pipeline</h3>
             <span className="chart-period">Workflow status</span>
           </div>
           <div className="stats-list">
             <div className="stat-row">
-              <div className="stat-icon green"><CheckIcon /></div>
+              <div className="stat-icon green">
+                <CheckIcon />
+              </div>
               <div className="stat-info">
                 <span className="stat-label">Accepted</span>
                 <span className="stat-value">{quotationStats.accepted}</span>
               </div>
               <div className="stat-bar">
-                <div 
-                  className="stat-fill green" 
-                  style={{ width: `${(quotationStats.accepted / Math.max(quotationStats.count, 1)) * 100}%` }}
+                <div
+                  className="stat-fill green"
+                  style={{
+                    width: `${(quotationStats.accepted / Math.max(quotationStats.count, 1)) * 100}%`,
+                  }}
                 ></div>
               </div>
             </div>
             <div className="stat-row">
-              <div className="stat-icon blue"><SendIcon /></div>
+              <div className="stat-icon blue">
+                <SendIcon />
+              </div>
               <div className="stat-info">
                 <span className="stat-label">Sent</span>
                 <span className="stat-value">{quotationStats.sent}</span>
               </div>
               <div className="stat-bar">
-                <div 
-                  className="stat-fill blue" 
-                  style={{ width: `${(quotationStats.sent / Math.max(quotationStats.count, 1)) * 100}%` }}
+                <div
+                  className="stat-fill blue"
+                  style={{
+                    width: `${(quotationStats.sent / Math.max(quotationStats.count, 1)) * 100}%`,
+                  }}
                 ></div>
               </div>
             </div>
             <div className="stat-row">
-              <div className="stat-icon gray"><EditIcon /></div>
+              <div className="stat-icon gray">
+                <EditIcon />
+              </div>
               <div className="stat-info">
                 <span className="stat-label">Draft</span>
                 <span className="stat-value">{quotationStats.draft}</span>
               </div>
               <div className="stat-bar">
-                <div 
-                  className="stat-fill gray" 
-                  style={{ width: `${(quotationStats.draft / Math.max(quotationStats.count, 1)) * 100}%` }}
+                <div
+                  className="stat-fill gray"
+                  style={{
+                    width: `${(quotationStats.draft / Math.max(quotationStats.count, 1)) * 100}%`,
+                  }}
                 ></div>
               </div>
             </div>
             <div className="stat-row">
-              <div className="stat-icon purple"><FileTextIcon /></div>
+              <div className="stat-icon purple">
+                <FileTextIcon />
+              </div>
               <div className="stat-info">
                 <span className="stat-label">Converted</span>
                 <span className="stat-value">{quotationStats.converted}</span>
               </div>
               <div className="stat-bar">
-                <div 
-                  className="stat-fill purple" 
-                  style={{ width: `${(quotationStats.converted / Math.max(quotationStats.count, 1)) * 100}%` }}
+                <div
+                  className="stat-fill purple"
+                  style={{
+                    width: `${(quotationStats.converted / Math.max(quotationStats.count, 1)) * 100}%`,
+                  }}
                 ></div>
               </div>
             </div>
@@ -487,10 +626,12 @@ export default function DashboardPage() {
 
       {/* Tables Row */}
       <div className="dashboard-tables">
-        <div className="table-card">
+        <div className="table-card card-bg-shadow">
           <div className="table-header">
             <h3>Recent Invoices</h3>
-            <NavLink to="/invoices" className="view-all-link">View All →</NavLink>
+            <NavLink to="/invoices" className="view-all-link">
+              View All →
+            </NavLink>
           </div>
           <table className="dashboard-table">
             <thead>
@@ -512,25 +653,31 @@ export default function DashboardPage() {
                     </span>
                   </td>
                   <td className="date-cell">
-                    {invoice.fiscalized_at 
-                      ? new Date(invoice.fiscalized_at).toLocaleDateString() 
-                      : invoice.created_at 
+                    {invoice.fiscalized_at
+                      ? new Date(invoice.fiscalized_at).toLocaleDateString()
+                      : invoice.created_at
                         ? new Date(invoice.created_at).toLocaleDateString()
                         : "-"}
                   </td>
                 </tr>
               ))}
               {recentInvoices.length === 0 && (
-                <tr><td colSpan={4} className="empty-cell">No invoices yet</td></tr>
+                <tr>
+                  <td colSpan={4} className="empty-cell">
+                    No invoices yet
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>
         </div>
 
-        <div className="table-card">
+        <div className="table-card card-bg-shadow">
           <div className="table-header">
             <h3>Recent Quotations</h3>
-            <NavLink to="/quotations" className="view-all-link">View All →</NavLink>
+            <NavLink to="/quotations" className="view-all-link">
+              View All →
+            </NavLink>
           </div>
           <table className="dashboard-table">
             <thead>
@@ -551,7 +698,11 @@ export default function DashboardPage() {
                 </tr>
               ))}
               {recentQuotations.length === 0 && (
-                <tr><td colSpan={2} className="empty-cell">No quotations yet</td></tr>
+                <tr>
+                  <td colSpan={2} className="empty-cell">
+                    No quotations yet
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>
@@ -562,8 +713,14 @@ export default function DashboardPage() {
       {filteredCompanyStatus.length > 0 && (
         <div className="table-card full-width">
           <div className="table-header">
-            <h3>{isAdmin ? "Company Status Overview" : "Your Company Status"}</h3>
-            {isAdmin && <NavLink to="/companies" className="view-all-link">Manage Companies →</NavLink>}
+            <h3>
+              {isAdmin ? "Company Status Overview" : "Your Company Status"}
+            </h3>
+            {isAdmin && (
+              <NavLink to="/companies" className="view-all-link">
+                Manage Companies →
+              </NavLink>
+            )}
           </div>
           <table className="dashboard-table">
             <thead>
@@ -581,24 +738,37 @@ export default function DashboardPage() {
                 <tr key={company.company_id}>
                   <td className="company-cell">{company.company_name}</td>
                   <td>
-                    <span className={company.devices_online > 0 ? "text-green" : "text-red"}>
+                    <span
+                      className={
+                        company.devices_online > 0 ? "text-green" : "text-red"
+                      }
+                    >
                       {company.devices_online}/{company.device_count}
                     </span>
                   </td>
                   <td>Day #{company.last_fiscal_day_no}</td>
                   <td>
-                    <span className={`cert-badge ${company.certificate_status.toLowerCase()}`}>
+                    <span
+                      className={`cert-badge ${company.certificate_status.toLowerCase()}`}
+                    >
                       {company.certificate_status}
                       {company.certificate_days_remaining !== null && (
-                        <span className="cert-days"> ({company.certificate_days_remaining}d)</span>
+                        <span className="cert-days">
+                          {" "}
+                          ({company.certificate_days_remaining}d)
+                        </span>
                       )}
                     </span>
                   </td>
                   <td className="date-cell">
-                    {company.last_sync ? new Date(company.last_sync).toLocaleString() : "Never"}
+                    {company.last_sync
+                      ? new Date(company.last_sync).toLocaleString()
+                      : "Never"}
                   </td>
                   <td>
-                    <span className={`status-pill ${company.open_day_status.toLowerCase()}`}>
+                    <span
+                      className={`status-pill ${company.open_day_status.toLowerCase()}`}
+                    >
                       {company.open_day_status}
                     </span>
                   </td>
@@ -610,7 +780,7 @@ export default function DashboardPage() {
       )}
 
       {/* Quick Stats Footer */}
-      <div className="dashboard-footer">
+      <div className="dashboard-footer card-bg-shadow">
         <div className="footer-stat">
           <span className="footer-label">Products</span>
           <span className="footer-value">{products.length}</span>
@@ -621,26 +791,42 @@ export default function DashboardPage() {
         </div>
         <div className="footer-stat">
           <span className="footer-label">Payments</span>
-          <span className="footer-value">{paymentStats?.total_payments || 0}</span>
+          <span className="footer-value">
+            {paymentStats?.total_payments || 0}
+          </span>
         </div>
         <div className="footer-stat">
           <span className="footer-label">Amount Collected</span>
-          <span className="footer-value">${invoicePaymentStats.totalPaid.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+          <span className="footer-value">
+            $
+            {invoicePaymentStats.totalPaid.toLocaleString(undefined, {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0,
+            })}
+          </span>
         </div>
-        {filteredCompanyStatus.length > 0 && filteredCompanyStatus[0].certificate_days_remaining !== null && (
-          <div className="footer-stat">
-            <span className="footer-label">Certificate Days</span>
-            <span className="footer-value">{filteredCompanyStatus[0].certificate_days_remaining}</span>
-          </div>
-        )}
+        {filteredCompanyStatus.length > 0 &&
+          filteredCompanyStatus[0].certificate_days_remaining !== null && (
+            <div className="footer-stat">
+              <span className="footer-label">Certificate Days</span>
+              <span className="footer-value">
+                {filteredCompanyStatus[0].certificate_days_remaining}
+              </span>
+            </div>
+          )}
       </div>
 
       {/* Recent Activity Section */}
       {recentAuditLogs.length > 0 && (
-        <div className="table-card full-width" style={{ marginTop: 20 }}>
+        <div
+          className="table-card full-width card-bg-shadow"
+          style={{ marginTop: 20 }}
+        >
           <div className="table-header">
             <h3>Recent Activity</h3>
-            <NavLink to="/audit-logs" className="view-all-link">View All →</NavLink>
+            <NavLink to="/audit-logs" className="view-all-link">
+              View All →
+            </NavLink>
           </div>
           <table className="dashboard-table">
             <thead>
@@ -655,13 +841,17 @@ export default function DashboardPage() {
               {recentAuditLogs.map((log) => (
                 <tr key={log.id}>
                   <td>
-                    <span className={`action-badge ${log.action.includes('create') ? 'green' : log.action.includes('delete') ? 'red' : 'blue'}`}>
-                      {log.action.replace(/_/g, ' ')}
+                    <span
+                      className={`action-badge ${log.action.includes("create") ? "green" : log.action.includes("delete") ? "red" : "blue"}`}
+                    >
+                      {log.action.replace(/_/g, " ")}
                     </span>
                   </td>
                   <td>{log.resource_type}</td>
-                  <td>{log.user_email || 'System'}</td>
-                  <td className="date-cell">{new Date(log.action_at).toLocaleString()}</td>
+                  <td>{log.user_email || "System"}</td>
+                  <td className="date-cell">
+                    {new Date(log.action_at).toLocaleString()}
+                  </td>
                 </tr>
               ))}
             </tbody>
