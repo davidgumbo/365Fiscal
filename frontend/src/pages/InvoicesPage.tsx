@@ -831,21 +831,20 @@ export default function InvoicesPage({
             .logo { width: 56px; height: 56px; object-fit: contain; border-radius: 50%; border: 2px solid var(--accent); background: #fff; padding: 6px; }
             .brand-details { font-size: 12px; line-height: 1.5; color: var(--muted); }
             .brand-details strong { color: var(--ink); }
-            .invoice-title { text-align: right; }
-            .invoice-title h1 { margin: 0; font-size: 26px; letter-spacing: 0.6px; }
-            .invoice-meta { margin-top: 10px; display: grid; gap: 6px; font-size: 12px; color: var(--muted); }
+            .company-details { text-align: right; font-size: 12px; line-height: 1.5; color: var(--muted); }
+            .company-details strong { color: var(--ink); }
+            .invoice-title { text-align: left; }
+            .invoice-title h1 { margin: 0 0 8px; font-size: 26px; letter-spacing: 0.6px; }
+            .invoice-meta { display: grid; gap: 6px; font-size: 12px; color: var(--muted); }
             .divider { border-top: 1px solid var(--line); margin: 16px 0; }
-            .addresses { display: grid; grid-template-columns: 1fr; gap: 22px; font-size: 12px; }
+            .addresses { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; font-size: 12px; }
             .addresses h4 { margin: 0 0 6px; font-size: 11px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--accent); }
             .addresses .block { line-height: 1.5; }
-            .ship-grid { margin-top: 12px; display: grid; grid-template-columns: 1.1fr 1fr; gap: 22px; font-size: 12px; color: var(--muted); }
-            .ship-grid h4 { margin: 0 0 6px; font-size: 11px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--accent); }
             table { width: 100%; border-collapse: collapse; margin-top: 18px; font-size: 12px; }
             thead th { background: var(--accent); color: #fff; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 10px; text-align: left; }
             tbody td { padding: 8px 10px; border-bottom: 1px solid var(--line); }
             tbody tr:nth-child(even) td { background: #f9fafb; }
-            .totals { margin-top: 16px; display: grid; grid-template-columns: 1fr 280px; gap: 16px; }
-            .notes { font-size: 12px; color: var(--muted); }
+            .totals { margin-top: 16px; display: flex; justify-content: flex-end; }
             .totals-card { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
             .totals-row { display: flex; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 12px; }
             .totals-row:last-child { border-bottom: none; font-weight: 700; background: #f8fafc; }
@@ -857,23 +856,14 @@ export default function InvoicesPage({
             <div class="header-row">
               <div class="brand">
                 ${logoMarkup || `<div class="logo"></div>`}
-                <div class="brand-details">
-                  <strong>${company?.name || "Your Company"}</strong><br />
-                  ${company?.address || ""}<br />
-                  ${company?.city || ""} ${company?.country || ""}<br />
-                  ${company?.email || ""}<br />
-                  ${company?.phone || ""}<br />
-                  TIN: ${company?.tin || "-"} | VAT: ${company?.vat || "-"}
-                </div>
               </div>
-              <div class="invoice-title">
-                <h1>${title.toUpperCase()}</h1>
-                <div class="invoice-meta">
-                  <div><strong>Issue Date:</strong> ${invoiceDateLabel}</div>
-                  <div><strong>Due Date:</strong> ${selectedInvoice.due_date ? new Date(selectedInvoice.due_date).toLocaleDateString() : "-"}</div>
-                  <div><strong>Invoice #:</strong> ${selectedInvoice.reference}</div>
-                  <div><strong>Status:</strong> ${statusLabel}</div>
-                </div>
+              <div class="company-details">
+                <strong>${company?.name || "Your Company"}</strong><br />
+                ${company?.address || ""}<br />
+                ${company?.city || ""} ${company?.country || ""}<br />
+                ${company?.email || ""}<br />
+                ${company?.phone || ""}<br />
+                TIN: ${company?.tin || "-"} | VAT: ${company?.vat || "-"}
               </div>
             </div>
 
@@ -890,14 +880,14 @@ export default function InvoicesPage({
                 TIN: ${customer?.tin || "-"}<br />
                 VAT: ${customer?.vat || "-"}
               </div>
-            </div>
-
-            <div class="ship-grid">
-              <div>
-                <h4>Additional</h4>
-                <div>P.O #: ${selectedInvoice.payment_reference || "-"}</div>
-                <div>Currency: ${currency}</div>
-                <div>Payment Terms: ${selectedInvoice.payment_terms || "-"}</div>
+              <div class="block invoice-title">
+                <h1>${title.toUpperCase()}</h1>
+                <div class="invoice-meta">
+                  <div><strong>Issue Date:</strong> ${invoiceDateLabel}</div>
+                  <div><strong>Due Date:</strong> ${selectedInvoice.due_date ? new Date(selectedInvoice.due_date).toLocaleDateString() : "-"}</div>
+                  <div><strong>Invoice #:</strong> ${selectedInvoice.reference}</div>
+                  <div><strong>Status:</strong> ${statusLabel}</div>
+                </div>
               </div>
             </div>
 
@@ -918,9 +908,6 @@ export default function InvoicesPage({
             </table>
 
             <div class="totals">
-              <div class="notes">
-                ${companySettings?.document_header || "Special notes, terms of sale."}
-              </div>
               <div class="totals-card">
                 <div class="totals-row"><span>Subtotal</span><span>${formatCurrency(selectedInvoice.subtotal || 0, currency)}</span></div>
                 <div class="totals-row"><span>Discount</span><span>${formatCurrency(selectedInvoice.discount_amount || 0, currency)}</span></div>
@@ -930,8 +917,6 @@ export default function InvoicesPage({
                 <div class="totals-row"><strong>Balance Due</strong><strong>${formatCurrency(selectedInvoice.amount_due || 0, currency)}</strong></div>
               </div>
             </div>
-
-            ${companySettings?.document_footer ? `<div class="notes" style="margin-top:12px;">${companySettings.document_footer}</div>` : ""}
           </div>
         </body>
       </html>
