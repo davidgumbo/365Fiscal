@@ -21,6 +21,14 @@ const InvoiceIcon = () => (
   </svg>
 );
 
+const PurchaseIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="9" cy="21" r="1" />
+    <circle cx="20" cy="21" r="1" />
+    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+  </svg>
+);
+
 const ProductIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
@@ -127,6 +135,7 @@ const adminApps: AppItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: DashboardIcon, color: "#ffffff", bgColor: "#f97316" },
   { to: "/companies", label: "Companies", icon: CompanyIcon, color: "#ffffff", bgColor: "#8b5cf6" },
   { to: "/invoices", label: "Invoices", icon: InvoiceIcon, color: "#ffffff", bgColor: "#ef4444" },
+  { to: "/purchases", label: "Purchases", icon: PurchaseIcon, color: "#ffffff", bgColor: "#0ea5e9" },
   { to: "/products", label: "Products", icon: ProductIcon, color: "#ffffff", bgColor: "#06b6d4" },
   { to: "/contacts", label: "Contacts", icon: ContactIcon, color: "#ffffff", bgColor: "#10b981" },
   { to: "/quotations", label: "Quotations", icon: QuoteIcon, color: "#ffffff", bgColor: "#6366f1" },
@@ -142,6 +151,7 @@ const adminApps: AppItem[] = [
 const portalApps: AppItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: DashboardIcon, color: "#ffffff", bgColor: "#f97316" },
   { to: "/invoices", label: "Invoices", icon: InvoiceIcon, color: "#ffffff", bgColor: "#ef4444" },
+  { to: "/purchases", label: "Purchases", icon: PurchaseIcon, color: "#ffffff", bgColor: "#0ea5e9" },
   { to: "/contacts", label: "Contacts", icon: ContactIcon, color: "#ffffff", bgColor: "#10b981" },
   { to: "/quotations", label: "Quotations", icon: QuoteIcon, color: "#ffffff", bgColor: "#6366f1" },
   { to: "/inventory", label: "Inventory", icon: InventoryIcon, color: "#ffffff", bgColor: "#7c3aed" },

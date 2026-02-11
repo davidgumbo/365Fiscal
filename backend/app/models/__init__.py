@@ -11,6 +11,8 @@ from app.models.quotation import Quotation
 from app.models.quotation_line import QuotationLine
 from app.models.invoice import Invoice
 from app.models.invoice_line import InvoiceLine
+from app.models.purchase_order import PurchaseOrder
+from app.models.purchase_order_line import PurchaseOrderLine
 from app.models.otp import OTPChallenge
 from app.models.tax_setting import TaxSetting
 from app.models.company_certificate import CompanyCertificate

@@ -76,6 +76,29 @@ interface PaymentItem {
   created_at: string;
 }
 
+interface PurchaseOrderLine {
+  id: number;
+  product_id: number | null;
+  description: string;
+  quantity: number;
+  unit_price: number;
+  discount: number;
+  vat_rate: number;
+  subtotal: number;
+  tax_amount: number;
+  total_price: number;
+}
+
+interface PurchaseOrder {
+  id: number;
+  reference: string;
+  status: string;
+  order_date: string | null;
+  total_amount: number;
+  tax_amount: number;
+  lines: PurchaseOrderLine[];
+}
+
 interface CompanySettings {
   currency_code?: string;
   currency_symbol?: string;
@@ -150,7 +173,17 @@ interface PaymentReport {
   }[];
 }
 
-type ReportType = "sales" | "stock" | "payments";
+interface VatReport {
+  sales_total: number;
+  purchases_total: number;
+  output_tax: number;
+  input_tax: number;
+  net_tax: number;
+  invoices_count: number;
+  purchases_count: number;
+}
+
+type ReportType = "sales" | "stock" | "payments" | "vat";
 
 const MONTH_NAMES = [
   "Jan",
@@ -183,6 +216,7 @@ export default function ReportsPage() {
   const [paymentReport, setPaymentReport] = useState<PaymentReport | null>(
     null,
   );
+  const [vatReport, setVatReport] = useState<VatReport | null>(null);
   const [companySettings, setCompanySettings] =
     useState<CompanySettings | null>(null);
 
@@ -479,6 +513,67 @@ export default function ReportsPage() {
     });
   }, [companyId, dateRange]);
 
+  const loadVatReport = useCallback(async () => {
+    if (!companyId) return;
+    const [invoices, purchases] = await Promise.all([
+      apiFetch<Invoice[]>(`/invoices?company_id=${companyId}`).catch(
+        () => [] as Invoice[],
+      ),
+      apiFetch<PurchaseOrder[]>(`/purchases?company_id=${companyId}`).catch(
+        () => [] as PurchaseOrder[],
+      ),
+    ]);
+
+    const fromDate = dateRange.from ? new Date(dateRange.from) : null;
+    const toDate = dateRange.to ? new Date(dateRange.to + "T23:59:59") : null;
+
+    const filteredInvoices = invoices.filter((inv) => {
+      if (inv.invoice_type === "credit_note") return false;
+      if (inv.status === "cancelled") return false;
+      const d = inv.invoice_date
+        ? new Date(inv.invoice_date)
+        : new Date(inv.created_at);
+      if (fromDate && d < fromDate) return false;
+      if (toDate && d > toDate) return false;
+      return true;
+    });
+
+    const filteredPurchases = purchases.filter((po) => {
+      if (po.status === "cancelled") return false;
+      const d = po.order_date ? new Date(po.order_date) : null;
+      if (fromDate && d && d < fromDate) return false;
+      if (toDate && d && d > toDate) return false;
+      return true;
+    });
+
+    const salesTotal = filteredInvoices.reduce(
+      (s, i) => s + (i.total_amount || 0),
+      0,
+    );
+    const outputTax = filteredInvoices.reduce(
+      (s, i) => s + (i.tax_amount || 0),
+      0,
+    );
+    const purchasesTotal = filteredPurchases.reduce(
+      (s, p) => s + (p.total_amount || 0),
+      0,
+    );
+    const inputTax = filteredPurchases.reduce(
+      (s, p) => s + (p.tax_amount || 0),
+      0,
+    );
+
+    setVatReport({
+      sales_total: salesTotal,
+      purchases_total: purchasesTotal,
+      output_tax: outputTax,
+      input_tax: inputTax,
+      net_tax: outputTax - inputTax,
+      invoices_count: filteredInvoices.length,
+      purchases_count: filteredPurchases.length,
+    });
+  }, [companyId, dateRange]);
+
   const loadReport = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -486,13 +581,14 @@ export default function ReportsPage() {
       if (activeReport === "sales") await loadSalesReport();
       else if (activeReport === "stock") await loadStockReport();
       else if (activeReport === "payments") await loadPaymentReport();
+      else if (activeReport === "vat") await loadVatReport();
     } catch (err: any) {
       console.error("Report load error:", err);
       setError(err?.message || "Failed to load report data");
     } finally {
       setLoading(false);
     }
-  }, [activeReport, loadSalesReport, loadStockReport, loadPaymentReport]);
+  }, [activeReport, loadSalesReport, loadStockReport, loadPaymentReport, loadVatReport]);
 
   useEffect(() => {
     if (!companyId || !dateRange.from || !dateRange.to) return;
@@ -585,6 +681,18 @@ export default function ReportsPage() {
           p.status,
         ]),
       );
+    } else if (activeReport === "vat" && vatReport) {
+      filename = `vat-report-${dateRange.from}-to-${dateRange.to}.csv`;
+      rows.push(["VAT Report", `${dateRange.from} to ${dateRange.to}`]);
+      rows.push([]);
+      rows.push(["Sales Total", vatReport.sales_total.toFixed(2)]);
+      rows.push(["Purchases Total", vatReport.purchases_total.toFixed(2)]);
+      rows.push(["Output VAT", vatReport.output_tax.toFixed(2)]);
+      rows.push(["Input VAT", vatReport.input_tax.toFixed(2)]);
+      rows.push(["Net VAT", vatReport.net_tax.toFixed(2)]);
+      rows.push([]);
+      rows.push(["Invoices Count", String(vatReport.invoices_count)]);
+      rows.push(["Purchases Count", String(vatReport.purchases_count)]);
     }
 
     const csv = rows
@@ -599,7 +707,9 @@ export default function ReportsPage() {
         ? "Sales Report"
         : activeReport === "stock"
           ? "Stock Report"
-          : "Payments Report";
+          : activeReport === "payments"
+            ? "Payments Report"
+            : "VAT Report";
     const period =
       activeReport === "stock"
         ? new Date().toLocaleDateString()
@@ -661,6 +771,20 @@ export default function ReportsPage() {
         <table><thead><tr><th>Reference</th><th>Invoice</th><th style="text-align:right">Amount</th><th>Date</th><th>Method</th><th>Status</th></tr></thead><tbody>
           ${paymentReport.recent_payments.map((p) => `<tr><td>${p.reference}</td><td>${p.invoice}</td><td style="text-align:right">${formatCurrency(p.amount)}</td><td>${p.date}</td><td style="text-transform:capitalize">${p.method}</td><td>${p.status}</td></tr>`).join("")}
         </tbody></table>`;
+    } else if (activeReport === "vat" && vatReport) {
+      bodyHTML = `
+        <div class="summary-grid">
+          <div class="summary-box"><div class="label">Sales Total</div><div class="val">${formatCurrency(vatReport.sales_total)}</div></div>
+          <div class="summary-box"><div class="label">Purchases Total</div><div class="val">${formatCurrency(vatReport.purchases_total)}</div></div>
+          <div class="summary-box"><div class="label">Output VAT</div><div class="val">${formatCurrency(vatReport.output_tax)}</div></div>
+          <div class="summary-box"><div class="label">Input VAT</div><div class="val">${formatCurrency(vatReport.input_tax)}</div></div>
+          <div class="summary-box"><div class="label">Net VAT</div><div class="val">${formatCurrency(vatReport.net_tax)}</div></div>
+        </div>
+        <h3>Document Counts</h3>
+        <table><thead><tr><th>Type</th><th style="text-align:right">Count</th></tr></thead><tbody>
+          <tr><td>Invoices</td><td style="text-align:right">${vatReport.invoices_count}</td></tr>
+          <tr><td>Purchases</td><td style="text-align:right">${vatReport.purchases_count}</td></tr>
+        </tbody></table>`;
     }
 
     const html = `<!DOCTYPE html><html><head><title>${title}</title><style>
@@ -718,7 +842,7 @@ export default function ReportsPage() {
       <div className="reports-header">
         <div>
           <h1>Reports</h1>
-          <p className="page-subtitle">Sales, stock, and payment analytics</p>
+          <p className="page-subtitle">Sales, stock, VAT, and payment analytics</p>
         </div>
         <div className="reports-actions">
           <button className="outline" onClick={exportCSV} disabled={loading}>
@@ -733,7 +857,7 @@ export default function ReportsPage() {
       {/* Toolbar */}
       <div className="reports-toolbar">
         <div className="report-tabs">
-          {(["sales", "stock", "payments"] as ReportType[]).map((tab) => (
+          {(["sales", "stock", "payments", "vat"] as ReportType[]).map((tab) => (
             <button
               key={tab}
               className={`report-tab ${activeReport === tab ? "active" : ""}`}
@@ -742,11 +866,14 @@ export default function ReportsPage() {
               {tab === "sales" && <SalesIcon />}
               {tab === "stock" && <StockIcon />}
               {tab === "payments" && <PaymentIcon />}
+              {tab === "vat" && <VatIcon />}
               {tab === "sales"
                 ? "Sales Report"
                 : tab === "stock"
                   ? "Stock Report"
-                  : "Payments Report"}
+                  : tab === "payments"
+                    ? "Payments Report"
+                    : "VAT Report"}
             </button>
           ))}
         </div>
@@ -1181,12 +1308,98 @@ export default function ReportsPage() {
         </div>
       )}
 
+      {/* ─── VAT Report ─── */}
+      {!loading && activeReport === "vat" && vatReport && (
+        <div className="report-content">
+          <div className="metrics-row">
+            <MetricCard
+              label="Sales Total"
+              value={formatCurrency(vatReport.sales_total)}
+            />
+            <MetricCard
+              label="Purchases Total"
+              value={formatCurrency(vatReport.purchases_total)}
+            />
+            <MetricCard
+              label="Output VAT"
+              value={formatCurrency(vatReport.output_tax)}
+              variant="success"
+            />
+            <MetricCard
+              label="Input VAT"
+              value={formatCurrency(vatReport.input_tax)}
+            />
+            <MetricCard
+              label="Net VAT"
+              value={formatCurrency(vatReport.net_tax)}
+              variant={vatReport.net_tax >= 0 ? "warning" : "success"}
+            />
+          </div>
+
+          <div className="report-grid">
+            <div className="report-card">
+              <h3>Document Counts</h3>
+              <table className="report-table">
+                <thead>
+                  <tr>
+                    <th>Type</th>
+                    <th className="text-right">Count</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Invoices</td>
+                    <td className="text-right">{vatReport.invoices_count}</td>
+                  </tr>
+                  <tr>
+                    <td>Purchases</td>
+                    <td className="text-right">{vatReport.purchases_count}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div className="report-card">
+              <h3>VAT Position</h3>
+              <table className="report-table">
+                <thead>
+                  <tr>
+                    <th>Metric</th>
+                    <th className="text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Output VAT (Sales)</td>
+                    <td className="text-right">
+                      {formatCurrency(vatReport.output_tax)}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Input VAT (Purchases)</td>
+                    <td className="text-right">
+                      {formatCurrency(vatReport.input_tax)}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Net VAT</td>
+                    <td className="text-right">
+                      {formatCurrency(vatReport.net_tax)}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Empty state when no data */}
       {!loading &&
         !error &&
         ((activeReport === "sales" && !salesReport) ||
           (activeReport === "stock" && !stockReport) ||
-          (activeReport === "payments" && !paymentReport)) && (
+          (activeReport === "payments" && !paymentReport) ||
+          (activeReport === "vat" && !vatReport)) && (
           <div
             style={{
               textAlign: "center",
@@ -1270,6 +1483,22 @@ function PaymentIcon() {
     >
       <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
       <line x1="1" y1="10" x2="23" y2="10" />
+    </svg>
+  );
+}
+
+function VatIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path d="M12 2v20" />
+      <path d="M5 6h10a4 4 0 1 1 0 8H9a4 4 0 0 0 0 8h10" />
     </svg>
   );
 }
