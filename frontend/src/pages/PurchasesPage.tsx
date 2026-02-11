@@ -476,53 +476,50 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
       )}
 
       {mode !== "list" && (
-        <div className="o-form-view">
-          <div className="o-form-header">
-            <h2 className="o-form-title">
-              {selectedOrder?.reference || "New Purchase"}
-            </h2>
-            <div className="o-form-status">
-              <div className="statusbar">
-                {["draft", "confirmed", "received"].map((step) => (
-                  <span
-                    key={step}
-                    className={`status-pill ${currentStatus === step ? "active" : currentStatus === "received" && step !== "draft" ? "active" : ""}`}
-                  >
-                    {step}
-                  </span>
-                ))}
+        <div className="card shadow-sm">
+          <div className="card-body invoice-form">
+            <div className="d-flex flex-wrap justify-content-between align-items-center mb-3">
+              <div>
+                <h2 className="mb-1">{selectedOrder?.reference || "New Purchase"}</h2>
+                <div className="statusbar">
+                  {["draft", "confirmed", "received"].map((step) => (
+                    <span
+                      key={step}
+                      className={`status-pill ${currentStatus === step ? "active" : currentStatus === "received" && step !== "draft" ? "active" : ""}`}
+                    >
+                      {step}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="form-actions">
+                {canEdit && (
+                  <button className="btn btn-primary btn-sm" onClick={saveOrder} disabled={saving}>
+                    {saving ? "Saving..." : "Save"}
+                  </button>
+                )}
+                {!canEdit && currentStatus === "draft" && (
+                  <button className="btn btn-outline-secondary btn-sm" onClick={() => setIsEditing(true)}>
+                    Edit
+                  </button>
+                )}
+                {selectedOrderId && currentStatus === "draft" && (
+                  <button className="btn btn-success btn-sm" onClick={confirmOrder}>Confirm</button>
+                )}
+                {selectedOrderId && currentStatus === "confirmed" && (
+                  <button className="btn btn-success btn-sm" onClick={receiveOrder}>Receive</button>
+                )}
+                {selectedOrderId && currentStatus !== "received" && (
+                  <button className="btn btn-outline-danger btn-sm" onClick={cancelOrder}>Cancel</button>
+                )}
               </div>
             </div>
-          </div>
 
-          <div className="form-actions">
-            {canEdit && (
-              <button className="primary" onClick={saveOrder} disabled={saving}>
-                {saving ? "Saving..." : "Save"}
-              </button>
-            )}
-            {!canEdit && currentStatus === "draft" && (
-              <button className="outline" onClick={() => setIsEditing(true)}>
-                Edit
-              </button>
-            )}
-            {selectedOrderId && currentStatus === "draft" && (
-              <button className="success" onClick={confirmOrder}>Confirm</button>
-            )}
-            {selectedOrderId && currentStatus === "confirmed" && (
-              <button className="success" onClick={receiveOrder}>Receive</button>
-            )}
-            {selectedOrderId && currentStatus !== "received" && (
-              <button className="danger" onClick={cancelOrder}>Cancel</button>
-            )}
-          </div>
-
-          <div className="o-form-sheet">
-            <div className="o-form-group">
-              <label className="o-form-label">Vendor</label>
-              <div className="o-form-field">
+            <div className="row g-3 mb-4">
+              <div className="col-md-6">
+                <label className="form-label fw-semibold">Vendor</label>
                 <select
-                  className="o-form-select"
+                  className="form-select input-underline"
                   value={form.vendor_id ?? ""}
                   onChange={(e) => setForm((prev) => ({ ...prev, vendor_id: Number(e.target.value) || null }))}
                   disabled={!canEdit}
@@ -533,36 +530,30 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
                   ))}
                 </select>
               </div>
-            </div>
-            <div className="o-form-group">
-              <label className="o-form-label">Order Date</label>
-              <div className="o-form-field">
+              <div className="col-md-3">
+                <label className="form-label fw-semibold">Order Date</label>
                 <input
                   type="date"
-                  className="o-form-input"
+                  className="form-control input-underline"
                   value={form.order_date}
                   onChange={(e) => setForm((prev) => ({ ...prev, order_date: e.target.value }))}
                   disabled={!canEdit}
                 />
               </div>
-            </div>
-            <div className="o-form-group">
-              <label className="o-form-label">Expected Date</label>
-              <div className="o-form-field">
+              <div className="col-md-3">
+                <label className="form-label fw-semibold">Expected Date</label>
                 <input
                   type="date"
-                  className="o-form-input"
+                  className="form-control input-underline"
                   value={form.expected_date}
                   onChange={(e) => setForm((prev) => ({ ...prev, expected_date: e.target.value }))}
                   disabled={!canEdit}
                 />
               </div>
-            </div>
-            <div className="o-form-group">
-              <label className="o-form-label">Warehouse</label>
-              <div className="o-form-field">
+              <div className="col-md-4">
+                <label className="form-label">Warehouse</label>
                 <select
-                  className="o-form-select"
+                  className="form-select input-underline"
                   value={form.warehouse_id ?? ""}
                   onChange={(e) => setForm((prev) => ({ ...prev, warehouse_id: Number(e.target.value) || null }))}
                   disabled={!canEdit}
@@ -573,12 +564,10 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
                   ))}
                 </select>
               </div>
-            </div>
-            <div className="o-form-group">
-              <label className="o-form-label">Location</label>
-              <div className="o-form-field">
+              <div className="col-md-4">
+                <label className="form-label">Location</label>
                 <select
-                  className="o-form-select"
+                  className="form-select input-underline"
                   value={form.location_id ?? ""}
                   onChange={(e) => setForm((prev) => ({ ...prev, location_id: Number(e.target.value) || null }))}
                   disabled={!canEdit}
@@ -589,158 +578,155 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
                   ))}
                 </select>
               </div>
-            </div>
-            <div className="o-form-group">
-              <label className="o-form-label">Currency</label>
-              <div className="o-form-field">
+              <div className="col-md-4">
+                <label className="form-label">Currency</label>
                 <input
-                  className="o-form-input"
+                  className="form-control input-underline"
                   value={form.currency}
                   onChange={(e) => setForm((prev) => ({ ...prev, currency: e.target.value }))}
                   disabled={!canEdit}
                 />
               </div>
-            </div>
-            <div className="o-form-group">
-              <label className="o-form-label">Notes</label>
-              <div className="o-form-field">
+              <div className="col-12">
+                <label className="form-label">Notes</label>
                 <textarea
-                  className="o-form-textarea"
+                  className="form-control input-underline"
+                  rows={2}
                   value={form.notes}
                   onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
                   disabled={!canEdit}
                 />
               </div>
             </div>
-          </div>
 
-          <div className="o-form-sheet">
-            <div className="d-flex align-items-center justify-content-between mb-2">
-              <h3 style={{ margin: 0 }}>Order Lines</h3>
-              {canEdit && (
-                <button className="outline" onClick={addLine}>Add Line</button>
-              )}
-            </div>
-            <div className="table-responsive">
-              <table className="table table-sm align-middle">
-                <thead>
-                  <tr>
-                    <th style={{ minWidth: 180 }}>Product</th>
-                    <th>Description</th>
-                    <th className="text-end">Qty</th>
-                    <th>UoM</th>
-                    <th className="text-end">Unit Price</th>
-                    <th className="text-end">Discount %</th>
-                    <th className="text-end">VAT %</th>
-                    <th className="text-end">Subtotal</th>
-                    <th className="text-end">Total</th>
-                    {canEdit && <th />}
-                  </tr>
-                </thead>
-                <tbody>
-                  {lines.map((line, index) => {
-                    const totals = lineTotals(line);
-                    return (
-                      <tr key={index}>
-                        <td>
-                          <select
-                            className="form-select form-select-sm"
-                            value={line.product_id ?? ""}
-                            onChange={(e) => selectProduct(index, Number(e.target.value) || null)}
-                            disabled={!canEdit}
-                          >
-                            <option value="">Select</option>
-                            {products
-                              .filter((p) => p.can_be_purchased !== false)
-                              .map((p) => (
-                                <option key={p.id} value={p.id}>{p.name}</option>
-                              ))}
-                          </select>
-                        </td>
-                        <td>
-                          <input
-                            className="form-control form-control-sm"
-                            value={line.description}
-                            onChange={(e) => updateLine(index, { description: e.target.value })}
-                            disabled={!canEdit}
-                          />
-                        </td>
-                        <td className="text-end">
-                          <input
-                            className="form-control form-control-sm text-end"
-                            type="number"
-                            min="0"
-                            value={line.quantity}
-                            onChange={(e) => updateLine(index, { quantity: Number(e.target.value) || 0 })}
-                            disabled={!canEdit}
-                          />
-                        </td>
-                        <td>
-                          <input
-                            className="form-control form-control-sm"
-                            value={line.uom}
-                            onChange={(e) => updateLine(index, { uom: e.target.value })}
-                            disabled={!canEdit}
-                          />
-                        </td>
-                        <td className="text-end">
-                          <input
-                            className="form-control form-control-sm text-end"
-                            type="number"
-                            min="0"
-                            value={line.unit_price}
-                            onChange={(e) => updateLine(index, { unit_price: Number(e.target.value) || 0 })}
-                            disabled={!canEdit}
-                          />
-                        </td>
-                        <td className="text-end">
-                          <input
-                            className="form-control form-control-sm text-end"
-                            type="number"
-                            min="0"
-                            value={line.discount}
-                            onChange={(e) => updateLine(index, { discount: Number(e.target.value) || 0 })}
-                            disabled={!canEdit}
-                          />
-                        </td>
-                        <td className="text-end">
-                          <input
-                            className="form-control form-control-sm text-end"
-                            type="number"
-                            min="0"
-                            value={line.vat_rate}
-                            onChange={(e) => updateLine(index, { vat_rate: Number(e.target.value) || 0 })}
-                            disabled={!canEdit}
-                          />
-                        </td>
-                        <td className="text-end">{formatMoney(totals.subtotal, currencySymbol)}</td>
-                        <td className="text-end">{formatMoney(totals.total, currencySymbol)}</td>
-                        {canEdit && (
-                          <td className="text-end">
-                            <button className="icon-btn danger" onClick={() => removeLine(index)}>
-                              ×
-                            </button>
-                          </td>
-                        )}
+            <div className="card border-0 bg-light">
+              <div className="card-body">
+                <div className="d-flex align-items-center justify-content-between mb-2">
+                  <h5 className="mb-0">Order Lines</h5>
+                  {canEdit && (
+                    <button className="btn btn-sm btn-outline-primary" onClick={addLine}>+ Add Line</button>
+                  )}
+                </div>
+                <div className="table-responsive">
+                  <table className="table table-sm align-middle">
+                    <thead>
+                      <tr>
+                        <th style={{ minWidth: 180 }}>Product</th>
+                        <th>Description</th>
+                        <th className="text-end">Qty</th>
+                        <th>UoM</th>
+                        <th className="text-end">Unit Price</th>
+                        <th className="text-end">Discount %</th>
+                        <th className="text-end">VAT %</th>
+                        <th className="text-end">Subtotal</th>
+                        <th className="text-end">Total</th>
+                        {canEdit && <th />}
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-            <div className="d-flex justify-content-end">
-              <div style={{ minWidth: 260 }}>
-                <div className="d-flex justify-content-between mb-1">
-                  <span>Subtotal</span>
-                  <strong>{formatMoney(totals.subtotal, currencySymbol)}</strong>
+                    </thead>
+                    <tbody>
+                      {lines.map((line, index) => {
+                        const totals = lineTotals(line);
+                        return (
+                          <tr key={index}>
+                            <td>
+                              <select
+                                className="form-select form-select-sm input-ghost"
+                                value={line.product_id ?? ""}
+                                onChange={(e) => selectProduct(index, Number(e.target.value) || null)}
+                                disabled={!canEdit}
+                              >
+                                <option value="">Select</option>
+                                {products.map((p) => (
+                                  <option key={p.id} value={p.id}>{p.name}</option>
+                                ))}
+                              </select>
+                            </td>
+                            <td>
+                              <input
+                                className="form-control form-control-sm input-ghost"
+                                value={line.description}
+                                onChange={(e) => updateLine(index, { description: e.target.value })}
+                                disabled={!canEdit}
+                              />
+                            </td>
+                            <td className="text-end">
+                              <input
+                                className="form-control form-control-sm text-end input-ghost"
+                                type="number"
+                                min="0"
+                                value={line.quantity}
+                                onChange={(e) => updateLine(index, { quantity: Number(e.target.value) || 0 })}
+                                disabled={!canEdit}
+                              />
+                            </td>
+                            <td>
+                              <input
+                                className="form-control form-control-sm input-ghost"
+                                value={line.uom}
+                                onChange={(e) => updateLine(index, { uom: e.target.value })}
+                                disabled={!canEdit}
+                              />
+                            </td>
+                            <td className="text-end">
+                              <input
+                                className="form-control form-control-sm text-end input-ghost"
+                                type="number"
+                                min="0"
+                                value={line.unit_price}
+                                onChange={(e) => updateLine(index, { unit_price: Number(e.target.value) || 0 })}
+                                disabled={!canEdit}
+                              />
+                            </td>
+                            <td className="text-end">
+                              <input
+                                className="form-control form-control-sm text-end input-ghost"
+                                type="number"
+                                min="0"
+                                value={line.discount}
+                                onChange={(e) => updateLine(index, { discount: Number(e.target.value) || 0 })}
+                                disabled={!canEdit}
+                              />
+                            </td>
+                            <td className="text-end">
+                              <input
+                                className="form-control form-control-sm text-end input-ghost"
+                                type="number"
+                                min="0"
+                                value={line.vat_rate}
+                                onChange={(e) => updateLine(index, { vat_rate: Number(e.target.value) || 0 })}
+                                disabled={!canEdit}
+                              />
+                            </td>
+                            <td className="text-end fw-semibold">{formatMoney(totals.subtotal, currencySymbol)}</td>
+                            <td className="text-end fw-semibold">{formatMoney(totals.total, currencySymbol)}</td>
+                            {canEdit && (
+                              <td className="text-center">
+                                <button className="btn btn-sm btn-light border" onClick={() => removeLine(index)}>
+                                  ✕
+                                </button>
+                              </td>
+                            )}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
-                <div className="d-flex justify-content-between mb-1">
-                  <span>VAT</span>
-                  <strong>{formatMoney(totals.tax, currencySymbol)}</strong>
-                </div>
-                <div className="d-flex justify-content-between">
-                  <span>Total</span>
-                  <strong>{formatMoney(totals.total, currencySymbol)}</strong>
+                <div className="d-flex justify-content-end">
+                  <div style={{ minWidth: 260 }}>
+                    <div className="d-flex justify-content-between mb-1">
+                      <span>Subtotal</span>
+                      <strong>{formatMoney(totals.subtotal, currencySymbol)}</strong>
+                    </div>
+                    <div className="d-flex justify-content-between mb-1">
+                      <span>VAT</span>
+                      <strong>{formatMoney(totals.tax, currencySymbol)}</strong>
+                    </div>
+                    <div className="d-flex justify-content-between">
+                      <span>Total</span>
+                      <strong>{formatMoney(totals.total, currencySymbol)}</strong>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
