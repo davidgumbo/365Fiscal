@@ -19,7 +19,12 @@ import AuditLogsPage from "./pages/AuditLogsPage";
 import PaymentsPage from "./pages/PaymentsPage";
 import { apiFetch } from "./api";
 import { useMe } from "./hooks/useMe";
-import ListViewContext, { FilterChip, ListViewState, SavedFilter } from "./context/ListViewContext";
+import BackIcon from "./assets/back.svg?react";
+import ListViewContext, {
+  FilterChip,
+  ListViewState,
+  SavedFilter,
+} from "./context/ListViewContext";
 import AuthGuard from "./components/AuthGuard";
 
 const adminNav = [
@@ -36,7 +41,7 @@ const adminNav = [
   { to: "/reports", label: "Reports", icon: ReportsIcon },
   { to: "/users-roles", label: "Users & Roles", icon: UsersIcon },
   { to: "/audit-logs", label: "Audit Logs", icon: AuditIcon },
-  { to: "/settings", label: "Settings", icon: SettingsIcon }
+  { to: "/settings", label: "Settings", icon: SettingsIcon },
 ];
 
 const portalNav = [
@@ -47,7 +52,7 @@ const portalNav = [
   { to: "/quotations", label: "Quotations", icon: QuoteIcon },
   { to: "/inventory", label: "Inventory", icon: InventoryIcon },
   { to: "/reports", label: "Reports", icon: ReportsIcon },
-  { to: "/settings", label: "Settings", icon: SettingsIcon }
+  { to: "/settings", label: "Settings", icon: SettingsIcon },
 ];
 
 type FilterCondition = {
@@ -68,14 +73,16 @@ function AppContent() {
   const location = useLocation();
   const { me } = useMe();
   const isPortalMode = !me?.is_admin;
-  const [listViewByPath, setListViewByPath] = useState<Record<string, ListViewState>>({});
+  const [listViewByPath, setListViewByPath] = useState<
+    Record<string, ListViewState>
+  >({});
   const [fieldValues, setFieldValues] = useState<Record<string, string[]>>({});
   const [appMenuOpen, setAppMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   // (moved) fetch choice field values when filter menu opens; placed after currentPath declaration
   const [conditions, setConditions] = useState<FilterCondition[]>([
-    { id: "cond-1", field: "", operator: "contains", value: "" }
+    { id: "cond-1", field: "", operator: "contains", value: "" },
   ]);
   const topbarRef = useRef<HTMLDivElement | null>(null);
 
@@ -88,20 +95,31 @@ function AppContent() {
     search: "",
     filters: [],
     groupBy: "",
-    favorites: []
+    favorites: [],
   };
-  const savedFilters = useMemo(() => getSavedFilters(currentPath), [currentPath]);
-  const groupOptions = useMemo(() => getGroupOptions(currentPath), [currentPath]);
-  const customFields = useMemo(() => getCustomFields(currentPath), [currentPath]);
+  const savedFilters = useMemo(
+    () => getSavedFilters(currentPath),
+    [currentPath],
+  );
+  const groupOptions = useMemo(
+    () => getGroupOptions(currentPath),
+    [currentPath],
+  );
+  const customFields = useMemo(
+    () => getCustomFields(currentPath),
+    [currentPath],
+  );
   const breadcrumb = getBreadcrumb(currentPath, navItems);
 
   useEffect(() => {
     const fields = getCustomFields(currentPath).filter((f) => f.valuesEndpoint);
     fields.forEach((f) => {
       if (!f.valuesEndpoint) return;
-      apiFetch<string[]>(f.valuesEndpoint).then((vals) => {
-        setFieldValues((prev) => ({ ...prev, [f.value]: vals || [] }));
-      }).catch(() => {});
+      apiFetch<string[]>(f.valuesEndpoint)
+        .then((vals) => {
+          setFieldValues((prev) => ({ ...prev, [f.value]: vals || [] }));
+        })
+        .catch(() => {});
     });
   }, [currentPath, me?.company_ids]);
 
@@ -110,17 +128,20 @@ function AppContent() {
       ...prev,
       [currentPath]: {
         ...listState,
-        ...next
-      }
+        ...next,
+      },
     }));
   };
 
   const listViewContextValue = {
     state: listState,
     setSearch: (value: string) => updateListState({ search: value }),
-    addFilter: (chip: FilterChip) => updateListState({ filters: [...listState.filters, chip] }),
+    addFilter: (chip: FilterChip) =>
+      updateListState({ filters: [...listState.filters, chip] }),
     removeFilter: (id: string) =>
-      updateListState({ filters: listState.filters.filter((chip) => chip.id !== id) }),
+      updateListState({
+        filters: listState.filters.filter((chip) => chip.id !== id),
+      }),
     clearFilters: () => updateListState({ filters: [] }),
     setGroupBy: (value: string) => updateListState({ groupBy: value }),
     toggleFavorite: (name: string) => {
@@ -128,11 +149,12 @@ function AppContent() {
       updateListState({
         favorites: exists
           ? listState.favorites.filter((item) => item !== name)
-          : [...listState.favorites, name]
+          : [...listState.favorites, name],
       });
     },
-    applySavedFilter: (saved: SavedFilter) => updateListState({ filters: saved.filters }),
-    savedFilters
+    applySavedFilter: (saved: SavedFilter) =>
+      updateListState({ filters: saved.filters }),
+    savedFilters,
   };
 
   useEffect(() => {
@@ -166,24 +188,38 @@ function AppContent() {
             <div className="topbar" ref={topbarRef}>
               <div className="topbar-left">
                 <NavLink to="/" className="app-switcher">
-                  <span className="app-switcher-icon">▦</span>
-                  <span>Apps</span>
+                  <span className="app-switcher-icon">
+                    <BackIcon aria-hidden="true" focusable="false" />
+                  </span>
                 </NavLink>
                 <div className="breadcrumb">
-                  {breadcrumb.section && <span className="breadcrumb-section">{breadcrumb.section}</span>}
+                  {breadcrumb.section && (
+                    <span className="breadcrumb-section">
+                      {breadcrumb.section}
+                    </span>
+                  )}
                   <span className="breadcrumb-sep">/</span>
                   <span className="breadcrumb-page">{breadcrumb.page}</span>
                 </div>
               </div>
               <div className="topbar-right">
-                <button className="user-menu" onClick={() => setUserMenuOpen((v) => !v)}>
+                <button
+                  className="user-menu"
+                  onClick={() => setUserMenuOpen((v) => !v)}
+                >
                   <span className="user-avatar-sm">{initials}</span>
-                  <span className="user-name-sm">{displayName}</span>
                 </button>
                 {userMenuOpen && (
                   <div className="menu-popover right">
-                    <div className="menu-title">User</div>
-                    <button className="menu-item" onClick={() => { window.location.href = "/settings"; }}>
+                    <div className="menu-title">
+                      <span className="user-name-sm">{displayName}</span>
+                    </div>
+                    <button
+                      className="menu-item"
+                      onClick={() => {
+                        window.location.href = "/settings";
+                      }}
+                    >
                       Settings
                     </button>
                     <button
@@ -205,16 +241,34 @@ function AppContent() {
               <Route path="/" element={<AppLauncherPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/invoices" element={<InvoicesPage mode="list" />} />
-              <Route path="/invoices/new" element={<InvoicesPage mode="new" />} />
-              <Route path="/invoices/:invoiceId" element={<InvoicesPage mode="detail" />} />
+              <Route
+                path="/invoices/new"
+                element={<InvoicesPage mode="new" />}
+              />
+              <Route
+                path="/invoices/:invoiceId"
+                element={<InvoicesPage mode="detail" />}
+              />
               <Route path="/companies" element={<CompaniesPage />} />
               <Route path="/products" element={<ProductsPage />} />
               <Route path="/contacts" element={<ContactsPage />} />
               <Route path="/contacts/new" element={<ContactFormPage />} />
-              <Route path="/contacts/:contactId" element={<ContactFormPage />} />
-              <Route path="/quotations" element={<QuotationsPage mode="list" />} />
-              <Route path="/quotations/new" element={<QuotationsPage mode="new" />} />
-              <Route path="/quotations/:quotationId" element={<QuotationsPage mode="detail" />} />
+              <Route
+                path="/contacts/:contactId"
+                element={<ContactFormPage />}
+              />
+              <Route
+                path="/quotations"
+                element={<QuotationsPage mode="list" />}
+              />
+              <Route
+                path="/quotations/new"
+                element={<QuotationsPage mode="new" />}
+              />
+              <Route
+                path="/quotations/:quotationId"
+                element={<QuotationsPage mode="detail" />}
+              />
               <Route path="/inventory" element={<InventoryPage />} />
               <Route path="/reports" element={<ReportsPage />} />
               <Route path="/settings" element={<SettingsPage />} />
@@ -266,13 +320,21 @@ function getSavedFilters(path: string): SavedFilter[] {
       {
         id: "active-companies",
         label: "Active Companies",
-        filters: [{ id: "f1", label: "Status is Active", params: { status: "active" } }]
+        filters: [
+          { id: "f1", label: "Status is Active", params: { status: "active" } },
+        ],
       },
       {
         id: "inactive-companies",
         label: "Inactive Companies",
-        filters: [{ id: "f2", label: "Status is Inactive", params: { status: "inactive" } }]
-      }
+        filters: [
+          {
+            id: "f2",
+            label: "Status is Inactive",
+            params: { status: "inactive" },
+          },
+        ],
+      },
     ];
   }
   return [];
@@ -285,13 +347,16 @@ function getGroupOptions(path: string): { label: string; value: string }[] {
   if (path === "/devices") {
     return [
       { label: "Company", value: "company" },
-      { label: "Status", value: "status" }
+      { label: "Status", value: "status" },
     ];
   }
   return [];
 }
 
-function getBreadcrumb(path: string, navItems: { to: string; label: string }[]) {
+function getBreadcrumb(
+  path: string,
+  navItems: { to: string; label: string }[],
+) {
   const item = navItems.find((n) => n.to === path);
   if (!item) {
     return { section: "Home", page: "Dashboard" };
@@ -299,37 +364,67 @@ function getBreadcrumb(path: string, navItems: { to: string; label: string }[]) 
   if (item.to === "/") {
     return { section: "Home", page: "Dashboard" };
   }
-  const section = item.to.includes("/invoices") || item.to.includes("/quotations")
-    ? "Accounting"
-    : item.to.includes("/products") || item.to.includes("/contacts")
-    ? "Sales"
-    : "Management";
+  const section =
+    item.to.includes("/invoices") || item.to.includes("/quotations")
+      ? "Accounting"
+      : item.to.includes("/products") || item.to.includes("/contacts")
+        ? "Sales"
+        : "Management";
   return { section, page: item.label };
 }
 
 function getCustomFields(path: string): CustomField[] {
   if (path === "/") {
     return [
-      { label: "Invoice Reference", value: "reference", type: "text", valuesEndpoint: "/invoices/values?field=reference" },
-      { label: "Invoice Status", value: "status", type: "choice", valuesEndpoint: "/invoices/values?field=status" },
-      { label: "Quotation Reference", value: "quotation_reference", type: "text" }
+      {
+        label: "Invoice Reference",
+        value: "reference",
+        type: "text",
+        valuesEndpoint: "/invoices/values?field=reference",
+      },
+      {
+        label: "Invoice Status",
+        value: "status",
+        type: "choice",
+        valuesEndpoint: "/invoices/values?field=status",
+      },
+      {
+        label: "Quotation Reference",
+        value: "quotation_reference",
+        type: "text",
+      },
     ];
   }
   if (path === "/companies") {
     return [
-      { label: "Name", value: "name", type: "text", valuesEndpoint: "/companies/values?field=name" },
-      { label: "TIN", value: "tin", type: "text", valuesEndpoint: "/companies/values?field=tin" },
+      {
+        label: "Name",
+        value: "name",
+        type: "text",
+        valuesEndpoint: "/companies/values?field=name",
+      },
+      {
+        label: "TIN",
+        value: "tin",
+        type: "text",
+        valuesEndpoint: "/companies/values?field=tin",
+      },
       { label: "VAT", value: "vat", type: "text" },
       { label: "Email", value: "email", type: "text" },
       { label: "Phone", value: "phone", type: "text" },
-      { label: "Created", value: "created", type: "date" }
+      { label: "Created", value: "created", type: "date" },
     ];
   }
   if (path === "/devices") {
     return [
       { label: "Serial", value: "serial", type: "text" },
       { label: "Model", value: "model", type: "text" },
-      { label: "Status", value: "status", type: "choice", valuesEndpoint: "/devices/values?field=status" }
+      {
+        label: "Status",
+        value: "status",
+        type: "choice",
+        valuesEndpoint: "/devices/values?field=status",
+      },
     ];
   }
   return [];
@@ -612,11 +707,8 @@ function PaymentIcon() {
       strokeLinecap="round"
       strokeLinejoin="round"
     >
-      <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-      <line x1="1" y1="10" x2="23" y2="10"/>
+      <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+      <line x1="1" y1="10" x2="23" y2="10" />
     </svg>
   );
 }
-
-
-

@@ -32,7 +32,10 @@ export default function LoginPage() {
       const res = await fetch("/api/auth/password-login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), password: password.trim() })
+        body: JSON.stringify({
+          email: email.trim(),
+          password: password.trim(),
+        }),
       });
       // Prefer JSON when available; fall back to text so we can surface
       // backend error messages even if the response isn't JSON.
@@ -55,10 +58,11 @@ export default function LoginPage() {
       }
 
       if (!res.ok) {
-        const serverMsg = (data && (data.detail || data.message || data.error))
-          || rawText
-          || res.statusText
-          || "Authentication failed";
+        const serverMsg =
+          (data && (data.detail || data.message || data.error)) ||
+          rawText ||
+          res.statusText ||
+          "Authentication failed";
         throw new Error(serverMsg);
       }
 
@@ -76,7 +80,9 @@ export default function LoginPage() {
     } catch (err: any) {
       setStatus(null);
       setIsLoading(false);
-      setError(err.message || "Authentication failed. Please verify your credentials.");
+      setError(
+        err.message || "Authentication failed. Please verify your credentials.",
+      );
     }
   };
 
@@ -92,7 +98,6 @@ export default function LoginPage() {
           <img src="/365.png" alt="365 Fiscal" className="logo-365" />
         </div>
         <div className="login-card-body">
-
           <form className="login-form" onSubmit={signIn}>
             <div className="input-group">
               <input
@@ -127,9 +132,19 @@ export default function LoginPage() {
               ) : (
                 <>
                   <span>Sign In</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="5" y1="12" x2="19" y2="12"/>
-                    <polyline points="12 5 19 12 12 19"/>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                    <polyline points="12 5 19 12 12 19" />
                   </svg>
                 </>
               )}
@@ -138,19 +153,39 @@ export default function LoginPage() {
 
           {status && !error && (
             <div className="login-status">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                <polyline points="22 4 12 14.01 9 11.01"/>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
               </svg>
               {status}
             </div>
           )}
           {error && (
             <div className="login-error">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="8" x2="12" y2="12"/>
-                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
               </svg>
               {error}
             </div>
@@ -164,6 +199,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
-
-
