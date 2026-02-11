@@ -324,6 +324,37 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
     if (!selectedQuotation) return;
     const company = selectedCompany;
     const customer = contacts.find((c) => c.id === selectedQuotation.customer_id);
+    const formatAddressLines = (
+      address?: string,
+      city?: string,
+      country?: string,
+    ) => {
+      const parts = (address || "")
+        .split(/\r?\n|,/)
+        .map((part) => part.trim())
+        .filter(Boolean);
+      const street1 = parts[0] || "";
+      const street2 = parts[1] || "";
+      return {
+        line1: [street1, street2].filter(Boolean).join(", "),
+        line2: (city || "").trim(),
+        line3: (country || "").trim(),
+      };
+    };
+    const companyAddress = formatAddressLines(
+      company?.address,
+      company?.city,
+      company?.country,
+    );
+    const customerAddress = formatAddressLines(
+      customer?.address,
+      customer?.city,
+      customer?.country,
+    );
+    const footerHtml = (companySettings?.document_footer || "").replace(
+      /\n/g,
+      "<br />",
+    );
     const layoutKey = (companySettings?.document_layout || "external_layout_standard").replace("external_layout_", "layout-");
     const logoMarkup = companySettings?.logo_data
       ? `<img class="logo" src="${companySettings.logo_data}" alt="Logo" />`
@@ -381,6 +412,7 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
             .totals-card { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
             .totals-row { display: flex; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 12px; }
             .totals-row:last-child { border-bottom: none; font-weight: 700; background: #f8fafc; }
+            .doc-footer { margin-top: 18px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 11px; color: var(--muted); text-align: center; }
           </style>
         </head>
         <body>
@@ -392,8 +424,9 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
               </div>
               <div class="company-details">
                 <strong>${company?.name || "Your Company"}</strong><br />
-                ${company?.address || ""}<br />
-                ${company?.city || ""} ${company?.country || ""}<br />
+                ${companyAddress.line1 ? `${companyAddress.line1}<br />` : ""}
+                ${companyAddress.line2 ? `${companyAddress.line2}<br />` : ""}
+                ${companyAddress.line3 ? `${companyAddress.line3}<br />` : ""}
                 ${company?.email || ""}<br />
                 ${company?.phone || ""}<br />
                 TIN: ${company?.tin || "-"} | VAT: ${company?.vat || "-"}
@@ -406,8 +439,9 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
               <div class="block">
                 <h4>Bill To</h4>
                 <strong>${customer?.name || "-"}</strong><br />
-                ${customer?.address || ""}<br />
-                ${customer?.city || ""} ${customer?.country || ""}<br />
+                ${customerAddress.line1 ? `${customerAddress.line1}<br />` : ""}
+                ${customerAddress.line2 ? `${customerAddress.line2}<br />` : ""}
+                ${customerAddress.line3 ? `${customerAddress.line3}<br />` : ""}
                 ${customer?.phone || ""}<br />
                 ${customer?.email || ""}
               </div>
@@ -442,6 +476,7 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
                 <div class="totals-row"><span>Total</span><span>${totalAmount.toFixed(2)}</span></div>
               </div>
             </div>
+            ${footerHtml ? `<div class="doc-footer">${footerHtml}</div>` : ""}
           </div>
         </body>
       </html>

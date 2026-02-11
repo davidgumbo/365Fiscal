@@ -294,6 +294,28 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
   const printOrder = () => {
     if (!selectedOrder) return;
     const vendor = contacts.find((c) => c.id === selectedOrder.vendor_id);
+    const formatAddressLines = (
+      address?: string,
+      city?: string,
+      country?: string,
+    ) => {
+      const parts = (address || "")
+        .split(/\r?\n|,/)
+        .map((part) => part.trim())
+        .filter(Boolean);
+      const street1 = parts[0] || "";
+      const street2 = parts[1] || "";
+      return {
+        line1: [street1, street2].filter(Boolean).join(", "),
+        line2: (city || "").trim(),
+        line3: (country || "").trim(),
+      };
+    };
+    const vendorAddress = formatAddressLines(
+      vendor?.address,
+      vendor?.city,
+      vendor?.country,
+    );
     const lineRows = (selectedOrder.lines || []).map((line) => {
       const product = products.find((p) => p.id === line.product_id);
       const totals = lineTotals(line);
@@ -312,6 +334,7 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
     const logo = companySettings?.logo_data || "";
     const headerText = companySettings?.document_header || "";
     const footerText = companySettings?.document_footer || "";
+    const footerHtml = footerText.replace(/\n/g, "<br />");
     const html = `<!DOCTYPE html><html><head><title>Purchase ${selectedOrder.reference}</title><style>
       :root { --ink: #0f172a; --muted: #6b7280; --line: #e5e7eb; --soft: #f8fafc; --accent: #1e4f9b; }
       @page { size: A4; margin: 14mm; }
@@ -340,6 +363,7 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
       .totals-card { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
       .totals-row { display: flex; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 12px; }
       .totals-row:last-child { border-bottom: none; font-weight: 700; background: #f8fafc; }
+      .doc-footer { margin-top: 18px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 11px; color: var(--muted); text-align: center; }
     </style></head><body>
       <div class="doc">
         <div class="header-row">
@@ -352,8 +376,9 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
           </div>
           <div class="company-details">
             <strong>${headerText || "Purchase Order"}</strong><br />
-            ${vendor?.address || ""}<br />
-            ${vendor?.city || ""} ${vendor?.country || ""}<br />
+            ${vendorAddress.line1 ? `${vendorAddress.line1}<br />` : ""}
+            ${vendorAddress.line2 ? `${vendorAddress.line2}<br />` : ""}
+            ${vendorAddress.line3 ? `${vendorAddress.line3}<br />` : ""}
             ${vendor?.phone || ""}
           </div>
         </div>
@@ -364,8 +389,9 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
           <div class="block">
             <h4>Vendor</h4>
             <strong>${vendor?.name || "-"}</strong><br />
-            ${vendor?.address || ""}<br />
-            ${vendor?.city || ""} ${vendor?.country || ""}<br />
+            ${vendorAddress.line1 ? `${vendorAddress.line1}<br />` : ""}
+            ${vendorAddress.line2 ? `${vendorAddress.line2}<br />` : ""}
+            ${vendorAddress.line3 ? `${vendorAddress.line3}<br />` : ""}
             ${vendor?.phone || ""}
           </div>
           <div class="block title-block">
@@ -413,6 +439,7 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
             <div class="totals-row"><span>Total</span><span>${formatMoney(selectedOrder.total_amount, currencySymbol)}</span></div>
           </div>
         </div>
+        ${footerHtml ? `<div class="doc-footer">${footerHtml}</div>` : ""}
       </div>
     </body></html>`;
     const container = document.createElement("div");
