@@ -4407,8 +4407,16 @@ button.danger:hover {
   align-items: start;
 }
 
+.two-panel-left {
+  grid-template-columns: 300px 1fr;
+}
+
 @media (max-width: 1024px) {
   .two-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .two-panel-left {
     grid-template-columns: 1fr;
   }
 }
@@ -4469,6 +4477,102 @@ button.danger:hover {
 .filter-button-stack {
   display: grid;
   gap: 8px;
+}
+
+.filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--stroke);
+  background: #ffffff;
+  font-weight: 600;
+  color: var(--ink);
+  transition: all 0.15s ease;
+}
+
+.filter-btn .filter-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(11, 87, 208, 0.1);
+  color: #0b57d0;
+}
+
+.filter-btn .filter-icon svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+.filter-btn:hover {
+  border-color: rgba(11, 87, 208, 0.35);
+  box-shadow: 0 6px 16px rgba(11, 87, 208, 0.12);
+  transform: translateY(-1px);
+}
+
+.filter-btn.active {
+  background: rgba(11, 87, 208, 0.1);
+  border-color: rgba(11, 87, 208, 0.35);
+  color: #0b57d0;
+}
+
+.filter-btn.status-draft .filter-icon {
+  background: rgba(148, 163, 184, 0.2);
+  color: #64748b;
+}
+
+.filter-btn.status-posted .filter-icon,
+.filter-btn.status-confirmed .filter-icon,
+.filter-btn.status-sent .filter-icon {
+  background: rgba(59, 130, 246, 0.18);
+  color: #2563eb;
+}
+
+.filter-btn.status-paid .filter-icon,
+.filter-btn.status-accepted .filter-icon,
+.filter-btn.status-received .filter-icon {
+  background: rgba(34, 197, 94, 0.18);
+  color: #16a34a;
+}
+
+.filter-btn.status-rejected .filter-icon,
+.filter-btn.status-cancelled .filter-icon {
+  background: rgba(239, 68, 68, 0.18);
+  color: #dc2626;
+}
+
+.filter-btn.status-fiscalized .filter-icon,
+.filter-btn.status-converted .filter-icon {
+  background: rgba(99, 102, 241, 0.18);
+  color: #4f46e5;
+}
+
+.filter-btn.type-credit_note .filter-icon,
+.filter-btn.report-vat .filter-icon {
+  background: rgba(249, 115, 22, 0.18);
+  color: #ea580c;
+}
+
+.filter-btn.type-invoice .filter-icon,
+.filter-btn.report-sales .filter-icon {
+  background: rgba(14, 165, 233, 0.18);
+  color: #0284c7;
+}
+
+.filter-btn.report-stock .filter-icon {
+  background: rgba(34, 197, 94, 0.18);
+  color: #16a34a;
+}
+
+.filter-btn.report-payments .filter-icon {
+  background: rgba(168, 85, 247, 0.18);
+  color: #7c3aed;
 }
 
 .sidebar-tab {

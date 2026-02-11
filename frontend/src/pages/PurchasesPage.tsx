@@ -576,7 +576,78 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
       </div>
 
       {mode === "list" && (
-        <div className="two-panel">
+        <div className="two-panel two-panel-left">
+          <aside className="sidebar-panel filter-sidebar">
+            <div className="filter-sidebar-title">Filters</div>
+            <button
+              className="btn btn-primary w-100 mb-3"
+              onClick={() => {
+                startNew();
+                navigate("/purchases/new");
+              }}
+            >
+              New Purchase
+            </button>
+            <div className="filter-group">
+              <label className="filter-label">Search</label>
+              <input
+                className="form-control"
+                placeholder="Reference or vendor"
+                value={listSearch}
+                onChange={(e) => setListSearch(e.target.value)}
+              />
+            </div>
+            <div className="filter-group">
+              <label className="filter-label">Status</label>
+              <div className="filter-button-stack">
+                {["", "draft", "confirmed", "received", "cancelled"].map((status) => (
+                  <button
+                    key={status || "all"}
+                    className={`filter-btn ${status ? `status-${status}` : "status-all"} ${listStatus === status ? "active" : ""}`}
+                    onClick={() => setListStatus(status)}
+                  >
+                    <span className="filter-icon">
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm3.54 7.54-4.24 4.24-2.12-2.12-1.41 1.41 3.53 3.54 5.66-5.66z" />
+                      </svg>
+                    </span>
+                    {status ? status.charAt(0).toUpperCase() + status.slice(1) : "All Status"}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="filter-group">
+              <label className="filter-label">Date Range</label>
+              <div className="filter-date-grid">
+                <input
+                  type="date"
+                  className="form-control"
+                  value={listFrom}
+                  onChange={(e) => setListFrom(e.target.value)}
+                />
+                <input
+                  type="date"
+                  className="form-control"
+                  value={listTo}
+                  onChange={(e) => setListTo(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="filter-actions">
+              <button
+                className="btn btn-light border w-100"
+                onClick={() => {
+                  setListSearch("");
+                  setListStatus("");
+                  setListFrom("");
+                  setListTo("");
+                }}
+              >
+                Clear Filters
+              </button>
+            </div>
+          </aside>
+
           <div className="card shadow-sm">
             <div className="card-body">
               <div className="table-responsive">
@@ -623,73 +694,6 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
               </div>
             </div>
           </div>
-
-          <aside className="sidebar-panel filter-sidebar">
-            <div className="filter-sidebar-title">Filters</div>
-            <button
-              className="btn btn-primary w-100 mb-3"
-              onClick={() => {
-                startNew();
-                navigate("/purchases/new");
-              }}
-            >
-              New Purchase
-            </button>
-            <div className="filter-group">
-              <label className="filter-label">Search</label>
-              <input
-                className="form-control"
-                placeholder="Reference or vendor"
-                value={listSearch}
-                onChange={(e) => setListSearch(e.target.value)}
-              />
-            </div>
-            <div className="filter-group">
-              <label className="filter-label">Status</label>
-              <select
-                className="form-select"
-                value={listStatus}
-                onChange={(e) => setListStatus(e.target.value)}
-              >
-                <option value="">All Status</option>
-                <option value="draft">Draft</option>
-                <option value="confirmed">Confirmed</option>
-                <option value="received">Received</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
-            </div>
-            <div className="filter-group">
-              <label className="filter-label">From</label>
-              <input
-                type="date"
-                className="form-control"
-                value={listFrom}
-                onChange={(e) => setListFrom(e.target.value)}
-              />
-            </div>
-            <div className="filter-group">
-              <label className="filter-label">To</label>
-              <input
-                type="date"
-                className="form-control"
-                value={listTo}
-                onChange={(e) => setListTo(e.target.value)}
-              />
-            </div>
-            <div className="filter-actions">
-              <button
-                className="btn btn-light border w-100"
-                onClick={() => {
-                  setListSearch("");
-                  setListStatus("");
-                  setListFrom("");
-                  setListTo("");
-                }}
-              >
-                Clear Filters
-              </button>
-            </div>
-          </aside>
         </div>
       )}
 

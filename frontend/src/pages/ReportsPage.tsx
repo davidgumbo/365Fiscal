@@ -855,7 +855,71 @@ export default function ReportsPage() {
         </div>
       </div>
 
-      <div className="two-panel">
+      <div className="two-panel two-panel-left">
+        <aside className="sidebar-panel filter-sidebar">
+          <div className="filter-sidebar-title">Report Filters</div>
+          <div className="filter-group">
+            <label className="filter-label">Report Type</label>
+            <div className="filter-button-stack">
+              {(["sales", "stock", "payments", "vat"] as ReportType[]).map((tab) => (
+                <button
+                  key={tab}
+                  className={`filter-btn report-${tab} ${activeReport === tab ? "active" : ""}`}
+                  onClick={() => setActiveReport(tab)}
+                >
+                  <span className="filter-icon">
+                    {tab === "sales" && <SalesIcon />}
+                    {tab === "stock" && <StockIcon />}
+                    {tab === "payments" && <PaymentIcon />}
+                    {tab === "vat" && <VatIcon />}
+                  </span>
+                  <span>
+                    {tab === "sales"
+                      ? "Sales Report"
+                      : tab === "stock"
+                        ? "Stock Report"
+                        : tab === "payments"
+                          ? "Payments Report"
+                          : "VAT Report"}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="filter-group">
+            <label className="filter-label">Date Range</label>
+            <div className="filter-date-grid">
+              <input
+                type="date"
+                className="form-control"
+                value={dateRange.from}
+                onChange={(e) =>
+                  setDateRange((prev) => ({ ...prev, from: e.target.value }))
+                }
+              />
+              <input
+                type="date"
+                className="form-control"
+                value={dateRange.to}
+                onChange={(e) =>
+                  setDateRange((prev) => ({ ...prev, to: e.target.value }))
+                }
+              />
+            </div>
+          </div>
+          <div className="filter-actions">
+            <button className="btn btn-primary w-100 mb-2" onClick={loadReport} disabled={loading}>
+              {loading ? "Loading..." : "Refresh"}
+            </button>
+            <button className="btn btn-light border w-100 mb-2" onClick={exportCSV} disabled={loading}>
+              <DownloadIcon /> Export CSV
+            </button>
+            <button className="btn btn-light border w-100" onClick={exportPDF} disabled={loading}>
+              <DownloadIcon /> Export PDF
+            </button>
+          </div>
+        </aside>
+
         <div>
 
       {/* Error */}
@@ -1394,69 +1458,6 @@ export default function ReportsPage() {
         )}
         </div>
 
-        <aside className="sidebar-panel filter-sidebar">
-          <div className="filter-sidebar-title">Report Filters</div>
-          <div className="filter-group">
-            <label className="filter-label">Report Type</label>
-            <div className="filter-button-stack">
-              {(["sales", "stock", "payments", "vat"] as ReportType[]).map((tab) => (
-                <button
-                  key={tab}
-                  className={`sidebar-tab ${activeReport === tab ? "active" : ""}`}
-                  onClick={() => setActiveReport(tab)}
-                >
-                  <span className="sidebar-tab-icon">
-                    {tab === "sales" && <SalesIcon />}
-                    {tab === "stock" && <StockIcon />}
-                    {tab === "payments" && <PaymentIcon />}
-                    {tab === "vat" && <VatIcon />}
-                  </span>
-                  <span>
-                    {tab === "sales"
-                      ? "Sales Report"
-                      : tab === "stock"
-                        ? "Stock Report"
-                        : tab === "payments"
-                          ? "Payments Report"
-                          : "VAT Report"}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="filter-group">
-            <label className="filter-label">Date Range</label>
-            <div className="filter-date-grid">
-              <input
-                type="date"
-                className="form-control"
-                value={dateRange.from}
-                onChange={(e) =>
-                  setDateRange((prev) => ({ ...prev, from: e.target.value }))
-                }
-              />
-              <input
-                type="date"
-                className="form-control"
-                value={dateRange.to}
-                onChange={(e) =>
-                  setDateRange((prev) => ({ ...prev, to: e.target.value }))
-                }
-              />
-            </div>
-          </div>
-          <div className="filter-actions">
-            <button className="btn btn-primary w-100 mb-2" onClick={loadReport} disabled={loading}>
-              {loading ? "Loading..." : "Refresh"}
-            </button>
-            <button className="btn btn-light border w-100 mb-2" onClick={exportCSV} disabled={loading}>
-              <DownloadIcon /> Export CSV
-            </button>
-            <button className="btn btn-light border w-100" onClick={exportPDF} disabled={loading}>
-              <DownloadIcon /> Export PDF
-            </button>
-          </div>
-        </aside>
       </div>
     </div>
   );

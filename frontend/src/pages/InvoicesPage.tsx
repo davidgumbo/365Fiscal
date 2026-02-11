@@ -999,7 +999,79 @@ export default function InvoicesPage({
 
       {/* ───────────── LIST VIEW ───────────── */}
       {!showForm && (
-        <div className="two-panel">
+        <div className="two-panel two-panel-left">
+          <aside className="sidebar-panel filter-sidebar">
+            <div className="filter-sidebar-title">Filters</div>
+            <button
+              className="btn btn-primary w-100 mb-3"
+              onClick={() => {
+                beginNew();
+                navigate("/invoices/new");
+              }}
+            >
+              + New Invoice
+            </button>
+            <div className="filter-group">
+              <label className="filter-label">Search</label>
+              <input
+                className="form-control"
+                placeholder="Reference or status"
+                value={listSearch}
+                onChange={(e) => setListSearch(e.target.value)}
+              />
+            </div>
+            <div className="filter-group">
+              <label className="filter-label">Status</label>
+              <div className="filter-button-stack">
+                {["", "draft", "posted", "paid", "fiscalized"].map((status) => (
+                  <button
+                    key={status || "all"}
+                    className={`filter-btn ${status ? `status-${status}` : "status-all"} ${listStatus === status ? "active" : ""}`}
+                    onClick={() => setListStatus(status)}
+                  >
+                    <span className="filter-icon">
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm3.54 7.54-4.24 4.24-2.12-2.12-1.41 1.41 3.53 3.54 5.66-5.66z" />
+                      </svg>
+                    </span>
+                    {status ? status.charAt(0).toUpperCase() + status.slice(1) : "All Status"}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="filter-group">
+              <label className="filter-label">Type</label>
+              <div className="filter-button-stack">
+                {["", "invoice", "credit_note"].map((type) => (
+                  <button
+                    key={type || "all"}
+                    className={`filter-btn ${type ? `type-${type}` : "type-all"} ${listType === type ? "active" : ""}`}
+                    onClick={() => setListType(type)}
+                  >
+                    <span className="filter-icon">
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M7 2h7l5 5v15a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm7 1.5V8h4.5" />
+                      </svg>
+                    </span>
+                    {type === "credit_note" ? "Credit Note" : type ? "Invoice" : "All Types"}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="filter-actions">
+              <button
+                className="btn btn-light border w-100"
+                onClick={() => {
+                  setListSearch("");
+                  setListStatus("");
+                  setListType("");
+                }}
+              >
+                Clear Filters
+              </button>
+            </div>
+          </aside>
+
           <div>
             <div className="d-flex flex-wrap justify-content-between align-items-center mb-3">
               <div>
@@ -1094,66 +1166,6 @@ export default function InvoicesPage({
               </div>
             </div>
           </div>
-
-          <aside className="sidebar-panel filter-sidebar">
-            <div className="filter-sidebar-title">Filters</div>
-            <button
-              className="btn btn-primary w-100 mb-3"
-              onClick={() => {
-                beginNew();
-                navigate("/invoices/new");
-              }}
-            >
-              + New Invoice
-            </button>
-            <div className="filter-group">
-              <label className="filter-label">Search</label>
-              <input
-                className="form-control"
-                placeholder="Reference or status"
-                value={listSearch}
-                onChange={(e) => setListSearch(e.target.value)}
-              />
-            </div>
-            <div className="filter-group">
-              <label className="filter-label">Status</label>
-              <select
-                className="form-select"
-                value={listStatus}
-                onChange={(e) => setListStatus(e.target.value)}
-              >
-                <option value="">All Status</option>
-                <option value="draft">Draft</option>
-                <option value="posted">Posted</option>
-                <option value="paid">Paid</option>
-                <option value="fiscalized">Fiscalized</option>
-              </select>
-            </div>
-            <div className="filter-group">
-              <label className="filter-label">Type</label>
-              <select
-                className="form-select"
-                value={listType}
-                onChange={(e) => setListType(e.target.value)}
-              >
-                <option value="">All Types</option>
-                <option value="invoice">Invoice</option>
-                <option value="credit_note">Credit Note</option>
-              </select>
-            </div>
-            <div className="filter-actions">
-              <button
-                className="btn btn-light border w-100"
-                onClick={() => {
-                  setListSearch("");
-                  setListStatus("");
-                  setListType("");
-                }}
-              >
-                Clear Filters
-              </button>
-            </div>
-          </aside>
         </div>
       )}
 
