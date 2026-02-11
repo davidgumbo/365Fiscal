@@ -33,6 +33,9 @@ type Location = { id: number; name: string; warehouse_id: number };
 type CompanySettings = {
   currency_code?: string;
   currency_symbol?: string;
+  logo_data?: string;
+  document_header?: string;
+  document_footer?: string;
 };
 
 type PurchaseOrderLine = {
@@ -285,6 +288,133 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
     return sums;
   }, [lines]);
 
+  const printOrder = () => {
+    if (!selectedOrder) return;
+    const vendor = contacts.find((c) => c.id === selectedOrder.vendor_id);
+    const lineRows = (selectedOrder.lines || []).map((line) => {
+      const product = products.find((p) => p.id === line.product_id);
+      return {
+        name: product?.name || line.description || "-",
+        description: line.description || product?.name || "-",
+        quantity: line.quantity,
+        received: line.received_quantity || 0,
+        uom: line.uom || product?.uom || "Units",
+        unit_price: line.unit_price,
+        vat_rate: line.vat_rate,
+        subtotal: line.subtotal,
+        total: line.total_price,
+      };
+    });
+
+    const logo = companySettings?.logo_data || "";
+    const headerText = companySettings?.document_header || "";
+    const footerText = companySettings?.document_footer || "";
+    const html = `<!DOCTYPE html><html><head><title>Purchase ${selectedOrder.reference}</title><style>
+      :root { --ink: #0f172a; --muted: #64748b; --line: #e2e8f0; --soft: #f8fafc; --accent: #2563eb; }
+      @page { size: A4; margin: 14mm; }
+      body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--ink); margin: 0; padding: 18px; font-size: 12px; }
+      h2 { margin: 0; font-size: 22px; letter-spacing: 0.4px; }
+      h3 { margin: 22px 0 8px; font-size: 1rem; border-bottom: 2px solid var(--line); padding-bottom: 6px; }
+      .header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+      .brand { display: flex; align-items: center; gap: 12px; }
+      .brand-logo { width: 54px; height: 54px; border-radius: 10px; object-fit: cover; border: 1px solid var(--line); }
+      .brand-name { font-size: 16px; font-weight: 700; }
+      .brand-sub { color: var(--muted); font-size: 11px; }
+      .header-card { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: #fff; min-width: 220px; }
+      .pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: #eef2ff; color: #3730a3; font-size: 11px; font-weight: 600; text-transform: capitalize; }
+      .meta { display: grid; grid-template-columns: repeat(3, minmax(120px, 1fr)); gap: 14px; margin: 16px 0 8px; }
+      .meta .label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); margin-bottom: 4px; }
+      .meta .value { font-size: 13px; font-weight: 600; }
+      table { width: 100%; border-collapse: collapse; margin: 8px 0 16px; }
+      th { background: var(--soft); font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; padding: 8px 10px; text-align: left; border-bottom: 2px solid var(--line); }
+      td { padding: 7px 10px; border-bottom: 1px solid #edf2f7; }
+      tr:nth-child(even) { background: #fbfdff; }
+      .text-right { text-align: right; }
+      .totals { width: 260px; margin-left: auto; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: #fff; }
+      .totals div { display: flex; justify-content: space-between; margin-bottom: 6px; color: var(--muted); }
+      .totals strong { color: var(--ink); font-size: 14px; }
+      .notes { margin-top: 14px; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: #fff; }
+      .notes .label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); margin-bottom: 6px; }
+      .footer { margin-top: 18px; font-size: 10px; color: var(--muted); display: flex; justify-content: space-between; }
+      @media print { body { padding: 0; } }
+    </style></head><body>
+      <div class="header">
+        <div>
+          <div class="brand">
+            ${logo ? `<img class="brand-logo" src="${logo}" alt="Company Logo" />` : ""}
+            <div>
+              <div class="brand-name">${headerText || "Purchase Order"}</div>
+              <div class="brand-sub">Purchase Order</div>
+            </div>
+          </div>
+          <div class="pill">${selectedOrder.reference}</div>
+        </div>
+        <div class="header-card">
+          <div class="label" style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;">Status</div>
+          <div style="font-size:14px;font-weight:700;text-transform:capitalize;">${selectedOrder.status}</div>
+          <div style="margin-top:8px;font-size:11px;color:var(--muted);">Currency: ${selectedOrder.currency || "USD"}</div>
+        </div>
+      </div>
+      <div class="meta">
+        <div><div class="label">Vendor</div><div class="value">${vendor?.name || "-"}</div></div>
+        <div><div class="label">Order Date</div><div class="value">${toDateInputValue(selectedOrder.order_date)}</div></div>
+        <div><div class="label">Expected Date</div><div class="value">${toDateInputValue(selectedOrder.expected_date)}</div></div>
+        <div><div class="label">Warehouse</div><div class="value">${warehouses.find((w) => w.id === selectedOrder.warehouse_id)?.name || "-"}</div></div>
+        <div><div class="label">Location</div><div class="value">${locations.find((l) => l.id === selectedOrder.location_id)?.name || "-"}</div></div>
+        <div><div class="label">Received</div><div class="value">${selectedOrder.received_at ? toDateInputValue(selectedOrder.received_at) : "-"}</div></div>
+      </div>
+      <h3>Order Lines</h3>
+      <table><thead><tr>
+        <th>Product</th>
+        <th>Description</th>
+        <th class="text-right">Qty</th>
+        <th class="text-right">Received</th>
+        <th>UoM</th>
+        <th class="text-right">Unit Price</th>
+        <th class="text-right">VAT %</th>
+        <th class="text-right">Subtotal</th>
+        <th class="text-right">Total</th>
+      </tr></thead><tbody>
+        ${lineRows
+          .map(
+            (row) => `
+          <tr>
+            <td>${row.name}</td>
+            <td>${row.description}</td>
+            <td class="text-right">${row.quantity}</td>
+            <td class="text-right">${row.received}</td>
+            <td>${row.uom}</td>
+            <td class="text-right">${formatMoney(row.unit_price, currencySymbol)}</td>
+            <td class="text-right">${row.vat_rate}</td>
+            <td class="text-right">${formatMoney(row.subtotal, currencySymbol)}</td>
+            <td class="text-right">${formatMoney(row.total, currencySymbol)}</td>
+          </tr>`
+          )
+          .join("")}
+      </tbody></table>
+      <div class="totals">
+        <div><span>Subtotal</span><strong>${formatMoney(selectedOrder.subtotal, currencySymbol)}</strong></div>
+        <div><span>VAT</span><strong>${formatMoney(selectedOrder.tax_amount, currencySymbol)}</strong></div>
+        <div><span>Total</span><strong>${formatMoney(selectedOrder.total_amount, currencySymbol)}</strong></div>
+      </div>
+      <div class="notes">
+        <div class="label">Notes</div>
+        <div>${selectedOrder.notes || "-"}</div>
+      </div>
+      <div class="footer">
+        <div>Generated on ${new Date().toLocaleDateString()}</div>
+        <div>${footerText || "Powered by 365 Fiscal"}</div>
+      </div>
+    </body></html>`;
+
+    const win = window.open("", "_blank", "width=900,height=700");
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+      setTimeout(() => win.print(), 400);
+    }
+  };
+
   const saveOrder = async () => {
     if (!companyId) return;
     setSaving(true);
@@ -513,6 +643,11 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
                 </div>
               </div>
               <div className="form-actions">
+                {selectedOrderId && (
+                  <button className="btn btn-outline-secondary btn-sm" onClick={printOrder}>
+                    Print
+                  </button>
+                )}
                 {canEdit && (
                   <button className="btn btn-primary btn-sm" onClick={saveOrder} disabled={saving}>
                     {saving ? "Saving..." : "Save"}
