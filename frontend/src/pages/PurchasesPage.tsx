@@ -579,26 +579,7 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
         <div className="two-panel two-panel-left">
           <aside className="sidebar-panel filter-sidebar">
             <div className="filter-sidebar-title">Filters</div>
-            <button
-              className="btn btn-primary w-100 mb-3"
-              onClick={() => {
-                startNew();
-                navigate("/purchases/new");
-              }}
-            >
-              New Purchase
-            </button>
             <div className="filter-group">
-              <label className="filter-label">Search</label>
-              <input
-                className="form-control"
-                placeholder="Reference or vendor"
-                value={listSearch}
-                onChange={(e) => setListSearch(e.target.value)}
-              />
-            </div>
-            <div className="filter-group">
-              <label className="filter-label">Status</label>
               <div className="filter-button-stack">
                 {["", "draft", "confirmed", "received", "cancelled"].map((status) => (
                   <button
@@ -607,17 +588,30 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
                     onClick={() => setListStatus(status)}
                   >
                     <span className="filter-icon">
-                      <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm3.54 7.54-4.24 4.24-2.12-2.12-1.41 1.41 3.53 3.54 5.66-5.66z" />
-                      </svg>
+                      {status === "" && (
+                        <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+                      )}
+                      {status === "draft" && (
+                        <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/></svg>
+                      )}
+                      {status === "confirmed" && (
+                        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                      )}
+                      {status === "received" && (
+                        <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1s3.1 1.39 3.1 3.1v2z"/></svg>
+                      )}
+                      {status === "cancelled" && (
+                        <svg viewBox="0 0 24 24"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/></svg>
+                      )}
                     </span>
-                    {status ? status.charAt(0).toUpperCase() + status.slice(1) : "All Status"}
+                    {status ? status.charAt(0).toUpperCase() + status.slice(1) : "All Purchases"}
                   </button>
                 ))}
               </div>
             </div>
+            <div className="sidebar-divider" />
+            <div className="filter-label">Date Range</div>
             <div className="filter-group">
-              <label className="filter-label">Date Range</label>
               <div className="filter-date-grid">
                 <input
                   type="date"
@@ -635,7 +629,7 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
             </div>
             <div className="filter-actions">
               <button
-                className="btn btn-light border w-100"
+                className="btn w-100"
                 onClick={() => {
                   setListSearch("");
                   setListStatus("");
@@ -648,8 +642,31 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
             </div>
           </aside>
 
-          <div className="card shadow-sm">
-            <div className="card-body">
+          <div>
+            <div className="content-top-bar">
+              <div className="top-search">
+                <span className="search-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </span>
+                <input
+                  placeholder="Search purchases…"
+                  value={listSearch}
+                  onChange={(e) => setListSearch(e.target.value)}
+                />
+              </div>
+              <button
+                className="btn-create"
+                onClick={() => {
+                  startNew();
+                  navigate("/purchases/new");
+                }}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                New Purchase
+              </button>
+            </div>
+            <div className="card shadow-sm">
+              <div className="card-body">
               <div className="table-responsive">
                 <table className="table table-hover align-middle">
                   <thead>
@@ -691,6 +708,7 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
                     )}
                   </tbody>
                 </table>
+              </div>
               </div>
             </div>
           </div>

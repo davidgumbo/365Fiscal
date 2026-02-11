@@ -857,9 +857,8 @@ export default function ReportsPage() {
 
       <div className="two-panel two-panel-left">
         <aside className="sidebar-panel filter-sidebar">
-          <div className="filter-sidebar-title">Report Filters</div>
+          <div className="filter-sidebar-title">Reports</div>
           <div className="filter-group">
-            <label className="filter-label">Report Type</label>
             <div className="filter-button-stack">
               {(["sales", "stock", "payments", "vat"] as ReportType[]).map((tab) => (
                 <button
@@ -886,8 +885,9 @@ export default function ReportsPage() {
               ))}
             </div>
           </div>
+          <div className="sidebar-divider" />
+          <div className="filter-label">Date Range</div>
           <div className="filter-group">
-            <label className="filter-label">Date Range</label>
             <div className="filter-date-grid">
               <input
                 type="date"
@@ -907,16 +907,29 @@ export default function ReportsPage() {
               />
             </div>
           </div>
-          <div className="filter-actions">
-            <button className="btn btn-primary w-100 mb-2" onClick={loadReport} disabled={loading}>
-              {loading ? "Loading..." : "Refresh"}
-            </button>
-            <button className="btn btn-light border w-100 mb-2" onClick={exportCSV} disabled={loading}>
-              <DownloadIcon /> Export CSV
-            </button>
-            <button className="btn btn-light border w-100" onClick={exportPDF} disabled={loading}>
-              <DownloadIcon /> Export PDF
-            </button>
+          <div className="sidebar-divider" />
+          <div className="filter-label">Actions</div>
+          <div className="filter-group">
+            <div className="filter-button-stack">
+              <button className={`filter-btn status-posted ${loading ? "active" : ""}`} onClick={loadReport} disabled={loading}>
+                <span className="filter-icon">
+                  <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+                </span>
+                {loading ? "Loading..." : "Refresh"}
+              </button>
+              <button className="filter-btn type-invoice" onClick={exportCSV} disabled={loading}>
+                <span className="filter-icon">
+                  <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                </span>
+                Export CSV
+              </button>
+              <button className="filter-btn report-vat" onClick={exportPDF} disabled={loading}>
+                <span className="filter-icon">
+                  <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                </span>
+                Export PDF
+              </button>
+            </div>
           </div>
         </aside>
 

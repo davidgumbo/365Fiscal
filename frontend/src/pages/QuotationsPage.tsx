@@ -546,26 +546,7 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
         <div className="two-panel two-panel-left">
           <aside className="sidebar-panel filter-sidebar">
             <div className="filter-sidebar-title">Filters</div>
-            <button
-              className="btn btn-primary w-100 mb-3"
-              onClick={() => {
-                startNew();
-                navigate("/quotations/new");
-              }}
-            >
-              + New Quotation
-            </button>
             <div className="filter-group">
-              <label className="filter-label">Search</label>
-              <input
-                className="form-control"
-                placeholder="Reference or customer"
-                value={listSearch}
-                onChange={(e) => setListSearch(e.target.value)}
-              />
-            </div>
-            <div className="filter-group">
-              <label className="filter-label">Status</label>
               <div className="filter-button-stack">
                 {["", "draft", "sent", "accepted", "rejected", "converted"].map((status) => (
                   <button
@@ -574,21 +555,37 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
                     onClick={() => setListStatus(status)}
                   >
                     <span className="filter-icon">
-                      <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm3.54 7.54-4.24 4.24-2.12-2.12-1.41 1.41 3.53 3.54 5.66-5.66z" />
-                      </svg>
+                      {status === "" && (
+                        <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+                      )}
+                      {status === "draft" && (
+                        <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/></svg>
+                      )}
+                      {status === "sent" && (
+                        <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                      )}
+                      {status === "accepted" && (
+                        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                      )}
+                      {status === "rejected" && (
+                        <svg viewBox="0 0 24 24"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/></svg>
+                      )}
+                      {status === "converted" && (
+                        <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5 0 1.93-1.57 3.5-3.5 3.5S8.5 11.43 8.5 9.5C8.5 7.57 10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z"/></svg>
+                      )}
                     </span>
                     {status === "converted"
                       ? "Sale Order"
                       : status
                         ? status.charAt(0).toUpperCase() + status.slice(1)
-                        : "All Status"}
+                        : "All Quotations"}
                   </button>
                 ))}
               </div>
             </div>
+            <div className="sidebar-divider" />
+            <div className="filter-label">Date Range</div>
             <div className="filter-group">
-              <label className="filter-label">Date Range</label>
               <div className="filter-date-grid">
                 <input
                   className="form-control"
@@ -606,7 +603,7 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
             </div>
             <div className="filter-actions">
               <button
-                className="btn btn-light border w-100"
+                className="btn w-100"
                 onClick={() => {
                   setListSearch("");
                   setListStatus("");
@@ -620,11 +617,27 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
           </aside>
 
           <div>
-            <div className="d-flex flex-wrap justify-content-between align-items-center mb-3">
-              <div>
-                <h3 className="fw-bold mb-0">Quotations</h3>
-                <small className="text-muted">Prepare and manage customer quotations.</small>
+            <div className="content-top-bar">
+              <div className="top-search">
+                <span className="search-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </span>
+                <input
+                  placeholder="Search quotations…"
+                  value={listSearch}
+                  onChange={(e) => setListSearch(e.target.value)}
+                />
               </div>
+              <button
+                className="btn-create"
+                onClick={() => {
+                  startNew();
+                  navigate("/quotations/new");
+                }}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                New Quotation
+              </button>
             </div>
             <div className="card shadow-sm">
               <div className="card-body p-0">
