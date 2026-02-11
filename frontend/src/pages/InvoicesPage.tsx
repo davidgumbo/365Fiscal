@@ -122,11 +122,24 @@ type CompanySettings = {
   document_watermark_opacity?: string;
 };
 
-const currencyOptions = ["USD", "ZWL", "ZAR", "EUR", "GBP", "KES", "UGX", "NGN", "TZS"];
+const currencyOptions = [
+  "USD",
+  "ZWL",
+  "ZAR",
+  "EUR",
+  "GBP",
+  "KES",
+  "UGX",
+  "NGN",
+  "TZS",
+];
 
 const formatCurrency = (value: number, currency: string) => {
   try {
-    return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(value || 0);
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency,
+    }).format(value || 0);
   } catch {
     return `${currency} ${(value || 0).toFixed(2)}`;
   }
@@ -141,7 +154,8 @@ const toDateInputValue = (value: string | null) => {
   return date.toISOString().split("T")[0];
 };
 
-const fromDateInputValue = (value: string) => (value ? new Date(value).toISOString() : null);
+const fromDateInputValue = (value: string) =>
+  value ? new Date(value).toISOString() : null;
 
 const getPaymentStatus = (amountPaid: number, amountDue: number) => {
   if (amountDue <= 0) return "Paid";
@@ -151,7 +165,11 @@ const getPaymentStatus = (amountPaid: number, amountDue: number) => {
 
 type InvoicesPageMode = "list" | "new" | "detail";
 
-export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMode }) {
+export default function InvoicesPage({
+  mode = "list",
+}: {
+  mode?: InvoicesPageMode;
+}) {
   const navigate = useNavigate();
   const { invoiceId } = useParams();
   const routeInvoiceId = invoiceId ? Number(invoiceId) : null;
@@ -165,8 +183,11 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
   const [devices, setDevices] = useState<Device[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
-  const [companySettings, setCompanySettings] = useState<CompanySettings | null>(null);
-  const [selectedInvoiceId, setSelectedInvoiceId] = useState<number | null>(null);
+  const [companySettings, setCompanySettings] =
+    useState<CompanySettings | null>(null);
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState<number | null>(
+    null,
+  );
   const [newMode, setNewMode] = useState(false);
   const [newQuotationId, setNewQuotationId] = useState<number | null>(null);
   const [newCustomerId, setNewCustomerId] = useState<number | null>(null);
@@ -204,8 +225,12 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
   const [productHsCode, setProductHsCode] = useState("");
   const [productUom, setProductUom] = useState("Units");
   const [productInitialStock, setProductInitialStock] = useState("");
-  const [productWarehouseId, setProductWarehouseId] = useState<number | null>(null);
-  const [productLocationId, setProductLocationId] = useState<number | null>(null);
+  const [productWarehouseId, setProductWarehouseId] = useState<number | null>(
+    null,
+  );
+  const [productLocationId, setProductLocationId] = useState<number | null>(
+    null,
+  );
   const [customerSearch, setCustomerSearch] = useState("");
   const [customerDropdownOpen, setCustomerDropdownOpen] = useState(false);
   const [customerCreating, setCustomerCreating] = useState(false);
@@ -215,15 +240,19 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
   const quotationDropdownRef = useRef<HTMLDivElement>(null);
 
   const filteredContacts = contacts.filter((c) =>
-    c.name.toLowerCase().includes(customerSearch.toLowerCase())
+    c.name.toLowerCase().includes(customerSearch.toLowerCase()),
   );
   const topContacts = contacts.slice(0, 3);
-  const displayContacts = customerSearch.trim() ? filteredContacts : topContacts;
+  const displayContacts = customerSearch.trim()
+    ? filteredContacts
+    : topContacts;
   const filteredQuotations = quotations.filter((q) =>
-    q.reference.toLowerCase().includes(quotationSearch.toLowerCase())
+    q.reference.toLowerCase().includes(quotationSearch.toLowerCase()),
   );
   const topQuotations = quotations.slice(0, 3);
-  const displayQuotations = quotationSearch.trim() ? filteredQuotations : topQuotations;
+  const displayQuotations = quotationSearch.trim()
+    ? filteredQuotations
+    : topQuotations;
 
   const selectCustomer = (id: number, name: string, mode: "new" | "edit") => {
     if (mode === "new") {
@@ -239,7 +268,9 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
     if (!companyId) return;
     const name = customerSearch.trim();
     if (!name) return;
-    const exists = contacts.some((c) => c.name.toLowerCase() === name.toLowerCase());
+    const exists = contacts.some(
+      (c) => c.name.toLowerCase() === name.toLowerCase(),
+    );
     if (exists) return;
     setCustomerCreating(true);
     setError(null);
@@ -248,8 +279,8 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
         method: "POST",
         body: JSON.stringify({
           company_id: companyId,
-          name
-        })
+          name,
+        }),
       });
       setContacts((prev) => [created, ...prev]);
       selectCustomer(created.id, created.name, mode);
@@ -263,10 +294,16 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
   // Close customer dropdown when clicking outside
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (customerDropdownRef.current && !customerDropdownRef.current.contains(e.target as Node)) {
+      if (
+        customerDropdownRef.current &&
+        !customerDropdownRef.current.contains(e.target as Node)
+      ) {
         setCustomerDropdownOpen(false);
       }
-      if (quotationDropdownRef.current && !quotationDropdownRef.current.contains(e.target as Node)) {
+      if (
+        quotationDropdownRef.current &&
+        !quotationDropdownRef.current.contains(e.target as Node)
+      ) {
         setQuotationDropdownOpen(false);
       }
     };
@@ -283,16 +320,24 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
         company_id: String(companyId),
         ...(listSearch ? { search: listSearch } : {}),
         ...(listStatus ? { status: listStatus } : {}),
-        ...(listType ? { invoice_type: listType } : {})
+        ...(listType ? { invoice_type: listType } : {}),
       }).toString();
-      const [invoiceData, quotationData, contactData, productData, warehouseData, deviceData, settingsData] = await Promise.all([
+      const [
+        invoiceData,
+        quotationData,
+        contactData,
+        productData,
+        warehouseData,
+        deviceData,
+        settingsData,
+      ] = await Promise.all([
         apiFetch<Invoice[]>(`/invoices?${query}`),
         apiFetch<Quotation[]>(`/quotations?company_id=${companyId}`),
         apiFetch<Contact[]>(`/contacts?company_id=${companyId}`),
         apiFetch<Product[]>(`/products/with-stock?company_id=${companyId}`),
         apiFetch<Warehouse[]>(`/warehouses?company_id=${companyId}`),
         apiFetch<Device[]>(`/devices?company_id=${companyId}`),
-        apiFetch<CompanySettings>(`/company-settings?company_id=${companyId}`)
+        apiFetch<CompanySettings>(`/company-settings?company_id=${companyId}`),
       ]);
       setInvoices(invoiceData);
       setQuotations(quotationData);
@@ -307,7 +352,10 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
       if (!newDeviceId && deviceData.length) {
         setNewDeviceId(deviceData[0].id);
       }
-      if (selectedInvoiceId && !invoiceData.find((inv) => inv.id === selectedInvoiceId)) {
+      if (
+        selectedInvoiceId &&
+        !invoiceData.find((inv) => inv.id === selectedInvoiceId)
+      ) {
         setSelectedInvoiceId(null);
       }
     } catch (err: any) {
@@ -393,10 +441,10 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
             const product = products.find((p) => p.id === line.product_id);
             return {
               ...line,
-              uom: line.uom || product?.uom || ""
+              uom: line.uom || product?.uom || "",
             };
           })
-        : []
+        : [],
     );
     setIsEditing(false);
   }, [selectedInvoice, products]);
@@ -413,24 +461,28 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
   }, [products]);
 
   const linkedQuotation = selectedInvoice?.quotation_id
-    ? quotationById.get(selectedInvoice.quotation_id) ?? null
+    ? (quotationById.get(selectedInvoice.quotation_id) ?? null)
     : null;
 
-  const newQuotation = newQuotationId ? quotationById.get(newQuotationId) ?? null : null;
+  const newQuotation = newQuotationId
+    ? (quotationById.get(newQuotationId) ?? null)
+    : null;
 
   const customer = selectedInvoice?.customer_id
-    ? contactById.get(selectedInvoice.customer_id) ?? null
+    ? (contactById.get(selectedInvoice.customer_id) ?? null)
     : linkedQuotation
-    ? contactById.get(linkedQuotation.customer_id) ?? null
-    : null;
+      ? (contactById.get(linkedQuotation.customer_id) ?? null)
+      : null;
 
   const invoiceDateLabel = selectedInvoice?.invoice_date
     ? new Date(selectedInvoice.invoice_date).toLocaleDateString()
     : selectedInvoice?.fiscalized_at
-    ? new Date(selectedInvoice.fiscalized_at).toLocaleDateString()
-    : "-";
+      ? new Date(selectedInvoice.fiscalized_at).toLocaleDateString()
+      : "-";
 
-  const invoiceCurrency = newMode ? newCurrency : selectedInvoice?.currency || editCurrency || "USD";
+  const invoiceCurrency = newMode
+    ? newCurrency
+    : selectedInvoice?.currency || editCurrency || "USD";
   const isCreditNote = selectedInvoice?.invoice_type === "credit_note";
 
   const newTotal = newQuotation
@@ -444,8 +496,15 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
       : "-";
 
   const statusLabel = selectedInvoice?.status ?? "draft";
-  const paymentStatus = selectedInvoice ? getPaymentStatus(selectedInvoice.amount_paid, selectedInvoice.amount_due) : "-";
-  const paymentBadge = paymentStatus === "Paid" ? "success" : paymentStatus === "Partial" ? "warning" : "secondary";
+  const paymentStatus = selectedInvoice
+    ? getPaymentStatus(selectedInvoice.amount_paid, selectedInvoice.amount_due)
+    : "-";
+  const paymentBadge =
+    paymentStatus === "Paid"
+      ? "success"
+      : paymentStatus === "Partial"
+        ? "warning"
+        : "secondary";
 
   const beginNew = () => {
     setNewMode(true);
@@ -472,8 +531,8 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
         uom: "",
         unit_price: 0,
         discount: 0,
-        vat_rate: 0
-      }
+        vat_rate: 0,
+      },
     ]);
   };
 
@@ -504,9 +563,9 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
             uom: line.uom || "Units",
             unit_price: line.unit_price || 0,
             discount: line.discount || 0,
-            vat_rate: line.vat_rate || 0
-          }))
-        })
+            vat_rate: line.vat_rate || 0,
+          })),
+        }),
       });
       setSelectedInvoiceId(created.id);
       setNewMode(false);
@@ -544,9 +603,9 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
             uom: line.uom || "",
             unit_price: line.unit_price || 0,
             discount: line.discount || 0,
-            vat_rate: line.vat_rate || 0
-          }))
-        })
+            vat_rate: line.vat_rate || 0,
+          })),
+        }),
       });
       setIsEditing(false);
       await loadAll();
@@ -560,7 +619,9 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
   const postInvoice = async () => {
     if (!selectedInvoiceId) return;
     try {
-      await apiFetch<Invoice>(`/invoices/${selectedInvoiceId}/post`, { method: "POST" });
+      await apiFetch<Invoice>(`/invoices/${selectedInvoiceId}/post`, {
+        method: "POST",
+      });
       await loadAll();
     } catch (err: any) {
       setError(err.message || "Failed to post invoice");
@@ -569,7 +630,9 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
 
   const resetInvoice = async () => {
     if (!selectedInvoiceId) return;
-    await apiFetch<Invoice>(`/invoices/${selectedInvoiceId}/reset`, { method: "POST" });
+    await apiFetch<Invoice>(`/invoices/${selectedInvoiceId}/reset`, {
+      method: "POST",
+    });
     await loadAll();
   };
 
@@ -581,7 +644,9 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
       return;
     }
     try {
-      await apiFetch<Invoice>(`/invoices/${selectedInvoiceId}/fiscalize`, { method: "POST" });
+      await apiFetch<Invoice>(`/invoices/${selectedInvoiceId}/fiscalize`, {
+        method: "POST",
+      });
       await loadAll();
     } catch (err: any) {
       setError(err.message || "Failed to fiscalize invoice");
@@ -592,9 +657,12 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
     if (!selectedInvoiceId) return;
     const amount = Number(paymentAmount);
     if (!amount || Number.isNaN(amount)) return;
-    await apiFetch<Invoice>(`/invoices/${selectedInvoiceId}/pay?amount=${amount}&payment_reference=${encodeURIComponent(paymentReference)}`, {
-      method: "POST"
-    });
+    await apiFetch<Invoice>(
+      `/invoices/${selectedInvoiceId}/pay?amount=${amount}&payment_reference=${encodeURIComponent(paymentReference)}`,
+      {
+        method: "POST",
+      },
+    );
     setPaymentOpen(false);
     setPaymentAmount("");
     setPaymentReference("");
@@ -604,7 +672,10 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
   const createCreditNote = async () => {
     if (!selectedInvoiceId) return;
     try {
-      const credit = await apiFetch<Invoice>(`/invoices/${selectedInvoiceId}/credit-note`, { method: "POST" });
+      const credit = await apiFetch<Invoice>(
+        `/invoices/${selectedInvoiceId}/credit-note`,
+        { method: "POST" },
+      );
       setSelectedInvoiceId(credit.id);
       await loadAll();
     } catch (err: any) {
@@ -613,7 +684,9 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
   };
 
   const updateLine = (index: number, patch: Partial<InvoiceLine>) => {
-    setEditLines((prev) => prev.map((line, idx) => (idx === index ? { ...line, ...patch } : line)));
+    setEditLines((prev) =>
+      prev.map((line, idx) => (idx === index ? { ...line, ...patch } : line)),
+    );
   };
 
   const addLine = () => {
@@ -626,8 +699,8 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
         uom: "",
         unit_price: 0,
         discount: 0,
-        vat_rate: 0
-      }
+        vat_rate: 0,
+      },
     ]);
   };
 
@@ -648,8 +721,8 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
         hs_code: productHsCode.trim(),
         sale_price: Number(productPrice) || 0,
         tax_rate: Number(productTaxRate) || 0,
-        uom: productUom
-      })
+        uom: productUom,
+      }),
     });
 
     if (initialQty > 0 && productWarehouseId && productLocationId) {
@@ -663,8 +736,8 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
           move_type: "in",
           quantity: initialQty,
           unit_cost: created.sale_price || 0,
-          reference: `Init ${created.name}`
-        })
+          reference: `Init ${created.name}`,
+        }),
       });
       await apiFetch(`/stock/moves/${move.id}/confirm`, { method: "POST" });
     }
@@ -684,7 +757,7 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
     setEditLines((prev) => prev.filter((_, idx) => idx !== index));
   };
 
-  const displayLines = isEditing ? editLines : selectedInvoice?.lines ?? [];
+  const displayLines = isEditing ? editLines : (selectedInvoice?.lines ?? []);
   const canEdit = isEditing && statusLabel === "draft" && !isCreditNote;
 
   const taxBreakdown = useMemo(() => {
@@ -703,16 +776,27 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
     if (!win) return;
     const lines = selectedInvoice.lines || [];
     const currency = selectedInvoice.currency || "USD";
-    const layoutKey = (companySettings?.document_layout || "external_layout_standard").replace("external_layout_", "layout-");
+    const layoutKey = (
+      companySettings?.document_layout || "external_layout_standard"
+    ).replace("external_layout_", "layout-");
     const logoMarkup = companySettings?.logo_data
       ? `<img class="logo" src="${companySettings.logo_data}" alt="Logo" />`
       : "";
-    const productMap = new Map(products.map((product) => [product.id, product]));
+    const productMap = new Map(
+      products.map((product) => [product.id, product]),
+    );
     const rows = lines
       .map((line) => {
-        const total = (line.quantity || 0) * (line.unit_price || 0) * (1 - (line.discount || 0) / 100) * (1 + (line.vat_rate || 0) / 100);
-        const hsCode = line.product_id ? productMap.get(line.product_id)?.hs_code || "-" : "-";
-        const qtyLabel = `${(line.quantity || 0).toFixed(2)} ${line.uom || ""}`.trim();
+        const total =
+          (line.quantity || 0) *
+          (line.unit_price || 0) *
+          (1 - (line.discount || 0) / 100) *
+          (1 + (line.vat_rate || 0) / 100);
+        const hsCode = line.product_id
+          ? productMap.get(line.product_id)?.hs_code || "-"
+          : "-";
+        const qtyLabel =
+          `${(line.quantity || 0).toFixed(2)} ${line.uom || ""}`.trim();
         return `
           <tr>
             <td style="text-align:left;">${qtyLabel}</td>
@@ -851,11 +935,18 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
   };
 
   return (
-    <div className="container-fluid py-3">
+    <div className="container-fluid py-3 ">
       {error && (
-        <div className="alert alert-danger alert-dismissible fade show" role="alert">
+        <div
+          className="alert alert-danger alert-dismissible fade show"
+          role="alert"
+        >
           {error}
-          <button type="button" className="btn-close" onClick={() => setError(null)} />
+          <button
+            type="button"
+            className="btn-close"
+            onClick={() => setError(null)}
+          />
         </div>
       )}
 
@@ -865,7 +956,9 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
           <div className="d-flex flex-wrap justify-content-between align-items-center mb-3">
             <div>
               <h3 className="fw-bold mb-0">Invoices</h3>
-              <small className="text-muted">Professional invoicing, payments, taxes, and fiscalization.</small>
+              <small className="text-muted">
+                Professional invoicing, payments, taxes, and fiscalization.
+              </small>
             </div>
             <button
               className="btn btn-primary"
@@ -878,7 +971,7 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
             </button>
           </div>
 
-          <div className="card shadow-sm">
+          <div className="card shadow-sm card-bg-shadow">
             <div className="card-body p-0">
               <div className="d-flex flex-wrap gap-2 p-3 border-bottom bg-light">
                 <input
@@ -888,14 +981,24 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
                   value={listSearch}
                   onChange={(e) => setListSearch(e.target.value)}
                 />
-                <select className="form-select" style={{ maxWidth: 160 }} value={listStatus} onChange={(e) => setListStatus(e.target.value)}>
+                <select
+                  className="form-select"
+                  style={{ maxWidth: 160 }}
+                  value={listStatus}
+                  onChange={(e) => setListStatus(e.target.value)}
+                >
                   <option value="">All Status</option>
                   <option value="draft">Draft</option>
                   <option value="posted">Posted</option>
                   <option value="paid">Paid</option>
                   <option value="fiscalized">Fiscalized</option>
                 </select>
-                <select className="form-select" style={{ maxWidth: 160 }} value={listType} onChange={(e) => setListType(e.target.value)}>
+                <select
+                  className="form-select"
+                  style={{ maxWidth: 160 }}
+                  value={listType}
+                  onChange={(e) => setListType(e.target.value)}
+                >
                   <option value="">All Types</option>
                   <option value="invoice">Invoice</option>
                   <option value="credit_note">Credit Note</option>
@@ -916,10 +1019,19 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
                   </thead>
                   <tbody>
                     {loading && (
-                      <tr><td colSpan={6} className="text-center py-5 text-muted">Loading invoices…</td></tr>
+                      <tr>
+                        <td colSpan={6} className="text-center py-5 text-muted">
+                          Loading invoices…
+                        </td>
+                      </tr>
                     )}
                     {!loading && invoices.length === 0 && (
-                      <tr><td colSpan={6} className="text-center py-5 text-muted">No invoices yet. Click <strong>+ New Invoice</strong> to create one.</td></tr>
+                      <tr>
+                        <td colSpan={6} className="text-center py-5 text-muted">
+                          No invoices yet. Click <strong>+ New Invoice</strong>{" "}
+                          to create one.
+                        </td>
+                      </tr>
                     )}
                     {invoices.map((inv) => {
                       const cust = contactById.get(inv.customer_id ?? 0);
@@ -931,21 +1043,41 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
                         >
                           <td>
                             <div className="fw-semibold">{inv.reference}</div>
-                            <small className="text-muted">{inv.invoice_type === "credit_note" ? "Credit Note" : "Invoice"}</small>
+                            <small className="text-muted">
+                              {inv.invoice_type === "credit_note"
+                                ? "Credit Note"
+                                : "Invoice"}
+                            </small>
                           </td>
                           <td>{cust?.name || "—"}</td>
-                          <td className="text-muted">{inv.invoice_date ? new Date(inv.invoice_date).toLocaleDateString() : "—"}</td>
+                          <td className="text-muted">
+                            {inv.invoice_date
+                              ? new Date(inv.invoice_date).toLocaleDateString()
+                              : "—"}
+                          </td>
                           <td>
-                            <span className={`badge ${inv.status === "paid" ? "bg-success" : inv.status === "posted" ? "bg-info" : inv.status === "fiscalized" ? "bg-primary" : "bg-secondary"}`}>
+                            <span
+                              className={`badge ${inv.status === "paid" ? "bg-success" : inv.status === "posted" ? "bg-info" : inv.status === "fiscalized" ? "bg-primary" : "bg-secondary"}`}
+                            >
                               {inv.status}
                             </span>
                           </td>
                           <td>
-                            <span className={`badge bg-${getPaymentStatus(inv.amount_paid, inv.amount_due) === "Paid" ? "success" : getPaymentStatus(inv.amount_paid, inv.amount_due) === "Partial" ? "warning" : "secondary"}`}>
-                              {getPaymentStatus(inv.amount_paid, inv.amount_due)}
+                            <span
+                              className={`badge bg-${getPaymentStatus(inv.amount_paid, inv.amount_due) === "Paid" ? "success" : getPaymentStatus(inv.amount_paid, inv.amount_due) === "Partial" ? "warning" : "secondary"}`}
+                            >
+                              {getPaymentStatus(
+                                inv.amount_paid,
+                                inv.amount_due,
+                              )}
                             </span>
                           </td>
-                          <td className="text-end fw-semibold">{formatCurrency(inv.total_amount || 0, inv.currency || "USD")}</td>
+                          <td className="text-end fw-semibold">
+                            {formatCurrency(
+                              inv.total_amount || 0,
+                              inv.currency || "USD",
+                            )}
+                          </td>
                         </tr>
                       );
                     })}
@@ -963,12 +1095,21 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
           {/* Top toolbar */}
           <div className="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
             <div className="d-flex align-items-center gap-2">
-              <button className="btn btn-sm btn-light border" onClick={goBackToList}>← Back</button>
+              <button
+                className="btn btn-sm btn-light border"
+                onClick={goBackToList}
+              >
+                ← Back
+              </button>
               <h4 className="fw-bold mb-0">
-                {newMode ? "New Invoice" : selectedInvoice?.reference || "Invoice"}
+                {newMode
+                  ? "New Invoice"
+                  : selectedInvoice?.reference || "Invoice"}
               </h4>
               {!newMode && selectedInvoice && (
-                <span className={`badge ms-2 ${statusLabel === "paid" ? "bg-success" : statusLabel === "posted" ? "bg-info" : statusLabel === "fiscalized" ? "bg-primary" : "bg-secondary"}`}>
+                <span
+                  className={`badge ms-2 ${statusLabel === "paid" ? "bg-success" : statusLabel === "posted" ? "bg-info" : statusLabel === "fiscalized" ? "bg-primary" : "bg-secondary"}`}
+                >
                   {statusLabel}
                 </span>
               )}
@@ -976,35 +1117,92 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
             <div className="d-flex flex-wrap gap-1">
               {newMode ? (
                 <>
-                  <button className="btn btn-sm btn-primary" onClick={createInvoice} disabled={loading}>
+                  <button
+                    className="btn btn-sm btn-primary"
+                    onClick={createInvoice}
+                    disabled={loading}
+                  >
                     {loading ? "Saving…" : "Create Invoice"}
                   </button>
-                  <button className="btn btn-sm btn-light border" onClick={goBackToList}>Discard</button>
+                  <button
+                    className="btn btn-sm btn-light border"
+                    onClick={goBackToList}
+                  >
+                    Discard
+                  </button>
                 </>
               ) : isEditing ? (
                 <>
-                  <button className="btn btn-sm btn-primary" onClick={saveInvoice} disabled={loading}>
+                  <button
+                    className="btn btn-sm btn-primary"
+                    onClick={saveInvoice}
+                    disabled={loading}
+                  >
                     {loading ? "Saving…" : "Save"}
                   </button>
-                  <button className="btn btn-sm btn-light border" onClick={() => setIsEditing(false)}>Discard</button>
+                  <button
+                    className="btn btn-sm btn-light border"
+                    onClick={() => setIsEditing(false)}
+                  >
+                    Discard
+                  </button>
                 </>
               ) : (
                 <>
                   {statusLabel === "draft" && (
-                    <button className="btn btn-sm btn-light border" onClick={() => setIsEditing(true)}>Edit</button>
+                    <button
+                      className="btn btn-sm btn-light border"
+                      onClick={() => setIsEditing(true)}
+                    >
+                      Edit
+                    </button>
                   )}
-                  <button className="btn btn-sm btn-light border" onClick={postInvoice} disabled={statusLabel !== "draft"}>Post</button>
+                  <button
+                    className="btn btn-sm btn-light border"
+                    onClick={postInvoice}
+                    disabled={statusLabel !== "draft"}
+                  >
+                    Post
+                  </button>
                   <button
                     className="btn btn-sm btn-light border"
                     onClick={fiscalizeInvoice}
-                    disabled={statusLabel !== "posted" || !(editDeviceId ?? selectedInvoice?.device_id)}
+                    disabled={
+                      statusLabel !== "posted" ||
+                      !(editDeviceId ?? selectedInvoice?.device_id)
+                    }
                   >
                     Fiscalize
                   </button>
-                  <button className="btn btn-sm btn-light border" onClick={resetInvoice} disabled={statusLabel !== "posted" && statusLabel !== "fiscalized"}>Reset</button>
-                  <button className="btn btn-sm btn-light border" onClick={printInvoice}>Print PDF</button>
-                  <button className="btn btn-sm btn-light border" onClick={() => setPaymentOpen(true)} disabled={statusLabel === "draft"}>Register Payment</button>
-                  <button className="btn btn-sm btn-light border" onClick={createCreditNote} disabled={statusLabel === "draft" || isCreditNote}>Credit Note</button>
+                  <button
+                    className="btn btn-sm btn-light border"
+                    onClick={resetInvoice}
+                    disabled={
+                      statusLabel !== "posted" && statusLabel !== "fiscalized"
+                    }
+                  >
+                    Reset
+                  </button>
+                  <button
+                    className="btn btn-sm btn-light border"
+                    onClick={printInvoice}
+                  >
+                    Print PDF
+                  </button>
+                  <button
+                    className="btn btn-sm btn-light border"
+                    onClick={() => setPaymentOpen(true)}
+                    disabled={statusLabel === "draft"}
+                  >
+                    Register Payment
+                  </button>
+                  <button
+                    className="btn btn-sm btn-light border"
+                    onClick={createCreditNote}
+                    disabled={statusLabel === "draft" || isCreditNote}
+                  >
+                    Credit Note
+                  </button>
                 </>
               )}
             </div>
@@ -1016,8 +1214,13 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
               <div className="card-body invoice-form">
                 <div className="row g-3">
                   <div className="col-md-6">
-                    <label className="form-label fw-semibold">Customer <span className="text-danger">*</span></label>
-                    <div className="position-relative" ref={customerDropdownRef}>
+                    <label className="form-label fw-semibold">
+                      Customer <span className="text-danger">*</span>
+                    </label>
+                    <div
+                      className="position-relative"
+                      ref={customerDropdownRef}
+                    >
                       <input
                         className="form-control input-underline"
                         placeholder="Search or select customer…"
@@ -1030,36 +1233,58 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
                         onFocus={() => setCustomerDropdownOpen(true)}
                       />
                       {customerDropdownOpen && (
-                        <ul className="list-group position-absolute w-100 shadow-sm" style={{ zIndex: 1050, maxHeight: 220, overflowY: "auto" }}>
+                        <ul
+                          className="list-group position-absolute w-100 shadow-sm"
+                          style={{
+                            zIndex: 1050,
+                            maxHeight: 220,
+                            overflowY: "auto",
+                          }}
+                        >
                           {displayContacts.map((c) => (
                             <li
                               key={c.id}
                               className={`list-group-item list-group-item-action${newCustomerId === c.id ? " active" : ""}`}
                               role="button"
-                              onClick={() => selectCustomer(c.id, c.name, "new")}
+                              onClick={() =>
+                                selectCustomer(c.id, c.name, "new")
+                              }
                             >
                               {c.name}
                             </li>
                           ))}
-                          {customerSearch.trim() && !filteredContacts.some((c) => c.name.toLowerCase() === customerSearch.trim().toLowerCase()) && (
-                            <li
-                              className="list-group-item list-group-item-action text-primary"
-                              role="button"
-                              onClick={() => createCustomerFromSearch("new")}
-                            >
-                              {customerCreating ? "Creating..." : `Create "${customerSearch.trim()}"`}
-                            </li>
-                          )}
-                          {!displayContacts.length && !customerSearch.trim() && (
-                            <li className="list-group-item text-muted">No customers</li>
-                          )}
+                          {customerSearch.trim() &&
+                            !filteredContacts.some(
+                              (c) =>
+                                c.name.toLowerCase() ===
+                                customerSearch.trim().toLowerCase(),
+                            ) && (
+                              <li
+                                className="list-group-item list-group-item-action text-primary"
+                                role="button"
+                                onClick={() => createCustomerFromSearch("new")}
+                              >
+                                {customerCreating
+                                  ? "Creating..."
+                                  : `Create "${customerSearch.trim()}"`}
+                              </li>
+                            )}
+                          {!displayContacts.length &&
+                            !customerSearch.trim() && (
+                              <li className="list-group-item text-muted">
+                                No customers
+                              </li>
+                            )}
                         </ul>
                       )}
                     </div>
                   </div>
                   <div className="col-md-6">
                     <label className="form-label fw-semibold">Quotation</label>
-                    <div className="position-relative" ref={quotationDropdownRef}>
+                    <div
+                      className="position-relative"
+                      ref={quotationDropdownRef}
+                    >
                       <input
                         className="form-control input-underline"
                         placeholder="Search or select quotation…"
@@ -1072,7 +1297,14 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
                         onFocus={() => setQuotationDropdownOpen(true)}
                       />
                       {quotationDropdownOpen && (
-                        <ul className="list-group position-absolute w-100 shadow-sm" style={{ zIndex: 1050, maxHeight: 220, overflowY: "auto" }}>
+                        <ul
+                          className="list-group position-absolute w-100 shadow-sm"
+                          style={{
+                            zIndex: 1050,
+                            maxHeight: 220,
+                            overflowY: "auto",
+                          }}
+                        >
                           {displayQuotations.map((q) => (
                             <li
                               key={q.id}
@@ -1087,45 +1319,82 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
                               {q.reference}
                             </li>
                           ))}
-                          {!displayQuotations.length && !quotationSearch.trim() && (
-                            <li className="list-group-item text-muted">No quotations</li>
-                          )}
+                          {!displayQuotations.length &&
+                            !quotationSearch.trim() && (
+                              <li className="list-group-item text-muted">
+                                No quotations
+                              </li>
+                            )}
                         </ul>
                       )}
                     </div>
                   </div>
                   <div className="col-md-3">
                     <label className="form-label">Reference</label>
-                    <input className="form-control input-underline bg-light" value="Auto-generated" readOnly />
+                    <input
+                      className="form-control input-underline bg-light"
+                      value="Auto-generated"
+                      readOnly
+                    />
                   </div>
                   <div className="col-md-3">
                     <label className="form-label">Currency</label>
-                    <select className="form-select input-underline" value={newCurrency} onChange={(e) => setNewCurrency(e.target.value)}>
+                    <select
+                      className="form-select input-underline"
+                      value={newCurrency}
+                      onChange={(e) => setNewCurrency(e.target.value)}
+                    >
                       {currencyOptions.map((cur) => (
-                        <option key={cur} value={cur}>{cur}</option>
+                        <option key={cur} value={cur}>
+                          {cur}
+                        </option>
                       ))}
                     </select>
                   </div>
                   <div className="col-md-3">
                     <label className="form-label">Invoice Date</label>
-                    <input className="form-control input-underline" type="date" value={newInvoiceDate} onChange={(e) => setNewInvoiceDate(e.target.value)} />
+                    <input
+                      className="form-control input-underline"
+                      type="date"
+                      value={newInvoiceDate}
+                      onChange={(e) => setNewInvoiceDate(e.target.value)}
+                    />
                   </div>
                   <div className="col-md-3">
                     <label className="form-label">Due Date</label>
-                    <input className="form-control input-underline" type="date" value={newDueDate} onChange={(e) => setNewDueDate(e.target.value)} />
+                    <input
+                      className="form-control input-underline"
+                      type="date"
+                      value={newDueDate}
+                      onChange={(e) => setNewDueDate(e.target.value)}
+                    />
                   </div>
                   <div className="col-md-4 d-none">
                     <label className="form-label">Fiscal Device</label>
-                    <select className="form-select input-underline" value={newDeviceId ?? ""} onChange={(e) => setNewDeviceId(e.target.value ? Number(e.target.value) : null)}>
+                    <select
+                      className="form-select input-underline"
+                      value={newDeviceId ?? ""}
+                      onChange={(e) =>
+                        setNewDeviceId(
+                          e.target.value ? Number(e.target.value) : null,
+                        )
+                      }
+                    >
                       <option value="">— None —</option>
                       {devices.map((d) => (
-                        <option key={d.id} value={d.id}>{d.device_id || d.serial_number || `Device ${d.id}`}</option>
+                        <option key={d.id} value={d.id}>
+                          {d.device_id || d.serial_number || `Device ${d.id}`}
+                        </option>
                       ))}
                     </select>
                   </div>
                   <div className="col-md-4">
                     <label className="form-label">Payment Terms</label>
-                    <select className="form-select input-underline" value={newPaymentTerms} onChange={(e) => setNewPaymentTerms(e.target.value)}>
+                    <select
+                      className="form-select input-underline"
+                      value={newPaymentTerms}
+                      onChange={(e) => setNewPaymentTerms(e.target.value)}
+                    >
                       <option value="">Select terms</option>
                       <option value="7 Days">7 Days</option>
                       <option value="14 Days">14 Days</option>
@@ -1137,7 +1406,12 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
                   </div>
                   <div className="col-md-4">
                     <label className="form-label">Notes</label>
-                    <textarea className="form-control input-underline" rows={1} value={newNotes} onChange={(e) => setNewNotes(e.target.value)} />
+                    <textarea
+                      className="form-control input-underline"
+                      rows={1}
+                      value={newNotes}
+                      onChange={(e) => setNewNotes(e.target.value)}
+                    />
                   </div>
                 </div>
 
@@ -1145,8 +1419,18 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
                 <div className="d-flex flex-wrap justify-content-between align-items-center mb-2">
                   <h6 className="fw-semibold mb-0">Invoice Lines</h6>
                   <div className="d-flex gap-2">
-                    <button className="btn btn-sm btn-light border" onClick={addLine}>+ Add Line</button>
-                    <button className="btn btn-sm btn-light border" onClick={() => setCreateProductOpen(true)}>+ New Product</button>
+                    <button
+                      className="btn btn-sm btn-light border"
+                      onClick={addLine}
+                    >
+                      + Add Line
+                    </button>
+                    <button
+                      className="btn btn-sm btn-light border"
+                      onClick={() => setCreateProductOpen(true)}
+                    >
+                      + New Product
+                    </button>
                   </div>
                 </div>
                 <div className="table-responsive">
@@ -1155,20 +1439,38 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
                       <tr>
                         <th style={{ minWidth: 160 }}>Product</th>
                         <th>Description</th>
-                        <th className="text-end" style={{ width: 80 }}>Qty</th>
+                        <th className="text-end" style={{ width: 80 }}>
+                          Qty
+                        </th>
                         <th style={{ width: 80 }}>UoM</th>
-                        <th className="text-end" style={{ width: 100 }}>Price</th>
-                        <th className="text-end" style={{ width: 80 }}>Disc %</th>
-                        <th className="text-end" style={{ width: 80 }}>Tax %</th>
-                        <th className="text-end" style={{ width: 110 }}>Amount</th>
+                        <th className="text-end" style={{ width: 100 }}>
+                          Price
+                        </th>
+                        <th className="text-end" style={{ width: 80 }}>
+                          Disc %
+                        </th>
+                        <th className="text-end" style={{ width: 80 }}>
+                          Tax %
+                        </th>
+                        <th className="text-end" style={{ width: 110 }}>
+                          Amount
+                        </th>
                         <th style={{ width: 40 }}></th>
                       </tr>
                     </thead>
                     <tbody>
                       {editLines.map((line, index) => {
-                        const product = line.product_id ? productById.get(line.product_id) : null;
-                        const lineTotal = (line.quantity || 0) * (line.unit_price || 0) * (1 - (line.discount || 0) / 100) * (1 + (line.vat_rate || 0) / 100);
-                        const displayUom = normalizeUom(product?.uom || line.uom || "Units");
+                        const product = line.product_id
+                          ? productById.get(line.product_id)
+                          : null;
+                        const lineTotal =
+                          (line.quantity || 0) *
+                          (line.unit_price || 0) *
+                          (1 - (line.discount || 0) / 100) *
+                          (1 + (line.vat_rate || 0) / 100);
+                        const displayUom = normalizeUom(
+                          product?.uom || line.uom || "Units",
+                        );
                         return (
                           <tr key={`new-${index}`}>
                             <td>
@@ -1176,37 +1478,119 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
                                 className="form-select form-select-sm"
                                 value={line.product_id ?? ""}
                                 onChange={(e) => {
-                                  const prod = products.find((p) => p.id === Number(e.target.value));
+                                  const prod = products.find(
+                                    (p) => p.id === Number(e.target.value),
+                                  );
                                   updateLine(index, {
-                                    product_id: e.target.value ? Number(e.target.value) : null,
+                                    product_id: e.target.value
+                                      ? Number(e.target.value)
+                                      : null,
                                     description: prod?.name ?? "",
                                     unit_price: prod?.sale_price ?? 0,
                                     vat_rate: prod?.tax_rate ?? 0,
-                                    uom: prod?.uom || ""
+                                    uom: prod?.uom || "",
                                   });
                                 }}
                               >
                                 <option value="">Select product</option>
                                 {products.map((p) => (
-                                  <option key={p.id} value={p.id}>{p.name}</option>
+                                  <option key={p.id} value={p.id}>
+                                    {p.name}
+                                  </option>
                                 ))}
                               </select>
                             </td>
-                            <td><input className="form-control form-control-sm" value={line.description || ""} onChange={(e) => updateLine(index, { description: e.target.value })} /></td>
-                            <td><input className="form-control form-control-sm text-end" type="number" value={line.quantity || 0} onChange={(e) => updateLine(index, { quantity: Number(e.target.value) })} /></td>
-                            <td><input className="form-control form-control-sm bg-light" value={displayUom} readOnly /></td>
-                            <td><input className="form-control form-control-sm text-end" type="number" value={line.unit_price || 0} onChange={(e) => updateLine(index, { unit_price: Number(e.target.value) })} /></td>
-                            <td><input className="form-control form-control-sm text-end" type="number" value={line.discount || 0} onChange={(e) => updateLine(index, { discount: Number(e.target.value) })} /></td>
-                            <td><input className="form-control form-control-sm text-end input-ghost" type="number" placeholder="Tax %" value={line.vat_rate ?? ""} onChange={(e) => updateLine(index, { vat_rate: Number(e.target.value) })} /></td>
-                            <td className="text-end fw-semibold">{formatCurrency(lineTotal, newCurrency)}</td>
+                            <td>
+                              <input
+                                className="form-control form-control-sm"
+                                value={line.description || ""}
+                                onChange={(e) =>
+                                  updateLine(index, {
+                                    description: e.target.value,
+                                  })
+                                }
+                              />
+                            </td>
+                            <td>
+                              <input
+                                className="form-control form-control-sm text-end"
+                                type="number"
+                                value={line.quantity || 0}
+                                onChange={(e) =>
+                                  updateLine(index, {
+                                    quantity: Number(e.target.value),
+                                  })
+                                }
+                              />
+                            </td>
+                            <td>
+                              <input
+                                className="form-control form-control-sm bg-light"
+                                value={displayUom}
+                                readOnly
+                              />
+                            </td>
+                            <td>
+                              <input
+                                className="form-control form-control-sm text-end"
+                                type="number"
+                                value={line.unit_price || 0}
+                                onChange={(e) =>
+                                  updateLine(index, {
+                                    unit_price: Number(e.target.value),
+                                  })
+                                }
+                              />
+                            </td>
+                            <td>
+                              <input
+                                className="form-control form-control-sm text-end"
+                                type="number"
+                                value={line.discount || 0}
+                                onChange={(e) =>
+                                  updateLine(index, {
+                                    discount: Number(e.target.value),
+                                  })
+                                }
+                              />
+                            </td>
+                            <td>
+                              <input
+                                className="form-control form-control-sm text-end input-ghost"
+                                type="number"
+                                placeholder="Tax %"
+                                value={line.vat_rate ?? ""}
+                                onChange={(e) =>
+                                  updateLine(index, {
+                                    vat_rate: Number(e.target.value),
+                                  })
+                                }
+                              />
+                            </td>
+                            <td className="text-end fw-semibold">
+                              {formatCurrency(lineTotal, newCurrency)}
+                            </td>
                             <td className="text-center">
-                              <button className="btn btn-sm btn-light border" onClick={() => removeLine(index)} disabled={editLines.length === 1}>✕</button>
+                              <button
+                                className="btn btn-sm btn-light border"
+                                onClick={() => removeLine(index)}
+                                disabled={editLines.length === 1}
+                              >
+                                ✕
+                              </button>
                             </td>
                           </tr>
                         );
                       })}
                       {!editLines.length && (
-                        <tr><td colSpan={9} className="text-center py-4 text-muted">Click <strong>+ Add Line</strong> to add products</td></tr>
+                        <tr>
+                          <td
+                            colSpan={9}
+                            className="text-center py-4 text-muted"
+                          >
+                            Click <strong>+ Add Line</strong> to add products
+                          </td>
+                        </tr>
                       )}
                     </tbody>
                   </table>
@@ -1225,7 +1609,12 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
                     <div className="card border-0 bg-light h-100">
                       <div className="card-body py-2">
                         <small className="text-muted">Total Amount</small>
-                        <div className="fs-5 fw-bold">{formatCurrency(selectedInvoice.total_amount || 0, invoiceCurrency)}</div>
+                        <div className="fs-5 fw-bold">
+                          {formatCurrency(
+                            selectedInvoice.total_amount || 0,
+                            invoiceCurrency,
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1233,8 +1622,15 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
                     <div className="card border-0 bg-light h-100">
                       <div className="card-body py-2">
                         <small className="text-muted">Amount Paid</small>
-                        <div className="fs-5 fw-bold">{formatCurrency(selectedInvoice.amount_paid || 0, invoiceCurrency)}</div>
-                        <span className={`badge bg-${paymentBadge}`}>{paymentStatus}</span>
+                        <div className="fs-5 fw-bold">
+                          {formatCurrency(
+                            selectedInvoice.amount_paid || 0,
+                            invoiceCurrency,
+                          )}
+                        </div>
+                        <span className={`badge bg-${paymentBadge}`}>
+                          {paymentStatus}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -1242,7 +1638,12 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
                     <div className="card border-0 bg-light h-100">
                       <div className="card-body py-2">
                         <small className="text-muted">Amount Due</small>
-                        <div className="fs-5 fw-bold">{formatCurrency(selectedInvoice.amount_due || 0, invoiceCurrency)}</div>
+                        <div className="fs-5 fw-bold">
+                          {formatCurrency(
+                            selectedInvoice.amount_due || 0,
+                            invoiceCurrency,
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1250,9 +1651,13 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
                     <div className="card border-0 bg-light h-100">
                       <div className="card-body py-2">
                         <small className="text-muted">Fiscalization</small>
-                        <div className="fw-bold text-uppercase">{selectedInvoice.zimra_status || "not_submitted"}</div>
+                        <div className="fw-bold text-uppercase">
+                          {selectedInvoice.zimra_status || "not_submitted"}
+                        </div>
                         {selectedInvoice.zimra_verification_code && (
-                          <small className="text-muted">Code: {selectedInvoice.zimra_verification_code}</small>
+                          <small className="text-muted">
+                            Code: {selectedInvoice.zimra_verification_code}
+                          </small>
                         )}
                       </div>
                     </div>
@@ -1264,7 +1669,10 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
                   <div className="col-md-6">
                     <label className="form-label fw-semibold">Customer</label>
                     {canEdit ? (
-                      <div className="position-relative" ref={customerDropdownRef}>
+                      <div
+                        className="position-relative"
+                        ref={customerDropdownRef}
+                      >
                         <input
                           className="form-control input-underline"
                           placeholder="Search or select customer…"
@@ -1277,56 +1685,102 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
                           onFocus={() => setCustomerDropdownOpen(true)}
                         />
                         {customerDropdownOpen && (
-                          <ul className="list-group position-absolute w-100 shadow-sm" style={{ zIndex: 1050, maxHeight: 220, overflowY: "auto" }}>
+                          <ul
+                            className="list-group position-absolute w-100 shadow-sm"
+                            style={{
+                              zIndex: 1050,
+                              maxHeight: 220,
+                              overflowY: "auto",
+                            }}
+                          >
                             {displayContacts.map((c) => (
                               <li
                                 key={c.id}
                                 className={`list-group-item list-group-item-action${editCustomerId === c.id ? " active" : ""}`}
                                 role="button"
-                                onClick={() => selectCustomer(c.id, c.name, "edit")}
+                                onClick={() =>
+                                  selectCustomer(c.id, c.name, "edit")
+                                }
                               >
                                 {c.name}
                               </li>
                             ))}
-                            {customerSearch.trim() && !filteredContacts.some((c) => c.name.toLowerCase() === customerSearch.trim().toLowerCase()) && (
-                              <li
-                                className="list-group-item list-group-item-action text-primary"
-                                role="button"
-                                onClick={() => createCustomerFromSearch("edit")}
-                              >
-                                {customerCreating ? "Creating..." : `Create "${customerSearch.trim()}"`}
-                              </li>
-                            )}
-                            {!displayContacts.length && !customerSearch.trim() && (
-                              <li className="list-group-item text-muted">No customers</li>
-                            )}
+                            {customerSearch.trim() &&
+                              !filteredContacts.some(
+                                (c) =>
+                                  c.name.toLowerCase() ===
+                                  customerSearch.trim().toLowerCase(),
+                              ) && (
+                                <li
+                                  className="list-group-item list-group-item-action text-primary"
+                                  role="button"
+                                  onClick={() =>
+                                    createCustomerFromSearch("edit")
+                                  }
+                                >
+                                  {customerCreating
+                                    ? "Creating..."
+                                    : `Create "${customerSearch.trim()}"`}
+                                </li>
+                              )}
+                            {!displayContacts.length &&
+                              !customerSearch.trim() && (
+                                <li className="list-group-item text-muted">
+                                  No customers
+                                </li>
+                              )}
                           </ul>
                         )}
                       </div>
                     ) : (
-                      <div className="form-control-plaintext">{customer?.name || "—"}</div>
+                      <div className="form-control-plaintext">
+                        {customer?.name || "—"}
+                      </div>
                     )}
                   </div>
                   <div className="col-md-3">
-                    <label className="form-label fw-semibold">Invoice Date</label>
+                    <label className="form-label fw-semibold">
+                      Invoice Date
+                    </label>
                     {canEdit ? (
-                      <input className="form-control input-underline" type="date" value={editInvoiceDate} onChange={(e) => setEditInvoiceDate(e.target.value)} />
+                      <input
+                        className="form-control input-underline"
+                        type="date"
+                        value={editInvoiceDate}
+                        onChange={(e) => setEditInvoiceDate(e.target.value)}
+                      />
                     ) : (
-                      <div className="form-control-plaintext">{invoiceDateLabel}</div>
+                      <div className="form-control-plaintext">
+                        {invoiceDateLabel}
+                      </div>
                     )}
                   </div>
                   <div className="col-md-3">
                     <label className="form-label fw-semibold">Due Date</label>
                     {canEdit ? (
-                      <input className="form-control input-underline" type="date" value={editDueDate} onChange={(e) => setEditDueDate(e.target.value)} />
+                      <input
+                        className="form-control input-underline"
+                        type="date"
+                        value={editDueDate}
+                        onChange={(e) => setEditDueDate(e.target.value)}
+                      />
                     ) : (
-                      <div className="form-control-plaintext">{selectedInvoice?.due_date ? new Date(selectedInvoice.due_date).toLocaleDateString() : "—"}</div>
+                      <div className="form-control-plaintext">
+                        {selectedInvoice?.due_date
+                          ? new Date(
+                              selectedInvoice.due_date,
+                            ).toLocaleDateString()
+                          : "—"}
+                      </div>
                     )}
                   </div>
                   <div className="col-md-4">
                     <label className="form-label">Quotation</label>
                     {canEdit ? (
-                      <div className="position-relative" ref={quotationDropdownRef}>
+                      <div
+                        className="position-relative"
+                        ref={quotationDropdownRef}
+                      >
                         <input
                           className="form-control input-underline"
                           placeholder="Search or select quotation…"
@@ -1339,7 +1793,14 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
                           onFocus={() => setQuotationDropdownOpen(true)}
                         />
                         {quotationDropdownOpen && (
-                          <ul className="list-group position-absolute w-100 shadow-sm" style={{ zIndex: 1050, maxHeight: 220, overflowY: "auto" }}>
+                          <ul
+                            className="list-group position-absolute w-100 shadow-sm"
+                            style={{
+                              zIndex: 1050,
+                              maxHeight: 220,
+                              overflowY: "auto",
+                            }}
+                          >
                             {displayQuotations.map((q) => (
                               <li
                                 key={q.id}
@@ -1354,49 +1815,82 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
                                 {q.reference}
                               </li>
                             ))}
-                            {!displayQuotations.length && !quotationSearch.trim() && (
-                              <li className="list-group-item text-muted">No quotations</li>
-                            )}
+                            {!displayQuotations.length &&
+                              !quotationSearch.trim() && (
+                                <li className="list-group-item text-muted">
+                                  No quotations
+                                </li>
+                              )}
                           </ul>
                         )}
                       </div>
                     ) : (
-                      <div className="form-control-plaintext">{linkedQuotation?.reference || "—"}</div>
+                      <div className="form-control-plaintext">
+                        {linkedQuotation?.reference || "—"}
+                      </div>
                     )}
                   </div>
                   <div className="col-md-4">
                     <label className="form-label">Reference</label>
-                    <div className="form-control-plaintext fw-semibold">{selectedInvoice?.reference || "—"}</div>
+                    <div className="form-control-plaintext fw-semibold">
+                      {selectedInvoice?.reference || "—"}
+                    </div>
                   </div>
                   <div className="col-md-4">
                     <label className="form-label">Currency</label>
                     {canEdit ? (
-                      <select className="form-select input-underline" value={editCurrency} onChange={(e) => setEditCurrency(e.target.value)}>
+                      <select
+                        className="form-select input-underline"
+                        value={editCurrency}
+                        onChange={(e) => setEditCurrency(e.target.value)}
+                      >
                         {currencyOptions.map((cur) => (
-                          <option key={cur} value={cur}>{cur}</option>
+                          <option key={cur} value={cur}>
+                            {cur}
+                          </option>
                         ))}
                       </select>
                     ) : (
-                      <div className="form-control-plaintext">{invoiceCurrency}</div>
+                      <div className="form-control-plaintext">
+                        {invoiceCurrency}
+                      </div>
                     )}
                   </div>
                   <div className="col-md-4 d-none">
                     <label className="form-label">Fiscal Device</label>
                     {canEdit ? (
-                      <select className="form-select input-underline" value={editDeviceId ?? ""} onChange={(e) => setEditDeviceId(e.target.value ? Number(e.target.value) : null)}>
+                      <select
+                        className="form-select input-underline"
+                        value={editDeviceId ?? ""}
+                        onChange={(e) =>
+                          setEditDeviceId(
+                            e.target.value ? Number(e.target.value) : null,
+                          )
+                        }
+                      >
                         <option value="">— None —</option>
                         {devices.map((d) => (
-                          <option key={d.id} value={d.id}>{d.device_id || d.serial_number || `Device ${d.id}`}</option>
+                          <option key={d.id} value={d.id}>
+                            {d.device_id || d.serial_number || `Device ${d.id}`}
+                          </option>
                         ))}
                       </select>
                     ) : (
-                      <div className="form-control-plaintext">{devices.find((d) => d.id === selectedInvoice?.device_id)?.device_id || "—"}</div>
+                      <div className="form-control-plaintext">
+                        {devices.find(
+                          (d) => d.id === selectedInvoice?.device_id,
+                        )?.device_id || "—"}
+                      </div>
                     )}
                   </div>
                   <div className="col-md-4">
                     <label className="form-label">Payment Terms</label>
                     {canEdit ? (
-                      <select className="form-select input-underline" value={editPaymentTerms} onChange={(e) => setEditPaymentTerms(e.target.value)}>
+                      <select
+                        className="form-select input-underline"
+                        value={editPaymentTerms}
+                        onChange={(e) => setEditPaymentTerms(e.target.value)}
+                      >
                         <option value="">Select terms</option>
                         <option value="7 Days">7 Days</option>
                         <option value="14 Days">14 Days</option>
@@ -1406,19 +1900,30 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
                         <option value="6 Months">6 Months</option>
                       </select>
                     ) : (
-                      <div className="form-control-plaintext">{selectedInvoice?.payment_terms || "—"}</div>
+                      <div className="form-control-plaintext">
+                        {selectedInvoice?.payment_terms || "—"}
+                      </div>
                     )}
                   </div>
                   <div className="col-md-4">
                     <label className="form-label">Payment Reference</label>
-                    <div className="form-control-plaintext">{selectedInvoice?.payment_reference || "—"}</div>
+                    <div className="form-control-plaintext">
+                      {selectedInvoice?.payment_reference || "—"}
+                    </div>
                   </div>
                   <div className="col-12">
                     <label className="form-label">Notes</label>
                     {canEdit ? (
-                      <textarea className="form-control input-underline" rows={2} value={editNotes} onChange={(e) => setEditNotes(e.target.value)} />
+                      <textarea
+                        className="form-control input-underline"
+                        rows={2}
+                        value={editNotes}
+                        onChange={(e) => setEditNotes(e.target.value)}
+                      />
                     ) : (
-                      <div className="form-control-plaintext">{selectedInvoice?.notes || "—"}</div>
+                      <div className="form-control-plaintext">
+                        {selectedInvoice?.notes || "—"}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -1428,8 +1933,18 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
                   <div className="fw-semibold">Invoice Lines</div>
                   {canEdit && (
                     <div className="d-flex gap-2">
-                      <button className="btn btn-sm btn-light border" onClick={addLine}>+ Add Line</button>
-                      <button className="btn btn-sm btn-light border" onClick={() => setCreateProductOpen(true)}>+ New Product</button>
+                      <button
+                        className="btn btn-sm btn-light border"
+                        onClick={addLine}
+                      >
+                        + Add Line
+                      </button>
+                      <button
+                        className="btn btn-sm btn-light border"
+                        onClick={() => setCreateProductOpen(true)}
+                      >
+                        + New Product
+                      </button>
                     </div>
                   )}
                 </div>
@@ -1450,9 +1965,17 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
                     </thead>
                     <tbody>
                       {displayLines.map((line, index) => {
-                        const product = line.product_id ? productById.get(line.product_id) : null;
-                        const lineTotal = (line.quantity || 0) * (line.unit_price || 0) * (1 - (line.discount || 0) / 100) * (1 + (line.vat_rate || 0) / 100);
-                        const displayUom = normalizeUom(product?.uom || line.uom || "");
+                        const product = line.product_id
+                          ? productById.get(line.product_id)
+                          : null;
+                        const lineTotal =
+                          (line.quantity || 0) *
+                          (line.unit_price || 0) *
+                          (1 - (line.discount || 0) / 100) *
+                          (1 + (line.vat_rate || 0) / 100);
+                        const displayUom = normalizeUom(
+                          product?.uom || line.uom || "",
+                        );
                         return (
                           <tr key={line.id || `edit-${index}`}>
                             <td>
@@ -1461,42 +1984,156 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
                                   className="form-select form-select-sm"
                                   value={line.product_id ?? ""}
                                   onChange={(e) => {
-                                    const prod = products.find((p) => p.id === Number(e.target.value));
+                                    const prod = products.find(
+                                      (p) => p.id === Number(e.target.value),
+                                    );
                                     updateLine(index, {
-                                      product_id: e.target.value ? Number(e.target.value) : null,
+                                      product_id: e.target.value
+                                        ? Number(e.target.value)
+                                        : null,
                                       description: prod?.name ?? "",
                                       unit_price: prod?.sale_price ?? 0,
                                       vat_rate: prod?.tax_rate ?? 0,
-                                      uom: prod?.uom || "Units"
+                                      uom: prod?.uom || "Units",
                                     });
                                   }}
                                 >
                                   <option value="">Select</option>
                                   {products.map((p) => (
-                                    <option key={p.id} value={p.id}>{p.name} (avail: {p.quantity_available ?? 0})</option>
+                                    <option key={p.id} value={p.id}>
+                                      {p.name} (avail:{" "}
+                                      {p.quantity_available ?? 0})
+                                    </option>
                                   ))}
                                 </select>
                               ) : (
-                                product?.name ?? "—"
+                                (product?.name ?? "—")
                               )}
                             </td>
-                            <td>{canEdit ? <input className="form-control form-control-sm" value={line.description || ""} onChange={(e) => updateLine(index, { description: e.target.value })} /> : (line.description || "—")}</td>
-                            <td className="text-end">{canEdit ? <input className="form-control form-control-sm text-end" type="number" value={line.quantity || 0} onChange={(e) => updateLine(index, { quantity: Number(e.target.value) })} /> : line.quantity}</td>
-                            <td>{canEdit ? <input className="form-control form-control-sm bg-light" value={displayUom} readOnly /> : (displayUom || "—")}</td>
-                            <td className="text-end">{canEdit ? <input className="form-control form-control-sm text-end" type="number" value={line.unit_price || 0} onChange={(e) => updateLine(index, { unit_price: Number(e.target.value) })} /> : formatCurrency(line.unit_price || 0, invoiceCurrency)}</td>
-                            <td className="text-end">{canEdit ? <input className="form-control form-control-sm text-end" type="number" value={line.discount || 0} onChange={(e) => updateLine(index, { discount: Number(e.target.value) })} /> : (line.discount ? `${line.discount}%` : "—")}</td>
-                            <td className="text-end">{canEdit ? <input className="form-control form-control-sm text-end input-ghost" type="number" placeholder="Tax %" value={line.vat_rate ?? ""} onChange={(e) => updateLine(index, { vat_rate: Number(e.target.value) })} /> : (line.vat_rate ? `${line.vat_rate}%` : "—")}</td>
-                            <td className="text-end fw-semibold">{formatCurrency(lineTotal, invoiceCurrency)}</td>
+                            <td>
+                              {canEdit ? (
+                                <input
+                                  className="form-control form-control-sm"
+                                  value={line.description || ""}
+                                  onChange={(e) =>
+                                    updateLine(index, {
+                                      description: e.target.value,
+                                    })
+                                  }
+                                />
+                              ) : (
+                                line.description || "—"
+                              )}
+                            </td>
+                            <td className="text-end">
+                              {canEdit ? (
+                                <input
+                                  className="form-control form-control-sm text-end"
+                                  type="number"
+                                  value={line.quantity || 0}
+                                  onChange={(e) =>
+                                    updateLine(index, {
+                                      quantity: Number(e.target.value),
+                                    })
+                                  }
+                                />
+                              ) : (
+                                line.quantity
+                              )}
+                            </td>
+                            <td>
+                              {canEdit ? (
+                                <input
+                                  className="form-control form-control-sm bg-light"
+                                  value={displayUom}
+                                  readOnly
+                                />
+                              ) : (
+                                displayUom || "—"
+                              )}
+                            </td>
+                            <td className="text-end">
+                              {canEdit ? (
+                                <input
+                                  className="form-control form-control-sm text-end"
+                                  type="number"
+                                  value={line.unit_price || 0}
+                                  onChange={(e) =>
+                                    updateLine(index, {
+                                      unit_price: Number(e.target.value),
+                                    })
+                                  }
+                                />
+                              ) : (
+                                formatCurrency(
+                                  line.unit_price || 0,
+                                  invoiceCurrency,
+                                )
+                              )}
+                            </td>
+                            <td className="text-end">
+                              {canEdit ? (
+                                <input
+                                  className="form-control form-control-sm text-end"
+                                  type="number"
+                                  value={line.discount || 0}
+                                  onChange={(e) =>
+                                    updateLine(index, {
+                                      discount: Number(e.target.value),
+                                    })
+                                  }
+                                />
+                              ) : line.discount ? (
+                                `${line.discount}%`
+                              ) : (
+                                "—"
+                              )}
+                            </td>
+                            <td className="text-end">
+                              {canEdit ? (
+                                <input
+                                  className="form-control form-control-sm text-end input-ghost"
+                                  type="number"
+                                  placeholder="Tax %"
+                                  value={line.vat_rate ?? ""}
+                                  onChange={(e) =>
+                                    updateLine(index, {
+                                      vat_rate: Number(e.target.value),
+                                    })
+                                  }
+                                />
+                              ) : line.vat_rate ? (
+                                `${line.vat_rate}%`
+                              ) : (
+                                "—"
+                              )}
+                            </td>
+                            <td className="text-end fw-semibold">
+                              {formatCurrency(lineTotal, invoiceCurrency)}
+                            </td>
                             {canEdit && (
                               <td className="text-center">
-                                <button className="btn btn-sm btn-light border" onClick={() => removeLine(index)} disabled={displayLines.length === 1}>✕</button>
+                                <button
+                                  className="btn btn-sm btn-light border"
+                                  onClick={() => removeLine(index)}
+                                  disabled={displayLines.length === 1}
+                                >
+                                  ✕
+                                </button>
                               </td>
                             )}
                           </tr>
                         );
                       })}
                       {!displayLines.length && (
-                        <tr><td colSpan={canEdit ? 9 : 8} className="text-center py-4 text-muted">No invoice lines</td></tr>
+                        <tr>
+                          <td
+                            colSpan={canEdit ? 9 : 8}
+                            className="text-center py-4 text-muted"
+                          >
+                            No invoice lines
+                          </td>
+                        </tr>
                       )}
                     </tbody>
                   </table>
@@ -1508,9 +2145,14 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
                     <div className="card border-0 bg-light">
                       <div className="card-body py-2">
                         <div className="fw-semibold mb-1">Tax Breakdown</div>
-                        {taxBreakdown.length === 0 && <small className="text-muted">No taxes applied</small>}
+                        {taxBreakdown.length === 0 && (
+                          <small className="text-muted">No taxes applied</small>
+                        )}
                         {taxBreakdown.map(([rate, amt]) => (
-                          <div key={rate} className="d-flex justify-content-between text-muted small">
+                          <div
+                            key={rate}
+                            className="d-flex justify-content-between text-muted small"
+                          >
                             <span>VAT {rate}%</span>
                             <span>{formatCurrency(amt, invoiceCurrency)}</span>
                           </div>
@@ -1521,11 +2163,44 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
                   <div className="col-md-6">
                     <div className="card border-0 bg-light">
                       <div className="card-body py-2">
-                        <div className="d-flex justify-content-between"><span>Subtotal</span><span>{formatCurrency(selectedInvoice.subtotal || 0, invoiceCurrency)}</span></div>
-                        <div className="d-flex justify-content-between"><span>Discount</span><span>-{formatCurrency(selectedInvoice.discount_amount || 0, invoiceCurrency)}</span></div>
-                        <div className="d-flex justify-content-between"><span>Tax</span><span>{formatCurrency(selectedInvoice.tax_amount || 0, invoiceCurrency)}</span></div>
+                        <div className="d-flex justify-content-between">
+                          <span>Subtotal</span>
+                          <span>
+                            {formatCurrency(
+                              selectedInvoice.subtotal || 0,
+                              invoiceCurrency,
+                            )}
+                          </span>
+                        </div>
+                        <div className="d-flex justify-content-between">
+                          <span>Discount</span>
+                          <span>
+                            -
+                            {formatCurrency(
+                              selectedInvoice.discount_amount || 0,
+                              invoiceCurrency,
+                            )}
+                          </span>
+                        </div>
+                        <div className="d-flex justify-content-between">
+                          <span>Tax</span>
+                          <span>
+                            {formatCurrency(
+                              selectedInvoice.tax_amount || 0,
+                              invoiceCurrency,
+                            )}
+                          </span>
+                        </div>
                         <hr className="my-1" />
-                        <div className="d-flex justify-content-between fw-bold"><span>Total</span><span>{formatCurrency(selectedInvoice.total_amount || 0, invoiceCurrency)}</span></div>
+                        <div className="d-flex justify-content-between fw-bold">
+                          <span>Total</span>
+                          <span>
+                            {formatCurrency(
+                              selectedInvoice.total_amount || 0,
+                              invoiceCurrency,
+                            )}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1544,27 +2219,51 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
             tabIndex={-1}
             role="dialog"
             style={{ display: "block", zIndex: 1050 }}
-            onClick={(e) => { if (e.target === e.currentTarget) setPaymentOpen(false); }}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setPaymentOpen(false);
+            }}
           >
             <div className="modal-dialog modal-dialog-centered">
               <div className="modal-content shadow-lg border-0">
                 <div className="modal-header border-bottom">
                   <h5 className="modal-title fw-semibold">Register Payment</h5>
-                  <button type="button" className="btn-close" onClick={() => setPaymentOpen(false)} />
+                  <button
+                    type="button"
+                    className="btn-close"
+                    onClick={() => setPaymentOpen(false)}
+                  />
                 </div>
                 <div className="modal-body py-4">
                   <div className="mb-3">
                     <label className="form-label fw-semibold">Amount</label>
-                    <input className="form-control" type="number" value={paymentAmount} onChange={(e) => setPaymentAmount(e.target.value)} />
+                    <input
+                      className="form-control"
+                      type="number"
+                      value={paymentAmount}
+                      onChange={(e) => setPaymentAmount(e.target.value)}
+                    />
                   </div>
                   <div className="mb-3">
-                    <label className="form-label fw-semibold">Payment Reference</label>
-                    <input className="form-control" value={paymentReference} onChange={(e) => setPaymentReference(e.target.value)} />
+                    <label className="form-label fw-semibold">
+                      Payment Reference
+                    </label>
+                    <input
+                      className="form-control"
+                      value={paymentReference}
+                      onChange={(e) => setPaymentReference(e.target.value)}
+                    />
                   </div>
                 </div>
                 <div className="modal-footer border-top">
-                  <button className="btn btn-light border" onClick={() => setPaymentOpen(false)}>Cancel</button>
-                  <button className="btn btn-primary" onClick={registerPayment}>Confirm Payment</button>
+                  <button
+                    className="btn btn-light border"
+                    onClick={() => setPaymentOpen(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button className="btn btn-primary" onClick={registerPayment}>
+                    Confirm Payment
+                  </button>
                 </div>
               </div>
             </div>
@@ -1579,68 +2278,142 @@ export default function InvoicesPage({ mode = "list" }: { mode?: InvoicesPageMod
             className="modal"
             tabIndex={-1}
             role="dialog"
-            style={{ position: "fixed", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem", zIndex: 1050, background: "transparent" }}
-            onClick={(e) => { if (e.target === e.currentTarget) setCreateProductOpen(false); }}
+            style={{
+              position: "fixed",
+              inset: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "1rem",
+              zIndex: 1050,
+              background: "transparent",
+            }}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setCreateProductOpen(false);
+            }}
           >
-            <div className="modal-dialog modal-lg modal-dialog-centered" style={{ margin: 0, width: "100%", maxWidth: 720 }}>
+            <div
+              className="modal-dialog modal-lg modal-dialog-centered"
+              style={{ margin: 0, width: "100%", maxWidth: 720 }}
+            >
               <div className="modal-content shadow-lg border-0">
                 <div className="modal-header border-bottom">
                   <h5 className="modal-title fw-semibold">Create Product</h5>
-                  <button type="button" className="btn-close" onClick={() => setCreateProductOpen(false)} />
+                  <button
+                    type="button"
+                    className="btn-close"
+                    onClick={() => setCreateProductOpen(false)}
+                  />
                 </div>
                 <div className="modal-body py-4">
                   <div className="row g-3">
                     <div className="col-md-6">
                       <label className="form-label">Product Name</label>
-                      <input className="form-control" value={productName} onChange={(e) => setProductName(e.target.value)} />
+                      <input
+                        className="form-control"
+                        value={productName}
+                        onChange={(e) => setProductName(e.target.value)}
+                      />
                     </div>
                     <div className="col-md-3">
                       <label className="form-label">Sale Price</label>
-                      <input className="form-control" type="number" value={productPrice} onChange={(e) => setProductPrice(e.target.value)} />
+                      <input
+                        className="form-control"
+                        type="number"
+                        value={productPrice}
+                        onChange={(e) => setProductPrice(e.target.value)}
+                      />
                     </div>
                     <div className="col-md-3">
                       <label className="form-label">Tax Rate %</label>
-                      <input className="form-control" type="number" value={productTaxRate} onChange={(e) => setProductTaxRate(e.target.value)} />
+                      <input
+                        className="form-control"
+                        type="number"
+                        value={productTaxRate}
+                        onChange={(e) => setProductTaxRate(e.target.value)}
+                      />
                     </div>
                     <div className="col-md-3">
                       <label className="form-label">Reference / SKU</label>
-                      <input className="form-control" value={productReference} onChange={(e) => setProductReference(e.target.value)} placeholder="e.g., PROD-001" />
+                      <input
+                        className="form-control"
+                        value={productReference}
+                        onChange={(e) => setProductReference(e.target.value)}
+                        placeholder="e.g., PROD-001"
+                      />
                     </div>
                     <div className="col-md-3">
                       <label className="form-label">HS Code</label>
-                      <input className="form-control" value={productHsCode} onChange={(e) => setProductHsCode(e.target.value)} placeholder="Harmonized code" />
+                      <input
+                        className="form-control"
+                        value={productHsCode}
+                        onChange={(e) => setProductHsCode(e.target.value)}
+                        placeholder="Harmonized code"
+                      />
                     </div>
                     <div className="col-md-3">
                       <label className="form-label">UoM</label>
-                      <input className="form-control" value={productUom} onChange={(e) => setProductUom(e.target.value)} />
+                      <input
+                        className="form-control"
+                        value={productUom}
+                        onChange={(e) => setProductUom(e.target.value)}
+                      />
                     </div>
                     <div className="col-md-3">
                       <label className="form-label">Initial Stock</label>
-                      <input className="form-control" type="number" value={productInitialStock} onChange={(e) => setProductInitialStock(e.target.value)} />
+                      <input
+                        className="form-control"
+                        type="number"
+                        value={productInitialStock}
+                        onChange={(e) => setProductInitialStock(e.target.value)}
+                      />
                     </div>
                     <div className="col-md-3">
                       <label className="form-label">Warehouse</label>
-                      <select className="form-select" value={productWarehouseId ?? ""} onChange={(e) => setProductWarehouseId(Number(e.target.value))}>
+                      <select
+                        className="form-select"
+                        value={productWarehouseId ?? ""}
+                        onChange={(e) =>
+                          setProductWarehouseId(Number(e.target.value))
+                        }
+                      >
                         <option value="">Select warehouse</option>
                         {warehouses.map((w) => (
-                          <option key={w.id} value={w.id}>{w.name}</option>
+                          <option key={w.id} value={w.id}>
+                            {w.name}
+                          </option>
                         ))}
                       </select>
                     </div>
                     <div className="col-md-3">
                       <label className="form-label">Location</label>
-                      <select className="form-select" value={productLocationId ?? ""} onChange={(e) => setProductLocationId(Number(e.target.value))}>
+                      <select
+                        className="form-select"
+                        value={productLocationId ?? ""}
+                        onChange={(e) =>
+                          setProductLocationId(Number(e.target.value))
+                        }
+                      >
                         <option value="">Select location</option>
                         {locations.map((l) => (
-                          <option key={l.id} value={l.id}>{l.name}</option>
+                          <option key={l.id} value={l.id}>
+                            {l.name}
+                          </option>
                         ))}
                       </select>
                     </div>
                   </div>
                 </div>
                 <div className="modal-footer border-top">
-                  <button className="btn btn-light border" onClick={() => setCreateProductOpen(false)}>Cancel</button>
-                  <button className="btn btn-primary" onClick={createProduct}>Create Product</button>
+                  <button
+                    className="btn btn-light border"
+                    onClick={() => setCreateProductOpen(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button className="btn btn-primary" onClick={createProduct}>
+                    Create Product
+                  </button>
                 </div>
               </div>
             </div>
