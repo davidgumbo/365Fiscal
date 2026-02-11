@@ -109,9 +109,27 @@ interface SalesReport {
 interface StockReport {
   total_products: number;
   total_value: number;
-  low_stock_items: { name: string; on_hand: number; available: number; reorder: number }[];
-  stock_summary: { name: string; on_hand: number; available: number; reserved: number; value: number }[];
-  recent_movements: { product: string; type: string; quantity: number; reference: string; date: string; state: string }[];
+  low_stock_items: {
+    name: string;
+    on_hand: number;
+    available: number;
+    reorder: number;
+  }[];
+  stock_summary: {
+    name: string;
+    on_hand: number;
+    available: number;
+    reserved: number;
+    value: number;
+  }[];
+  recent_movements: {
+    product: string;
+    type: string;
+    quantity: number;
+    reference: string;
+    date: string;
+    state: string;
+  }[];
 }
 
 interface PaymentReport {
@@ -122,12 +140,32 @@ interface PaymentReport {
   pending_count: number;
   pending_amount: number;
   by_method: { method: string; count: number; amount: number }[];
-  recent_payments: { reference: string; invoice: string; amount: number; date: string; method: string; status: string }[];
+  recent_payments: {
+    reference: string;
+    invoice: string;
+    amount: number;
+    date: string;
+    method: string;
+    status: string;
+  }[];
 }
 
 type ReportType = "sales" | "stock" | "payments";
 
-const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MONTH_NAMES = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
 
 /* ── Component ───────────────────────────────────────── */
 
@@ -142,8 +180,11 @@ export default function ReportsPage() {
 
   const [salesReport, setSalesReport] = useState<SalesReport | null>(null);
   const [stockReport, setStockReport] = useState<StockReport | null>(null);
-  const [paymentReport, setPaymentReport] = useState<PaymentReport | null>(null);
-  const [companySettings, setCompanySettings] = useState<CompanySettings | null>(null);
+  const [paymentReport, setPaymentReport] = useState<PaymentReport | null>(
+    null,
+  );
+  const [companySettings, setCompanySettings] =
+    useState<CompanySettings | null>(null);
 
   // Set default date range
   useEffect(() => {
@@ -169,10 +210,13 @@ export default function ReportsPage() {
   const formatCurrency = useCallback(
     (amount: number) => {
       const abs = Math.abs(amount);
-      const formatted = abs.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const formatted = abs.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
       return `${amount < 0 ? "-" : ""}${currencySymbol}${formatted}`;
     },
-    [currencySymbol]
+    [currencySymbol],
   );
 
   /* ── Data loaders ──────────────────────────────── */
@@ -190,7 +234,9 @@ export default function ReportsPage() {
     // Filter invoices by date range — only count actual invoices (not credit notes)
     const filtered = invoices.filter((inv) => {
       if (inv.invoice_type === "credit_note") return false;
-      const d = inv.invoice_date ? new Date(inv.invoice_date) : new Date(inv.created_at);
+      const d = inv.invoice_date
+        ? new Date(inv.invoice_date)
+        : new Date(inv.created_at);
       if (fromDate && d < fromDate) return false;
       if (toDate && d > toDate) return false;
       return true;
@@ -199,14 +245,23 @@ export default function ReportsPage() {
     const totalSales = filtered.reduce((s, i) => s + (i.total_amount || 0), 0);
     const totalTax = filtered.reduce((s, i) => s + (i.tax_amount || 0), 0);
     const paidInvoices = filtered.filter(
-      (i) => i.status === "paid" || i.status === "fiscalized" || i.amount_paid >= i.total_amount
+      (i) =>
+        i.status === "paid" ||
+        i.status === "fiscalized" ||
+        i.amount_paid >= i.total_amount,
     );
     const pendingInvoices = filtered.filter(
-      (i) => i.status !== "paid" && i.status !== "fiscalized" && i.status !== "cancelled"
+      (i) =>
+        i.status !== "paid" &&
+        i.status !== "fiscalized" &&
+        i.status !== "cancelled",
     );
 
     // Aggregate top products from real invoice lines
-    const productMap = new Map<number, { name: string; qty: number; revenue: number }>();
+    const productMap = new Map<
+      number,
+      { name: string; qty: number; revenue: number }
+    >();
     const prodLookup = new Map(products.map((p) => [p.id, p]));
 
     for (const inv of filtered) {
@@ -215,24 +270,35 @@ export default function ReportsPage() {
         const pid = line.product_id;
         if (!pid) continue;
         const existing = productMap.get(pid);
-        const prodName = prodLookup.get(pid)?.name || line.description || `Product #${pid}`;
+        const prodName =
+          prodLookup.get(pid)?.name || line.description || `Product #${pid}`;
         if (existing) {
           existing.qty += line.quantity;
           existing.revenue += line.total_price || line.subtotal || 0;
         } else {
-          productMap.set(pid, { name: prodName, qty: line.quantity, revenue: line.total_price || line.subtotal || 0 });
+          productMap.set(pid, {
+            name: prodName,
+            qty: line.quantity,
+            revenue: line.total_price || line.subtotal || 0,
+          });
         }
       }
     }
     const topProducts: TopProduct[] = Array.from(productMap.values())
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 10)
-      .map((p) => ({ name: p.name, quantity: Math.round(p.qty * 100) / 100, revenue: p.revenue }));
+      .map((p) => ({
+        name: p.name,
+        quantity: Math.round(p.qty * 100) / 100,
+        revenue: p.revenue,
+      }));
 
     // Monthly breakdown
     const monthlyMap = new Map<string, { amount: number; count: number }>();
     for (const inv of filtered) {
-      const d = inv.invoice_date ? new Date(inv.invoice_date) : new Date(inv.created_at);
+      const d = inv.invoice_date
+        ? new Date(inv.invoice_date)
+        : new Date(inv.created_at);
       const key = `${d.getFullYear()}-${String(d.getMonth()).padStart(2, "0")}`;
       const existing = monthlyMap.get(key);
       if (existing) {
@@ -246,7 +312,11 @@ export default function ReportsPage() {
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([key, val]) => {
         const [, m] = key.split("-");
-        return { month: `${MONTH_NAMES[parseInt(m)]}`, amount: val.amount, count: val.count };
+        return {
+          month: `${MONTH_NAMES[parseInt(m)]}`,
+          amount: val.amount,
+          count: val.count,
+        };
       });
 
     setSalesReport({
@@ -265,8 +335,12 @@ export default function ReportsPage() {
     if (!companyId) return;
     const [products, quants, moves] = await Promise.all([
       apiFetch<Product[]>(`/products?company_id=${companyId}`),
-      apiFetch<StockQuant[]>(`/stock/quants?company_id=${companyId}`).catch(() => [] as StockQuant[]),
-      apiFetch<StockMoveItem[]>(`/stock/moves?company_id=${companyId}`).catch(() => [] as StockMoveItem[]),
+      apiFetch<StockQuant[]>(`/stock/quants?company_id=${companyId}`).catch(
+        () => [] as StockQuant[],
+      ),
+      apiFetch<StockMoveItem[]>(`/stock/moves?company_id=${companyId}`).catch(
+        () => [] as StockMoveItem[],
+      ),
     ]);
 
     const prodLookup = new Map(products.map((p) => [p.id, p]));
@@ -292,7 +366,12 @@ export default function ReportsPage() {
         if (!prod) return null;
         const reorder = prod.reorder_point || 0;
         if (reorder > 0 && q.available_quantity <= reorder) {
-          return { name: prod.name, on_hand: q.quantity, available: q.available_quantity, reorder };
+          return {
+            name: prod.name,
+            on_hand: q.quantity,
+            available: q.available_quantity,
+            reorder,
+          };
         }
         return null;
       })
@@ -315,21 +394,29 @@ export default function ReportsPage() {
       total_products: products.filter((p) => p.is_active).length,
       total_value: totalValue,
       low_stock_items: lowStock,
-      stock_summary: stockSummary.sort((a, b) => b.value - a.value).slice(0, 20),
+      stock_summary: stockSummary
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 20),
       recent_movements: recentMoves,
     });
   }, [companyId]);
 
   const loadPaymentReport = useCallback(async () => {
     if (!companyId) return;
-    const payments = await apiFetch<PaymentItem[]>(`/payments?company_id=${companyId}`).catch(() => [] as PaymentItem[]);
-    const invoices = await apiFetch<Invoice[]>(`/invoices?company_id=${companyId}`).catch(() => [] as Invoice[]);
+    const payments = await apiFetch<PaymentItem[]>(
+      `/payments?company_id=${companyId}`,
+    ).catch(() => [] as PaymentItem[]);
+    const invoices = await apiFetch<Invoice[]>(
+      `/invoices?company_id=${companyId}`,
+    ).catch(() => [] as Invoice[]);
 
     const fromDate = dateRange.from ? new Date(dateRange.from) : null;
     const toDate = dateRange.to ? new Date(dateRange.to + "T23:59:59") : null;
 
     const filtered = payments.filter((p) => {
-      const d = p.payment_date ? new Date(p.payment_date) : new Date(p.created_at);
+      const d = p.payment_date
+        ? new Date(p.payment_date)
+        : new Date(p.created_at);
       if (fromDate && d < fromDate) return false;
       if (toDate && d > toDate) return false;
       return true;
@@ -338,9 +425,16 @@ export default function ReportsPage() {
     const invLookup = new Map(invoices.map((i) => [i.id, i.reference]));
 
     const totalAmount = filtered.reduce((s, p) => s + (p.amount || 0), 0);
-    const reconciled = filtered.filter((p) => p.status === "reconciled" || p.reconciled_at);
-    const reconciledAmount = reconciled.reduce((s, p) => s + (p.amount || 0), 0);
-    const pending = filtered.filter((p) => p.status !== "reconciled" && p.status !== "cancelled");
+    const reconciled = filtered.filter(
+      (p) => p.status === "reconciled" || p.reconciled_at,
+    );
+    const reconciledAmount = reconciled.reduce(
+      (s, p) => s + (p.amount || 0),
+      0,
+    );
+    const pending = filtered.filter(
+      (p) => p.status !== "reconciled" && p.status !== "cancelled",
+    );
     const pendingAmount = pending.reduce((s, p) => s + (p.amount || 0), 0);
 
     // By method
@@ -372,9 +466,13 @@ export default function ReportsPage() {
         })),
       recent_payments: filtered.slice(0, 15).map((p) => ({
         reference: p.reference || "-",
-        invoice: p.invoice_id ? invLookup.get(p.invoice_id) || `INV-${p.invoice_id}` : "-",
+        invoice: p.invoice_id
+          ? invLookup.get(p.invoice_id) || `INV-${p.invoice_id}`
+          : "-",
         amount: p.amount || 0,
-        date: p.payment_date ? new Date(p.payment_date).toLocaleDateString() : "-",
+        date: p.payment_date
+          ? new Date(p.payment_date).toLocaleDateString()
+          : "-",
         method: (p.payment_method || "other").replace(/_/g, " "),
         status: p.status,
       })),
@@ -420,11 +518,15 @@ export default function ReportsPage() {
       rows.push([]);
       rows.push(["Top Products"]);
       rows.push(["Product", "Qty Sold", "Revenue"]);
-      salesReport.top_products.forEach((p) => rows.push([p.name, String(p.quantity), p.revenue.toFixed(2)]));
+      salesReport.top_products.forEach((p) =>
+        rows.push([p.name, String(p.quantity), p.revenue.toFixed(2)]),
+      );
       rows.push([]);
       rows.push(["Sales by Month"]);
       rows.push(["Month", "Amount", "Invoice Count"]);
-      salesReport.sales_by_month.forEach((m) => rows.push([m.month, m.amount.toFixed(2), String(m.count)]));
+      salesReport.sales_by_month.forEach((m) =>
+        rows.push([m.month, m.amount.toFixed(2), String(m.count)]),
+      );
     } else if (activeReport === "stock" && stockReport) {
       filename = `stock-report-${new Date().toISOString().split("T")[0]}.csv`;
       rows.push(["Stock Report"]);
@@ -435,14 +537,25 @@ export default function ReportsPage() {
       rows.push(["Stock Summary"]);
       rows.push(["Product", "On Hand", "Available", "Reserved", "Value"]);
       stockReport.stock_summary.forEach((s) =>
-        rows.push([s.name, String(s.on_hand), String(s.available), String(s.reserved), s.value.toFixed(2)])
+        rows.push([
+          s.name,
+          String(s.on_hand),
+          String(s.available),
+          String(s.reserved),
+          s.value.toFixed(2),
+        ]),
       );
       if (stockReport.low_stock_items.length > 0) {
         rows.push([]);
         rows.push(["Low Stock Alerts"]);
         rows.push(["Product", "On Hand", "Available", "Reorder Level"]);
         stockReport.low_stock_items.forEach((s) =>
-          rows.push([s.name, String(s.on_hand), String(s.available), String(s.reorder)])
+          rows.push([
+            s.name,
+            String(s.on_hand),
+            String(s.available),
+            String(s.reorder),
+          ]),
         );
       }
     } else if (activeReport === "payments" && paymentReport) {
@@ -456,22 +569,37 @@ export default function ReportsPage() {
       rows.push([]);
       rows.push(["By Payment Method"]);
       rows.push(["Method", "Count", "Amount"]);
-      paymentReport.by_method.forEach((m) => rows.push([m.method, String(m.count), m.amount.toFixed(2)]));
+      paymentReport.by_method.forEach((m) =>
+        rows.push([m.method, String(m.count), m.amount.toFixed(2)]),
+      );
       rows.push([]);
       rows.push(["Recent Payments"]);
       rows.push(["Reference", "Invoice", "Amount", "Date", "Method", "Status"]);
       paymentReport.recent_payments.forEach((p) =>
-        rows.push([p.reference, p.invoice, p.amount.toFixed(2), p.date, p.method, p.status])
+        rows.push([
+          p.reference,
+          p.invoice,
+          p.amount.toFixed(2),
+          p.date,
+          p.method,
+          p.status,
+        ]),
       );
     }
 
-    const csv = rows.map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(",")).join("\n");
+    const csv = rows
+      .map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(","))
+      .join("\n");
     downloadBlob(csv, filename, "text/csv");
   };
 
   const exportPDF = () => {
     const title =
-      activeReport === "sales" ? "Sales Report" : activeReport === "stock" ? "Stock Report" : "Payments Report";
+      activeReport === "sales"
+        ? "Sales Report"
+        : activeReport === "stock"
+          ? "Stock Report"
+          : "Payments Report";
     const period =
       activeReport === "stock"
         ? new Date().toLocaleDateString()
@@ -508,11 +636,15 @@ export default function ReportsPage() {
         <table><thead><tr><th>Product</th><th style="text-align:right">On Hand</th><th style="text-align:right">Available</th><th style="text-align:right">Reserved</th><th style="text-align:right">Value</th></tr></thead><tbody>
           ${stockReport.stock_summary.map((s) => `<tr><td>${s.name}</td><td style="text-align:right">${s.on_hand}</td><td style="text-align:right">${s.available}</td><td style="text-align:right">${s.reserved}</td><td style="text-align:right">${formatCurrency(s.value)}</td></tr>`).join("")}
         </tbody></table>
-        ${stockReport.low_stock_items.length > 0 ? `
+        ${
+          stockReport.low_stock_items.length > 0
+            ? `
         <h3>Low Stock Alerts</h3>
         <table><thead><tr><th>Product</th><th style="text-align:right">On Hand</th><th style="text-align:right">Available</th><th style="text-align:right">Reorder Level</th></tr></thead><tbody>
           ${stockReport.low_stock_items.map((s) => `<tr><td>${s.name}</td><td style="text-align:right">${s.on_hand}</td><td style="text-align:right">${s.available}</td><td style="text-align:right">${s.reorder}</td></tr>`).join("")}
-        </tbody></table>` : ""}`;
+        </tbody></table>`
+            : ""
+        }`;
     } else if (activeReport === "payments" && paymentReport) {
       bodyHTML = `
         <div class="summary-grid">
@@ -535,7 +667,7 @@ export default function ReportsPage() {
       @page { size: A4; margin: 15mm; }
       body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1a1a2e; margin: 0; padding: 20px; font-size: 12px; }
       h2 { margin: 0 0 4px; font-size: 20px; }
-      h3 { margin: 24px 0 8px; font-size: 14px; border-bottom: 2px solid #e8ecf1; padding-bottom: 6px; }
+      h3 { margin: 24px 0 8px; font-size: 1rem; border-bottom: 2px solid #e8ecf1; padding-bottom: 6px; }
       .period { color: #6c757d; margin-bottom: 20px; }
       .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 16px 0; }
       .summary-box { background: #f8f9fb; border: 1px solid #e8ecf1; border-radius: 8px; padding: 12px; }
@@ -560,7 +692,11 @@ export default function ReportsPage() {
     }
   };
 
-  const downloadBlob = (content: string, filename: string, mimeType: string) => {
+  const downloadBlob = (
+    content: string,
+    filename: string,
+    mimeType: string,
+  ) => {
     const blob = new Blob([content], { type: mimeType });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -573,7 +709,7 @@ export default function ReportsPage() {
   /* ── Render ────────────────────────────────────── */
 
   const maxBarValue = salesReport
-    ? Math.max(...(salesReport.sales_by_month.map((m) => m.amount)), 1)
+    ? Math.max(...salesReport.sales_by_month.map((m) => m.amount), 1)
     : 1;
 
   return (
@@ -606,7 +742,11 @@ export default function ReportsPage() {
               {tab === "sales" && <SalesIcon />}
               {tab === "stock" && <StockIcon />}
               {tab === "payments" && <PaymentIcon />}
-              {tab === "sales" ? "Sales Report" : tab === "stock" ? "Stock Report" : "Payments Report"}
+              {tab === "sales"
+                ? "Sales Report"
+                : tab === "stock"
+                  ? "Stock Report"
+                  : "Payments Report"}
             </button>
           ))}
         </div>
@@ -615,13 +755,17 @@ export default function ReportsPage() {
           <input
             type="date"
             value={dateRange.from}
-            onChange={(e) => setDateRange((prev) => ({ ...prev, from: e.target.value }))}
+            onChange={(e) =>
+              setDateRange((prev) => ({ ...prev, from: e.target.value }))
+            }
           />
           <label>To:</label>
           <input
             type="date"
             value={dateRange.to}
-            onChange={(e) => setDateRange((prev) => ({ ...prev, to: e.target.value }))}
+            onChange={(e) =>
+              setDateRange((prev) => ({ ...prev, to: e.target.value }))
+            }
           />
           <button className="primary" onClick={loadReport} disabled={loading}>
             {loading ? "Loading..." : "Refresh"}
@@ -633,13 +777,30 @@ export default function ReportsPage() {
       {error && (
         <div className="alert alert-danger" style={{ margin: "16px 0" }}>
           {error}
-          <button onClick={() => setError("")} style={{ float: "right", background: "none", border: "none", cursor: "pointer", fontSize: 18 }}>×</button>
+          <button
+            onClick={() => setError("")}
+            style={{
+              float: "right",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              fontSize: 18,
+            }}
+          >
+            ×
+          </button>
         </div>
       )}
 
       {/* Loading */}
       {loading && (
-        <div style={{ textAlign: "center", padding: "60px 20px", color: "#6c757d" }}>
+        <div
+          style={{
+            textAlign: "center",
+            padding: "60px 20px",
+            color: "#6c757d",
+          }}
+        >
           Loading report data...
         </div>
       )}
@@ -648,12 +809,32 @@ export default function ReportsPage() {
       {!loading && activeReport === "sales" && salesReport && (
         <div className="report-content">
           <div className="metrics-row">
-            <MetricCard label="Total Sales" value={formatCurrency(salesReport.total_sales)} />
-            <MetricCard label="Total Invoices" value={String(salesReport.total_invoices)} />
-            <MetricCard label="Paid Invoices" value={String(salesReport.paid_invoices)} variant="success" />
-            <MetricCard label="Pending Invoices" value={String(salesReport.pending_invoices)} variant="warning" />
-            <MetricCard label="Total Tax" value={formatCurrency(salesReport.total_tax)} />
-            <MetricCard label="Avg Invoice" value={formatCurrency(salesReport.average_invoice)} />
+            <MetricCard
+              label="Total Sales"
+              value={formatCurrency(salesReport.total_sales)}
+            />
+            <MetricCard
+              label="Total Invoices"
+              value={String(salesReport.total_invoices)}
+            />
+            <MetricCard
+              label="Paid Invoices"
+              value={String(salesReport.paid_invoices)}
+              variant="success"
+            />
+            <MetricCard
+              label="Pending Invoices"
+              value={String(salesReport.pending_invoices)}
+              variant="warning"
+            />
+            <MetricCard
+              label="Total Tax"
+              value={formatCurrency(salesReport.total_tax)}
+            />
+            <MetricCard
+              label="Avg Invoice"
+              value={formatCurrency(salesReport.average_invoice)}
+            />
           </div>
 
           <div className="report-grid">
@@ -664,14 +845,20 @@ export default function ReportsPage() {
               ) : (
                 <table className="report-table">
                   <thead>
-                    <tr><th>Product</th><th className="text-right">Qty Sold</th><th className="text-right">Revenue</th></tr>
+                    <tr>
+                      <th>Product</th>
+                      <th className="text-right">Qty Sold</th>
+                      <th className="text-right">Revenue</th>
+                    </tr>
                   </thead>
                   <tbody>
                     {salesReport.top_products.map((p, i) => (
                       <tr key={i}>
                         <td>{p.name}</td>
                         <td className="text-right">{p.quantity}</td>
-                        <td className="text-right">{formatCurrency(p.revenue)}</td>
+                        <td className="text-right">
+                          {formatCurrency(p.revenue)}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -687,11 +874,19 @@ export default function ReportsPage() {
                 <div className="chart-container">
                   <div className="bar-chart">
                     {salesReport.sales_by_month.map((item, i) => (
-                      <div key={i} className="bar-item" title={`${item.month}: ${formatCurrency(item.amount)} (${item.count} invoices)`}>
-                        <div className="bar-value">{formatCurrency(item.amount)}</div>
+                      <div
+                        key={i}
+                        className="bar-item"
+                        title={`${item.month}: ${formatCurrency(item.amount)} (${item.count} invoices)`}
+                      >
+                        <div className="bar-value">
+                          {formatCurrency(item.amount)}
+                        </div>
                         <div
                           className="bar"
-                          style={{ height: `${(item.amount / maxBarValue) * 100}%` }}
+                          style={{
+                            height: `${(item.amount / maxBarValue) * 100}%`,
+                          }}
                         />
                         <span className="bar-label">{item.month}</span>
                       </div>
@@ -708,10 +903,25 @@ export default function ReportsPage() {
       {!loading && activeReport === "stock" && stockReport && (
         <div className="report-content">
           <div className="metrics-row">
-            <MetricCard label="Active Products" value={String(stockReport.total_products)} />
-            <MetricCard label="Inventory Value" value={formatCurrency(stockReport.total_value)} />
-            <MetricCard label="Low Stock Items" value={String(stockReport.low_stock_items.length)} variant={stockReport.low_stock_items.length > 0 ? "danger" : "success"} />
-            <MetricCard label="Tracked Items" value={String(stockReport.stock_summary.length)} />
+            <MetricCard
+              label="Active Products"
+              value={String(stockReport.total_products)}
+            />
+            <MetricCard
+              label="Inventory Value"
+              value={formatCurrency(stockReport.total_value)}
+            />
+            <MetricCard
+              label="Low Stock Items"
+              value={String(stockReport.low_stock_items.length)}
+              variant={
+                stockReport.low_stock_items.length > 0 ? "danger" : "success"
+              }
+            />
+            <MetricCard
+              label="Tracked Items"
+              value={String(stockReport.stock_summary.length)}
+            />
           </div>
 
           <div className="report-grid">
@@ -720,7 +930,12 @@ export default function ReportsPage() {
                 <h3>⚠️ Low Stock Alerts</h3>
                 <table className="report-table">
                   <thead>
-                    <tr><th>Product</th><th className="text-right">On Hand</th><th className="text-right">Available</th><th className="text-right">Reorder Level</th></tr>
+                    <tr>
+                      <th>Product</th>
+                      <th className="text-right">On Hand</th>
+                      <th className="text-right">Available</th>
+                      <th className="text-right">Reorder Level</th>
+                    </tr>
                   </thead>
                   <tbody>
                     {stockReport.low_stock_items.map((item, i) => (
@@ -743,7 +958,13 @@ export default function ReportsPage() {
               ) : (
                 <table className="report-table">
                   <thead>
-                    <tr><th>Product</th><th className="text-right">On Hand</th><th className="text-right">Available</th><th className="text-right">Reserved</th><th className="text-right">Value</th></tr>
+                    <tr>
+                      <th>Product</th>
+                      <th className="text-right">On Hand</th>
+                      <th className="text-right">Available</th>
+                      <th className="text-right">Reserved</th>
+                      <th className="text-right">Value</th>
+                    </tr>
                   </thead>
                   <tbody>
                     {stockReport.stock_summary.map((s, i) => (
@@ -752,7 +973,9 @@ export default function ReportsPage() {
                         <td className="text-right">{s.on_hand}</td>
                         <td className="text-right">{s.available}</td>
                         <td className="text-right">{s.reserved}</td>
-                        <td className="text-right">{formatCurrency(s.value)}</td>
+                        <td className="text-right">
+                          {formatCurrency(s.value)}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -766,14 +989,23 @@ export default function ReportsPage() {
               <h3>Recent Stock Movements</h3>
               <table className="report-table">
                 <thead>
-                  <tr><th>Product</th><th>Type</th><th className="text-right">Qty</th><th>Reference</th><th>Date</th><th>State</th></tr>
+                  <tr>
+                    <th>Product</th>
+                    <th>Type</th>
+                    <th className="text-right">Qty</th>
+                    <th>Reference</th>
+                    <th>Date</th>
+                    <th>State</th>
+                  </tr>
                 </thead>
                 <tbody>
                   {stockReport.recent_movements.map((m, i) => (
                     <tr key={i}>
                       <td>{m.product}</td>
                       <td>
-                        <span className={`badge ${m.type === "IN" ? "badge-success" : m.type === "OUT" ? "badge-warning" : "badge-info"}`}>
+                        <span
+                          className={`badge ${m.type === "IN" ? "badge-success" : m.type === "OUT" ? "badge-warning" : "badge-info"}`}
+                        >
                           {m.type}
                         </span>
                       </td>
@@ -781,7 +1013,9 @@ export default function ReportsPage() {
                       <td>{m.reference}</td>
                       <td>{m.date}</td>
                       <td>
-                        <span className={`badge ${m.state === "done" ? "badge-success" : m.state === "cancelled" ? "badge-danger" : "badge-secondary"}`}>
+                        <span
+                          className={`badge ${m.state === "done" ? "badge-success" : m.state === "cancelled" ? "badge-danger" : "badge-secondary"}`}
+                        >
                           {m.state}
                         </span>
                       </td>
@@ -798,10 +1032,24 @@ export default function ReportsPage() {
       {!loading && activeReport === "payments" && paymentReport && (
         <div className="report-content">
           <div className="metrics-row">
-            <MetricCard label="Total Payments" value={String(paymentReport.total_payments)} />
-            <MetricCard label="Total Amount" value={formatCurrency(paymentReport.total_amount)} />
-            <MetricCard label="Reconciled" value={`${paymentReport.reconciled_count} (${formatCurrency(paymentReport.reconciled_amount)})`} variant="success" />
-            <MetricCard label="Pending" value={`${paymentReport.pending_count} (${formatCurrency(paymentReport.pending_amount)})`} variant="warning" />
+            <MetricCard
+              label="Total Payments"
+              value={String(paymentReport.total_payments)}
+            />
+            <MetricCard
+              label="Total Amount"
+              value={formatCurrency(paymentReport.total_amount)}
+            />
+            <MetricCard
+              label="Reconciled"
+              value={`${paymentReport.reconciled_count} (${formatCurrency(paymentReport.reconciled_amount)})`}
+              variant="success"
+            />
+            <MetricCard
+              label="Pending"
+              value={`${paymentReport.pending_count} (${formatCurrency(paymentReport.pending_amount)})`}
+              variant="warning"
+            />
           </div>
 
           <div className="report-grid">
@@ -813,14 +1061,22 @@ export default function ReportsPage() {
                 <>
                   <table className="report-table">
                     <thead>
-                      <tr><th>Method</th><th className="text-right">Count</th><th className="text-right">Amount</th></tr>
+                      <tr>
+                        <th>Method</th>
+                        <th className="text-right">Count</th>
+                        <th className="text-right">Amount</th>
+                      </tr>
                     </thead>
                     <tbody>
                       {paymentReport.by_method.map((m, i) => (
                         <tr key={i}>
-                          <td style={{ textTransform: "capitalize" }}>{m.method}</td>
+                          <td style={{ textTransform: "capitalize" }}>
+                            {m.method}
+                          </td>
                           <td className="text-right">{m.count}</td>
-                          <td className="text-right">{formatCurrency(m.amount)}</td>
+                          <td className="text-right">
+                            {formatCurrency(m.amount)}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -828,16 +1084,45 @@ export default function ReportsPage() {
                   {/* Horizontal bar chart for payment methods */}
                   <div style={{ marginTop: 16 }}>
                     {paymentReport.by_method.map((m, i) => {
-                      const maxAmt = Math.max(...paymentReport.by_method.map((x) => x.amount), 1);
+                      const maxAmt = Math.max(
+                        ...paymentReport.by_method.map((x) => x.amount),
+                        1,
+                      );
                       const pct = (m.amount / maxAmt) * 100;
                       return (
                         <div key={i} style={{ marginBottom: 8 }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 3 }}>
-                            <span style={{ textTransform: "capitalize" }}>{m.method}</span>
-                            <span style={{ fontWeight: 600 }}>{formatCurrency(m.amount)}</span>
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              fontSize: 12,
+                              marginBottom: 3,
+                            }}
+                          >
+                            <span style={{ textTransform: "capitalize" }}>
+                              {m.method}
+                            </span>
+                            <span style={{ fontWeight: 600 }}>
+                              {formatCurrency(m.amount)}
+                            </span>
                           </div>
-                          <div style={{ height: 8, background: "#f1f3f5", borderRadius: 4, overflow: "hidden" }}>
-                            <div style={{ width: `${pct}%`, height: "100%", background: "#4361ee", borderRadius: 4, transition: "width 0.5s" }} />
+                          <div
+                            style={{
+                              height: 8,
+                              background: "#f1f3f5",
+                              borderRadius: 4,
+                              overflow: "hidden",
+                            }}
+                          >
+                            <div
+                              style={{
+                                width: `${pct}%`,
+                                height: "100%",
+                                background: "#4361ee",
+                                borderRadius: 4,
+                                transition: "width 0.5s",
+                              }}
+                            />
                           </div>
                         </div>
                       );
@@ -854,18 +1139,35 @@ export default function ReportsPage() {
               ) : (
                 <table className="report-table">
                   <thead>
-                    <tr><th>Reference</th><th>Invoice</th><th className="text-right">Amount</th><th>Date</th><th>Method</th><th>Status</th></tr>
+                    <tr>
+                      <th>Reference</th>
+                      <th>Invoice</th>
+                      <th className="text-right">Amount</th>
+                      <th>Date</th>
+                      <th>Method</th>
+                      <th>Status</th>
+                    </tr>
                   </thead>
                   <tbody>
                     {paymentReport.recent_payments.map((p, i) => (
                       <tr key={i}>
-                        <td style={{ fontFamily: "monospace", fontSize: 12 }}>{p.reference}</td>
-                        <td style={{ fontFamily: "monospace", fontSize: 12 }}>{p.invoice}</td>
-                        <td className="text-right">{formatCurrency(p.amount)}</td>
+                        <td style={{ fontFamily: "monospace", fontSize: 12 }}>
+                          {p.reference}
+                        </td>
+                        <td style={{ fontFamily: "monospace", fontSize: 12 }}>
+                          {p.invoice}
+                        </td>
+                        <td className="text-right">
+                          {formatCurrency(p.amount)}
+                        </td>
                         <td>{p.date}</td>
-                        <td style={{ textTransform: "capitalize" }}>{p.method}</td>
+                        <td style={{ textTransform: "capitalize" }}>
+                          {p.method}
+                        </td>
                         <td>
-                          <span className={`badge ${p.status === "reconciled" ? "badge-success" : p.status === "posted" ? "badge-info" : p.status === "cancelled" ? "badge-danger" : "badge-secondary"}`}>
+                          <span
+                            className={`badge ${p.status === "reconciled" ? "badge-success" : p.status === "posted" ? "badge-info" : p.status === "cancelled" ? "badge-danger" : "badge-secondary"}`}
+                          >
                             {p.status}
                           </span>
                         </td>
@@ -880,22 +1182,39 @@ export default function ReportsPage() {
       )}
 
       {/* Empty state when no data */}
-      {!loading && !error && (
-        (activeReport === "sales" && !salesReport) ||
-        (activeReport === "stock" && !stockReport) ||
-        (activeReport === "payments" && !paymentReport)
-      ) && (
-        <div style={{ textAlign: "center", padding: "60px 20px", color: "#6c757d" }}>
-          <p>Select a date range and click <strong>Refresh</strong> to load report data.</p>
-        </div>
-      )}
+      {!loading &&
+        !error &&
+        ((activeReport === "sales" && !salesReport) ||
+          (activeReport === "stock" && !stockReport) ||
+          (activeReport === "payments" && !paymentReport)) && (
+          <div
+            style={{
+              textAlign: "center",
+              padding: "60px 20px",
+              color: "#6c757d",
+            }}
+          >
+            <p>
+              Select a date range and click <strong>Refresh</strong> to load
+              report data.
+            </p>
+          </div>
+        )}
     </div>
   );
 }
 
 /* ── Sub-components ─────────────────────────────────── */
 
-function MetricCard({ label, value, variant }: { label: string; value: string; variant?: string }) {
+function MetricCard({
+  label,
+  value,
+  variant,
+}: {
+  label: string;
+  value: string;
+  variant?: string;
+}) {
   return (
     <div className={`metric-card ${variant || ""}`}>
       <div className="metric-label">{label}</div>
@@ -908,7 +1227,14 @@ function MetricCard({ label, value, variant }: { label: string; value: string; v
 
 function SalesIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
       <line x1="12" y1="1" x2="12" y2="23" />
       <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
     </svg>
@@ -917,7 +1243,14 @@ function SalesIcon() {
 
 function StockIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
       <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
       <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
       <line x1="12" y1="22.08" x2="12" y2="12" />
@@ -927,7 +1260,14 @@ function StockIcon() {
 
 function PaymentIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
       <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
       <line x1="1" y1="10" x2="23" y2="10" />
     </svg>
@@ -936,7 +1276,14 @@ function PaymentIcon() {
 
 function DownloadIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
       <polyline points="7 10 12 15 17 10" />
       <line x1="12" y1="15" x2="12" y2="3" />
