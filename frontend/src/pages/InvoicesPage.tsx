@@ -834,7 +834,7 @@ export default function InvoicesPage({
             .company-details { text-align: right; font-size: 12px; line-height: 1.5; color: var(--muted); }
             .company-details strong { color: var(--ink); }
             .invoice-title { text-align: left; }
-            .invoice-title h1 { margin: 0 0 8px; font-size: 26px; letter-spacing: 0.6px; }
+            .invoice-title h1 { margin: 0 0 8px; font-size: 20px; letter-spacing: 0.6px; }
             .invoice-meta { display: grid; gap: 6px; font-size: 12px; color: var(--muted); }
             .divider { border-top: 1px solid var(--line); margin: 16px 0; }
             .addresses { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; font-size: 12px; }
