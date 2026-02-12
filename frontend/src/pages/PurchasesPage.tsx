@@ -579,19 +579,25 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
           {/* Sidebar */}
           <div className="o-sidebar">
             <div className="o-sidebar-section">
-              <div className="o-sidebar-title">Status</div>
-              {["", "draft", "confirmed", "received", "cancelled"].map((status) => (
+              <div className="o-sidebar-title">STATUS</div>
+              {[
+                { key: "", label: "ALL PURCHASES", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg> },
+                { key: "draft", label: "DRAFT", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> },
+                { key: "confirmed", label: "CONFIRMED", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> },
+                { key: "received", label: "RECEIVED", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg> },
+                { key: "cancelled", label: "CANCELLED", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> },
+              ].map((item) => (
                 <div
-                  key={status || "all"}
-                  className={`o-sidebar-item ${listStatus === status ? "active" : ""}`}
-                  onClick={() => setListStatus(status)}
+                  key={item.key || "all"}
+                  className={`o-sidebar-item ${listStatus === item.key ? "active" : ""}`}
+                  onClick={() => setListStatus(item.key)}
                   style={{ cursor: "pointer" }}
                 >
-                  <span>{status ? status.charAt(0).toUpperCase() + status.slice(1) : "All Purchases"}</span>
+                  <span style={{ display: "flex", alignItems: "center", gap: 8 }}>{item.icon}{item.label}</span>
                   <span className="o-sidebar-count">
-                    {status === ""
+                    {item.key === ""
                       ? orders.length
-                      : orders.filter((p) => p.status === status).length}
+                      : orders.filter((p) => p.status === item.key).length}
                   </span>
                 </div>
               ))}

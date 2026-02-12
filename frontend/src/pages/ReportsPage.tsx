@@ -851,23 +851,20 @@ export default function ReportsPage() {
         {/* Sidebar */}
         <div className="o-sidebar">
           <div className="o-sidebar-section">
-            <div className="o-sidebar-title">Reports</div>
-            {(["sales", "stock", "payments", "vat"] as ReportType[]).map((tab) => (
+            <div className="o-sidebar-title">REPORTS</div>
+            {[
+              { key: "sales", label: "SALES REPORT", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> },
+              { key: "stock", label: "STOCK REPORT", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg> },
+              { key: "payments", label: "PAYMENTS REPORT", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> },
+              { key: "vat", label: "VAT REPORT", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v20"/><path d="M5 6h10a4 4 0 1 1 0 8H9a4 4 0 0 0 0 8h10"/></svg> },
+            ].map((item) => (
               <div
-                key={tab}
-                className={`o-sidebar-item ${activeReport === tab ? "active" : ""}`}
-                onClick={() => setActiveReport(tab)}
+                key={item.key}
+                className={`o-sidebar-item ${activeReport === item.key ? "active" : ""}`}
+                onClick={() => setActiveReport(item.key as ReportType)}
                 style={{ cursor: "pointer" }}
               >
-                <span>
-                  {tab === "sales"
-                    ? "Sales Report"
-                    : tab === "stock"
-                      ? "Stock Report"
-                      : tab === "payments"
-                        ? "Payments Report"
-                        : "VAT Report"}
-                </span>
+                <span style={{ display: "flex", alignItems: "center", gap: 8 }}>{item.icon}{item.label}</span>
               </div>
             ))}
           </div>

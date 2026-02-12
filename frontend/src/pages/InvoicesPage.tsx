@@ -1000,38 +1000,48 @@ export default function InvoicesPage({
           {/* Sidebar */}
           <div className="o-sidebar">
             <div className="o-sidebar-section">
-              <div className="o-sidebar-title"></div>
-              {["", "draft", "posted", "paid", "fiscalized"].map((status) => (
+              <div className="o-sidebar-title">STATUS</div>
+              {[
+                { key: "", label: "ALL INVOICES", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> },
+                { key: "draft", label: "DRAFT", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> },
+                { key: "posted", label: "POSTED", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> },
+                { key: "paid", label: "PAID", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> },
+                { key: "fiscalized", label: "FISCALIZED", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg> },
+              ].map((item) => (
                 <div
-                  key={status || "all"}
-                  className={`o-sidebar-item ${listStatus === status ? "active" : ""}`}
-                  onClick={() => setListStatus(status)}
+                  key={item.key || "all"}
+                  className={`o-sidebar-item ${listStatus === item.key ? "active" : ""}`}
+                  onClick={() => setListStatus(item.key)}
                   style={{ cursor: "pointer" }}
                 >
-                  <span>{status ? status.charAt(0).toUpperCase() + status.slice(1) : "All Invoices"}</span>
+                  <span style={{ display: "flex", alignItems: "center", gap: 8 }}>{item.icon}{item.label}</span>
                   <span className="o-sidebar-count">
-                    {status === ""
+                    {item.key === ""
                       ? invoices.length
-                      : invoices.filter((inv) => inv.status === status).length}
+                      : invoices.filter((inv) => inv.status === item.key).length}
                   </span>
                 </div>
               ))}
             </div>
 
             <div className="o-sidebar-section">
-              <div className="o-sidebar-title"></div>
-              {["", "invoice", "credit_note"].map((type) => (
+              <div className="o-sidebar-title">TYPE</div>
+              {[
+                { key: "", label: "ALL TYPES", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg> },
+                { key: "invoice", label: "INVOICE", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> },
+                { key: "credit_note", label: "CREDIT NOTE", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 3h18v18H3zM21 9H3M9 21V9"/></svg> },
+              ].map((item) => (
                 <div
-                  key={type || "all"}
-                  className={`o-sidebar-item ${listType === type ? "active" : ""}`}
-                  onClick={() => setListType(type)}
+                  key={item.key || "all"}
+                  className={`o-sidebar-item ${listType === item.key ? "active" : ""}`}
+                  onClick={() => setListType(item.key)}
                   style={{ cursor: "pointer" }}
                 >
-                  <span>{type === "credit_note" ? "Credit Note" : type ? "Invoice" : "All Types"}</span>
+                  <span style={{ display: "flex", alignItems: "center", gap: 8 }}>{item.icon}{item.label}</span>
                   <span className="o-sidebar-count">
-                    {type === ""
+                    {item.key === ""
                       ? invoices.length
-                      : invoices.filter((inv) => inv.invoice_type === type).length}
+                      : invoices.filter((inv) => inv.invoice_type === item.key).length}
                   </span>
                 </div>
               ))}
