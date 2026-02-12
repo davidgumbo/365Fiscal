@@ -74,7 +74,11 @@ def ping_device(device: Device, db) -> dict:
 
 
 def register_device(device: Device, db) -> dict:
-    payload = {"deviceID": str(device.device_id)}
+    payload = {
+        "deviceID": str(device.device_id),
+        "deviceModelName": device.model or "UNKNOWN",
+        "deviceModelVersion": "1.0",
+    }
     return _call_fdms(device, db, f"Device/v1/{device.device_id}/RegisterDevice", payload=payload)
 
 
