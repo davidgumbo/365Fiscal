@@ -30,6 +30,7 @@ export default function DevicesPage() {
   const { state } = useListView();
   const [companyId, setCompanyId] = useState<number | null>(null);
   const [devices, setDevices] = useState<Device[]>([]);
+  const [certStatus, setCertStatus] = useState<"loading" | "ready" | "missing">("loading");
   const [form, setForm] = useState({
     device_id: "",
     serial_number: "",
@@ -78,6 +79,26 @@ export default function DevicesPage() {
     }
     return undefined;
   }, [companyId, state.filters]);
+
+  useEffect(() => {
+    const fetchCertStatus = async () => {
+      if (!companyId) return;
+      try {
+        setCertStatus("loading");
+        const cert = await apiFetch<{ crt_filename?: string; key_filename?: string } | null>(
+          `/company-certificates?company_id=${companyId}`
+        );
+        if (cert?.crt_filename && cert?.key_filename) {
+          setCertStatus("ready");
+        } else {
+          setCertStatus("missing");
+        }
+      } catch {
+        setCertStatus("missing");
+      }
+    };
+    fetchCertStatus();
+  }, [companyId]);
 
   const createDevice = async () => {
     if (!companyId) {
@@ -210,6 +231,16 @@ export default function DevicesPage() {
         <h3>Register Device (FDMS)</h3>
         {error && <div className="alert alert-error" style={{ marginBottom: 12 }}>{error}</div>}
         {actionStatus && <div className="alert alert-success" style={{ marginBottom: 12 }}>{actionStatus}</div>}
+        {certStatus === "missing" && (
+          <div className="alert alert-error" style={{ marginBottom: 12 }}>
+            Company certificate/key missing. Upload them in Settings → Company Certificates.
+          </div>
+        )}
+        {certStatus === "ready" && (
+          <div className="alert alert-success" style={{ marginBottom: 12 }}>
+            Company certificate and key are configured.
+          </div>
+        )}
         <div className="form-grid">
           <label className="input">
             Company

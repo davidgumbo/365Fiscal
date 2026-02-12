@@ -12,10 +12,20 @@ from app.api.deps import (
     require_portal_user,
 )
 from app.models.device import Device
+from app.models.company_certificate import CompanyCertificate
 from app.schemas.device import DeviceCreate, DeviceRead
 from app.services.fdms import get_status, open_day, close_day, get_config, ping_device, register_device
 
 router = APIRouter(prefix="/devices", tags=["devices"])
+
+
+def _ensure_company_certificate(db: Session, company_id: int) -> None:
+    cert = db.query(CompanyCertificate).filter(CompanyCertificate.company_id == company_id).first()
+    if not cert or not cert.crt_data or not cert.key_data:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Company certificate or key not configured",
+        )
 
 
 @router.get("/values")
@@ -125,6 +135,7 @@ def fetch_status(device_id: int, db: Session = Depends(get_db), user=Depends(req
     if not device:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Device not found")
     ensure_company_access(db, user, device.company_id)
+    _ensure_company_certificate(db, device.company_id)
     try:
         status_payload = get_status(device, db)
         return status_payload
@@ -138,6 +149,7 @@ def fetch_config(device_id: int, db: Session = Depends(get_db), user=Depends(req
     if not device:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Device not found")
     ensure_company_access(db, user, device.company_id)
+    _ensure_company_certificate(db, device.company_id)
     try:
         return get_config(device, db)
     except Exception as exc:
@@ -150,6 +162,7 @@ def ping(device_id: int, db: Session = Depends(get_db), user=Depends(require_por
     if not device:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Device not found")
     ensure_company_access(db, user, device.company_id)
+    _ensure_company_certificate(db, device.company_id)
     try:
         return ping_device(device, db)
     except Exception as exc:
@@ -162,6 +175,7 @@ def register(device_id: int, db: Session = Depends(get_db), user=Depends(require
     if not device:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Device not found")
     ensure_company_access(db, user, device.company_id)
+    _ensure_company_certificate(db, device.company_id)
     try:
         return register_device(device, db)
     except Exception as exc:
@@ -174,6 +188,7 @@ def open_fiscal_day(device_id: int, db: Session = Depends(get_db), user=Depends(
     if not device:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Device not found")
     ensure_company_access(db, user, device.company_id)
+    _ensure_company_certificate(db, device.company_id)
     try:
         result = open_day(device, db)
         device.fiscal_day_status = result.get("fiscalDayStatus", device.fiscal_day_status)
@@ -191,6 +206,7 @@ def close_fiscal_day(device_id: int, db: Session = Depends(get_db), user=Depends
     if not device:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Device not found")
     ensure_company_access(db, user, device.company_id)
+    _ensure_company_certificate(db, device.company_id)
     try:
         result = close_day(device, db)
         device.fiscal_day_status = result.get("fiscalDayStatus", device.fiscal_day_status)
