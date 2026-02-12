@@ -565,40 +565,6 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
               ))}
             </div>
 
-            <div className="o-sidebar-section">
-              <div className="o-sidebar-title">Date Range</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "0 8px" }}>
-                <input
-                  className="o-form-input"
-                  type="date"
-                  value={listFrom}
-                  onChange={(e) => setListFrom(e.target.value)}
-                  style={{ width: "100%" }}
-                />
-                <input
-                  className="o-form-input"
-                  type="date"
-                  value={listTo}
-                  onChange={(e) => setListTo(e.target.value)}
-                  style={{ width: "100%" }}
-                />
-              </div>
-            </div>
-
-            <div className="o-sidebar-section">
-              <button
-                className="o-btn o-btn-secondary"
-                style={{ width: "100%" }}
-                onClick={() => {
-                  setListSearch("");
-                  setListStatus("");
-                  setListFrom("");
-                  setListTo("");
-                }}
-              >
-                Clear Filters
-              </button>
-            </div>
           </div>
 
           <div>
@@ -613,6 +579,34 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
                   onChange={(e) => setListSearch(e.target.value)}
                 />
               </div>
+              <button
+                className="o-btn o-btn-secondary"
+                style={{ display: "flex", alignItems: "center", gap: 6 }}
+                onClick={() => {
+                  const headers = ["Reference", "Customer", "Status", "Payment Terms", "Expiry Date", "Total"];
+                  const rows = filteredQuotations.map((q) => {
+                    const customer = contacts.find((c) => c.id === q.customer_id);
+                    const total = q.lines?.reduce((sum, line) => sum + lineTotal(line), 0) || 0;
+                    return [
+                      q.reference,
+                      customer?.name || "",
+                      q.status === "converted" ? "Sale Order" : q.status,
+                      q.payment_terms || "",
+                      q.expires_at ? new Date(q.expires_at).toLocaleDateString() : "",
+                      total.toFixed(2),
+                    ];
+                  });
+                  const csvContent = [headers, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
+                  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+                  const link = document.createElement("a");
+                  link.href = URL.createObjectURL(blob);
+                  link.download = `quotations_${new Date().toISOString().split("T")[0]}.csv`;
+                  link.click();
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export
+              </button>
               <button
                 className="btn-create"
                 onClick={() => {
@@ -652,6 +646,14 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
                         </tr>
                       ))}
                     </tbody>
+                    <tfoot>
+                      <tr style={{ background: "#f8fafc", fontWeight: 600 }}>
+                        <td colSpan={3} className="text-end">Grand Total:</td>
+                        <td className="text-end">
+                          {filteredQuotations.reduce((sum, q) => sum + (q.lines?.reduce((s, line) => s + lineTotal(line), 0) || 0), 0).toFixed(2)}
+                        </td>
+                      </tr>
+                    </tfoot>
                   </table>
                 </div>
               </div>
