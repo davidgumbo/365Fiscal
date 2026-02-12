@@ -34,14 +34,37 @@ def _get_company_cert_paths(company_id: int, db) -> tuple[str, str]:
     return crt_path, key_path
 
 
-def _call_fdms(device: Device, db, endpoint: str, method: str = "POST", payload: dict | None = None) -> dict:
+def _call_fdms(
+    device: Device,
+    db,
+    endpoint: str,
+    method: str = "POST",
+    payload: dict | None = None,
+    use_certificate: bool = True,
+) -> dict:
+    """Call an FDMS API endpoint with proper headers and mutual-TLS."""
     url = f"{settings.fdms_api_url.rstrip('/')}/{endpoint.lstrip('/')}"
-    cert_paths = _get_company_cert_paths(device.company_id, db)
+
+    # ZIMRA requires these headers on EVERY request
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "DeviceModelName": device.model or "365Fiscal",
+        "DeviceModelVersion": "1.0",
+        "DeviceID": str(device.device_id),
+        "DeviceSerialNo": device.serial_number or "",
+    }
+
+    cert_paths: tuple[str, str] | None = None
+    if use_certificate:
+        cert_paths = _get_company_cert_paths(device.company_id, db)
+
     try:
         resp = requests.request(
             method=method,
             url=url,
             json=payload,
+            headers=headers,
             cert=cert_paths,
             verify=settings.fdms_verify_ssl,
             timeout=settings.fdms_timeout_seconds,
@@ -52,49 +75,66 @@ def _call_fdms(device: Device, db, endpoint: str, method: str = "POST", payload:
             return resp.json()
         return {}
     finally:
-        for path in cert_paths:
-            try:
-                import os
+        if cert_paths:
+            for path in cert_paths:
+                try:
+                    import os
 
-                os.unlink(path)
-            except Exception:
-                pass
+                    os.unlink(path)
+                except Exception:
+                    pass
 
 
 def get_status(device: Device, db) -> dict:
+    """GET /Device/v1/{deviceID}/GetStatus – returns fiscal day status, counters etc."""
     return _call_fdms(device, db, f"Device/v1/{device.device_id}/GetStatus", method="GET")
 
 
 def get_config(device: Device, db) -> dict:
+    """GET /Device/v1/{deviceID}/GetConfig – returns device configuration & tax tables."""
     return _call_fdms(device, db, f"Device/v1/{device.device_id}/GetConfig", method="GET")
 
 
 def ping_device(device: Device, db) -> dict:
-    return _call_fdms(device, db, f"Device/v1/{device.device_id}/Ping", method="GET")
+    """POST /Device/v1/{deviceID}/Ping – heartbeat, returns reportingFrequency."""
+    payload = {"deviceID": str(device.device_id)}
+    return _call_fdms(device, db, f"Device/v1/{device.device_id}/Ping", method="POST", payload=payload)
 
 
 def register_device(device: Device, db) -> dict:
+    """POST /Public/v1/{deviceID}/RegisterDevice – initial device registration.
+
+    Note: The reference implementation sends a CSR + activationKey and does
+    NOT use mutual-TLS for this call.  For now we send a minimal payload;
+    adjust once the CSR flow is wired up.
+    """
     payload = {
         "deviceID": str(device.device_id),
-        "deviceModelName": device.model or "UNKNOWN",
-        "deviceModelVersion": "1.0",
     }
-    return _call_fdms(device, db, f"Device/v1/{device.device_id}/RegisterDevice", payload=payload)
+    return _call_fdms(
+        device, db,
+        f"Public/v1/{device.device_id}/RegisterDevice",
+        payload=payload,
+        use_certificate=False,
+    )
 
 
 def open_day(device: Device, db) -> dict:
+    """POST /Device/v1/{deviceID}/OpenDay – open a new fiscal day."""
     now = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")
     next_day_no = (device.current_fiscal_day_no or device.last_fiscal_day_no or 0) + 1
     payload = {
-        "deviceID": str(device.device_id),
-        "fiscalDayOpened": now,
         "fiscalDayNo": next_day_no,
+        "fiscalDayOpened": now,
     }
     return _call_fdms(device, db, f"Device/v1/{device.device_id}/OpenDay", payload=payload)
 
 
 def close_day(device: Device, db) -> dict:
-    payload = {"deviceID": str(device.device_id)}
+    """POST /Device/v1/{deviceID}/CloseDay – close the current fiscal day."""
+    payload = {
+        "fiscalDayNo": device.current_fiscal_day_no or device.last_fiscal_day_no or 0,
+    }
     return _call_fdms(device, db, f"Device/v1/{device.device_id}/CloseDay", payload=payload)
 
 

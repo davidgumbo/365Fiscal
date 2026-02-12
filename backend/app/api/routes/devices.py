@@ -137,8 +137,24 @@ def fetch_status(device_id: int, db: Session = Depends(get_db), user=Depends(req
     ensure_company_access(db, user, device.company_id)
     _ensure_company_certificate(db, device.company_id)
     try:
-        status_payload = get_status(device, db)
-        return status_payload
+        result = get_status(device, db)
+        # Persist useful fields from FDMS response
+        if "fiscalDayStatus" in result:
+            raw = result["fiscalDayStatus"]
+            device.fiscal_day_status = (
+                "open" if raw == "FiscalDayOpened"
+                else "closed" if raw in ("FiscalDayClosed", "") else raw
+            )
+        if "lastFiscalDayNo" in result:
+            device.last_fiscal_day_no = result["lastFiscalDayNo"]
+        if "lastReceiptCounter" in result:
+            device.last_receipt_counter = result["lastReceiptCounter"]
+        if "lastReceiptGlobalNo" in result:
+            device.last_receipt_global_no = result["lastReceiptGlobalNo"]
+        if "lastReceiptHash" in result:
+            device.last_receipt_hash = result["lastReceiptHash"] or ""
+        db.commit()
+        return result
     except Exception as exc:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc))
 
@@ -151,12 +167,17 @@ def fetch_config(device_id: int, db: Session = Depends(get_db), user=Depends(req
     ensure_company_access(db, user, device.company_id)
     _ensure_company_certificate(db, device.company_id)
     try:
-        return get_config(device, db)
+        result = get_config(device, db)
+        # Persist QR URL if present
+        if result.get("qrUrl"):
+            device.qr_url = result["qrUrl"]
+            db.commit()
+        return result
     except Exception as exc:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc))
 
 
-@router.get("/{device_id}/ping")
+@router.post("/{device_id}/ping")
 def ping(device_id: int, db: Session = Depends(get_db), user=Depends(require_portal_user)):
     device = db.query(Device).filter(Device.id == device_id).first()
     if not device:
@@ -175,7 +196,6 @@ def register(device_id: int, db: Session = Depends(get_db), user=Depends(require
     if not device:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Device not found")
     ensure_company_access(db, user, device.company_id)
-    _ensure_company_certificate(db, device.company_id)
     try:
         return register_device(device, db)
     except Exception as exc:
