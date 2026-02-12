@@ -1000,7 +1000,7 @@ export default function InvoicesPage({
           {/* Sidebar */}
           <div className="o-sidebar">
             <div className="o-sidebar-section">
-              <div className="o-sidebar-title">Status</div>
+              <div className="o-sidebar-title"></div>
               {["", "draft", "posted", "paid", "fiscalized"].map((status) => (
                 <div
                   key={status || "all"}
@@ -1019,7 +1019,7 @@ export default function InvoicesPage({
             </div>
 
             <div className="o-sidebar-section">
-              <div className="o-sidebar-title">Type</div>
+              <div className="o-sidebar-title"></div>
               {["", "invoice", "credit_note"].map((type) => (
                 <div
                   key={type || "all"}
@@ -1037,19 +1037,7 @@ export default function InvoicesPage({
               ))}
             </div>
 
-            <div className="o-sidebar-section">
-              <button
-                className="o-btn o-btn-secondary"
-                style={{ width: "100%" }}
-                onClick={() => {
-                  setListSearch("");
-                  setListStatus("");
-                  setListType("");
-                }}
-              >
-                Clear Filters
-              </button>
-            </div>
+          
           </div>
 
           <div>
@@ -1064,6 +1052,38 @@ export default function InvoicesPage({
                   onChange={(e) => setListSearch(e.target.value)}
                 />
               </div>
+              <button
+                className="o-btn o-btn-secondary"
+                style={{ display: "flex", alignItems: "center", gap: 6 }}
+                onClick={() => {
+                  const headers = ["Reference", "Type", "Customer", "Date", "Status", "Payment", "Subtotal", "Tax", "Total", "Paid", "Due"];
+                  const rows = invoices.map((inv) => {
+                    const cust = contactById.get(inv.customer_id ?? 0);
+                    return [
+                      inv.reference,
+                      inv.invoice_type === "credit_note" ? "Credit Note" : "Invoice",
+                      cust?.name || "",
+                      inv.invoice_date ? new Date(inv.invoice_date).toLocaleDateString() : "",
+                      inv.status,
+                      getPaymentStatus(inv.amount_paid, inv.amount_due),
+                      inv.subtotal || 0,
+                      inv.tax_amount || 0,
+                      inv.total_amount || 0,
+                      inv.amount_paid || 0,
+                      inv.amount_due || 0,
+                    ];
+                  });
+                  const csvContent = [headers, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
+                  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+                  const link = document.createElement("a");
+                  link.href = URL.createObjectURL(blob);
+                  link.download = `invoices_${new Date().toISOString().split("T")[0]}.csv`;
+                  link.click();
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export
+              </button>
               <button
                 className="btn-create"
                 onClick={() => {
@@ -1155,6 +1175,17 @@ export default function InvoicesPage({
                         );
                       })}
                     </tbody>
+                    <tfoot>
+                      <tr style={{ background: "#f8fafc", fontWeight: 600 }}>
+                        <td colSpan={5} className="text-end">Grand Total:</td>
+                        <td className="text-end">
+                          {formatCurrency(
+                            invoices.reduce((sum, inv) => sum + (inv.total_amount || 0), 0),
+                            "USD"
+                          )}
+                        </td>
+                      </tr>
+                    </tfoot>
                   </table>
                 </div>
               </div>
