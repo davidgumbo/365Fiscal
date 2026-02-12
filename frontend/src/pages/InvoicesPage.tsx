@@ -997,67 +997,50 @@ export default function InvoicesPage({
       {/* ───────────── LIST VIEW ───────────── */}
       {!showForm && (
         <div className="two-panel two-panel-left">
-          <aside className="sidebar-panel filter-sidebar">
-            <div className="filter-sidebar-title">Filters</div>
-            <div className="filter-group">
-              <div className="filter-button-stack">
-                {["", "draft", "posted", "paid", "fiscalized"].map((status) => (
-                  <button
-                    key={status || "all"}
-                    className={`filter-btn ${status ? `status-${status}` : "status-all"} ${listStatus === status ? "active" : ""}`}
-                    onClick={() => setListStatus(status)}
-                  >
-                    <span className="filter-icon">
-                      {status === "" && (
-                        <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
-                      )}
-                      {status === "draft" && (
-                        <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/></svg>
-                      )}
-                      {status === "posted" && (
-                        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-                      )}
-                      {status === "paid" && (
-                        <svg viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
-                      )}
-                      {status === "fiscalized" && (
-                        <svg viewBox="0 0 24 24"><path d="M23 12l-2.44-2.78.34-3.68-3.61-.82-1.89-3.18L12 3 8.6 1.54 6.71 4.72l-3.61.81.34 3.68L1 12l2.44 2.78-.34 3.69 3.61.82 1.89 3.18L12 21l3.4 1.46 1.89-3.18 3.61-.82-.34-3.68L23 12zm-13 5l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
-                      )}
-                    </span>
-                    {status ? status.charAt(0).toUpperCase() + status.slice(1) : "All Invoices"}
-                  </button>
-                ))}
-              </div>
+          {/* Sidebar */}
+          <div className="o-sidebar">
+            <div className="o-sidebar-section">
+              <div className="o-sidebar-title">Status</div>
+              {["", "draft", "posted", "paid", "fiscalized"].map((status) => (
+                <div
+                  key={status || "all"}
+                  className={`o-sidebar-item ${listStatus === status ? "active" : ""}`}
+                  onClick={() => setListStatus(status)}
+                  style={{ cursor: "pointer" }}
+                >
+                  <span>{status ? status.charAt(0).toUpperCase() + status.slice(1) : "All Invoices"}</span>
+                  <span className="o-sidebar-count">
+                    {status === ""
+                      ? invoices.length
+                      : invoices.filter((inv) => inv.status === status).length}
+                  </span>
+                </div>
+              ))}
             </div>
-            <div className="sidebar-divider" />
-            <div className="filter-label">Type</div>
-            <div className="filter-group">
-              <div className="filter-button-stack">
-                {["", "invoice", "credit_note"].map((type) => (
-                  <button
-                    key={type || "all"}
-                    className={`filter-btn ${type ? `type-${type}` : "type-all"} ${listType === type ? "active" : ""}`}
-                    onClick={() => setListType(type)}
-                  >
-                    <span className="filter-icon">
-                      {type === "" && (
-                        <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/></svg>
-                      )}
-                      {type === "invoice" && (
-                        <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
-                      )}
-                      {type === "credit_note" && (
-                        <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
-                      )}
-                    </span>
-                    {type === "credit_note" ? "Credit Note" : type ? "Invoice" : "All Types"}
-                  </button>
-                ))}
-              </div>
+
+            <div className="o-sidebar-section">
+              <div className="o-sidebar-title">Type</div>
+              {["", "invoice", "credit_note"].map((type) => (
+                <div
+                  key={type || "all"}
+                  className={`o-sidebar-item ${listType === type ? "active" : ""}`}
+                  onClick={() => setListType(type)}
+                  style={{ cursor: "pointer" }}
+                >
+                  <span>{type === "credit_note" ? "Credit Note" : type ? "Invoice" : "All Types"}</span>
+                  <span className="o-sidebar-count">
+                    {type === ""
+                      ? invoices.length
+                      : invoices.filter((inv) => inv.invoice_type === type).length}
+                  </span>
+                </div>
+              ))}
             </div>
-            <div className="filter-actions">
+
+            <div className="o-sidebar-section">
               <button
-                className="btn w-100"
+                className="o-btn o-btn-secondary"
+                style={{ width: "100%" }}
                 onClick={() => {
                   setListSearch("");
                   setListStatus("");
@@ -1067,7 +1050,7 @@ export default function InvoicesPage({
                 Clear Filters
               </button>
             </div>
-          </aside>
+          </div>
 
           <div>
             <div className="content-top-bar">
