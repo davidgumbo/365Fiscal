@@ -302,7 +302,7 @@ export default function CompaniesPage() {
       {/* Add Company Modal */}
       {showAddModal && (
         <div className="modal-overlay" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }} onClick={() => setShowAddModal(false)}>
-          <div className="modal" style={{ background: "#fff", borderRadius: 12, width: "100%", maxWidth: 600, maxHeight: "90vh", overflow: "hidden" }} onClick={(e) => e.stopPropagation()}>
+          <div className="modal" style={{ background: "#fff", borderRadius: 12, width: "100%", maxWidth: 600, maxHeight: "90vh", overflow: "hidden", display: "block", visibility: "visible" }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Register New Company</h3>
               <button className="icon-btn" onClick={() => setShowAddModal(false)}>
@@ -403,7 +403,7 @@ export default function CompaniesPage() {
       {/* Edit Company Modal */}
       {showEditModal && (
         <div className="modal-overlay" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }} onClick={closeEditModal}>
-          <div className="modal" style={{ background: "#fff", borderRadius: 12, width: "100%", maxWidth: 600, maxHeight: "90vh", overflow: "hidden" }} onClick={(e) => e.stopPropagation()}>
+          <div className="modal" style={{ background: "#fff", borderRadius: 12, width: "100%", maxWidth: 600, maxHeight: "90vh", overflow: "hidden", display: "block", visibility: "visible" }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Edit Company</h3>
               <button className="icon-btn" onClick={closeEditModal}>
