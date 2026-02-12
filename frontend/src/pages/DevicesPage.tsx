@@ -31,6 +31,7 @@ export default function DevicesPage() {
   const [companyId, setCompanyId] = useState<number | null>(null);
   const [devices, setDevices] = useState<Device[]>([]);
   const [certStatus, setCertStatus] = useState<"loading" | "ready" | "missing">("loading");
+  const [certInfo, setCertInfo] = useState<{ crt?: string; key?: string }>({});
   const [form, setForm] = useState({
     device_id: "",
     serial_number: "",
@@ -88,6 +89,7 @@ export default function DevicesPage() {
         const cert = await apiFetch<{ crt_filename?: string; key_filename?: string } | null>(
           `/company-certificates?company_id=${companyId}`
         );
+        setCertInfo({ crt: cert?.crt_filename, key: cert?.key_filename });
         if (cert?.crt_filename && cert?.key_filename) {
           setCertStatus("ready");
         } else {
@@ -95,10 +97,39 @@ export default function DevicesPage() {
         }
       } catch {
         setCertStatus("missing");
+        setCertInfo({});
       }
     };
     fetchCertStatus();
   }, [companyId]);
+
+  const uploadCompanyCert = async (type: "crt" | "key", file: File) => {
+    if (!companyId) return;
+    const formData = new FormData();
+    formData.append(type, file);
+    try {
+      setError(null);
+      const res = await apiRequest(`/company-certificates/${companyId}/${type}`, {
+        method: "POST",
+        body: formData
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        setError(text || "Certificate upload failed");
+        return;
+      }
+      const successMessage = `${type.toUpperCase()} certificate uploaded`;
+      setActionStatus(successMessage);
+      setActionLog((prev) => [successMessage, ...prev].slice(0, 10));
+      const updated = await apiFetch<{ crt_filename?: string; key_filename?: string } | null>(
+        `/company-certificates?company_id=${companyId}`
+      );
+      setCertInfo({ crt: updated?.crt_filename, key: updated?.key_filename });
+      setCertStatus(updated?.crt_filename && updated?.key_filename ? "ready" : "missing");
+    } catch (err: any) {
+      setError(err.message || "Certificate upload failed");
+    }
+  };
 
   const createDevice = async () => {
     if (!companyId) {
@@ -251,6 +282,26 @@ export default function DevicesPage() {
                 </option>
               ))}
             </select>
+          </label>
+          <label className="input">
+            Company CRT
+            <div className="file-stack">
+              <span>{certInfo.crt || "Not uploaded"}</span>
+              <input
+                type="file"
+                onChange={(e) => e.target.files?.[0] && uploadCompanyCert("crt", e.target.files[0])}
+              />
+            </div>
+          </label>
+          <label className="input">
+            Company KEY
+            <div className="file-stack">
+              <span>{certInfo.key || "Not uploaded"}</span>
+              <input
+                type="file"
+                onChange={(e) => e.target.files?.[0] && uploadCompanyCert("key", e.target.files[0])}
+              />
+            </div>
           </label>
           <label className="input">
             Device ID
