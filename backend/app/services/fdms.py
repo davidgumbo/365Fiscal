@@ -34,6 +34,15 @@ def _get_company_cert_paths(company_id: int, db) -> tuple[str, str]:
     return crt_path, key_path
 
 
+def _get_device_cert_paths(device: Device) -> tuple[str, str] | None:
+    """Return temp file paths for the device's own certificate + key, if available."""
+    if device.crt_data and device.key_data:
+        crt_path = _write_temp_file(device.crt_data, ".crt")
+        key_path = _write_temp_file(device.key_data, ".key")
+        return crt_path, key_path
+    return None
+
+
 def _call_fdms(
     device: Device,
     db,
@@ -57,7 +66,10 @@ def _call_fdms(
 
     cert_paths: tuple[str, str] | None = None
     if use_certificate:
-        cert_paths = _get_company_cert_paths(device.company_id, db)
+        # Prefer device cert (returned during registration) over company cert
+        cert_paths = _get_device_cert_paths(device)
+        if not cert_paths:
+            cert_paths = _get_company_cert_paths(device.company_id, db)
 
     try:
         resp = requests.request(
