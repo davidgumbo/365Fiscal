@@ -175,9 +175,33 @@ def register_device(device: Device, db) -> dict:
 
 
 def open_day(device: Device, db) -> dict:
-    """POST /Device/v1/{deviceID}/OpenDay – open a new fiscal day."""
+    """POST /Device/v1/{deviceID}/OpenDay – open a new fiscal day.
+
+    Fetches GetStatus first to determine the correct next day number.
+    """
+    # Get current status from FDMS to find the correct next day
+    try:
+        status = get_status(device, db)
+        last_day = status.get("lastFiscalDayNo", device.last_fiscal_day_no or 0)
+        # Persist status fields while we have them
+        if "fiscalDayStatus" in status:
+            raw = status["fiscalDayStatus"]
+            device.fiscal_day_status = (
+                "open" if raw == "FiscalDayOpened"
+                else "closed" if raw in ("FiscalDayClosed", "") else raw
+            )
+        if "lastFiscalDayNo" in status:
+            device.last_fiscal_day_no = status["lastFiscalDayNo"]
+        if "lastReceiptCounter" in status:
+            device.last_receipt_counter = status["lastReceiptCounter"]
+        if "lastReceiptGlobalNo" in status:
+            device.last_receipt_global_no = status["lastReceiptGlobalNo"]
+        db.commit()
+    except Exception:
+        last_day = device.last_fiscal_day_no or device.current_fiscal_day_no or 0
+
+    next_day_no = last_day + 1
     now = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")
-    next_day_no = (device.current_fiscal_day_no or device.last_fiscal_day_no or 0) + 1
     payload = {
         "fiscalDayNo": next_day_no,
         "fiscalDayOpened": now,
@@ -186,9 +210,18 @@ def open_day(device: Device, db) -> dict:
 
 
 def close_day(device: Device, db) -> dict:
-    """POST /Device/v1/{deviceID}/CloseDay – close the current fiscal day."""
+    """POST /Device/v1/{deviceID}/CloseDay – close the current fiscal day.
+
+    Fetches GetStatus first to determine the correct current day number.
+    """
+    try:
+        status = get_status(device, db)
+        current_day = status.get("lastFiscalDayNo", device.current_fiscal_day_no or device.last_fiscal_day_no or 0)
+    except Exception:
+        current_day = device.current_fiscal_day_no or device.last_fiscal_day_no or 0
+
     payload = {
-        "fiscalDayNo": device.current_fiscal_day_no or device.last_fiscal_day_no or 0,
+        "fiscalDayNo": current_day,
     }
     return _call_fdms(device, db, f"Device/v1/{device.device_id}/CloseDay", payload=payload)
 
@@ -346,11 +379,15 @@ def submit_invoice(invoice: Invoice, db) -> dict:
     if invoice.zimra_receipt_counter > 1 and device.last_receipt_hash:
         receipt["previousReceiptHash"] = device.last_receipt_hash
 
-    cert = db.query(CompanyCertificate).filter(CompanyCertificate.company_id == invoice.company_id).first()
-    if not cert or not cert.key_data:
-        raise ValueError("Company private key missing")
+    # Prefer device private key (from registration), fall back to company key
+    sign_key = device.key_data
+    if not sign_key:
+        cert = db.query(CompanyCertificate).filter(CompanyCertificate.company_id == invoice.company_id).first()
+        if not cert or not cert.key_data:
+            raise ValueError("No signing key available – register the device or upload a company key")
+        sign_key = cert.key_data
 
-    sig = _sign_receipt(receipt, cert.key_data)
+    sig = _sign_receipt(receipt, sign_key)
     receipt["receiptDeviceSignature"] = {
         "hash": sig["hash"],
         "signature": sig["signature"],

@@ -44,8 +44,12 @@ type Invoice = {
   notes: string;
   device_id?: number | null;
   zimra_status?: string;
+  zimra_receipt_id?: string;
+  zimra_receipt_counter?: number;
+  zimra_receipt_global_no?: number;
   zimra_verification_code?: string;
   zimra_verification_url?: string;
+  zimra_errors?: string;
   lines: InvoiceLine[];
 };
 
@@ -636,12 +640,26 @@ export default function InvoicesPage({
 
   const fiscalizeInvoice = async () => {
     if (!selectedInvoiceId) return;
-    const deviceId = editDeviceId ?? selectedInvoice?.device_id ?? null;
+    let deviceId = editDeviceId ?? selectedInvoice?.device_id ?? null;
+
+    // Auto-assign first available device if none is set
+    if (!deviceId && devices.length > 0) {
+      deviceId = devices[0].id;
+      setEditDeviceId(deviceId);
+    }
     if (!deviceId) {
-      setError("Assign a fiscal device before fiscalizing");
+      setError("No fiscal device available. Create a device on the Devices page first.");
       return;
     }
+
     try {
+      // Ensure invoice has the device_id saved before fiscalizing
+      if (selectedInvoice && selectedInvoice.device_id !== deviceId) {
+        await apiFetch<Invoice>(`/invoices/${selectedInvoiceId}`, {
+          method: "PUT",
+          body: JSON.stringify({ device_id: deviceId }),
+        });
+      }
       await apiFetch<Invoice>(`/invoices/${selectedInvoiceId}/fiscalize`, {
         method: "POST",
       });
@@ -948,6 +966,30 @@ export default function InvoicesPage({
                 <div class="totals-row"><strong>Balance Due</strong><strong>${formatCurrency(selectedInvoice.amount_due || 0, currency)}</strong></div>
               </div>
             </div>
+
+            ${selectedInvoice.zimra_status === "submitted" ? `
+            <div style="margin-top:18px; border:1px solid var(--line); border-radius:10px; padding:14px 18px;">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap;">
+                <div>
+                  <div style="font-size:13px; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">ZIMRA Fiscal Details</div>
+                  <div style="font-size:12px; line-height:1.8; color:var(--muted);">
+                    <div><strong>Status:</strong> Fiscalized ✓</div>
+                    <div><strong>Verification Code:</strong> ${selectedInvoice.zimra_verification_code || "-"}</div>
+                    <div><strong>Receipt #:</strong> ${selectedInvoice.zimra_receipt_counter || "-"} / Global #${selectedInvoice.zimra_receipt_global_no || "-"}</div>
+                    <div><strong>Receipt ID:</strong> ${selectedInvoice.zimra_receipt_id || "-"}</div>
+                    <div><strong>Fiscalized:</strong> ${selectedInvoice.fiscalized_at ? new Date(selectedInvoice.fiscalized_at).toLocaleString() : "-"}</div>
+                  </div>
+                </div>
+                ${selectedInvoice.zimra_verification_url ? `
+                <div style="text-align:center;">
+                  <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(selectedInvoice.zimra_verification_url)}" width="100" height="100" style="border:1px solid var(--line); border-radius:6px;" />
+                  <div style="font-size:10px; color:var(--muted); margin-top:4px;">Scan to verify</div>
+                </div>
+                ` : ""}
+              </div>
+            </div>
+            ` : ""}
+
             ${footerHtml ? `<div class="doc-footer">${footerHtml}</div>` : ""}
           </div>
         </body>
@@ -1484,7 +1526,7 @@ export default function InvoicesPage({
                       onChange={(e) => setNewDueDate(e.target.value)}
                     />
                   </div>
-                  <div className="col-md-4 d-none">
+                  <div className="col-md-4">
                     <label className="form-label">Fiscal Device</label>
                     <select
                       className="form-select input-underline"
@@ -1971,7 +2013,7 @@ export default function InvoicesPage({
                       </div>
                     )}
                   </div>
-                  <div className="col-md-4 d-none">
+                  <div className="col-md-4">
                     <label className="form-label">Fiscal Device</label>
                     {canEdit ? (
                       <select
