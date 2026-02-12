@@ -790,18 +790,11 @@ export default function InventoryPage() {
       className="page-container"
       style={{
         display: "flex",
-        gap: 24,
+        gap: 0,
         flexWrap: "nowrap",
       }}
     >
-      <div
-        id="main-content"
-        style={{
-          flex: 1,
-          display: "flex",
-          justifyContent: "flex-end",
-        }}
-      >
+      <div id="main-content" className="two-panel two-panel-left">
         {/* Side Bar Navigation */}
         <div className="o-sidebar">
           <div className="o-sidebar-section">
@@ -858,88 +851,89 @@ export default function InventoryPage() {
           </div>
         </div>
 
-        {/* Form Sub Control Panel */}
-        {subView === "form" && (
-          <div
-            className="o-control-panel"
-            style={{ background: "#f8f9fa", marginTop: -8 }}
-          >
-            <div className="o-control-panel-left">
-              <button className="o-btn o-btn-link" onClick={goBack}>
-                ← Back to List
-              </button>
-              <span style={{ fontWeight: 600, marginLeft: 16 }}>
-                {mainView === "products" &&
-                  (isNew ? "New Product" : selectedProduct?.name)}
-                {mainView === "warehouses" &&
-                  (isNew ? "New Warehouse" : selectedWarehouse?.name)}
-                {mainView === "operations" &&
-                  (isNew
-                    ? "New Stock Move"
-                    : selectedMove?.reference || `Move #${selectedMoveId}`)}
-              </span>
-            </div>
-            <div className="o-control-panel-right">
-              <button
-                className="o-btn o-btn-primary"
-                onClick={() => {
-                  if (mainView === "products") saveProduct();
-                  else if (mainView === "warehouses") saveWarehouse();
-                  else if (mainView === "operations") saveMove();
-                }}
-                disabled={saving}
-              >
-                {saving ? "Saving..." : "Save"}
-              </button>
-              {!isNew && (
+        <div className="o-main">
+          {/* Form Sub Control Panel */}
+          {subView === "form" && (
+            <div
+              className="o-control-panel"
+              style={{ background: "#f8f9fa", marginTop: -8 }}
+            >
+              <div className="o-control-panel-left">
+                <button className="o-btn o-btn-link" onClick={goBack}>
+                  ← Back to List
+                </button>
+                <span style={{ fontWeight: 600, marginLeft: 16 }}>
+                  {mainView === "products" &&
+                    (isNew ? "New Product" : selectedProduct?.name)}
+                  {mainView === "warehouses" &&
+                    (isNew ? "New Warehouse" : selectedWarehouse?.name)}
+                  {mainView === "operations" &&
+                    (isNew
+                      ? "New Stock Move"
+                      : selectedMove?.reference || `Move #${selectedMoveId}`)}
+                </span>
+              </div>
+              <div className="o-control-panel-right">
                 <button
-                  className="o-btn"
-                  style={{ background: "#f8f9fa", color: "#fff" }}
+                  className="o-btn o-btn-primary"
                   onClick={() => {
-                    if (mainView === "products" && selectedProductId)
-                      deleteProduct(selectedProductId);
-                    else if (mainView === "warehouses" && selectedWarehouseId)
-                      deleteWarehouse(selectedWarehouseId);
+                    if (mainView === "products") saveProduct();
+                    else if (mainView === "warehouses") saveWarehouse();
+                    else if (mainView === "operations") saveMove();
                   }}
                   disabled={saving}
                 >
-                  Delete
+                  {saving ? "Saving..." : "Save"}
                 </button>
-              )}
-              <button className="o-btn o-btn-secondary" onClick={goBack}>
-                Discard
-              </button>
+                {!isNew && (
+                  <button
+                    className="o-btn"
+                    style={{ background: "#f8f9fa", color: "#fff" }}
+                    onClick={() => {
+                      if (mainView === "products" && selectedProductId)
+                        deleteProduct(selectedProductId);
+                      else if (mainView === "warehouses" && selectedWarehouseId)
+                        deleteWarehouse(selectedWarehouseId);
+                    }}
+                    disabled={saving}
+                  >
+                    Delete
+                  </button>
+                )}
+                <button className="o-btn o-btn-secondary" onClick={goBack}>
+                  Discard
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Main Content */}
-        <div
-          className="o-content"
-          style={{ flexWrap: "wrap", alignContent: "flex-start", rowGap: 12 }}
-        >
-          {/* Sub Control Panel */}
-          {subView !== "form" && mainView !== "overview" && (
-            <div
-              id="filters-search"
-              className="o-control-panel"
-              style={{
-                background: "#ffffff",
-                height: "5rem",
-                width: "100%",
-                flex: "1 1 100%",
-              }}
-            >
-              <div className="o-control-panel-left">
-                <div className="o-searchbox">
-                  <span className="o-searchbox-icon">Search</span>
-                  <input
-                    type="text"
-                    placeholder="Search..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
+          {/* Main Content */}
+          <div
+            className="o-content"
+            style={{ flexWrap: "wrap", alignContent: "flex-start", rowGap: 12 }}
+          >
+            {/* Sub Control Panel */}
+            {subView !== "form" && mainView !== "overview" && (
+              <div
+                id="filters-search"
+                className="o-control-panel"
+                style={{
+                  background: "#ffffff",
+                  height: "5rem",
+                  width: "100%",
+                  flex: "1 1 100%",
+                }}
+              >
+                <div className="o-control-panel-left">
+                  <div className="o-searchbox">
+                    <span className="o-searchbox-icon">Search</span>
+                    <input
+                      type="text"
+                      placeholder="Search..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
 
                 {mainView === "operations" && (
                   <div style={{ display: "flex", gap: 4, marginLeft: 1 }}>
@@ -1018,11 +1012,11 @@ export default function InventoryPage() {
                   </div>
                 )}
               </div>
-            </div>
-          )}
+              </div>
+            )}
           {/* ============= OVERVIEW ============= */}
           {mainView === "overview" && (
-            <div style={{ padding: 20, width: "100%", overflow: "auto" }}>
+            <div style={{ padding: 20, width: "100%" }}>
               {/* Stats Row */}
               <div
                 style={{
@@ -3317,5 +3311,6 @@ export default function InventoryPage() {
         )}
       </div>
     </div>
+  </div>
   );
 }

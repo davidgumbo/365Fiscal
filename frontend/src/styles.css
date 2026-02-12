@@ -66,11 +66,21 @@ textarea {
   display: grid;
   grid-template-columns: 240px 1fr;
   min-height: 100vh;
-  margin: 1rem
+  height: 100vh;
+  margin: 1rem;
+  overflow: hidden;
 }
 
 .app-shell.no-sidebar {
   grid-template-columns: 1fr;
+}
+
+.main-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .page-content {
@@ -78,6 +88,9 @@ textarea {
   /* max-width: 1400px; */
   margin: 0 auto;
   /* padding: 36px; */
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
 }
 
 .sidebar {
@@ -332,6 +345,10 @@ textarea {
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: #f8fafc;
 }
 
 .form-view {
@@ -511,6 +528,7 @@ textarea {
   border-radius: 14px;
   padding: 10px 14px;
   box-shadow: var(--shadow-soft);
+  position: sticky
 }
 
 .topbar-left,
@@ -4414,12 +4432,22 @@ button.danger:hover {
 .two-panel {
   display: grid;
   grid-template-columns: 1fr 340px;
-  gap: 24px;
   align-items: start;
 }
 
 .two-panel-left {
   grid-template-columns: 260px 1fr;
+  gap: 0;
+}
+
+.two-panel {
+  min-height: 0;
+}
+
+.two-panel .o-sidebar {
+  position: sticky;
+  top: 0;
+  align-self: start;
 }
 
 @media (max-width: 1024px) {
@@ -4438,6 +4466,14 @@ button.danger:hover {
   gap: 12px;
   margin-bottom: 20px;
   flex-wrap: wrap;
+}
+
+.page-content .content-top-bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: #ffffff;
+  padding: 12px 0;
 }
 
 .content-top-bar .top-search {
@@ -4867,7 +4903,14 @@ button.danger:hover {
   border-radius: 12px;
   margin-left: 16px;
   margin-right: 16px;
-  width: 10vw
+  width: 10vw;
+}
+
+.page-content .o-control-panel {
+  position: sticky;
+  top: 0;
+  z-index: 15;
+  background: #ffffff;
 }
 
 .o-control-panel-left {
@@ -6271,6 +6314,11 @@ tr:hover .o-quick-actions {
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 2em;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: #f8fafc;
+  padding: 12px 0;
 }
 
 .dashboard-header h1 {
