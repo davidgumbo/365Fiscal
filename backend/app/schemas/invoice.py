@@ -68,6 +68,7 @@ class InvoiceRead(ORMBase):
     payment_reference: str
     notes: str
     zimra_status: str
+    zimra_errors: str = ""
     zimra_receipt_id: str
     zimra_receipt_counter: int
     zimra_receipt_global_no: int
