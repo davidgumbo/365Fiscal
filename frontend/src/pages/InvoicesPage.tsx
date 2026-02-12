@@ -667,6 +667,7 @@ export default function InvoicesPage({
       await loadAll();
     } catch (err: any) {
       setError(err.message || "Failed to fiscalize invoice");
+      await loadAll();  // Reload to show stored zimra_errors
     }
   };
 
@@ -1808,13 +1809,18 @@ export default function InvoicesPage({
                     <div className="card border-0 bg-light h-100">
                       <div className="card-body py-2">
                         <small className="text-muted">Fiscalization</small>
-                        <div className="fw-bold text-uppercase">
+                        <div className="fw-bold text-uppercase" style={{ color: selectedInvoice.zimra_status === "error" ? "#dc3545" : selectedInvoice.zimra_status === "submitted" ? "#198754" : undefined }}>
                           {selectedInvoice.zimra_status || "not_submitted"}
                         </div>
                         {selectedInvoice.zimra_verification_code && (
                           <small className="text-muted">
                             Code: {selectedInvoice.zimra_verification_code}
                           </small>
+                        )}
+                        {selectedInvoice.zimra_status === "error" && selectedInvoice.zimra_errors && (
+                          <div style={{ marginTop: 6, padding: "6px 8px", background: "#fff3f3", border: "1px solid #f5c2c7", borderRadius: 6, fontSize: 11, color: "#842029", maxHeight: 120, overflowY: "auto", wordBreak: "break-word" }}>
+                            {selectedInvoice.zimra_errors}
+                          </div>
                         )}
                       </div>
                     </div>
