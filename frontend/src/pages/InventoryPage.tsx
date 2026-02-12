@@ -125,6 +125,7 @@ type MainView =
   | "operations"
   | "reporting";
 type SubView = "list" | "kanban" | "form";
+type InventoryIconProps = { color?: string };
 
 const OverviewIcon = ({ color }: InventoryIconProps) => (
   <svg
