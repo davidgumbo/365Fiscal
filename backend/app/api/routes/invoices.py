@@ -116,8 +116,8 @@ def process_invoice_stock(invoice: Invoice, db: Session, reverse: bool = False):
         ).first()
         
         if quant:
-            quant.quantity_on_hand -= quantity
-            quant.quantity_available = quant.quantity_on_hand - quant.quantity_reserved
+            quant.quantity -= quantity
+            quant.available_quantity = quant.quantity - quant.reserved_quantity
         elif not settings.allow_negative_stock:
             raise HTTPException(
                 status_code=400, 
