@@ -89,6 +89,7 @@ type Product = {
   name: string;
   sale_price: number;
   tax_rate: number;
+  tax_id: number | null;
   reference?: string;
   hs_code?: string;
   uom?: string;
@@ -1325,8 +1326,7 @@ export default function InvoicesPage({
                     className="btn btn-sm btn-light border"
                     onClick={fiscalizeInvoice}
                     disabled={
-                      statusLabel !== "posted" ||
-                      !(editDeviceId ?? selectedInvoice?.device_id)
+                      statusLabel !== "posted" && statusLabel !== "paid"
                     }
                   >
                     Fiscalize
