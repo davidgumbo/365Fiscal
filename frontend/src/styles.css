@@ -77,7 +77,7 @@ textarea {
   width: 100%;
   /* max-width: 1400px; */
   margin: 0 auto;
-  padding: 36px;
+  /* padding: 36px; */
 }
 
 .sidebar {
@@ -4847,22 +4847,20 @@ button.danger:hover {
   box-shadow: 0 0 0 3px rgba(11, 87, 208, 0.15);
 }
 
-/* ========================================
-   ODOO-STYLE ERP COMPONENTS
-   ======================================== */
+.menu-items {
+  justify-content: center;
+}
 
-/* Control Panel (Odoo-style top bar) */
 .o-control-panel {
   background: var(--card);
-  border-bottom: 1px solid var(--stroke);
-  padding: 12px 20px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   flex-wrap: wrap;
   gap: 12px;
   border-radius: 12px;
-  margin-bottom: 16px;
+  margin-left: 16px;
+  margin-right: 16px;
+  width: 10vw
 }
 
 .o-control-panel-left {
