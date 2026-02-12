@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, UploadFile, File, Query
+from fastapi import APIRouter, Depends, UploadFile, File, Query, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import (
@@ -91,12 +91,13 @@ def upload_crt(
     user=Depends(require_admin),
 ):
     device = db.query(Device).filter(Device.id == device_id).first()
-    if device:
-        ensure_company_access(db, user, device.company_id)
-        device.crt_filename = crt.filename
-        device.crt_data = crt.file.read()
-        db.commit()
-        db.refresh(device)
+    if not device:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Device not found")
+    ensure_company_access(db, user, device.company_id)
+    device.crt_filename = crt.filename
+    device.crt_data = crt.file.read()
+    db.commit()
+    db.refresh(device)
     return device
 
 
@@ -108,12 +109,13 @@ def upload_key(
     user=Depends(require_admin),
 ):
     device = db.query(Device).filter(Device.id == device_id).first()
-    if device:
-        ensure_company_access(db, user, device.company_id)
-        device.key_filename = key.filename
-        device.key_data = key.file.read()
-        db.commit()
-        db.refresh(device)
+    if not device:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Device not found")
+    ensure_company_access(db, user, device.company_id)
+    device.key_filename = key.filename
+    device.key_data = key.file.read()
+    db.commit()
+    db.refresh(device)
     return device
 
 
@@ -121,61 +123,79 @@ def upload_key(
 def fetch_status(device_id: int, db: Session = Depends(get_db), user=Depends(require_portal_user)):
     device = db.query(Device).filter(Device.id == device_id).first()
     if not device:
-        return None
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Device not found")
     ensure_company_access(db, user, device.company_id)
-    status = get_status(device, db)
-    return status
+    try:
+        status_payload = get_status(device, db)
+        return status_payload
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc))
 
 
 @router.get("/{device_id}/config")
 def fetch_config(device_id: int, db: Session = Depends(get_db), user=Depends(require_portal_user)):
     device = db.query(Device).filter(Device.id == device_id).first()
     if not device:
-        return None
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Device not found")
     ensure_company_access(db, user, device.company_id)
-    return get_config(device, db)
+    try:
+        return get_config(device, db)
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc))
 
 
 @router.get("/{device_id}/ping")
 def ping(device_id: int, db: Session = Depends(get_db), user=Depends(require_portal_user)):
     device = db.query(Device).filter(Device.id == device_id).first()
     if not device:
-        return None
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Device not found")
     ensure_company_access(db, user, device.company_id)
-    return ping_device(device, db)
+    try:
+        return ping_device(device, db)
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc))
 
 
 @router.post("/{device_id}/register")
 def register(device_id: int, db: Session = Depends(get_db), user=Depends(require_admin)):
     device = db.query(Device).filter(Device.id == device_id).first()
     if not device:
-        return None
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Device not found")
     ensure_company_access(db, user, device.company_id)
-    return register_device(device, db)
+    try:
+        return register_device(device, db)
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc))
 
 
 @router.post("/{device_id}/open-day")
 def open_fiscal_day(device_id: int, db: Session = Depends(get_db), user=Depends(require_admin)):
     device = db.query(Device).filter(Device.id == device_id).first()
     if not device:
-        return None
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Device not found")
     ensure_company_access(db, user, device.company_id)
-    result = open_day(device, db)
-    device.fiscal_day_status = result.get("fiscalDayStatus", device.fiscal_day_status)
-    device.current_fiscal_day_no = result.get("currentFiscalDayNo", device.current_fiscal_day_no)
-    device.last_fiscal_day_no = result.get("lastFiscalDayNo", device.last_fiscal_day_no)
-    db.commit()
-    return result
+    try:
+        result = open_day(device, db)
+        device.fiscal_day_status = result.get("fiscalDayStatus", device.fiscal_day_status)
+        device.current_fiscal_day_no = result.get("currentFiscalDayNo", device.current_fiscal_day_no)
+        device.last_fiscal_day_no = result.get("lastFiscalDayNo", device.last_fiscal_day_no)
+        db.commit()
+        return result
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc))
 
 
 @router.post("/{device_id}/close-day")
 def close_fiscal_day(device_id: int, db: Session = Depends(get_db), user=Depends(require_admin)):
     device = db.query(Device).filter(Device.id == device_id).first()
     if not device:
-        return None
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Device not found")
     ensure_company_access(db, user, device.company_id)
-    result = close_day(device, db)
-    device.fiscal_day_status = result.get("fiscalDayStatus", device.fiscal_day_status)
-    device.last_fiscal_day_no = result.get("lastFiscalDayNo", device.last_fiscal_day_no)
-    db.commit()
-    return result
+    try:
+        result = close_day(device, db)
+        device.fiscal_day_status = result.get("fiscalDayStatus", device.fiscal_day_status)
+        device.last_fiscal_day_no = result.get("lastFiscalDayNo", device.last_fiscal_day_no)
+        db.commit()
+        return result
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc))
