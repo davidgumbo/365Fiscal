@@ -401,7 +401,7 @@ export default function CompaniesPage() {
       )}
 
       {/* Edit Company Modal */}
-      {showEditModal && editingCompany && (
+      {showEditModal && (
         <div className="modal-overlay" onClick={closeEditModal}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
