@@ -36,6 +36,7 @@ export default function DevicesPage() {
   const [loadingDevices, setLoadingDevices] = useState(false);
   const [creating, setCreating] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [actionLog, setActionLog] = useState<string[]>([]);
 
   useEffect(() => {
     if (companies.length && companyId === null) {
@@ -90,7 +91,9 @@ export default function DevicesPage() {
         body: JSON.stringify({ ...form, company_id: companyId })
       });
       setForm({ device_id: "", serial_number: "", model: "", activation_date: "" });
-      setActionStatus("Device created successfully");
+      const successMessage = "Device created successfully";
+      setActionStatus(successMessage);
+      setActionLog((prev) => [successMessage, ...prev].slice(0, 10));
       loadDevices(companyId);
     } catch (err: any) {
       setError(err.message || "Failed to create device");
@@ -109,7 +112,9 @@ export default function DevicesPage() {
         body: formData
       });
       if (res.ok && companyId) {
-        setActionStatus(`${type.toUpperCase()} uploaded`);
+        const successMessage = `${type.toUpperCase()} uploaded`;
+        setActionStatus(successMessage);
+        setActionLog((prev) => [successMessage, ...prev].slice(0, 10));
         loadDevices(companyId);
       } else {
         const text = await res.text();
@@ -130,7 +135,9 @@ export default function DevicesPage() {
       if (!res.ok) {
         setError(text || "Action failed");
       } else {
-        setActionStatus(text || `${action} executed`);
+        const successMessage = text || `${action} executed`;
+        setActionStatus(successMessage);
+        setActionLog((prev) => [successMessage, ...prev].slice(0, 10));
       }
       if (companyId) {
         loadDevices(companyId);
@@ -221,6 +228,16 @@ export default function DevicesPage() {
       </div>
       <div className="card">
         <h3>Devices</h3>
+        {actionLog.length > 0 && (
+          <div className="alert" style={{ marginBottom: 12, background: "#f8fafc", border: "1px solid var(--stroke)" }}>
+            <div style={{ fontWeight: 600, marginBottom: 6 }}>Latest Messages</div>
+            <ul style={{ margin: 0, paddingLeft: 16 }}>
+              {actionLog.map((msg, index) => (
+                <li key={`${msg}-${index}`} style={{ marginBottom: 4 }}>{msg}</li>
+              ))}
+            </ul>
+          </div>
+        )}
         <table className="data-table">
           <thead>
             <tr>
