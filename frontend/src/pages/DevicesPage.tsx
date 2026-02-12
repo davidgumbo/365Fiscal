@@ -13,6 +13,7 @@ type Device = {
   device_id: string;
   serial_number: string;
   model: string;
+  activation_key: string;
   activation_date?: string | null;
   crt_filename: string;
   key_filename: string;
@@ -100,6 +101,7 @@ export default function DevicesPage() {
     device_id: "",
     serial_number: "",
     model: "",
+    activation_key: "",
     activation_date: "",
   });
   const [globalMsg, setGlobalMsg] = useState<DeviceMessage | null>(null);
@@ -231,7 +233,7 @@ export default function DevicesPage() {
         method: "POST",
         body: JSON.stringify({ ...form, company_id: companyId }),
       });
-      setForm({ device_id: "", serial_number: "", model: "", activation_date: "" });
+      setForm({ device_id: "", serial_number: "", model: "", activation_key: "", activation_date: "" });
       pushGlobal("success", "Device created successfully");
       pushLog("success", `Device ${form.device_id} created`);
       loadDevices(companyId);
@@ -383,6 +385,10 @@ export default function DevicesPage() {
           <label className="input">
             Model
             <input value={form.model} placeholder="e.g. 365Fiscal" onChange={(e) => setForm({ ...form, model: e.target.value })} />
+          </label>
+          <label className="input">
+            Activation Key
+            <input value={form.activation_key} placeholder="e.g. ABCD1234" maxLength={8} style={{ textTransform: "uppercase" }} onChange={(e) => setForm({ ...form, activation_key: e.target.value.toUpperCase() })} />
           </label>
           <label className="input">
             Activation Date

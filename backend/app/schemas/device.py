@@ -8,6 +8,7 @@ class DeviceCreate(BaseModel):
     device_id: str = ""
     serial_number: str = ""
     model: str = ""
+    activation_key: str = ""
     activation_date: datetime | None = None
 
 
@@ -17,6 +18,7 @@ class DeviceRead(ORMBase):
     device_id: str
     serial_number: str
     model: str
+    activation_key: str
     activation_date: datetime | None
     crt_filename: str
     key_filename: str

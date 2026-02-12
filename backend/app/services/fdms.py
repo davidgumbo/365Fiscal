@@ -101,22 +101,65 @@ def ping_device(device: Device, db) -> dict:
     return _call_fdms(device, db, f"Device/v1/{device.device_id}/Ping", method="POST", payload=payload)
 
 
-def register_device(device: Device, db) -> dict:
-    """POST /Public/v1/{deviceID}/RegisterDevice – initial device registration.
+def _generate_ecc_csr(device: Device) -> tuple[str, str]:
+    """Generate an ECC P-256 private key and CSR for ZIMRA registration.
 
-    Note: The reference implementation sends a CSR + activationKey and does
-    NOT use mutual-TLS for this call.  For now we send a minimal payload;
-    adjust once the CSR flow is wired up.
+    Returns (private_key_pem, csr_pem).
     """
+    private_key = ec.generate_private_key(ec.SECP256R1())
+    device_id_padded = str(int(device.device_id)).zfill(10)
+    common_name = f"ZIMRA-{device.serial_number}-{device_id_padded}"
+
+    from cryptography import x509
+    from cryptography.x509.oid import NameOID
+
+    csr = (
+        x509.CertificateSigningRequestBuilder()
+        .subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, common_name)]))
+        .sign(private_key, hashes.SHA256())
+    )
+    private_key_pem = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption(),
+    ).decode("utf-8")
+    csr_pem = csr.public_bytes(serialization.Encoding.PEM).decode("utf-8")
+    return private_key_pem, csr_pem
+
+
+def register_device(device: Device, db) -> dict:
+    """POST /Public/v1/{deviceID}/RegisterDevice.
+
+    Generates an ECC CSR, sends it with the activation key to FDMS,
+    and stores the returned certificate + private key on the device.
+    """
+    if not device.activation_key:
+        raise ValueError("Activation key is required for device registration")
+
+    private_key_pem, csr_pem = _generate_ecc_csr(device)
+
     payload = {
-        "deviceID": str(device.device_id),
+        "certificateRequest": csr_pem,
+        "activationKey": device.activation_key.strip().upper(),
     }
-    return _call_fdms(
+    result = _call_fdms(
         device, db,
         f"Public/v1/{device.device_id}/RegisterDevice",
         payload=payload,
         use_certificate=False,
     )
+
+    # Store the returned certificate and our generated private key
+    returned_cert = result.get("certificate", "")
+    if returned_cert:
+        device.crt_data = returned_cert.encode("utf-8")
+        device.crt_filename = f"device_{device.device_id}.crt"
+    device.key_data = private_key_pem.encode("utf-8")
+    device.key_filename = f"device_{device.device_id}.key"
+    db.commit()
+    db.refresh(device)
+
+    return result
 
 
 def open_day(device: Device, db) -> dict:

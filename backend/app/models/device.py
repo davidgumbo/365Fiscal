@@ -14,6 +14,7 @@ class Device(Base, TimestampMixin):
     device_id: Mapped[str] = mapped_column(String(100), default="")
     serial_number: Mapped[str] = mapped_column(String(100), default="")
     model: Mapped[str] = mapped_column(String(100), default="")
+    activation_key: Mapped[str] = mapped_column(String(100), default="")
     activation_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     crt_filename: Mapped[str] = mapped_column(String(255), default="")
     crt_data: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
