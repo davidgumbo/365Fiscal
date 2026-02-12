@@ -566,7 +566,6 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
       <div className="page-header">
         <div>
           <h1>Purchases</h1>
-          <p className="page-subtitle">Manage purchase orders and receipts</p>
         </div>
         <div className="header-actions">
           {mode !== "list" && (
@@ -598,40 +597,7 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
               ))}
             </div>
 
-            <div className="o-sidebar-section">
-              <div className="o-sidebar-title">Date Range</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "0 8px" }}>
-                <input
-                  type="date"
-                  className="o-form-input"
-                  value={listFrom}
-                  onChange={(e) => setListFrom(e.target.value)}
-                  style={{ width: "100%" }}
-                />
-                <input
-                  type="date"
-                  className="o-form-input"
-                  value={listTo}
-                  onChange={(e) => setListTo(e.target.value)}
-                  style={{ width: "100%" }}
-                />
-              </div>
-            </div>
-
-            <div className="o-sidebar-section">
-              <button
-                className="o-btn o-btn-secondary"
-                style={{ width: "100%" }}
-                onClick={() => {
-                  setListSearch("");
-                  setListStatus("");
-                  setListFrom("");
-                  setListTo("");
-                }}
-              >
-                Clear Filters
-              </button>
-            </div>
+          
           </div>
 
           <div>
@@ -646,6 +612,35 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
                   onChange={(e) => setListSearch(e.target.value)}
                 />
               </div>
+              <button
+                className="o-btn o-btn-secondary"
+                style={{ display: "flex", alignItems: "center", gap: 6 }}
+                onClick={() => {
+                  const headers = ["Reference", "Vendor", "Status", "Order Date", "Expected Date", "Subtotal", "Tax", "Total"];
+                  const rows = filteredOrders.map((order) => {
+                    const vendor = contacts.find((c) => c.id === order.vendor_id);
+                    return [
+                      order.reference,
+                      vendor?.name || "",
+                      order.status,
+                      toDateInputValue(order.order_date),
+                      toDateInputValue(order.expected_date),
+                      order.subtotal || 0,
+                      order.tax_amount || 0,
+                      order.total_amount || 0,
+                    ];
+                  });
+                  const csvContent = [headers, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
+                  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+                  const link = document.createElement("a");
+                  link.href = URL.createObjectURL(blob);
+                  link.download = `purchases_${new Date().toISOString().split("T")[0]}.csv`;
+                  link.click();
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export
+              </button>
               <button
                 className="btn-create"
                 onClick={() => {
@@ -699,6 +694,17 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
                       ))
                     )}
                   </tbody>
+                  <tfoot>
+                    <tr style={{ background: "#f8fafc", fontWeight: 600 }}>
+                      <td colSpan={4} className="text-end">Grand Total:</td>
+                      <td className="text-end">
+                        {formatMoney(
+                          filteredOrders.reduce((sum, order) => sum + (order.total_amount || 0), 0),
+                          currencySymbol
+                        )}
+                      </td>
+                    </tr>
+                  </tfoot>
                 </table>
               </div>
               </div>
