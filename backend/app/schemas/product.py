@@ -9,6 +9,7 @@ class ProductCreate(BaseModel):
     description: str = ""
     sale_price: float = 0
     tax_rate: float = 0
+    tax_id: int | None = None
     sales_cost: float = 0
     purchase_cost: float = 0
     hs_code: str = ""
@@ -35,6 +36,7 @@ class ProductRead(ORMBase):
     description: str
     sale_price: float
     tax_rate: float
+    tax_id: int | None = None
     sales_cost: float
     purchase_cost: float
     hs_code: str
@@ -59,6 +61,7 @@ class ProductUpdate(BaseModel):
     description: str | None = None
     sale_price: float | None = None
     tax_rate: float | None = None
+    tax_id: int | None = None
     sales_cost: float | None = None
     purchase_cost: float | None = None
     hs_code: str | None = None

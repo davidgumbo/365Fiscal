@@ -4,6 +4,14 @@ import { apiFetch } from "../api";
 import { useCompanies, Company } from "../hooks/useCompanies";
 import { useMe } from "../hooks/useMe";
 
+type DeviceBasic = {
+  id: number;
+  device_id: string;
+  serial_number: string;
+  model: string;
+  company_id: number;
+};
+
 const TAX_TYPES = [
   { value: "sales", label: "Sales" },
   { value: "purchases", label: "Purchases" },
@@ -43,6 +51,11 @@ type TaxSetting = {
   rate: number;
   zimra_code: string;
   is_active: boolean;
+  zimra_tax_id: number | null;
+  zimra_tax_code: string;
+  zimra_valid_from: string | null;
+  zimra_valid_till: string | null;
+  is_zimra_tax: boolean;
 };
 
 type CompanySettings = {
@@ -132,6 +145,12 @@ export default function SettingsPage() {
   const [showConfigureLayout, setShowConfigureLayout] = useState(false);
   const [showEditLayout, setShowEditLayout] = useState(false);
   const [companySettings, setCompanySettings] = useState<CompanySettings | null>(null);
+  // Devices for ZIMRA tax pull
+  const [devices, setDevices] = useState<DeviceBasic[]>([]);
+  const [pullDeviceId, setPullDeviceId] = useState<number | null>(null);
+  const [pulling, setPulling] = useState(false);
+  const [pullError, setPullError] = useState<string | null>(null);
+  const [pullSuccess, setPullSuccess] = useState<string | null>(null);
   const [settingsForm, setSettingsForm] = useState({
     currency_code: "USD",
     currency_symbol: "$",
@@ -196,6 +215,37 @@ export default function SettingsPage() {
       setAdmins(data.filter((u) => u.is_admin));
     } catch (err: any) {
       setAdminError(err.message || "Failed to load admins");
+    }
+  };
+
+  const loadDevices = async (cid: number) => {
+    try {
+      const data = await apiFetch<DeviceBasic[]>(`/devices?company_id=${cid}`);
+      setDevices(data);
+      if (data.length) setPullDeviceId(data[0].id);
+      else setPullDeviceId(null);
+    } catch {
+      setDevices([]);
+      setPullDeviceId(null);
+    }
+  };
+
+  const pullZimraTaxes = async () => {
+    if (!pullDeviceId) return;
+    setPulling(true);
+    setPullError(null);
+    setPullSuccess(null);
+    try {
+      const result = await apiFetch<TaxSetting[]>(
+        `/tax-settings/pull-from-fdms?device_id=${pullDeviceId}`,
+        { method: "POST" }
+      );
+      setPullSuccess(`Successfully pulled ${result.length} ZIMRA tax(es) from device`);
+      if (companyId) loadTaxes(companyId);
+    } catch (err: any) {
+      setPullError(err.message || "Failed to pull taxes from FDMS");
+    } finally {
+      setPulling(false);
     }
   };
 
@@ -566,6 +616,7 @@ export default function SettingsPage() {
     if (companyId) {
       loadTaxes(companyId);
       loadCompanySettings(companyId);
+      loadDevices(companyId);
     }
   }, [companyId]);
 
@@ -852,6 +903,121 @@ export default function SettingsPage() {
                 </div>
               </section>
 
+              {/* ZIMRA Tax Configuration */}
+              <section className="settings-section">
+                <div className="settings-section-header">
+                  <h4>ZIMRA Tax Configuration</h4>
+                </div>
+                <p className="settings-section-desc">
+                  Pull applicable taxes from a registered FDMS device. These taxes will be available for selection on products in Inventory.
+                </p>
+
+                <div style={{ display: "flex", gap: 12, alignItems: "flex-end", marginBottom: 16 }}>
+                  <label className="input" style={{ flex: 1, maxWidth: 320 }}>
+                    Device
+                    <select
+                      value={pullDeviceId ?? ""}
+                      onChange={(e) => setPullDeviceId(e.target.value ? Number(e.target.value) : null)}
+                    >
+                      <option value="">— Select a device —</option>
+                      {devices.map((d) => (
+                        <option key={d.id} value={d.id}>
+                          {d.model || "Device"} — {d.device_id} ({d.serial_number})
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    className="primary"
+                    onClick={pullZimraTaxes}
+                    disabled={pulling || !pullDeviceId}
+                    style={{ height: 38 }}
+                  >
+                    {pulling ? "Pulling…" : "Pull ZIMRA Taxes"}
+                  </button>
+                </div>
+                {pullError && (
+                  <div className="alert alert-danger" style={{ marginBottom: 12 }}>
+                    {pullError}
+                    <button onClick={() => setPullError(null)} style={{ float: "right", border: "none", background: "transparent", cursor: "pointer" }}>×</button>
+                  </div>
+                )}
+                {pullSuccess && (
+                  <div className="alert alert-success" style={{ marginBottom: 12 }}>
+                    {pullSuccess}
+                    <button onClick={() => setPullSuccess(null)} style={{ float: "right", border: "none", background: "transparent", cursor: "pointer" }}>×</button>
+                  </div>
+                )}
+
+                {taxes.length > 0 ? (
+                  <table className="table" style={{ marginTop: 0 }}>
+                    <thead>
+                      <tr>
+                        <th>Tax Name</th>
+                        <th>Rate (%)</th>
+                        <th>ZIMRA Tax ID</th>
+                        <th>Tax Code</th>
+                        <th>Valid From</th>
+                        <th>Valid Till</th>
+                        <th>ZIMRA</th>
+                        <th>Active</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {taxes.map((tax) => (
+                        <tr key={tax.id}>
+                          <td>{tax.name}</td>
+                          <td>{tax.rate}%</td>
+                          <td>{tax.zimra_tax_id ?? "—"}</td>
+                          <td>{tax.zimra_tax_code || tax.zimra_code || "—"}</td>
+                          <td>{tax.zimra_valid_from || "—"}</td>
+                          <td>{tax.zimra_valid_till || "—"}</td>
+                          <td>
+                            {tax.is_zimra_tax ? (
+                              <span style={{ color: "#16a34a", fontWeight: 600 }}>✓</span>
+                            ) : (
+                              <span style={{ color: "#94a3b8" }}>—</span>
+                            )}
+                          </td>
+                          <td>
+                            <span style={{ color: tax.is_active ? "#16a34a" : "#ef4444" }}>
+                              {tax.is_active ? "Yes" : "No"}
+                            </span>
+                          </td>
+                          <td>
+                            <div style={{ display: "flex", gap: 4 }}>
+                              <button
+                                className="icon-btn"
+                                title="Edit"
+                                onClick={() => { setSelectedTax(tax); setShowForm(true); }}
+                              >
+                                <EditIcon />
+                              </button>
+                              <button
+                                className="icon-btn"
+                                title="Delete"
+                                onClick={() => deleteTax(tax.id)}
+                              >
+                                <TrashIcon />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div style={{ color: "#94a3b8", fontSize: 13, padding: "12px 0" }}>
+                    No taxes configured yet. Use "Pull ZIMRA Taxes" to fetch from a registered device, or add one manually.
+                  </div>
+                )}
+
+                <button className="outline" onClick={createTax} style={{ marginTop: 8 }}>
+                  <PlusIcon /> Add Tax Manually
+                </button>
+              </section>
+
             </>
           )}
 
@@ -1096,93 +1262,132 @@ export default function SettingsPage() {
       )}
 
       {showForm && selectedTax ? (
-        <div className="card">
-          <h3>Tax</h3>
-          <div className="tab-row">
-            <button className="tab active">Definition</button>
-            <button className="tab">Advanced Options</button>
-          </div>
-          <div className="form-grid">
-            <label className="input">
-              Tax Name
-              <input
-                value={selectedTax.name}
-                onChange={(e) => setSelectedTax({ ...selectedTax, name: e.target.value })}
-              />
-            </label>
-            <label className="input">
-              Description
-              <input
-                value={selectedTax.description}
-                onChange={(e) => setSelectedTax({ ...selectedTax, description: e.target.value })}
-              />
-            </label>
-            <label className="input">
-              Tax Type
-              <select
-                value={selectedTax.tax_type}
-                onChange={(e) => setSelectedTax({ ...selectedTax, tax_type: e.target.value })}
-              >
-                {TAX_TYPES.map((type) => (
-                  <option key={type.value} value={type.value}>
-                    {type.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="input">
-              Tax Scope
-              <select
-                value={selectedTax.tax_scope}
-                onChange={(e) => setSelectedTax({ ...selectedTax, tax_scope: e.target.value })}
-              >
-                {TAX_SCOPES.map((scope) => (
-                  <option key={scope.value} value={scope.value}>
-                    {scope.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="input">
-              Label on Invoices
-              <input
-                value={selectedTax.label_on_invoice}
-                onChange={(e) => setSelectedTax({ ...selectedTax, label_on_invoice: e.target.value })}
-              />
-            </label>
-            <label className="input">
-              Rate (%)
-              <input
-                type="number"
-                value={selectedTax.rate}
-                onChange={(e) => setSelectedTax({ ...selectedTax, rate: Number(e.target.value) })}
-              />
-            </label>
-            <label className="input">
-              ZIMRA Code
-              <input
-                value={selectedTax.zimra_code}
-                onChange={(e) => setSelectedTax({ ...selectedTax, zimra_code: e.target.value })}
-              />
-            </label>
-            <label className="input">
-              Active
-              <select
-                value={selectedTax.is_active ? "yes" : "no"}
-                onChange={(e) => setSelectedTax({ ...selectedTax, is_active: e.target.value === "yes" })}
-              >
-                <option value="yes">Yes</option>
-                <option value="no">No</option>
-              </select>
-            </label>
-          </div>
-          <div style={{ marginTop: 16, display: "flex", gap: 12 }}>
-            <button className="primary" onClick={saveTax}>
-              Save
-            </button>
-            <button className="outline" onClick={() => deleteTax(selectedTax.id)}>
-              Delete
-            </button>
+        <div className="settings-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) { setShowForm(false); setSelectedTax(null); } }}>
+          <div className="settings-modal">
+            <div className="settings-modal-header">
+              <h3>{selectedTax.is_zimra_tax ? "ZIMRA Tax" : "Tax"}</h3>
+              <button className="settings-modal-close" onClick={() => { setShowForm(false); setSelectedTax(null); }}>×</button>
+            </div>
+            <div className="settings-modal-body">
+              <div className="settings-modal-grid">
+                <label className="input">
+                  Tax Name
+                  <input
+                    value={selectedTax.name}
+                    onChange={(e) => setSelectedTax({ ...selectedTax, name: e.target.value })}
+                  />
+                </label>
+                <label className="input">
+                  Description
+                  <input
+                    value={selectedTax.description}
+                    onChange={(e) => setSelectedTax({ ...selectedTax, description: e.target.value })}
+                  />
+                </label>
+                <label className="input">
+                  Tax Type
+                  <select
+                    value={selectedTax.tax_type}
+                    onChange={(e) => setSelectedTax({ ...selectedTax, tax_type: e.target.value })}
+                  >
+                    {TAX_TYPES.map((type) => (
+                      <option key={type.value} value={type.value}>
+                        {type.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="input">
+                  Tax Scope
+                  <select
+                    value={selectedTax.tax_scope}
+                    onChange={(e) => setSelectedTax({ ...selectedTax, tax_scope: e.target.value })}
+                  >
+                    {TAX_SCOPES.map((scope) => (
+                      <option key={scope.value} value={scope.value}>
+                        {scope.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="input">
+                  Label on Invoices
+                  <input
+                    value={selectedTax.label_on_invoice}
+                    onChange={(e) => setSelectedTax({ ...selectedTax, label_on_invoice: e.target.value })}
+                  />
+                </label>
+                <label className="input">
+                  Rate (%)
+                  <input
+                    type="number"
+                    value={selectedTax.rate}
+                    onChange={(e) => setSelectedTax({ ...selectedTax, rate: Number(e.target.value) })}
+                  />
+                </label>
+                <label className="input">
+                  ZIMRA Tax ID
+                  <input
+                    type="number"
+                    value={selectedTax.zimra_tax_id ?? ""}
+                    onChange={(e) => setSelectedTax({ ...selectedTax, zimra_tax_id: e.target.value ? Number(e.target.value) : null })}
+                    placeholder="From FDMS GetConfig"
+                  />
+                </label>
+                <label className="input">
+                  ZIMRA Tax Code
+                  <input
+                    value={selectedTax.zimra_tax_code || ""}
+                    onChange={(e) => setSelectedTax({ ...selectedTax, zimra_tax_code: e.target.value })}
+                    placeholder="e.g., A, B, C"
+                  />
+                </label>
+                <label className="input">
+                  ZIMRA Code
+                  <input
+                    value={selectedTax.zimra_code}
+                    onChange={(e) => setSelectedTax({ ...selectedTax, zimra_code: e.target.value })}
+                  />
+                </label>
+                <label className="input">
+                  Valid From
+                  <input
+                    type="date"
+                    value={selectedTax.zimra_valid_from || ""}
+                    onChange={(e) => setSelectedTax({ ...selectedTax, zimra_valid_from: e.target.value || null })}
+                  />
+                </label>
+                <label className="input">
+                  Valid Till
+                  <input
+                    type="date"
+                    value={selectedTax.zimra_valid_till || ""}
+                    onChange={(e) => setSelectedTax({ ...selectedTax, zimra_valid_till: e.target.value || null })}
+                  />
+                </label>
+                <label className="input">
+                  Active
+                  <select
+                    value={selectedTax.is_active ? "yes" : "no"}
+                    onChange={(e) => setSelectedTax({ ...selectedTax, is_active: e.target.value === "yes" })}
+                  >
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+            <div className="settings-modal-footer">
+              <button className="primary" onClick={saveTax}>
+                Save
+              </button>
+              <button className="outline" onClick={() => deleteTax(selectedTax.id)}>
+                Delete
+              </button>
+              <button className="outline" onClick={() => { setShowForm(false); setSelectedTax(null); }}>
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       ) : null}

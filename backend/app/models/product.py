@@ -15,6 +15,7 @@ class Product(Base, TimestampMixin):
     description: Mapped[str] = mapped_column(String(1000), default="")
     sale_price: Mapped[float] = mapped_column(Float, default=0)
     tax_rate: Mapped[float] = mapped_column(Float, default=0)
+    tax_id: Mapped[int | None] = mapped_column(ForeignKey("tax_settings.id"), nullable=True, default=None)
     sales_cost: Mapped[float] = mapped_column(Float, default=0)
     purchase_cost: Mapped[float] = mapped_column(Float, default=0)
     hs_code: Mapped[str] = mapped_column(String(50), default="")
@@ -38,5 +39,6 @@ class Product(Base, TimestampMixin):
 
     company = relationship("Company", back_populates="products")
     category = relationship("Category", back_populates="products")
+    tax = relationship("TaxSetting", foreign_keys=[tax_id], lazy="joined")
     stock_moves = relationship("StockMove", back_populates="product")
     stock_quants = relationship("StockQuant", back_populates="product")

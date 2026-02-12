@@ -17,6 +17,7 @@ type Product = {
   description: string;
   sale_price: number;
   tax_rate: number;
+  tax_id: number | null;
   sales_cost: number;
   purchase_cost: number;
   hs_code: string;
@@ -33,6 +34,17 @@ type Product = {
   is_active: boolean;
   can_be_sold: boolean;
   can_be_purchased: boolean;
+};
+
+type TaxSetting = {
+  id: number;
+  company_id: number;
+  name: string;
+  rate: number;
+  zimra_tax_id: number | null;
+  zimra_tax_code: string;
+  is_zimra_tax: boolean;
+  is_active: boolean;
 };
 
 type ProductWithStock = Product & {
@@ -226,6 +238,7 @@ export default function InventoryPage() {
   const [locations, setLocations] = useState<Location[]>([]);
   const [stockMoves, setStockMoves] = useState<StockMove[]>([]);
   const [stockQuants, setStockQuants] = useState<StockQuant[]>([]);
+  const [taxSettings, setTaxSettings] = useState<TaxSetting[]>([]);
 
   // UI states
   const [searchQuery, setSearchQuery] = useState("");
@@ -258,6 +271,7 @@ export default function InventoryPage() {
     sales_cost: 0,
     purchase_cost: 0,
     tax_rate: 15,
+    tax_id: null as number | null,
     hs_code: "",
     track_inventory: true,
     min_stock_quantity: 0,
@@ -334,7 +348,7 @@ export default function InventoryPage() {
     console.log("loadAllData starting for companyId:", companyId);
     setLoading(true);
     try {
-      const [prods, cats, whs, moves, quants] = await Promise.all([
+      const [prods, cats, whs, moves, quants, taxes] = await Promise.all([
         apiFetch<ProductWithStock[]>(
           `/products/with-stock?company_id=${companyId}`,
         ),
@@ -342,6 +356,7 @@ export default function InventoryPage() {
         apiFetch<Warehouse[]>(`/warehouses?company_id=${companyId}`),
         apiFetch<StockMove[]>(`/stock/moves?company_id=${companyId}`),
         apiFetch<StockQuant[]>(`/stock/quants?company_id=${companyId}`),
+        apiFetch<TaxSetting[]>(`/tax-settings?company_id=${companyId}`),
       ]);
       console.log("loadAllData results:", {
         prods: prods.length,
@@ -356,6 +371,7 @@ export default function InventoryPage() {
       setWarehouses(whs);
       setStockMoves(moves);
       setStockQuants(quants);
+      setTaxSettings(taxes);
 
       // Load locations for all warehouses
       if (whs.length) {
@@ -389,6 +405,7 @@ export default function InventoryPage() {
       sales_cost: 0,
       purchase_cost: 0,
       tax_rate: 15,
+      tax_id: null,
       hs_code: "",
       track_inventory: true,
       min_stock_quantity: 0,
@@ -418,6 +435,7 @@ export default function InventoryPage() {
       sales_cost: product.sales_cost,
       purchase_cost: product.purchase_cost,
       tax_rate: product.tax_rate,
+      tax_id: product.tax_id ?? null,
       hs_code: product.hs_code,
       track_inventory: product.track_inventory,
       min_stock_quantity: product.min_stock_quantity,
@@ -1865,6 +1883,34 @@ export default function InventoryPage() {
                       </div>
 
                       <div className="o-form-group">
+                        <label className="o-form-label">ZIMRA Tax</label>
+                        <div className="o-form-field">
+                          <select
+                            className="o-form-select"
+                            value={productForm.tax_id ?? ""}
+                            onChange={(e) => {
+                              const tid = e.target.value ? Number(e.target.value) : null;
+                              const matched = taxSettings.find((t) => t.id === tid);
+                              setProductForm({
+                                ...productForm,
+                                tax_id: tid,
+                                tax_rate: matched ? matched.rate : productForm.tax_rate,
+                              });
+                            }}
+                          >
+                            <option value="">— Manual rate —</option>
+                            {taxSettings
+                              .filter((t) => t.is_active)
+                              .map((t) => (
+                                <option key={t.id} value={t.id}>
+                                  {t.name} ({t.rate}%){t.is_zimra_tax && t.zimra_tax_id ? ` [ZIMRA ID: ${t.zimra_tax_id}]` : ""}
+                                </option>
+                              ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="o-form-group">
                         <label className="o-form-label">Tax Rate (%)</label>
                         <div className="o-form-field">
                           <input
@@ -1879,6 +1925,7 @@ export default function InventoryPage() {
                             }
                             step="0.1"
                             min="0"
+                            disabled={!!productForm.tax_id}
                           />
                         </div>
                       </div>

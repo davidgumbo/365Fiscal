@@ -14,8 +14,10 @@ from app.core.config import settings
 from app.models.company_certificate import CompanyCertificate
 from app.models.device import Device
 from app.models.invoice import Invoice
+from app.models.product import Product
 from app.models.quotation import Quotation
 from app.models.quotation_line import QuotationLine
+from app.models.tax_setting import TaxSetting
 
 
 def _write_temp_file(data: bytes, suffix: str) -> str:
@@ -276,13 +278,13 @@ def _generate_qr(signature_b64: str, receipt_global_no: int, device_id: str, qr_
     return {"code": code, "url": url}
 
 
-def _build_receipt(invoice: Invoice, lines: list[Any], device_id_str: str) -> dict:
+def _build_receipt(invoice: Invoice, lines: list[Any], device_id_str: str, db=None) -> dict:
     receipt_counter = (invoice.zimra_receipt_counter or 0) or 0
     receipt_global = (invoice.zimra_receipt_global_no or 0) or 0
     receipt_date = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")
 
     receipt_lines = []
-    tax_summary: dict[str, dict[str, Decimal]] = {}
+    tax_summary: dict[str, dict[str, Any]] = {}
     total_with_tax = Decimal("0.00")
 
     for idx, line in enumerate(lines, start=1):
@@ -291,6 +293,17 @@ def _build_receipt(invoice: Invoice, lines: list[Any], device_id_str: str) -> di
         vat_rate = Decimal(str(getattr(line, "vat_rate", 0) or 0))
         desc = getattr(line, "description", "") or "Item"
         uom_val = getattr(line, "uom", "") or "Units"
+
+        # Resolve ZIMRA tax ID from the product's linked tax setting
+        zimra_tax_id = 1  # default fallback
+        product_id = getattr(line, "product_id", None)
+        if product_id and db:
+            product = db.query(Product).filter(Product.id == product_id).first()
+            if product and product.tax_id:
+                tax_setting = db.query(TaxSetting).filter(TaxSetting.id == product.tax_id).first()
+                if tax_setting and tax_setting.zimra_tax_id is not None:
+                    zimra_tax_id = tax_setting.zimra_tax_id
+                    vat_rate = Decimal(str(tax_setting.rate))
 
         line_total = (qty * price * (Decimal("1") + vat_rate / Decimal("100"))).quantize(
             Decimal("0.01"), rounding=ROUND_HALF_UP
@@ -306,14 +319,15 @@ def _build_receipt(invoice: Invoice, lines: list[Any], device_id_str: str) -> di
                 "receiptLinePrice": float(price),
                 "receiptLineTotal": float(line_total),
                 "receiptLineUnit": uom_val,
-                "taxID": "1",
+                "taxID": str(zimra_tax_id),
                 "taxPercent": float(vat_rate),
             }
         )
 
-        tax_key = str(vat_rate)
+        tax_key = str(zimra_tax_id)
         if tax_key not in tax_summary:
             tax_summary[tax_key] = {
+                "zimra_tax_id": zimra_tax_id,
                 "taxPercent": vat_rate,
                 "taxAmount": Decimal("0.00"),
                 "salesAmountWithTax": Decimal("0.00"),
@@ -327,10 +341,10 @@ def _build_receipt(invoice: Invoice, lines: list[Any], device_id_str: str) -> di
         tax_summary[tax_key]["salesAmountWithTax"] += sales_amount
 
     receipt_taxes = []
-    for idx, (key, data) in enumerate(tax_summary.items(), start=1):
+    for key, data in tax_summary.items():
         receipt_taxes.append(
             {
-                "taxID": str(idx),
+                "taxID": str(data["zimra_tax_id"]),
                 "taxPercent": float(data["taxPercent"]),
                 "taxAmount": float(data["taxAmount"]),
                 "salesAmountWithTax": float(data["salesAmountWithTax"]),
@@ -375,7 +389,7 @@ def submit_invoice(invoice: Invoice, db) -> dict:
     invoice.zimra_receipt_counter = (device.last_receipt_counter or 0) + 1
     invoice.zimra_receipt_global_no = (device.last_receipt_global_no or 0) + 1
 
-    receipt = _build_receipt(invoice, lines, str(device.device_id))
+    receipt = _build_receipt(invoice, lines, str(device.device_id), db=db)
     if invoice.zimra_receipt_counter > 1 and device.last_receipt_hash:
         receipt["previousReceiptHash"] = device.last_receipt_hash
 

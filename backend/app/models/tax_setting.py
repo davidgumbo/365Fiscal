@@ -1,4 +1,4 @@
-﻿from sqlalchemy import Boolean, Float, ForeignKey, String
+﻿from sqlalchemy import Boolean, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -18,5 +18,12 @@ class TaxSetting(Base, TimestampMixin):
     rate: Mapped[float] = mapped_column(Float, default=0)
     zimra_code: Mapped[str] = mapped_column(String(50), default="")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    # ZIMRA fields – populated by Pull from FDMS / GetConfig
+    zimra_tax_id: Mapped[int | None] = mapped_column(Integer, nullable=True, default=None)
+    zimra_tax_code: Mapped[str] = mapped_column(String(10), default="")
+    zimra_valid_from: Mapped[str | None] = mapped_column(String(10), nullable=True, default=None)
+    zimra_valid_till: Mapped[str | None] = mapped_column(String(10), nullable=True, default=None)
+    is_zimra_tax: Mapped[bool] = mapped_column(Boolean, default=False)
 
     company = relationship("Company", back_populates="tax_settings")
