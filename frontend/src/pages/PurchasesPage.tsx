@@ -577,59 +577,51 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
 
       {mode === "list" && (
         <div className="two-panel two-panel-left">
-          <aside className="sidebar-panel filter-sidebar">
-            <div className="filter-sidebar-title">Filters</div>
-            <div className="filter-group">
-              <div className="filter-button-stack">
-                {["", "draft", "confirmed", "received", "cancelled"].map((status) => (
-                  <button
-                    key={status || "all"}
-                    className={`filter-btn ${status ? `status-${status}` : "status-all"} ${listStatus === status ? "active" : ""}`}
-                    onClick={() => setListStatus(status)}
-                  >
-                    <span className="filter-icon">
-                      {status === "" && (
-                        <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
-                      )}
-                      {status === "draft" && (
-                        <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/></svg>
-                      )}
-                      {status === "confirmed" && (
-                        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-                      )}
-                      {status === "received" && (
-                        <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1s3.1 1.39 3.1 3.1v2z"/></svg>
-                      )}
-                      {status === "cancelled" && (
-                        <svg viewBox="0 0 24 24"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/></svg>
-                      )}
-                    </span>
-                    {status ? status.charAt(0).toUpperCase() + status.slice(1) : "All Purchases"}
-                  </button>
-                ))}
-              </div>
+          {/* Sidebar */}
+          <div className="o-sidebar">
+            <div className="o-sidebar-section">
+              <div className="o-sidebar-title">Status</div>
+              {["", "draft", "confirmed", "received", "cancelled"].map((status) => (
+                <div
+                  key={status || "all"}
+                  className={`o-sidebar-item ${listStatus === status ? "active" : ""}`}
+                  onClick={() => setListStatus(status)}
+                  style={{ cursor: "pointer" }}
+                >
+                  <span>{status ? status.charAt(0).toUpperCase() + status.slice(1) : "All Purchases"}</span>
+                  <span className="o-sidebar-count">
+                    {status === ""
+                      ? orders.length
+                      : orders.filter((p) => p.status === status).length}
+                  </span>
+                </div>
+              ))}
             </div>
-            <div className="sidebar-divider" />
-            <div className="filter-label">Date Range</div>
-            <div className="filter-group">
-              <div className="filter-date-grid">
+
+            <div className="o-sidebar-section">
+              <div className="o-sidebar-title">Date Range</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "0 8px" }}>
                 <input
                   type="date"
-                  className="form-control"
+                  className="o-form-input"
                   value={listFrom}
                   onChange={(e) => setListFrom(e.target.value)}
+                  style={{ width: "100%" }}
                 />
                 <input
                   type="date"
-                  className="form-control"
+                  className="o-form-input"
                   value={listTo}
                   onChange={(e) => setListTo(e.target.value)}
+                  style={{ width: "100%" }}
                 />
               </div>
             </div>
-            <div className="filter-actions">
+
+            <div className="o-sidebar-section">
               <button
-                className="btn w-100"
+                className="o-btn o-btn-secondary"
+                style={{ width: "100%" }}
                 onClick={() => {
                   setListSearch("");
                   setListStatus("");
@@ -640,7 +632,7 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
                 Clear Filters
               </button>
             </div>
-          </aside>
+          </div>
 
           <div>
             <div className="content-top-bar">

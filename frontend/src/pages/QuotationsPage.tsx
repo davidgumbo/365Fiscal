@@ -544,66 +544,51 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
     <div className="container-fluid py-3">
       {!showForm && (
         <div className="two-panel two-panel-left">
-          <aside className="sidebar-panel filter-sidebar">
-            <div className="filter-sidebar-title">Filters</div>
-            <div className="filter-group">
-              <div className="filter-button-stack">
-                {["", "draft", "sent", "accepted", "rejected", "converted"].map((status) => (
-                  <button
-                    key={status || "all"}
-                    className={`filter-btn ${status ? `status-${status}` : "status-all"} ${listStatus === status ? "active" : ""}`}
-                    onClick={() => setListStatus(status)}
-                  >
-                    <span className="filter-icon">
-                      {status === "" && (
-                        <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
-                      )}
-                      {status === "draft" && (
-                        <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/></svg>
-                      )}
-                      {status === "sent" && (
-                        <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-                      )}
-                      {status === "accepted" && (
-                        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-                      )}
-                      {status === "rejected" && (
-                        <svg viewBox="0 0 24 24"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/></svg>
-                      )}
-                      {status === "converted" && (
-                        <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5 0 1.93-1.57 3.5-3.5 3.5S8.5 11.43 8.5 9.5C8.5 7.57 10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z"/></svg>
-                      )}
-                    </span>
-                    {status === "converted"
-                      ? "Sale Order"
-                      : status
-                        ? status.charAt(0).toUpperCase() + status.slice(1)
-                        : "All Quotations"}
-                  </button>
-                ))}
-              </div>
+          {/* Sidebar */}
+          <div className="o-sidebar">
+            <div className="o-sidebar-section">
+              <div className="o-sidebar-title">Status</div>
+              {["", "draft", "sent", "accepted", "rejected", "converted"].map((status) => (
+                <div
+                  key={status || "all"}
+                  className={`o-sidebar-item ${listStatus === status ? "active" : ""}`}
+                  onClick={() => setListStatus(status)}
+                  style={{ cursor: "pointer" }}
+                >
+                  <span>{status === "converted" ? "Sale Order" : status ? status.charAt(0).toUpperCase() + status.slice(1) : "All Quotations"}</span>
+                  <span className="o-sidebar-count">
+                    {status === ""
+                      ? quotations.length
+                      : quotations.filter((q) => q.status === status).length}
+                  </span>
+                </div>
+              ))}
             </div>
-            <div className="sidebar-divider" />
-            <div className="filter-label">Date Range</div>
-            <div className="filter-group">
-              <div className="filter-date-grid">
+
+            <div className="o-sidebar-section">
+              <div className="o-sidebar-title">Date Range</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "0 8px" }}>
                 <input
-                  className="form-control"
+                  className="o-form-input"
                   type="date"
                   value={listFrom}
                   onChange={(e) => setListFrom(e.target.value)}
+                  style={{ width: "100%" }}
                 />
                 <input
-                  className="form-control"
+                  className="o-form-input"
                   type="date"
                   value={listTo}
                   onChange={(e) => setListTo(e.target.value)}
+                  style={{ width: "100%" }}
                 />
               </div>
             </div>
-            <div className="filter-actions">
+
+            <div className="o-sidebar-section">
               <button
-                className="btn w-100"
+                className="o-btn o-btn-secondary"
+                style={{ width: "100%" }}
                 onClick={() => {
                   setListSearch("");
                   setListStatus("");
@@ -614,7 +599,7 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
                 Clear Filters
               </button>
             </div>
-          </aside>
+          </div>
 
           <div>
             <div className="content-top-bar">

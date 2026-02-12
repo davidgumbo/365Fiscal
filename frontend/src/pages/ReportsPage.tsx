@@ -856,82 +856,84 @@ export default function ReportsPage() {
       </div>
 
       <div className="two-panel two-panel-left">
-        <aside className="sidebar-panel filter-sidebar">
-          <div className="filter-sidebar-title">Reports</div>
-          <div className="filter-group">
-            <div className="filter-button-stack">
-              {(["sales", "stock", "payments", "vat"] as ReportType[]).map((tab) => (
-                <button
-                  key={tab}
-                  className={`filter-btn report-${tab} ${activeReport === tab ? "active" : ""}`}
-                  onClick={() => setActiveReport(tab)}
-                >
-                  <span className="filter-icon">
-                    {tab === "sales" && <SalesIcon />}
-                    {tab === "stock" && <StockIcon />}
-                    {tab === "payments" && <PaymentIcon />}
-                    {tab === "vat" && <VatIcon />}
-                  </span>
-                  <span>
-                    {tab === "sales"
-                      ? "Sales Report"
-                      : tab === "stock"
-                        ? "Stock Report"
-                        : tab === "payments"
-                          ? "Payments Report"
-                          : "VAT Report"}
-                  </span>
-                </button>
-              ))}
-            </div>
+        {/* Sidebar */}
+        <div className="o-sidebar">
+          <div className="o-sidebar-section">
+            <div className="o-sidebar-title">Reports</div>
+            {(["sales", "stock", "payments", "vat"] as ReportType[]).map((tab) => (
+              <div
+                key={tab}
+                className={`o-sidebar-item ${activeReport === tab ? "active" : ""}`}
+                onClick={() => setActiveReport(tab)}
+                style={{ cursor: "pointer" }}
+              >
+                <span>
+                  {tab === "sales"
+                    ? "Sales Report"
+                    : tab === "stock"
+                      ? "Stock Report"
+                      : tab === "payments"
+                        ? "Payments Report"
+                        : "VAT Report"}
+                </span>
+              </div>
+            ))}
           </div>
-          <div className="sidebar-divider" />
-          <div className="filter-label">Date Range</div>
-          <div className="filter-group">
-            <div className="filter-date-grid">
+
+          <div className="o-sidebar-section">
+            <div className="o-sidebar-title">Date Range</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "0 8px" }}>
               <input
                 type="date"
-                className="form-control"
+                className="o-form-input"
                 value={dateRange.from}
                 onChange={(e) =>
                   setDateRange((prev) => ({ ...prev, from: e.target.value }))
                 }
+                style={{ width: "100%" }}
               />
               <input
                 type="date"
-                className="form-control"
+                className="o-form-input"
                 value={dateRange.to}
                 onChange={(e) =>
                   setDateRange((prev) => ({ ...prev, to: e.target.value }))
                 }
+                style={{ width: "100%" }}
               />
             </div>
           </div>
-          <div className="sidebar-divider" />
-          <div className="filter-label">Actions</div>
-          <div className="filter-group">
-            <div className="filter-button-stack">
-              <button className={`filter-btn status-posted ${loading ? "active" : ""}`} onClick={loadReport} disabled={loading}>
-                <span className="filter-icon">
-                  <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
-                </span>
+
+          <div className="o-sidebar-section">
+            <div className="o-sidebar-title">Actions</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "0 8px" }}>
+              <button
+                className={`o-btn ${loading ? "o-btn-primary" : "o-btn-secondary"}`}
+                onClick={loadReport}
+                disabled={loading}
+                style={{ width: "100%" }}
+              >
                 {loading ? "Loading..." : "Refresh"}
               </button>
-              <button className="filter-btn type-invoice" onClick={exportCSV} disabled={loading}>
-                <span className="filter-icon">
-                  <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-                </span>
+              <button
+                className="o-btn o-btn-secondary"
+                onClick={exportCSV}
+                disabled={loading}
+                style={{ width: "100%" }}
+              >
                 Export CSV
               </button>
-              <button className="filter-btn report-vat" onClick={exportPDF} disabled={loading}>
-                <span className="filter-icon">
-                  <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-                </span>
+              <button
+                className="o-btn o-btn-secondary"
+                onClick={exportPDF}
+                disabled={loading}
+                style={{ width: "100%" }}
+              >
                 Export PDF
               </button>
             </div>
           </div>
-        </aside>
+        </div>
 
         <div>
 
