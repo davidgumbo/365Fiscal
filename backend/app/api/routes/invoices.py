@@ -102,7 +102,6 @@ def process_invoice_stock(invoice: Invoice, db: Session, reverse: bool = False):
             company_id=invoice.company_id,
             product_id=line.product_id,
             location_id=location.id,
-            dest_location_id=None,  # Customer location (virtual)
             quantity=quantity,
             reference=f"INV-{invoice.reference}",
             move_type="out" if quantity > 0 else "in",
