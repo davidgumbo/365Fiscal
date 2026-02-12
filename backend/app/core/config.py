@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     default_portal_email: str | None = None
     default_portal_password: str | None = None
     default_portal_company: str | None = None
-    fdms_api_url: str = "https://fdmsapi.zimra.co.zw"
+    fdms_api_url: str = "https://fdmsapitest.zimra.co.zw"
     fdms_verify_ssl: bool = True
     fdms_timeout_seconds: int = 30
 
