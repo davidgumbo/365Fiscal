@@ -214,16 +214,82 @@ def open_day(device: Device, db) -> dict:
 def close_day(device: Device, db) -> dict:
     """POST /Device/v1/{deviceID}/CloseDay – close the current fiscal day.
 
-    Fetches GetStatus first to determine the correct current day number.
+    Fetches GetStatus first to get counters, then signs and submits.
+    ZIMRA requires: fiscalDayNo, fiscalDayCounters, fiscalDayDeviceSignature, receiptCounter
     """
-    try:
-        status = get_status(device, db)
-        current_day = status.get("lastFiscalDayNo", device.current_fiscal_day_no or device.last_fiscal_day_no or 0)
-    except Exception:
-        current_day = device.current_fiscal_day_no or device.last_fiscal_day_no or 0
+    # 1. Get current status from ZIMRA
+    status = get_status(device, db)
+    current_day = status.get("lastFiscalDayNo", device.current_fiscal_day_no or device.last_fiscal_day_no or 0)
+    receipt_counter = status.get("lastReceiptCounter", device.last_receipt_counter or 0)
+
+    # 2. Get fiscal day counters from ZIMRA status
+    fiscal_counters = status.get("fiscalDayCounter") or status.get("fiscalDayCounters") or []
+
+    # 3. Build signature over fiscal counters
+    #    Concat: deviceID + fiscalDayNo + fiscalDayDate + counters
+    device_id_str = str(int(device.device_id))
+    fiscal_day_date = datetime.utcnow().strftime("%Y-%m-%d")
+
+    # Build counters concatenation (only non-zero, sorted by type/currency/taxID)
+    counters_concat = ""
+    for counter in sorted(fiscal_counters, key=lambda c: (
+        str(c.get("fiscalCounterType", "")),
+        str(c.get("fiscalCounterCurrency", "")),
+        int(c.get("fiscalCounterTaxID", 0) or 0),
+    )):
+        raw_value = counter.get("fiscalCounterValue", 0) or 0
+        value_dec = Decimal(str(raw_value)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        if value_dec == Decimal("0.00"):
+            continue
+        counter_type = str(counter.get("fiscalCounterType", "")).upper()
+        currency = str(counter.get("fiscalCounterCurrency", "")).upper()
+        cents = str(int((value_dec * 100).to_integral_value(rounding=ROUND_HALF_UP)))
+
+        if counter_type == "BALANCEBYMONEYTYPE":
+            money_type = str(counter.get("fiscalCounterMoneyType", "")).upper()
+            counters_concat += f"{counter_type}{currency}{money_type}{cents}"
+        else:
+            tax_percent = counter.get("fiscalCounterTaxPercent")
+            if tax_percent is not None:
+                tp = Decimal(str(tax_percent)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                percent_str = f"{float(tp):.2f}"
+            else:
+                percent_str = ""
+            counters_concat += f"{counter_type}{currency}{percent_str}{cents}"
+
+    concat = f"{device_id_str}{current_day}{fiscal_day_date}{counters_concat}"
+    payload_bytes = concat.encode("utf-8")
+    hash_bytes = hashlib.sha256(payload_bytes).digest()
+    hash_b64 = base64.b64encode(hash_bytes).decode("ascii")
+
+    # Sign with device key
+    sign_key = device.key_data
+    if not sign_key:
+        cert = db.query(CompanyCertificate).filter(CompanyCertificate.company_id == device.company_id).first()
+        if not cert or not cert.key_data:
+            raise ValueError("No signing key available for CloseDay")
+        sign_key = cert.key_data
+
+    key = serialization.load_pem_private_key(sign_key, password=None)
+    if isinstance(key, ec.EllipticCurvePrivateKey):
+        from cryptography.hazmat.primitives.asymmetric import utils
+        sig_bytes = key.sign(hash_bytes, ec.ECDSA(utils.Prehashed(hashes.SHA256())))
+    elif isinstance(key, rsa.RSAPrivateKey):
+        from cryptography.hazmat.primitives.asymmetric import utils
+        sig_bytes = key.sign(hash_bytes, padding.PKCS1v15(), utils.Prehashed(hashes.SHA256()))
+    else:
+        raise ValueError("Unsupported key type for CloseDay signature")
+
+    sig_b64 = base64.b64encode(sig_bytes).decode("ascii")
 
     payload = {
         "fiscalDayNo": current_day,
+        "fiscalDayCounters": fiscal_counters,
+        "fiscalDayDeviceSignature": {
+            "hash": hash_b64,
+            "signature": sig_b64,
+        },
+        "receiptCounter": receipt_counter,
     }
     return _call_fdms(device, db, f"Device/v1/{device.device_id}/CloseDay", payload=payload)
 
