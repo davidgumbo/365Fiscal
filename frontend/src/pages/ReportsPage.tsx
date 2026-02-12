@@ -847,14 +847,6 @@ export default function ReportsPage() {
 
   return (
     <div className="reports-page">
-      {/* Header */}
-      <div className="reports-header">
-        <div>
-          <h1>Reports</h1>
-          <p className="page-subtitle">Sales, stock, VAT, and payment analytics</p>
-        </div>
-      </div>
-
       <div className="two-panel two-panel-left">
         {/* Sidebar */}
         <div className="o-sidebar">
@@ -879,63 +871,59 @@ export default function ReportsPage() {
               </div>
             ))}
           </div>
+        </div>
 
-          <div className="o-sidebar-section">
-            <div className="o-sidebar-title">Date Range</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "0 8px" }}>
+        <div>
+          {/* Top bar with date range and actions */}
+          <div className="content-top-bar">
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <label style={{ fontSize: 13, fontWeight: 500 }}>From:</label>
               <input
                 type="date"
-                className="o-form-input"
+                className="form-control form-control-sm"
+                style={{ width: 140 }}
                 value={dateRange.from}
-                onChange={(e) =>
-                  setDateRange((prev) => ({ ...prev, from: e.target.value }))
-                }
-                style={{ width: "100%" }}
+                onChange={(e) => setDateRange((prev) => ({ ...prev, from: e.target.value }))}
               />
+              <label style={{ fontSize: 13, fontWeight: 500 }}>To:</label>
               <input
                 type="date"
-                className="o-form-input"
+                className="form-control form-control-sm"
+                style={{ width: 140 }}
                 value={dateRange.to}
-                onChange={(e) =>
-                  setDateRange((prev) => ({ ...prev, to: e.target.value }))
-                }
-                style={{ width: "100%" }}
+                onChange={(e) => setDateRange((prev) => ({ ...prev, to: e.target.value }))}
               />
             </div>
-          </div>
-
-          <div className="o-sidebar-section">
-            <div className="o-sidebar-title">Actions</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "0 8px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <button
                 className={`o-btn ${loading ? "o-btn-primary" : "o-btn-secondary"}`}
+                style={{ display: "flex", alignItems: "center", gap: 6 }}
                 onClick={loadReport}
                 disabled={loading}
-                style={{ width: "100%" }}
               >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
                 {loading ? "Loading..." : "Refresh"}
               </button>
               <button
                 className="o-btn o-btn-secondary"
+                style={{ display: "flex", alignItems: "center", gap: 6 }}
                 onClick={exportCSV}
                 disabled={loading}
-                style={{ width: "100%" }}
               >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 Export CSV
               </button>
               <button
                 className="o-btn o-btn-secondary"
+                style={{ display: "flex", alignItems: "center", gap: 6 }}
                 onClick={exportPDF}
                 disabled={loading}
-                style={{ width: "100%" }}
               >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
                 Export PDF
               </button>
             </div>
           </div>
-        </div>
-
-        <div>
 
       {/* Error */}
       {error && (
