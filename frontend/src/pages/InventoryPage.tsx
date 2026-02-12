@@ -126,7 +126,7 @@ type MainView =
   | "reporting";
 type SubView = "list" | "kanban" | "form";
 
-const OverviewIcon = () => (
+const OverviewIcon = ({ color }: InventoryIconProps) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="16"
@@ -138,6 +138,7 @@ const OverviewIcon = () => (
     strokeLinecap="round"
     strokeLinejoin="round"
     aria-hidden="true"
+    style={color ? { color } : undefined}
   >
     <rect x="3" y="3" width="7" height="7" rx="1" />
     <rect x="14" y="3" width="7" height="7" rx="1" />
@@ -146,7 +147,7 @@ const OverviewIcon = () => (
   </svg>
 );
 
-const ProductsIcon = () => (
+const ProductsIcon = ({ color }: InventoryIconProps) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="16"
@@ -158,6 +159,7 @@ const ProductsIcon = () => (
     strokeLinecap="round"
     strokeLinejoin="round"
     aria-hidden="true"
+    style={color ? { color } : undefined}
   >
     <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
     <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
@@ -165,7 +167,7 @@ const ProductsIcon = () => (
   </svg>
 );
 
-const WarehousesIcon = () => (
+const WarehousesIcon = ({ color }: InventoryIconProps) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="16"
@@ -177,6 +179,7 @@ const WarehousesIcon = () => (
     strokeLinecap="round"
     strokeLinejoin="round"
     aria-hidden="true"
+    style={color ? { color } : undefined}
   >
     <path d="M3 7l9-4 9 4" />
     <path d="M21 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7" />
@@ -187,7 +190,7 @@ const WarehousesIcon = () => (
   </svg>
 );
 
-const OperationsIcon = () => (
+const OperationsIcon = ({ color }: InventoryIconProps) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="16"
@@ -199,6 +202,7 @@ const OperationsIcon = () => (
     strokeLinecap="round"
     strokeLinejoin="round"
     aria-hidden="true"
+    style={color ? { color } : undefined}
   >
     <polyline points="16 3 21 3 21 8" />
     <line x1="4" y1="20" x2="21" y2="3" />
@@ -798,72 +802,59 @@ export default function InventoryPage() {
         }}
       >
         {/* Side Bar Navigation */}
-        <div className="o-control-panel menu-items">
-          <aside
-            style={{
-              justifyContent: "center",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 9,
-                alignItems: "start",
-                width: "100%",
-              }}
-            >
-              {[
-                { key: "overview", label: "Overview", icon: OverviewIcon },
-                { key: "products", label: "Products", icon: ProductsIcon },
-                {
-                  key: "warehouses",
-                  label: "Warehouses",
-                  icon: WarehousesIcon,
-                },
-                {
-                  key: "operations",
-                  label: "Operations",
-                  icon: OperationsIcon,
-                },
-              ].map((tab) => (
-                <button
-                  key={tab.key}
-                  className={`o-btn ${mainView === tab.key ? "o-btn-primary" : "o-btn-secondary"}`}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    justifyContent: "center",
-                    textAlign: "center",
-                    width: "160px",
-                  }}
-                  onClick={() => {
-                    setMainView(tab.key as MainView);
-                    setSubView("list");
-                    setSearchQuery("");
-                  }}
-                >
-                  <tab.icon />
-                  <span>{tab.label}</span>
-                </button>
-              ))}
-            </div>
-          </aside>
-          {/* <div className="o-control-panel-right">
-            <select
-              className="o-form-select"
-              style={{ width: 180 }}
-              value={companyId ?? ""}
-              onChange={(e) => setCompanyId(Number(e.target.value))}
-            >
-              {companies.map((c: Company) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </div> */}
+        <div className="o-sidebar">
+          <div className="o-sidebar-section">
+            <div className="o-sidebar-title">MENU</div>
+            {[
+              {
+                key: "overview",
+                label: "OVERVIEW",
+                icon: OverviewIcon,
+                color: "#2563eb",
+              },
+              {
+                key: "products",
+                label: "PRODUCTS",
+                icon: ProductsIcon,
+                color: "#f59e0b",
+              },
+              {
+                key: "warehouses",
+                label: "WAREHOUSES",
+                icon: WarehousesIcon,
+                color: "#10b981",
+              },
+              {
+                key: "operations",
+                label: "OPERATIONS",
+                icon: OperationsIcon,
+                color: "#8b5cf6",
+              },
+            ].map((tab) => (
+              <div
+                key={tab.key}
+                className={`o-sidebar-item ${mainView === tab.key ? "active" : ""}`}
+                onClick={() => {
+                  setMainView(tab.key as MainView);
+                  setSubView("list");
+                  setSearchQuery("");
+                }}
+              >
+                <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <tab.icon color={tab.color} />
+                  <span
+                    style={{
+                      letterSpacing: "0.5px",
+                      fontSize: 12,
+                      fontWeight: 500,
+                    }}
+                  >
+                    {tab.label}
+                  </span>
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Form Sub Control Panel */}
