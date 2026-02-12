@@ -15,6 +15,11 @@ type Device = {
   fiscal_day_status: string;
 };
 
+type DeviceMessage = {
+  type: "success" | "error";
+  text: string;
+};
+
 type GroupedDevices = {
   label: string;
   items: Device[];
@@ -37,6 +42,7 @@ export default function DevicesPage() {
   const [creating, setCreating] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [actionLog, setActionLog] = useState<string[]>([]);
+  const [deviceMessages, setDeviceMessages] = useState<Record<number, DeviceMessage>>({});
 
   useEffect(() => {
     if (companies.length && companyId === null) {
@@ -115,13 +121,27 @@ export default function DevicesPage() {
         const successMessage = `${type.toUpperCase()} uploaded`;
         setActionStatus(successMessage);
         setActionLog((prev) => [successMessage, ...prev].slice(0, 10));
+        setDeviceMessages((prev) => ({
+          ...prev,
+          [deviceId]: { type: "success", text: successMessage }
+        }));
         loadDevices(companyId);
       } else {
         const text = await res.text();
-        setError(text || "Upload failed");
+        const errorMessage = text || "Upload failed";
+        setError(errorMessage);
+        setDeviceMessages((prev) => ({
+          ...prev,
+          [deviceId]: { type: "error", text: errorMessage }
+        }));
       }
     } catch (err: any) {
-      setError(err.message || "Upload failed");
+      const errorMessage = err.message || "Upload failed";
+      setError(errorMessage);
+      setDeviceMessages((prev) => ({
+        ...prev,
+        [deviceId]: { type: "error", text: errorMessage }
+      }));
     }
   };
 
@@ -133,17 +153,31 @@ export default function DevicesPage() {
       const res = await apiRequest(`/devices/${deviceId}/${action}`, { method });
       const text = await res.text();
       if (!res.ok) {
-        setError(text || "Action failed");
+        const errorMessage = text || "Action failed";
+        setError(errorMessage);
+        setDeviceMessages((prev) => ({
+          ...prev,
+          [deviceId]: { type: "error", text: errorMessage }
+        }));
       } else {
         const successMessage = text || `${action} executed`;
         setActionStatus(successMessage);
         setActionLog((prev) => [successMessage, ...prev].slice(0, 10));
+        setDeviceMessages((prev) => ({
+          ...prev,
+          [deviceId]: { type: "success", text: successMessage }
+        }));
       }
       if (companyId) {
         loadDevices(companyId);
       }
     } catch (err: any) {
-      setError(err.message || "Action failed");
+      const errorMessage = err.message || "Action failed";
+      setError(errorMessage);
+      setDeviceMessages((prev) => ({
+        ...prev,
+        [deviceId]: { type: "error", text: errorMessage }
+      }));
     } finally {
       setActionLoading(null);
     }
@@ -295,6 +329,14 @@ export default function DevicesPage() {
                         <button className="outline" onClick={() => runAction(d.id, "open-day", "POST")} disabled={actionLoading === `${d.id}-open-day`}>Open Day</button>
                         <button className="outline" onClick={() => runAction(d.id, "close-day", "POST")} disabled={actionLoading === `${d.id}-close-day`}>Close Day</button>
                       </div>
+                      {deviceMessages[d.id] && (
+                        <div
+                          className={`alert ${deviceMessages[d.id].type === "success" ? "alert-success" : "alert-error"}`}
+                          style={{ marginTop: 8, padding: "6px 8px", fontSize: 12 }}
+                        >
+                          {deviceMessages[d.id].text}
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}
