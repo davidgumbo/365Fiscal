@@ -32,7 +32,7 @@ type DeviceMessage = {
 
 type GroupedDevices = { label: string; items: Device[] };
 
-type PageView = "companies" | "devices" | "new-device";
+type PageView = "companies" | "devices" | "new-device" | "edit-device";
 
 /* ------------------------------------------------------------------ */
 /*  Icons                                                              */
@@ -71,6 +71,22 @@ const ArrowLeft = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <line x1="19" y1="12" x2="5" y2="12" />
     <polyline points="12 19 5 12 12 5" />
+  </svg>
+);
+
+const EditIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+  </svg>
+);
+
+const TrashIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="3 6 5 6 21 6" />
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+    <line x1="10" y1="11" x2="10" y2="17" />
+    <line x1="14" y1="11" x2="14" y2="17" />
   </svg>
 );
 
@@ -154,6 +170,11 @@ export default function DevicesPage() {
   const [globalMsg, setGlobalMsg] = useState<DeviceMessage | null>(null);
   const [loadingDevices, setLoadingDevices] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [editingDevice, setEditingDevice] = useState<Device | null>(null);
+  const [editForm, setEditForm] = useState({ device_id: "", serial_number: "", model: "", activation_key: "", activation_date: "" });
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState<number | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<Device | null>(null);
   const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({});
   const [actionLog, setActionLog] = useState<DeviceMessage[]>([]);
   const [deviceMessages, setDeviceMessages] = useState<Record<number, DeviceMessage>>({});
@@ -291,6 +312,60 @@ export default function DevicesPage() {
       pushGlobal("error", parseErrorDetail(err.message) || "Failed to create device");
     } finally {
       setCreating(false);
+    }
+  };
+
+  /* ---- edit device ---- */
+  const startEdit = (d: Device) => {
+    setEditingDevice(d);
+    setEditForm({
+      device_id: d.device_id,
+      serial_number: d.serial_number,
+      model: d.model,
+      activation_key: d.activation_key || "",
+      activation_date: d.activation_date ? d.activation_date.slice(0, 10) : "",
+    });
+    setView("edit-device");
+  };
+
+  const updateDevice = async () => {
+    if (!editingDevice || !selectedCompany) return;
+    if (!editForm.device_id.trim()) return pushGlobal("error", "Device ID is required");
+    if (!editForm.serial_number.trim()) return pushGlobal("error", "Serial Number is required");
+    if (!editForm.model.trim()) return pushGlobal("error", "Model is required");
+    try {
+      setSaving(true);
+      setGlobalMsg(null);
+      await apiFetch<Device>(`/devices/${editingDevice.id}`, {
+        method: "PUT",
+        body: JSON.stringify(editForm),
+      });
+      pushGlobal("success", "Device updated successfully");
+      pushLog("success", `Device ${editForm.device_id} updated`);
+      setEditingDevice(null);
+      setView("devices");
+      loadDevices(selectedCompany.id);
+    } catch (err: any) {
+      pushGlobal("error", parseErrorDetail(err.message) || "Failed to update device");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  /* ---- delete device ---- */
+  const deleteDevice = async (d: Device) => {
+    if (!selectedCompany) return;
+    try {
+      setDeleting(d.id);
+      await apiRequest(`/devices/${d.id}`, { method: "DELETE" });
+      pushGlobal("success", `Device ${d.device_id} deleted`);
+      pushLog("success", `Device ${d.device_id} deleted`);
+      setConfirmDelete(null);
+      loadDevices(selectedCompany.id);
+    } catch (err: any) {
+      pushGlobal("error", parseErrorDetail(err.message) || "Failed to delete device");
+    } finally {
+      setDeleting(null);
     }
   };
 
@@ -470,6 +545,66 @@ export default function DevicesPage() {
   }
 
   /* ================================================================ */
+  /*  VIEW: Edit Device Form                                           */
+  /* ================================================================ */
+
+  if (view === "edit-device" && selectedCompany && editingDevice) {
+    return (
+      <div className="content">
+        <div className="o-control-panel" style={{ marginBottom: 24 }}>
+          <div className="o-breadcrumb">
+            <span className="o-breadcrumb-item" onClick={goBack}>Devices</span>
+            <span className="o-breadcrumb-separator"><ChevronRight /></span>
+            <span className="o-breadcrumb-item" onClick={() => setView("devices")}>{selectedCompany.name}</span>
+            <span className="o-breadcrumb-separator"><ChevronRight /></span>
+            <span className="o-breadcrumb-current">Edit Device {editingDevice.device_id}</span>
+          </div>
+        </div>
+
+        {globalMsg && (
+          <div className={`alert ${globalMsg.type === "success" ? "alert-success" : globalMsg.type === "error" ? "alert-error" : ""}`} style={{ marginBottom: 16 }}>
+            {globalMsg.text}
+          </div>
+        )}
+
+        <div className="card">
+          <h3 style={{ marginBottom: 16 }}>Edit Device {editingDevice.device_id}</h3>
+
+          <div className="form-grid">
+            <label className="input">
+              Device ID <span style={{ color: "var(--danger)" }}>*</span>
+              <input value={editForm.device_id} placeholder="e.g. 12345" onChange={(e) => setEditForm({ ...editForm, device_id: e.target.value })} />
+            </label>
+            <label className="input">
+              Serial Number <span style={{ color: "var(--danger)" }}>*</span>
+              <input value={editForm.serial_number} placeholder="e.g. SN-001" onChange={(e) => setEditForm({ ...editForm, serial_number: e.target.value })} />
+            </label>
+            <label className="input">
+              Model <span style={{ color: "var(--danger)" }}>*</span>
+              <input value={editForm.model} placeholder="e.g. 365Fiscal" onChange={(e) => setEditForm({ ...editForm, model: e.target.value })} />
+            </label>
+            <label className="input">
+              Activation Key
+              <input value={editForm.activation_key} placeholder="e.g. ABCD1234" maxLength={8} style={{ textTransform: "uppercase" }} onChange={(e) => setEditForm({ ...editForm, activation_key: e.target.value.toUpperCase() })} />
+            </label>
+            <label className="input">
+              Activation Date
+              <input type="date" value={editForm.activation_date} onChange={(e) => setEditForm({ ...editForm, activation_date: e.target.value })} />
+            </label>
+          </div>
+
+          <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+            <button className="primary" onClick={updateDevice} disabled={saving}>
+              {saving ? "Saving…" : "Save Changes"}
+            </button>
+            <button className="outline" onClick={() => { setEditingDevice(null); setView("devices"); }}>Cancel</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ================================================================ */
   /*  VIEW: Device List for selected company                           */
   /* ================================================================ */
 
@@ -554,6 +689,24 @@ export default function DevicesPage() {
         </div>
       )}
 
+      {/* delete confirmation modal */}
+      {confirmDelete && (
+        <div className="modal-overlay" onClick={() => setConfirmDelete(null)}>
+          <div className="modal--centered" onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ marginBottom: 12 }}>Delete Device</h3>
+            <p style={{ marginBottom: 20, color: "var(--muted)" }}>
+              Are you sure you want to delete device <strong>{confirmDelete.device_id}</strong> ({confirmDelete.serial_number})? This action cannot be undone.
+            </p>
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+              <button className="outline" onClick={() => setConfirmDelete(null)}>Cancel</button>
+              <button className="danger" disabled={deleting === confirmDelete.id} onClick={() => deleteDevice(confirmDelete)}>
+                {deleting === confirmDelete.id ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {grouped.map((group, gi) => (
         <Fragment key={group.label || `g-${gi}`}>
           {group.label && <h4 style={{ margin: "16px 0 8px", color: "var(--muted)", fontSize: 13, textTransform: "uppercase", letterSpacing: 1 }}>{group.label}</h4>}
@@ -567,10 +720,19 @@ export default function DevicesPage() {
                     <div>
                       <div className="device-card-title">Device {d.device_id}</div>
                       <div className="device-card-sub">{d.serial_number} · {d.model}</div>
+                      {d.activation_key && <div className="device-card-sub" style={{ fontSize: 11, opacity: 0.7 }}>Key: {d.activation_key}</div>}
                     </div>
-                    <span className={`badge ${d.fiscal_day_status === "open" ? "badge-success" : "badge-warning"}`}>
-                      {fmtStatus(d.fiscal_day_status)}
-                    </span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span className={`badge ${d.fiscal_day_status === "open" ? "badge-success" : "badge-warning"}`}>
+                        {fmtStatus(d.fiscal_day_status)}
+                      </span>
+                      <button className="device-icon-btn" title="Edit" onClick={() => startEdit(d)}>
+                        <EditIcon />
+                      </button>
+                      <button className="device-icon-btn danger" title="Delete" onClick={() => setConfirmDelete(d)}>
+                        <TrashIcon />
+                      </button>
+                    </div>
                   </div>
 
                   {/* stats */}

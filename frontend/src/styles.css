@@ -7595,6 +7595,61 @@ tr:hover .o-quick-actions {
   color: var(--muted, #94a3b8);
 }
 
+/* Device icon buttons (edit/delete) */
+.device-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--stroke, #e0e0e0);
+  background: transparent;
+  color: var(--muted, #64748b);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.device-icon-btn:hover {
+  background: var(--surface, #f1f5f9);
+  color: var(--primary, #2563eb);
+  border-color: var(--primary, #2563eb);
+}
+.device-icon-btn.danger:hover {
+  background: #fef2f2;
+  color: var(--danger, #dc2626);
+  border-color: var(--danger, #dc2626);
+}
+
+/* Danger button */
+button.danger {
+  background: var(--danger, #dc2626);
+  color: #fff;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+button.danger:hover {
+  background: #b91c1c;
+}
+button.danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Modal overlay */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
 /* Responsive */
 @media (max-width: 600px) {
   .device-company-grid {

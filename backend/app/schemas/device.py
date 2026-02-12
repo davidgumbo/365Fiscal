@@ -12,6 +12,14 @@ class DeviceCreate(BaseModel):
     activation_date: datetime | None = None
 
 
+class DeviceUpdate(BaseModel):
+    device_id: str | None = None
+    serial_number: str | None = None
+    model: str | None = None
+    activation_key: str | None = None
+    activation_date: datetime | None = None
+
+
 class DeviceRead(ORMBase):
     id: int
     company_id: int

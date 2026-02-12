@@ -13,7 +13,7 @@ from app.api.deps import (
 )
 from app.models.device import Device
 from app.models.company_certificate import CompanyCertificate
-from app.schemas.device import DeviceCreate, DeviceRead
+from app.schemas.device import DeviceCreate, DeviceRead, DeviceUpdate
 from app.services.fdms import get_status, open_day, close_day, get_config, ping_device, register_device
 
 router = APIRouter(prefix="/devices", tags=["devices"])
@@ -91,6 +91,40 @@ def list_devices(
     if date_to:
         query = query.filter(Device.created_at <= date_to)
     return query.all()
+
+
+@router.put("/{device_id}", response_model=DeviceRead)
+def update_device(
+    device_id: int,
+    payload: DeviceUpdate,
+    db: Session = Depends(get_db),
+    user=Depends(require_admin),
+):
+    device = db.query(Device).filter(Device.id == device_id).first()
+    if not device:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Device not found")
+    ensure_company_access(db, user, device.company_id)
+    update_data = payload.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(device, key, value)
+    db.commit()
+    db.refresh(device)
+    return device
+
+
+@router.delete("/{device_id}")
+def delete_device(
+    device_id: int,
+    db: Session = Depends(get_db),
+    user=Depends(require_admin),
+):
+    device = db.query(Device).filter(Device.id == device_id).first()
+    if not device:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Device not found")
+    ensure_company_access(db, user, device.company_id)
+    db.delete(device)
+    db.commit()
+    return {"detail": "Device deleted"}
 
 
 @router.post("/{device_id}/crt", response_model=DeviceRead)
