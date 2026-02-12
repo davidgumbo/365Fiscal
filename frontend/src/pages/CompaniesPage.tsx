@@ -43,12 +43,6 @@ const BuildingIcon = () => (
   </svg>
 );
 
-const CheckIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="20 6 9 17 4 12" />
-  </svg>
-);
-
 const XIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <line x1="18" y1="6" x2="6" y2="18" />
@@ -77,8 +71,9 @@ export default function CompaniesPage() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
-  const [showModal, setShowModal] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const [form, setForm] = useState({
     name: "",
     address: "",
@@ -100,6 +95,7 @@ export default function CompaniesPage() {
   const [editPortalPassword, setEditPortalPassword] = useState("");
   const [portalEmail, setPortalEmail] = useState("");
   const [portalPassword, setPortalPassword] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const loadCompanies = async () => {
     const params = new URLSearchParams();
@@ -138,6 +134,7 @@ export default function CompaniesPage() {
     try {
       setError(null);
       setStatus(null);
+      setSaving(true);
       const company = await apiFetch<Company>("/companies", {
         method: "POST",
         body: JSON.stringify(form)
@@ -158,7 +155,7 @@ export default function CompaniesPage() {
         setPortalPassword("");
       }
       setForm({ name: "", address: "", email: "", phone: "", tin: "", vat: "" });
-      setShowModal(false);
+      setShowAddModal(false);
       if (portalCreated) {
         setStatus(`Company "${company.name}" created successfully! Portal user can now log in at /login with email: ${portalEmailSnapshot}`);
       } else if (portalEmailSnapshot) {
@@ -169,20 +166,23 @@ export default function CompaniesPage() {
       loadCompanies();
     } catch (err: any) {
       setError(err.message || "Failed to create company");
+    } finally {
+      setSaving(false);
     }
   };
 
-  const startEdit = async (company: Company) => {
-    setEditingId(company.id);
+  const openEditModal = async (company: Company) => {
+    setEditingCompany(company);
     setEditForm({
       name: company.name,
-      address: company.address,
+      address: company.address || "",
       email: company.email || "",
-      phone: company.phone,
-      tin: company.tin,
-      vat: company.vat
+      phone: company.phone || "",
+      tin: company.tin || "",
+      vat: company.vat || ""
     });
     setEditPortalPassword("");
+    setError(null);
     try {
       const portalUsers = await apiFetch<{id: number; email: string}[]>(`/company-users/portal-users?company_id=${company.id}`);
       if (portalUsers.length) {
@@ -196,26 +196,34 @@ export default function CompaniesPage() {
       setEditPortalUserId(null);
       setEditPortalEmail("");
     }
+    setShowEditModal(true);
   };
 
-  const cancelEdit = () => {
-    setEditingId(null);
+  const closeEditModal = () => {
+    setShowEditModal(false);
+    setEditingCompany(null);
     setEditForm({ name: "", address: "", email: "", phone: "", tin: "", vat: "" });
     setEditPortalUserId(null);
     setEditPortalEmail("");
     setEditPortalPassword("");
   };
 
-  const saveEdit = async (companyId: number) => {
+  const saveEdit = async () => {
+    if (!editingCompany) return;
+    if (!editForm.name || !editForm.tin) {
+      setError("Company name and TIN are required");
+      return;
+    }
     try {
       setError(null);
-      await apiFetch(`/companies/${companyId}`, {
+      setSaving(true);
+      await apiFetch(`/companies/${editingCompany.id}`, {
         method: "PATCH",
         body: JSON.stringify(editForm)
       });
       // Update or create portal user if email/password provided
       if (editPortalEmail && editPortalPassword) {
-        await apiFetch(`/companies/${companyId}/portal-user`, {
+        await apiFetch(`/companies/${editingCompany.id}/portal-user`, {
           method: "PATCH",
           body: JSON.stringify({ email: editPortalEmail, password: editPortalPassword })
         });
@@ -225,14 +233,13 @@ export default function CompaniesPage() {
           method: "PATCH"
         });
       }
-      setEditingId(null);
-      setEditPortalUserId(null);
-      setEditPortalEmail("");
-      setEditPortalPassword("");
+      closeEditModal();
       setStatus("Company updated successfully");
       loadCompanies();
     } catch (err: any) {
       setError(err.message || "Failed to update company");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -263,6 +270,14 @@ export default function CompaniesPage() {
     return [{ label: "", items: companies }];
   }, [companies, state.groupBy]);
 
+  // Clear status message after 5 seconds
+  useEffect(() => {
+    if (status) {
+      const timer = setTimeout(() => setStatus(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [status]);
+
   return (
     <div className="content">
       {/* Page Header */}
@@ -272,9 +287,9 @@ export default function CompaniesPage() {
           <h2>Companies</h2>
         </div>
         {me?.is_admin && (
-          <button className="primary" onClick={() => setShowModal(true)}>
+          <button className="primary" onClick={() => setShowAddModal(true)}>
             <PlusIcon />
-            Add Company
+            ADD COMPANY
           </button>
         )}
       </div>
@@ -283,12 +298,12 @@ export default function CompaniesPage() {
       {status && <div className="alert alert-success">{status}</div>}
 
       {/* Add Company Modal */}
-      {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+      {showAddModal && (
+        <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Register New Company</h3>
-              <button className="icon-btn" onClick={() => setShowModal(false)}>
+              <button className="icon-btn" onClick={() => setShowAddModal(false)}>
                 <XIcon />
               </button>
             </div>
@@ -374,8 +389,113 @@ export default function CompaniesPage() {
               </div>
             </div>
             <div className="modal-footer">
-              <button className="ghost" onClick={() => setShowModal(false)}>Cancel</button>
-              <button className="primary" onClick={createCompany}>Create Company</button>
+              <button className="ghost" onClick={() => setShowAddModal(false)}>Cancel</button>
+              <button className="primary" onClick={createCompany} disabled={saving}>
+                {saving ? "Creating..." : "Create Company"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Company Modal */}
+      {showEditModal && editingCompany && (
+        <div className="modal-overlay" onClick={closeEditModal}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Edit Company</h3>
+              <button className="icon-btn" onClick={closeEditModal}>
+                <XIcon />
+              </button>
+            </div>
+            <div className="modal-body">
+              {error && <div className="alert alert-error" style={{ marginBottom: 16 }}>{error}</div>}
+              <div className="form-grid">
+                <label className="input">
+                  Company Name *
+                  <input
+                    type="text"
+                    placeholder="Enter company name"
+                    value={editForm.name}
+                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  />
+                </label>
+                <label className="input">
+                  TIN *
+                  <input
+                    type="text"
+                    placeholder="Tax Identification Number"
+                    value={editForm.tin}
+                    onChange={(e) => setEditForm({ ...editForm, tin: e.target.value })}
+                  />
+                </label>
+                <label className="input">
+                  VAT
+                  <input
+                    type="text"
+                    placeholder="VAT Number"
+                    value={editForm.vat}
+                    onChange={(e) => setEditForm({ ...editForm, vat: e.target.value })}
+                  />
+                </label>
+                <label className="input">
+                  Address
+                  <input
+                    type="text"
+                    placeholder="Company address"
+                    value={editForm.address}
+                    onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+                  />
+                </label>
+                <label className="input">
+                  Email
+                  <input
+                    type="email"
+                    placeholder="company@example.com"
+                    value={editForm.email}
+                    onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                  />
+                </label>
+                <label className="input">
+                  Phone
+                  <input
+                    type="text"
+                    placeholder="+263 xxx xxx xxx"
+                    value={editForm.phone}
+                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                  />
+                </label>
+              </div>
+              <div className="form-section">
+                <h4>Portal Access</h4>
+                <div className="form-grid">
+                  <label className="input">
+                    Portal Email
+                    <input
+                      type="email"
+                      placeholder="portal@company.com"
+                      value={editPortalEmail}
+                      onChange={(e) => setEditPortalEmail(e.target.value)}
+                    />
+                    {editPortalUserId && <small style={{ color: "var(--muted)", marginTop: 4 }}>Current portal user exists</small>}
+                  </label>
+                  <label className="input">
+                    {editPortalUserId ? "New Password (leave blank to keep)" : "Portal Password"}
+                    <input
+                      type="password"
+                      placeholder={editPortalUserId ? "Enter new password" : "Password"}
+                      value={editPortalPassword}
+                      onChange={(e) => setEditPortalPassword(e.target.value)}
+                    />
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="ghost" onClick={closeEditModal}>Cancel</button>
+              <button className="primary" onClick={saveEdit} disabled={saving}>
+                {saving ? "Saving..." : "Save Changes"}
+              </button>
             </div>
           </div>
         </div>
@@ -400,119 +520,40 @@ export default function CompaniesPage() {
               <Fragment key={group.label || `group-${index}`}>
                 {group.label && (
                   <tr className="table-group">
-                    <td colSpan={me?.is_admin ? 6 : 5}>
+                    <td colSpan={me?.is_admin ? 7 : 5}>
                       <strong>{group.label}</strong> ({group.items.length})
                     </td>
                   </tr>
                 )}
                 {group.items.map((c) => (
                   <tr key={c.id}>
-                    {editingId === c.id ? (
-                      <>
-                        <td>
-                          <input
-                            type="text"
-                            value={editForm.name}
-                            onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                            className="inline-edit"
-                          />
-                        </td>
-                        <td>
-                          <input
-                            type="text"
-                            value={editForm.tin}
-                            onChange={(e) => setEditForm({ ...editForm, tin: e.target.value })}
-                            className="inline-edit"
-                          />
-                        </td>
-                        <td>
-                          <input
-                            type="text"
-                            value={editForm.vat}
-                            onChange={(e) => setEditForm({ ...editForm, vat: e.target.value })}
-                            className="inline-edit"
-                          />
-                        </td>
-                        <td>
-                          <input
-                            type="text"
-                            value={editForm.phone}
-                            onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                            className="inline-edit"
-                          />
-                        </td>
-                        <td>
-                          <input
-                            type="email"
-                            value={editForm.email}
-                            onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                            className="inline-edit"
-                          />
-                        </td>
-                        <td>
-                          <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                            <span style={{ fontSize: "12px", color: "var(--muted)" }}>{editPortalEmail || "No portal user"}</span>
-                            {editPortalUserId && (
-                              <input
-                                type="password"
-                                placeholder="New password"
-                                value={editPortalPassword}
-                                onChange={(e) => setEditPortalPassword(e.target.value)}
-                                className="inline-edit"
-                              />
-                            )}
-                          </div>
-                        </td>
-                        <td>
-                          <div className="action-icons">
-                            <button
-                              className="icon-btn success"
-                              onClick={() => saveEdit(c.id)}
-                              title="Save"
-                            >
-                              <CheckIcon />
-                            </button>
-                            <button
-                              className="icon-btn"
-                              onClick={cancelEdit}
-                              title="Cancel"
-                            >
-                              <XIcon />
-                            </button>
-                          </div>
-                        </td>
-                      </>
-                    ) : (
-                      <>
-                        <td>
-                          <span className="company-name">{c.name}</span>
-                        </td>
-                        <td><code>{c.tin}</code></td>
-                        <td>{c.vat ? <span className="badge badge-info">{c.vat}</span> : <span className="text-muted">—</span>}</td>
-                        <td>{c.phone || <span className="text-muted">—</span>}</td>
-                        <td>{c.email || <span className="text-muted">—</span>}</td>
-                        {me?.is_admin && <td><span className="text-muted">••••••••</span></td>}
-                        {me?.is_admin && (
-                          <td>
-                            <div className="action-icons">
-                              <button
-                                className="icon-btn"
-                                onClick={() => startEdit(c)}
-                                title="Edit company"
-                              >
-                                <EditIcon />
-                              </button>
-                              <button
-                                className="icon-btn danger"
-                                onClick={() => deleteCompany(c.id)}
-                                title="Delete company"
-                              >
-                                <TrashIcon />
-                              </button>
-                            </div>
-                          </td>
-                        )}
-                      </>
+                    <td>
+                      <span className="company-name">{c.name}</span>
+                    </td>
+                    <td><code style={{ color: "#3b82f6" }}>{c.tin}</code></td>
+                    <td>{c.vat ? <span className="badge badge-info">{c.vat}</span> : <span className="text-muted">—</span>}</td>
+                    <td>{c.phone || <span className="text-muted">—</span>}</td>
+                    <td>{c.email ? <a href={`mailto:${c.email}`} style={{ color: "#3b82f6" }}>{c.email}</a> : <span className="text-muted">—</span>}</td>
+                    {me?.is_admin && <td><span className="text-muted">••••••••</span></td>}
+                    {me?.is_admin && (
+                      <td>
+                        <div className="action-icons">
+                          <button
+                            className="icon-btn"
+                            onClick={() => openEditModal(c)}
+                            title="Edit company"
+                          >
+                            <EditIcon />
+                          </button>
+                          <button
+                            className="icon-btn danger"
+                            onClick={() => deleteCompany(c.id)}
+                            title="Delete company"
+                          >
+                            <TrashIcon />
+                          </button>
+                        </div>
+                      </td>
                     )}
                   </tr>
                 ))}
