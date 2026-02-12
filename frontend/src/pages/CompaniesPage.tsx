@@ -172,9 +172,10 @@ export default function CompaniesPage() {
   };
 
   const openEditModal = async (company: Company) => {
+    console.log("Opening edit modal for company:", company);
     setEditingCompany(company);
     setEditForm({
-      name: company.name,
+      name: company.name || "",
       address: company.address || "",
       email: company.email || "",
       phone: company.phone || "",
@@ -182,21 +183,22 @@ export default function CompaniesPage() {
       vat: company.vat || ""
     });
     setEditPortalPassword("");
+    setEditPortalUserId(null);
+    setEditPortalEmail("");
     setError(null);
+    setShowEditModal(true);
+    
+    // Load portal user info in background
     try {
       const portalUsers = await apiFetch<{id: number; email: string}[]>(`/company-users/portal-users?company_id=${company.id}`);
-      if (portalUsers.length) {
+      if (portalUsers && portalUsers.length) {
         setEditPortalUserId(portalUsers[0].id);
         setEditPortalEmail(portalUsers[0].email);
-      } else {
-        setEditPortalUserId(null);
-        setEditPortalEmail("");
       }
-    } catch {
-      setEditPortalUserId(null);
-      setEditPortalEmail("");
+    } catch (err) {
+      console.log("No portal users found or error:", err);
+      // Silently ignore - portal user info is optional
     }
-    setShowEditModal(true);
   };
 
   const closeEditModal = () => {
