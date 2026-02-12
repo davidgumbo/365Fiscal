@@ -351,12 +351,18 @@ def _build_receipt(invoice: Invoice, lines: list[Any], device_id_str: str, db=No
             }
         )
 
+    # Build invoice number for ZIMRA (required field)
+    invoice_no = getattr(invoice, "reference", "") or getattr(invoice, "invoice_number", "") or ""
+    if not invoice_no:
+        invoice_no = f"INV-{receipt_global}"
+
     receipt = {
         "deviceID": device_id_str,
         "receiptType": "FiscalInvoice",
         "receiptCurrency": (invoice.currency or "USD").upper(),
         "receiptCounter": receipt_counter,
         "receiptGlobalNo": receipt_global,
+        "invoiceNo": invoice_no,
         "receiptDate": receipt_date,
         "receiptLinesTaxInclusive": True,
         "receiptPrintForm": "Receipt48",
