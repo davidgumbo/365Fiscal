@@ -211,58 +211,84 @@ def open_day(device: Device, db) -> dict:
     return _call_fdms(device, db, f"Device/v1/{device.device_id}/OpenDay", payload=payload)
 
 
-def close_day(device: Device, db) -> dict:
-    """POST /Device/v1/{deviceID}/CloseDay – close the current fiscal day.
+def _sort_fiscal_counters(counters: list[dict]) -> list[dict]:
+    """Sort fiscal counters per ZIMRA Section 13.3.1 spec and filter out zeros."""
+    _TYPE_ORDER = {
+        "SaleByTax": 1,
+        "SaleTaxByTax": 2,
+        "CreditNoteByTax": 3,
+        "CreditNoteTaxByTax": 4,
+        "DebitNoteByTax": 5,
+        "DebitNoteTaxByTax": 6,
+        "BalanceByMoneyType": 7,
+    }
 
-    Fetches GetStatus first to get counters, then signs and submits.
-    ZIMRA requires: fiscalDayNo, fiscalDayCounters, fiscalDayDeviceSignature, receiptCounter
+    non_zero = []
+    for c in counters:
+        raw = c.get("fiscalCounterValue", 0) or 0
+        val = Decimal(str(raw)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        if val != Decimal("0.00"):
+            non_zero.append(c)
+
+    def _key(c):
+        ct = str(c.get("fiscalCounterType", ""))
+        order = _TYPE_ORDER.get(ct, 99)
+        cur = str(c.get("fiscalCounterCurrency", "")).upper()
+        if ct == "BalanceByMoneyType":
+            mt = str(c.get("fiscalCounterMoneyType", "")).upper()
+            return (order, cur, mt)
+        tid = 0
+        try:
+            tid = int(c.get("fiscalCounterTaxID", 0) or 0)
+        except (ValueError, TypeError):
+            pass
+        return (order, cur, tid)
+
+    non_zero.sort(key=_key)
+    return non_zero
+
+
+def _build_counters_concat(counters: list[dict]) -> str:
+    """Build canonical concatenation of fiscal counters per ZIMRA Section 13.3.1.
+
+    All text values in UPPER CASE, amounts in cents.
     """
-    # 1. Get current status from ZIMRA
-    status = get_status(device, db)
-    current_day = status.get("lastFiscalDayNo", device.current_fiscal_day_no or device.last_fiscal_day_no or 0)
-    receipt_counter = status.get("lastReceiptCounter", device.last_receipt_counter or 0)
-
-    # 2. Get fiscal day counters from ZIMRA status
-    fiscal_counters = status.get("fiscalDayCounter") or status.get("fiscalDayCounters") or []
-
-    # 3. Build signature over fiscal counters
-    #    Concat: deviceID + fiscalDayNo + fiscalDayDate + counters
-    device_id_str = str(int(device.device_id))
-    fiscal_day_date = datetime.utcnow().strftime("%Y-%m-%d")
-
-    # Build counters concatenation (only non-zero, sorted by type/currency/taxID)
-    counters_concat = ""
-    for counter in sorted(fiscal_counters, key=lambda c: (
-        str(c.get("fiscalCounterType", "")),
-        str(c.get("fiscalCounterCurrency", "")),
-        int(c.get("fiscalCounterTaxID", 0) or 0),
-    )):
+    parts: list[str] = []
+    for counter in counters:
         raw_value = counter.get("fiscalCounterValue", 0) or 0
         value_dec = Decimal(str(raw_value)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-        if value_dec == Decimal("0.00"):
-            continue
         counter_type = str(counter.get("fiscalCounterType", "")).upper()
         currency = str(counter.get("fiscalCounterCurrency", "")).upper()
         cents = str(int((value_dec * 100).to_integral_value(rounding=ROUND_HALF_UP)))
 
         if counter_type == "BALANCEBYMONEYTYPE":
             money_type = str(counter.get("fiscalCounterMoneyType", "")).upper()
-            counters_concat += f"{counter_type}{currency}{money_type}{cents}"
+            parts.append(f"{counter_type}{currency}{money_type}{cents}")
         else:
             tax_percent = counter.get("fiscalCounterTaxPercent")
             if tax_percent is not None:
                 tp = Decimal(str(tax_percent)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
                 percent_str = f"{float(tp):.2f}"
             else:
-                percent_str = ""
-            counters_concat += f"{counter_type}{currency}{percent_str}{cents}"
+                percent_str = ""  # exempt
+            parts.append(f"{counter_type}{currency}{percent_str}{cents}")
+    return "".join(parts)
 
+
+def _sign_close_day(device: Device, db, current_day: int, fiscal_day_date: str, counters: list[dict]) -> dict:
+    """Build and sign the CloseDay concatenation string.
+
+    concat = deviceID + fiscalDayNo + fiscalDayDate + counters_concat
+    Returns {"hash": b64, "signature": b64, "concat": str}
+    """
+    device_id_str = str(int(device.device_id))
+    counters_concat = _build_counters_concat(counters)
     concat = f"{device_id_str}{current_day}{fiscal_day_date}{counters_concat}"
+
     payload_bytes = concat.encode("utf-8")
     hash_bytes = hashlib.sha256(payload_bytes).digest()
     hash_b64 = base64.b64encode(hash_bytes).decode("ascii")
 
-    # Sign with device key
     sign_key = device.key_data
     if not sign_key:
         cert = db.query(CompanyCertificate).filter(CompanyCertificate.company_id == device.company_id).first()
@@ -270,24 +296,46 @@ def close_day(device: Device, db) -> dict:
             raise ValueError("No signing key available for CloseDay")
         sign_key = cert.key_data
 
+    from cryptography.hazmat.primitives.asymmetric import utils as asym_utils
     key = serialization.load_pem_private_key(sign_key, password=None)
     if isinstance(key, ec.EllipticCurvePrivateKey):
-        from cryptography.hazmat.primitives.asymmetric import utils
-        sig_bytes = key.sign(hash_bytes, ec.ECDSA(utils.Prehashed(hashes.SHA256())))
+        sig_bytes = key.sign(hash_bytes, ec.ECDSA(asym_utils.Prehashed(hashes.SHA256())))
     elif isinstance(key, rsa.RSAPrivateKey):
-        from cryptography.hazmat.primitives.asymmetric import utils
-        sig_bytes = key.sign(hash_bytes, padding.PKCS1v15(), utils.Prehashed(hashes.SHA256()))
+        sig_bytes = key.sign(hash_bytes, padding.PKCS1v15(), asym_utils.Prehashed(hashes.SHA256()))
     else:
         raise ValueError("Unsupported key type for CloseDay signature")
 
     sig_b64 = base64.b64encode(sig_bytes).decode("ascii")
+    return {"hash": hash_b64, "signature": sig_b64, "concat": concat}
+
+
+def close_day(device: Device, db) -> dict:
+    """POST /Device/v1/{deviceID}/CloseDay – close the current fiscal day.
+
+    Fetches GetStatus first to get counters from ZIMRA, then signs and submits.
+    ZIMRA requires: fiscalDayNo, fiscalDayCounters, fiscalDayDeviceSignature, receiptCounter
+    """
+    # 1. Get current status from ZIMRA
+    status = get_status(device, db)
+    current_day = status.get("lastFiscalDayNo", device.current_fiscal_day_no or device.last_fiscal_day_no or 0)
+    receipt_counter = status.get("lastReceiptCounter", device.last_receipt_counter or 0)
+
+    # 2. Get fiscal day counters from ZIMRA status (they may be in either key)
+    raw_counters = status.get("fiscalDayCounter") or status.get("fiscalDayCounters") or []
+
+    # 3. Sort and filter out zero-value counters
+    sorted_counters = _sort_fiscal_counters(raw_counters)
+
+    # 4. Build and sign
+    fiscal_day_date = datetime.utcnow().strftime("%Y-%m-%d")
+    sig = _sign_close_day(device, db, current_day, fiscal_day_date, sorted_counters)
 
     payload = {
         "fiscalDayNo": current_day,
-        "fiscalDayCounters": fiscal_counters,
+        "fiscalDayCounters": sorted_counters,
         "fiscalDayDeviceSignature": {
-            "hash": hash_b64,
-            "signature": sig_b64,
+            "hash": sig["hash"],
+            "signature": sig["signature"],
         },
         "receiptCounter": receipt_counter,
     }
@@ -422,9 +470,18 @@ def _build_receipt(invoice: Invoice, lines: list[Any], device_id_str: str, db=No
     if not invoice_no:
         invoice_no = f"INV-{receipt_global}"
 
+    # Determine receipt type based on invoice type
+    invoice_type = getattr(invoice, "invoice_type", "invoice") or "invoice"
+    if invoice_type == "credit_note":
+        receipt_type = "CreditNote"
+    elif invoice_type == "debit_note":
+        receipt_type = "DebitNote"
+    else:
+        receipt_type = "FiscalInvoice"
+
     receipt = {
         "deviceID": device_id_str,
-        "receiptType": "FiscalInvoice",
+        "receiptType": receipt_type,
         "receiptCurrency": (invoice.currency or "USD").upper(),
         "receiptCounter": receipt_counter,
         "receiptGlobalNo": receipt_global,
@@ -439,6 +496,15 @@ def _build_receipt(invoice: Invoice, lines: list[Any], device_id_str: str, db=No
             {"moneyTypeCode": "Cash", "paymentAmount": float(total_with_tax)}
         ],
     }
+
+    # Credit notes / debit notes must reference the original receipt
+    if receipt_type in ("CreditNote", "DebitNote"):
+        reversed_id = getattr(invoice, "reversed_invoice_id", None)
+        if reversed_id and db:
+            original = db.query(Invoice).filter(Invoice.id == reversed_id).first()
+            if original and original.zimra_receipt_global_no:
+                receipt["receiptRefNo"] = str(original.zimra_receipt_global_no)
+
     return receipt
 
 
