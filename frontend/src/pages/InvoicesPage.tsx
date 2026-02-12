@@ -14,318 +14,154 @@ type InvoiceLine = {
   description: string;
   hs_code?: string | null;
   quantity: number;
-  uom: string;
-  unit_price: number;
-  discount: number;
-  vat_rate: number;
-  subtotal: number;
-  tax_amount: number;
-  total_price: number;
-};
+        <div className="two-panel two-panel-left">
+          <aside
+            className="sidebar-panel filter-sidebar"
+            style={{ "--sidebar-hue": sidebarHue } as CssVarStyle}
+          >
+            <div className="filter-sidebar-title">Filters</div>
+            <div className="filter-group">
+              <div className="filter-button-stack">
+                {["", "draft", "posted", "paid", "fiscalized"].map((status) => (
+                  <button
+                    key={status || "all"}
+                    className={`filter-btn ${status ? `status-${status}` : "status-all"} ${listStatus === status ? "active" : ""}`}
+                    onClick={() => setListStatus(status)}
+                    type="button"
+                  >
+                    <span className="filter-icon">
+                      {status === "" && (
+                        <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+                      )}
+                      {status === "draft" && (
+                        <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/></svg>
+                      )}
+                      {status === "posted" && (
+                        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                      )}
+                      {status === "paid" && (
+                        <svg viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
+                      )}
+                      {status === "fiscalized" && (
+                        <svg viewBox="0 0 24 24"><path d="M23 12l-2.44-2.78.34-3.68-3.61-.82-1.89-3.18L12 3 8.6 1.54 6.71 4.72l-3.61.81.34 3.68L1 12l2.44 2.78-.34 3.69 3.61.82 1.89 3.18L12 21l3.4 1.46 1.89-3.18 3.61-.82-.34-3.68L23 12zm-13 5l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+                      )}
+                    </span>
+                    {status
+                      ? status.charAt(0).toUpperCase() + status.slice(1)
+                      : "All Invoices"}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </aside>
 
-type Invoice = {
-  id: number;
-  company_id: number;
-  quotation_id: number | null;
-  customer_id: number | null;
-  reference: string;
-  invoice_type: string;
-  reversed_invoice_id: number | null;
-  status: string;
-  invoice_date: string | null;
-  due_date: string | null;
-  fiscalized_at: string | null;
-  subtotal: number;
-  discount_amount: number;
-  tax_amount: number;
-  total_amount: number;
-  amount_paid: number;
-  amount_due: number;
-  currency: string;
-  payment_terms: string;
-  payment_reference: string;
-  notes: string;
-  device_id?: number | null;
-  zimra_status?: string;
-  zimra_verification_code?: string;
-  zimra_verification_url?: string;
-  lines: InvoiceLine[];
-};
+          <div>
+            <div className="content-top-bar">
+              <div className="top-search">
+                <span className="search-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </span>
+                <input
+                  placeholder="Search invoices…"
+                  value={listSearch}
+                  onChange={(e) => setListSearch(e.target.value)}
+                />
+              </div>
+              <button
+                className="btn-create"
+                onClick={() => {
+                  beginNew();
+                  navigate("/invoices/new");
+                }}
+                type="button"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                New Invoice
+              </button>
+            </div>
 
-type QuotationLine = {
-  id: number;
-  product_id: number | null;
-  description: string;
-  quantity: number;
-  uom: string;
-  unit_price: number;
-  vat_rate: number;
-  total_price: number;
-};
-
-type Quotation = {
-  id: number;
-  customer_id: number;
-  reference: string;
-  status: string;
-  lines: QuotationLine[];
-};
-
-type Contact = {
-  id: number;
-  name: string;
-  address: string;
-  city?: string;
-  country?: string;
-  vat: string;
-  tin: string;
-  phone: string;
-  email?: string | null;
-};
-
-type Product = {
-  id: number;
-  name: string;
-  sale_price: number;
-  tax_rate: number;
-  reference?: string;
-  hs_code?: string;
-  uom?: string;
-  quantity_on_hand?: number;
-  quantity_available?: number;
-  quantity_reserved?: number;
-  stock_value?: number;
-};
-
-type Device = {
-  id: number;
-  device_id: string;
-  serial_number?: string;
-  model?: string;
-};
-
-type Warehouse = {
-  id: number;
-  name: string;
-};
-
-type Location = {
-  id: number;
-  name: string;
-  warehouse_id: number;
-};
-
-type CompanySettings = {
-  logo_data: string;
-  document_layout: string;
-  invoice_notes?: string;
-  payment_terms_default?: string;
-  document_header?: string;
-  document_footer?: string;
-  document_watermark?: string;
-  document_watermark_opacity?: string;
-};
-
-const currencyOptions = [
-  "USD",
-  "ZWL",
-  "ZAR",
-  "EUR",
-  "GBP",
-  "KES",
-  "UGX",
-  "NGN",
-  "TZS",
-];
-
-const formatCurrency = (value: number, currency: string) => {
-  try {
-    return new Intl.NumberFormat(undefined, {
-      style: "currency",
-      currency,
-    }).format(value || 0);
-  } catch {
-    return `${currency} ${(value || 0).toFixed(2)}`;
-  }
-};
-
-const normalizeUom = (value: string) => (value === "PCS" ? "Units" : value);
-
-const toDateInputValue = (value: string | null) => {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  return date.toISOString().split("T")[0];
-};
-
-const fromDateInputValue = (value: string) =>
-  value ? new Date(value).toISOString() : null;
-
-const getPaymentStatus = (amountPaid: number, amountDue: number) => {
-  if (amountDue <= 0) return "Paid";
-  if (amountPaid > 0) return "Partial";
-  return "Unpaid";
-};
-
-type InvoicesPageMode = "list" | "new" | "detail";
-
-export default function InvoicesPage({
-  mode = "list",
-}: {
-  mode?: InvoicesPageMode;
-}) {
-  const navigate = useNavigate();
-  const { invoiceId } = useParams();
-  const routeInvoiceId = invoiceId ? Number(invoiceId) : null;
-  const { me } = useMe();
-  const companyId = me?.company_ids?.[0];
-  const company = me?.companies?.find((c) => c.id === companyId);
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [quotations, setQuotations] = useState<Quotation[]>([]);
-  const [contacts, setContacts] = useState<Contact[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [devices, setDevices] = useState<Device[]>([]);
-  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
-  const [locations, setLocations] = useState<Location[]>([]);
-  const [companySettings, setCompanySettings] =
-    useState<CompanySettings | null>(null);
-  const [selectedInvoiceId, setSelectedInvoiceId] = useState<number | null>(
-    null,
-  );
-  const [newMode, setNewMode] = useState(false);
-  const [newQuotationId, setNewQuotationId] = useState<number | null>(null);
-  const [newCustomerId, setNewCustomerId] = useState<number | null>(null);
-  const [newReference, setNewReference] = useState("");
-  const [newCurrency, setNewCurrency] = useState("USD");
-  const [newInvoiceDate, setNewInvoiceDate] = useState("");
-  const [newDueDate, setNewDueDate] = useState("");
-  const [newPaymentTerms, setNewPaymentTerms] = useState("");
-  const [newNotes, setNewNotes] = useState("");
-  const [newDeviceId, setNewDeviceId] = useState<number | null>(null);
-  const [editQuotationId, setEditQuotationId] = useState<number | null>(null);
-  const [editCustomerId, setEditCustomerId] = useState<number | null>(null);
-  const [editReference, setEditReference] = useState("");
-  const [editCurrency, setEditCurrency] = useState("USD");
-  const [editInvoiceDate, setEditInvoiceDate] = useState("");
-  const [editDueDate, setEditDueDate] = useState("");
-  const [editPaymentTerms, setEditPaymentTerms] = useState("");
-  const [editNotes, setEditNotes] = useState("");
-  const [editDeviceId, setEditDeviceId] = useState<number | null>(null);
-  const [editLines, setEditLines] = useState<Partial<InvoiceLine>[]>([]);
-  const [isEditing, setIsEditing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [listSearch, setListSearch] = useState("");
-  const [listStatus, setListStatus] = useState("");
-  const [listType, setListType] = useState("");
-  const [paymentOpen, setPaymentOpen] = useState(false);
-  const [paymentAmount, setPaymentAmount] = useState("");
-  const [paymentReference, setPaymentReference] = useState("");
-  const [createProductOpen, setCreateProductOpen] = useState(false);
-  const [productName, setProductName] = useState("");
-  const [productPrice, setProductPrice] = useState("");
-  const [productTaxRate, setProductTaxRate] = useState("");
-  const [productReference, setProductReference] = useState("");
-  const [productHsCode, setProductHsCode] = useState("");
-  const [productUom, setProductUom] = useState("Units");
-  const [productInitialStock, setProductInitialStock] = useState("");
-  const [productWarehouseId, setProductWarehouseId] = useState<number | null>(
-    null,
-  );
-  const [productLocationId, setProductLocationId] = useState<number | null>(
-    null,
-  );
-  const [customerSearch, setCustomerSearch] = useState("");
-  const [customerDropdownOpen, setCustomerDropdownOpen] = useState(false);
-  const [customerCreating, setCustomerCreating] = useState(false);
-  const [quotationSearch, setQuotationSearch] = useState("");
-  const [quotationDropdownOpen, setQuotationDropdownOpen] = useState(false);
-  const customerDropdownRef = useRef<HTMLDivElement>(null);
-  const quotationDropdownRef = useRef<HTMLDivElement>(null);
-
-  const filteredContacts = contacts.filter((c) =>
-    c.name.toLowerCase().includes(customerSearch.toLowerCase()),
-  );
-  const topContacts = contacts.slice(0, 3);
-  const displayContacts = customerSearch.trim()
-    ? filteredContacts
-    : topContacts;
-  const filteredQuotations = quotations.filter((q) =>
-    q.reference.toLowerCase().includes(quotationSearch.toLowerCase()),
-  );
-  const topQuotations = quotations.slice(0, 3);
-  const displayQuotations = quotationSearch.trim()
-    ? filteredQuotations
-    : topQuotations;
-
-  const selectCustomer = (id: number, name: string, mode: "new" | "edit") => {
-    if (mode === "new") {
-      setNewCustomerId(id);
-    } else {
-      setEditCustomerId(id);
-    }
-    setCustomerSearch(name);
-    setCustomerDropdownOpen(false);
-  };
-
-  const createCustomerFromSearch = async (mode: "new" | "edit") => {
-    if (!companyId) return;
-    const name = customerSearch.trim();
-    if (!name) return;
-    const exists = contacts.some(
-      (c) => c.name.toLowerCase() === name.toLowerCase(),
-    );
-    if (exists) return;
-    setCustomerCreating(true);
-    setError(null);
-    try {
-      const created = await apiFetch<Contact>("/contacts", {
-        method: "POST",
-        body: JSON.stringify({
-          company_id: companyId,
-          name,
-        }),
-      });
-      setContacts((prev) => [created, ...prev]);
-      selectCustomer(created.id, created.name, mode);
-    } catch (err: any) {
-      setError(err.message || "Failed to create customer");
-    } finally {
-      setCustomerCreating(false);
-    }
-  };
-
-  // Close customer dropdown when clicking outside
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (
-        customerDropdownRef.current &&
-        !customerDropdownRef.current.contains(e.target as Node)
-      ) {
-        setCustomerDropdownOpen(false);
-      }
-      if (
-        quotationDropdownRef.current &&
-        !quotationDropdownRef.current.contains(e.target as Node)
-      ) {
-        setQuotationDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  const loadAll = async () => {
-    if (!companyId) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const query = new URLSearchParams({
-        company_id: String(companyId),
+            <div className="card shadow-sm card-bg-shadow">
+              <div className="card-body p-0">
+                <div className="table-responsive">
+                  <table className="table table-hover align-middle mb-0">
+                    <thead className="table-light">
+                      <tr>
+                        <th>Reference</th>
+                        <th>Customer</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Payment</th>
+                        <th className="text-end">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {loading && (
+                        <tr>
+                          <td colSpan={6} className="text-center py-5 text-muted">
+                            Loading invoices…
+                          </td>
+                        </tr>
+                      )}
+                      {!loading && invoices.length === 0 && (
+                        <tr>
+                          <td colSpan={6} className="text-center py-5 text-muted">
+                            No invoices yet. Click <strong>New Invoice</strong>{" "}
+                            to create one.
+                          </td>
+                        </tr>
+                      )}
+                      {invoices.map((inv) => {
+                        const cust = contactById.get(inv.customer_id ?? 0);
+                        return (
+                          <tr
+                            key={inv.id}
+                            role="button"
+                            onClick={() => navigate(`/invoices/${inv.id}`)}
+                          >
+                            <td>
+                              <div className="fw-semibold">{inv.reference}</div>
+                              <small className="text-muted">
+                                {inv.invoice_type === "credit_note"
+                                  ? "Credit Note"
+                                  : "Invoice"}
+                              </small>
+                            </td>
+                            <td>{cust?.name || "—"}</td>
+                            <td className="text-muted">
+                              {inv.invoice_date
+                                ? new Date(inv.invoice_date).toLocaleDateString()
+                                : "—"}
+                            </td>
+                            <td>
+                              <span
+                                className={`badge ${inv.status === "paid" ? "bg-success" : inv.status === "posted" ? "bg-info" : inv.status === "fiscalized" ? "bg-primary" : "bg-secondary"}`}
+                              >
+                                {inv.status}
+                              </span>
+                            </td>
+                            <td>
+                              <span
+                                className={`badge bg-${getPaymentStatus(inv.amount_paid, inv.amount_due) === "Paid" ? "success" : getPaymentStatus(inv.amount_paid, inv.amount_due) === "Partial" ? "warning" : "secondary"}`}
+                              >
+                                {getPaymentStatus(inv.amount_paid, inv.amount_due)}
+                              </span>
+                            </td>
+                            <td className="text-end fw-semibold">
+                              {formatCurrency(inv.total_amount || 0, inv.currency || "USD")}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
         ...(listSearch ? { search: listSearch } : {}),
         ...(listStatus ? { status: listStatus } : {}),
-        ...(listType ? { invoice_type: listType } : {}),
-      }).toString();
+      {/* ── New Invoice Form ── */}
       const [
         invoiceData,
         quotationData,
@@ -371,7 +207,7 @@ export default function InvoicesPage({
 
   useEffect(() => {
     loadAll();
-  }, [companyId, listSearch, listStatus, listType]);
+  }, [companyId, listSearch, listStatus]);
 
   useEffect(() => {
     if (mode === "list") {
@@ -1008,7 +844,10 @@ export default function InvoicesPage({
       {/* ───────────── LIST VIEW ───────────── */}
       {!showForm && (
         <div className="two-panel two-panel-left">
-          <aside className="sidebar-panel filter-sidebar">
+          <aside
+            className="sidebar-panel filter-sidebar"
+            style={{ "--sidebar-hue": sidebarHue } as CssVarStyle}
+          >
             <div className="filter-sidebar-title">Filters</div>
             <div className="filter-group">
               <div className="filter-button-stack">
@@ -1017,6 +856,7 @@ export default function InvoicesPage({
                     key={status || "all"}
                     className={`filter-btn ${status ? `status-${status}` : "status-all"} ${listStatus === status ? "active" : ""}`}
                     onClick={() => setListStatus(status)}
+                    type="button"
                   >
                     <span className="filter-icon">
                       {status === "" && (
@@ -1039,44 +879,6 @@ export default function InvoicesPage({
                   </button>
                 ))}
               </div>
-            </div>
-            <div className="sidebar-divider" />
-            <div className="filter-label">Type</div>
-            <div className="filter-group">
-              <div className="filter-button-stack">
-                {["", "invoice", "credit_note"].map((type) => (
-                  <button
-                    key={type || "all"}
-                    className={`filter-btn ${type ? `type-${type}` : "type-all"} ${listType === type ? "active" : ""}`}
-                    onClick={() => setListType(type)}
-                  >
-                    <span className="filter-icon">
-                      {type === "" && (
-                        <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/></svg>
-                      )}
-                      {type === "invoice" && (
-                        <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
-                      )}
-                      {type === "credit_note" && (
-                        <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
-                      )}
-                    </span>
-                    {type === "credit_note" ? "Credit Note" : type ? "Invoice" : "All Types"}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="filter-actions">
-              <button
-                className="btn w-100"
-                onClick={() => {
-                  setListSearch("");
-                  setListStatus("");
-                  setListType("");
-                }}
-              >
-                Clear Filters
-              </button>
             </div>
           </aside>
 

@@ -4516,7 +4516,19 @@ button.danger:hover {
 
 /* ── Filter Sidebar (professional dark nav) ── */
 .filter-sidebar {
-  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  --sidebar-hue: 220;
+  --sidebar-accent: hsl(var(--sidebar-hue) 85% 60%);
+  background:
+    radial-gradient(
+      900px 420px at 20% 0%,
+      color-mix(in srgb, var(--sidebar-accent) 22%, transparent) 0%,
+      transparent 62%
+    ),
+    linear-gradient(
+      180deg,
+      hsl(var(--sidebar-hue) 35% 18%) 0%,
+      hsl(var(--sidebar-hue) 35% 10%) 100%
+    );
   border: none;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
 }
@@ -4744,8 +4756,8 @@ button.danger:hover {
 
 .filter-sidebar .form-control:focus {
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(59, 130, 246, 0.4);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.12);
+  border-color: color-mix(in srgb, var(--sidebar-accent) 45%, rgba(255, 255, 255, 0.2));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--sidebar-accent) 25%, transparent);
   color: #f1f5f9;
 }
 
@@ -7011,13 +7023,13 @@ tr:hover .o-quick-actions {
 }
 
 .data-table tbody tr:hover {
-  background: rgba(59, 130, 246, 0.02);
-}
+  background: color-mix(in srgb, var(--sidebar-accent) 22%, rgba(255, 255, 255, 0.06));
+  color: color-mix(in srgb, var(--sidebar-accent) 82%, #ffffff);
 
 .data-table tbody tr:last-child td {
   border-bottom: none;
-}
-
+  background: color-mix(in srgb, var(--sidebar-accent) 24%, rgba(255, 255, 255, 0.10));
+  color: color-mix(in srgb, var(--sidebar-accent) 82%, #ffffff);
 /* ========== Tabs Component ========== */
 .tabs-container {
   display: flex;
