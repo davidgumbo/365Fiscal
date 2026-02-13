@@ -889,7 +889,14 @@ export default function DevicesPage() {
   return (
     <div className="content">
       {/* breadcrumb + actions bar */}
-      <div className="o-control-panel" style={{ marginBottom: 20 }}>
+      <div
+        className="o-control-panel"
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          marginBottom: 20,
+        }}
+      >
         <div
           style={{
             display: "flex",
