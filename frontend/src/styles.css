@@ -3916,7 +3916,7 @@ button.danger:hover {
   padding: 8px 14px;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  min-width: 320px;
+  width: 100%;
   background: #f9fafb;
   font-size: 13px;
   transition: border-color 150ms, box-shadow 150ms;
