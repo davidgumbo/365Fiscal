@@ -592,7 +592,11 @@ def submit_invoice(invoice: Invoice, db) -> dict:
     invoice.zimra_payload = json.dumps(submit_payload)
     invoice.fiscalized_at = datetime.utcnow()
 
-    qr_base = device.qr_url or "https://fdmstest.zimra.co.zw/Receipt"
+    qr_base = (device.qr_url or "").strip() or "https://fdmstest.zimra.co.zw"
+    # Some configs mistakenly include a trailing /Receipt path, but the verifier expects the token at the root.
+    # Example: https://fdmstest.zimra.co.zw/00000...
+    if qr_base.rstrip("/").endswith("/Receipt"):
+        qr_base = qr_base.rstrip("/")[: -len("/Receipt")]
     qr = _generate_qr(sig["signature"], invoice.zimra_receipt_global_no, str(device.device_id), qr_base)
     invoice.zimra_verification_code = qr["code"]
     invoice.zimra_verification_url = qr["url"]
