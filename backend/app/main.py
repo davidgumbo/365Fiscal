@@ -133,8 +133,18 @@ def ensure_default_portal_user():
 import threading
 import time
 import logging
+import sys
+import os
 
 _ping_logger = logging.getLogger("device_ping")
+_ping_logger.setLevel(logging.INFO)
+if not _ping_logger.handlers:
+    _handler = logging.StreamHandler(sys.stderr)
+    _handler.setFormatter(logging.Formatter("[%(asctime)s] %(name)s %(levelname)s: %(message)s"))
+    _ping_logger.addHandler(_handler)
+
+# Only start one ping thread across workers (use PID file to coordinate)
+_PING_LOCK_FILE = "/tmp/365fiscal_ping.lock"
 
 
 def _ping_all_devices():
@@ -150,6 +160,7 @@ def _ping_all_devices():
             .filter(Device.crt_data.isnot(None), Device.key_data.isnot(None))
             .all()
         )
+        _ping_logger.info("Found %d registered devices to ping", len(devices))
         for device in devices:
             try:
                 result = ping_device(device, db)
@@ -169,6 +180,8 @@ def _ping_all_devices():
 
 def _ping_loop():
     """Background thread that pings devices every 3 minutes."""
+    _ping_logger.info("Ping loop thread started, first ping in 10 seconds...")
+    time.sleep(10)  # wait for app to be fully ready
     while True:
         try:
             _ping_all_devices()
@@ -179,10 +192,27 @@ def _ping_loop():
 
 @app.on_event("startup")
 def start_ping_scheduler():
-    """Start the background ping thread on app startup."""
-    t = threading.Thread(target=_ping_loop, daemon=True, name="device-ping")
-    t.start()
-    _ping_logger.info("Device ping scheduler started (every 3 min)")
+    """Start the background ping thread on app startup (only in first worker)."""
+    try:
+        # Simple coordination: only the first worker to grab the lock file starts the thread
+        pid = str(os.getpid())
+        if os.path.exists(_PING_LOCK_FILE):
+            try:
+                with open(_PING_LOCK_FILE) as f:
+                    old_pid = f.read().strip()
+                # Check if old process is still alive
+                if old_pid and os.path.exists(f"/proc/{old_pid}"):
+                    _ping_logger.info("Ping scheduler already running in PID %s, skipping", old_pid)
+                    return
+            except Exception:
+                pass
+        with open(_PING_LOCK_FILE, "w") as f:
+            f.write(pid)
+        t = threading.Thread(target=_ping_loop, daemon=True, name="device-ping")
+        t.start()
+        _ping_logger.info("Device ping scheduler started in PID %s (every 3 min)", pid)
+    except Exception as e:
+        _ping_logger.error("Failed to start ping scheduler: %s", e)
 
 
 @app.get("/health")
