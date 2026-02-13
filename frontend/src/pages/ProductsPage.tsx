@@ -45,9 +45,13 @@ export default function ProductsPage() {
   const [companyId, setCompanyId] = useState<number | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
+  const [selectedProductId, setSelectedProductId] = useState<number | null>(
+    null,
+  );
   const [isEditing, setIsEditing] = useState(false);
-  const [activeTab, setActiveTab] = useState<"general" | "inventory" | "sales">("general");
+  const [activeTab, setActiveTab] = useState<"general" | "inventory" | "sales">(
+    "general",
+  );
   const [form, setForm] = useState({
     name: "",
     category_id: null as number | null,
@@ -69,7 +73,7 @@ export default function ProductsPage() {
     weight_uom: "kg",
     is_active: true,
     can_be_sold: true,
-    can_be_purchased: true
+    can_be_purchased: true,
   });
 
   useEffect(() => {
@@ -105,7 +109,7 @@ export default function ProductsPage() {
         weight_uom: first.weight_uom || "kg",
         is_active: first.is_active ?? true,
         can_be_sold: first.can_be_sold ?? true,
-        can_be_purchased: first.can_be_purchased ?? true
+        can_be_purchased: first.can_be_purchased ?? true,
       });
     }
   };
@@ -143,14 +147,14 @@ export default function ProductsPage() {
     weight_uom: "kg",
     is_active: true,
     can_be_sold: true,
-    can_be_purchased: true
+    can_be_purchased: true,
   });
 
   const createProduct = async () => {
     if (!companyId) return;
     await apiFetch<Product>("/products", {
       method: "POST",
-      body: JSON.stringify({ ...form, company_id: companyId })
+      body: JSON.stringify({ ...form, company_id: companyId }),
     });
     setForm(emptyForm());
     loadProducts(companyId);
@@ -160,7 +164,7 @@ export default function ProductsPage() {
     if (!selectedProductId) return;
     await apiFetch<Product>(`/products/${selectedProductId}`, {
       method: "PATCH",
-      body: JSON.stringify(form)
+      body: JSON.stringify(form),
     });
     loadProducts(companyId!);
     setIsEditing(false);
@@ -195,7 +199,7 @@ export default function ProductsPage() {
       weight_uom: product.weight_uom || "kg",
       is_active: product.is_active ?? true,
       can_be_sold: product.can_be_sold ?? true,
-      can_be_purchased: product.can_be_purchased ?? true
+      can_be_purchased: product.can_be_purchased ?? true,
     });
     setIsEditing(false);
   };
@@ -203,34 +207,103 @@ export default function ProductsPage() {
   return (
     <div className="page-container">
       <div className="two-panel">
+        <div className="sidebar-panel">
+          <h4>Products List</h4>
+          <div style={{ maxHeight: "600px", overflowY: "auto" }}>
+            {products.length === 0 ? (
+              <div className="empty-state-pro"></div>
+            ) : (
+              products.map((p) => (
+                <div
+                  key={p.id}
+                  className={`list-item ${selectedProductId === p.id ? "active" : ""}`}
+                  onClick={() => selectProduct(p)}
+                >
+                  <div>
+                    <div className="list-item-title">{p.name}</div>
+                    <div className="list-item-sub">
+                      ${p.sale_price.toFixed(2)} • {p.tax_rate}%
+                    </div>
+                  </div>
+                  <span
+                    className={`badge ${p.is_active ? "badge-success" : "badge-secondary"}`}
+                  >
+                    {p.is_active ? "Active" : "Off"}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
         <div className="form-shell-pro">
           <div className="section-header">
             <div className="section-title">
-              <h3>{selectedProductId ? form.name || "Product" : "New Product"}</h3>
-              <p>{selectedProductId ? `ID: ${selectedProductId}` : "Create a new product"}</p>
+              <h3>
+                {selectedProductId ? form.name || "Product" : "New Product"}
+              </h3>
+              <p>
+                {selectedProductId
+                  ? `ID: ${selectedProductId}`
+                  : "Create a new product"}
+              </p>
             </div>
             <div className="toolbar-right">
               <div className="statusbar">
-                <span className={`badge ${form.is_active ? "badge-success" : "badge-secondary"}`}>
+                <span
+                  className={`badge ${form.is_active ? "badge-success" : "badge-secondary"}`}
+                >
                   {form.is_active ? "Active" : "Inactive"}
                 </span>
               </div>
-              <button className="btn btn-secondary" onClick={startNew}>+ New</button>
+              <button className="btn btn-secondary" onClick={startNew}>
+                + New
+              </button>
               {isEditing ? (
                 <>
-                  <button className="btn btn-primary" onClick={selectedProductId ? updateProduct : createProduct}>Save</button>
-                  <button className="btn btn-secondary" onClick={() => setIsEditing(false)}>Discard</button>
+                  <button
+                    className="btn btn-primary"
+                    onClick={selectedProductId ? updateProduct : createProduct}
+                  >
+                    Save
+                  </button>
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => setIsEditing(false)}
+                  >
+                    Discard
+                  </button>
                 </>
               ) : (
-                <button className="btn btn-primary" onClick={() => setIsEditing(true)}>Edit</button>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => setIsEditing(true)}
+                >
+                  Edit
+                </button>
               )}
             </div>
           </div>
-          
+
           <div className="tabs-nav">
-            <button className={`tab-btn ${activeTab === "general" ? "active" : ""}`} onClick={() => setActiveTab("general")}>General Info</button>
-            <button className={`tab-btn ${activeTab === "inventory" ? "active" : ""}`} onClick={() => setActiveTab("inventory")}>Inventory</button>
-            <button className={`tab-btn ${activeTab === "sales" ? "active" : ""}`} onClick={() => setActiveTab("sales")}>Sales & Purchases</button>
+            <button
+              className={`tab-btn ${activeTab === "general" ? "active" : ""}`}
+              onClick={() => setActiveTab("general")}
+            >
+              General Info
+            </button>
+            <button
+              className={`tab-btn ${activeTab === "inventory" ? "active" : ""}`}
+              onClick={() => setActiveTab("inventory")}
+            >
+              Inventory
+            </button>
+            <button
+              className={`tab-btn ${activeTab === "sales" ? "active" : ""}`}
+              onClick={() => setActiveTab("sales")}
+            >
+              Sales & Purchases
+            </button>
           </div>
 
           {activeTab === "general" && (
@@ -244,7 +317,9 @@ export default function ProductsPage() {
                   disabled={!isEditing}
                 >
                   {companies.map((c: Company) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -265,7 +340,11 @@ export default function ProductsPage() {
                   className="input-field dropdown-select"
                   value={form.category_id ?? ""}
                   onChange={(e) =>
-                    setForm({ ...form, category_id: e.target.value === "" ? null : Number(e.target.value) })
+                    setForm({
+                      ...form,
+                      category_id:
+                        e.target.value === "" ? null : Number(e.target.value),
+                    })
                   }
                   disabled={!isEditing}
                 >
@@ -282,11 +361,15 @@ export default function ProductsPage() {
                 <select
                   className="input-field dropdown-select"
                   value={form.product_type}
-                  onChange={(e) => setForm({ ...form, product_type: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, product_type: e.target.value })
+                  }
                   disabled={!isEditing}
                 >
-                  {PRODUCT_TYPES.map(t => (
-                    <option key={t.value} value={t.value}>{t.label}</option>
+                  {PRODUCT_TYPES.map((t) => (
+                    <option key={t.value} value={t.value}>
+                      {t.label}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -296,7 +379,9 @@ export default function ProductsPage() {
                   className="input-field"
                   type="text"
                   value={form.reference}
-                  onChange={(e) => setForm({ ...form, reference: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, reference: e.target.value })
+                  }
                   disabled={!isEditing}
                   placeholder="e.g., SKU-001"
                 />
@@ -307,7 +392,9 @@ export default function ProductsPage() {
                   className="input-field"
                   type="text"
                   value={form.barcode}
-                  onChange={(e) => setForm({ ...form, barcode: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, barcode: e.target.value })
+                  }
                   disabled={!isEditing}
                   placeholder="e.g., 1234567890123"
                 />
@@ -318,7 +405,9 @@ export default function ProductsPage() {
                   className="input-field"
                   type="text"
                   value={form.hs_code}
-                  onChange={(e) => setForm({ ...form, hs_code: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, hs_code: e.target.value })
+                  }
                   disabled={!isEditing}
                   placeholder="Harmonized System code"
                 />
@@ -328,7 +417,9 @@ export default function ProductsPage() {
                 <textarea
                   className="input-field"
                   value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, description: e.target.value })
+                  }
                   disabled={!isEditing}
                   rows={3}
                   placeholder="Product description..."
@@ -339,7 +430,9 @@ export default function ProductsPage() {
                   type="checkbox"
                   id="is_active"
                   checked={form.is_active}
-                  onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
+                  onChange={(e) =>
+                    setForm({ ...form, is_active: e.target.checked })
+                  }
                   disabled={!isEditing}
                 />
                 <label htmlFor="is_active">Product is Active</label>
@@ -367,7 +460,9 @@ export default function ProductsPage() {
                   type="number"
                   step="0.01"
                   value={form.weight}
-                  onChange={(e) => setForm({ ...form, weight: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setForm({ ...form, weight: Number(e.target.value) })
+                  }
                   disabled={!isEditing}
                 />
               </div>
@@ -377,7 +472,9 @@ export default function ProductsPage() {
                   className="input-field"
                   type="text"
                   value={form.weight_uom}
-                  onChange={(e) => setForm({ ...form, weight_uom: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, weight_uom: e.target.value })
+                  }
                   disabled={!isEditing}
                   placeholder="kg"
                 />
@@ -388,7 +485,12 @@ export default function ProductsPage() {
                   className="input-field"
                   type="number"
                   value={form.min_stock_quantity}
-                  onChange={(e) => setForm({ ...form, min_stock_quantity: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      min_stock_quantity: Number(e.target.value),
+                    })
+                  }
                   disabled={!isEditing}
                 />
               </div>
@@ -398,7 +500,12 @@ export default function ProductsPage() {
                   className="input-field"
                   type="number"
                   value={form.max_stock_quantity}
-                  onChange={(e) => setForm({ ...form, max_stock_quantity: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      max_stock_quantity: Number(e.target.value),
+                    })
+                  }
                   disabled={!isEditing}
                 />
               </div>
@@ -408,7 +515,9 @@ export default function ProductsPage() {
                   className="input-field"
                   type="number"
                   value={form.reorder_point}
-                  onChange={(e) => setForm({ ...form, reorder_point: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setForm({ ...form, reorder_point: Number(e.target.value) })
+                  }
                   disabled={!isEditing}
                 />
               </div>
@@ -417,7 +526,9 @@ export default function ProductsPage() {
                   type="checkbox"
                   id="track_inventory"
                   checked={form.track_inventory}
-                  onChange={(e) => setForm({ ...form, track_inventory: e.target.checked })}
+                  onChange={(e) =>
+                    setForm({ ...form, track_inventory: e.target.checked })
+                  }
                   disabled={!isEditing}
                 />
                 <label htmlFor="track_inventory">Track Inventory Levels</label>
@@ -434,7 +545,9 @@ export default function ProductsPage() {
                   type="number"
                   step="0.01"
                   value={form.sale_price}
-                  onChange={(e) => setForm({ ...form, sale_price: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setForm({ ...form, sale_price: Number(e.target.value) })
+                  }
                   disabled={!isEditing}
                 />
               </div>
@@ -445,7 +558,9 @@ export default function ProductsPage() {
                   type="number"
                   step="0.01"
                   value={form.tax_rate}
-                  onChange={(e) => setForm({ ...form, tax_rate: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setForm({ ...form, tax_rate: Number(e.target.value) })
+                  }
                   disabled={!isEditing}
                 />
               </div>
@@ -456,7 +571,9 @@ export default function ProductsPage() {
                   type="number"
                   step="0.01"
                   value={form.sales_cost}
-                  onChange={(e) => setForm({ ...form, sales_cost: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setForm({ ...form, sales_cost: Number(e.target.value) })
+                  }
                   disabled={!isEditing}
                 />
               </div>
@@ -467,7 +584,9 @@ export default function ProductsPage() {
                   type="number"
                   step="0.01"
                   value={form.purchase_cost}
-                  onChange={(e) => setForm({ ...form, purchase_cost: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setForm({ ...form, purchase_cost: Number(e.target.value) })
+                  }
                   disabled={!isEditing}
                 />
               </div>
@@ -476,7 +595,9 @@ export default function ProductsPage() {
                   type="checkbox"
                   id="can_be_sold"
                   checked={form.can_be_sold}
-                  onChange={(e) => setForm({ ...form, can_be_sold: e.target.checked })}
+                  onChange={(e) =>
+                    setForm({ ...form, can_be_sold: e.target.checked })
+                  }
                   disabled={!isEditing}
                 />
                 <label htmlFor="can_be_sold">Can be Sold</label>
@@ -486,39 +607,15 @@ export default function ProductsPage() {
                   type="checkbox"
                   id="can_be_purchased"
                   checked={form.can_be_purchased}
-                  onChange={(e) => setForm({ ...form, can_be_purchased: e.target.checked })}
+                  onChange={(e) =>
+                    setForm({ ...form, can_be_purchased: e.target.checked })
+                  }
                   disabled={!isEditing}
                 />
                 <label htmlFor="can_be_purchased">Can be Purchased</label>
               </div>
             </div>
           )}
-        </div>
-
-        <div className="sidebar-panel">
-          <h4>Products List</h4>
-          <div style={{ maxHeight: "600px", overflowY: "auto" }}>
-            {products.length === 0 ? (
-              <div className="empty-state-pro">
-              </div>
-            ) : (
-              products.map((p) => (
-                <div
-                  key={p.id}
-                  className={`list-item ${selectedProductId === p.id ? "active" : ""}`}
-                  onClick={() => selectProduct(p)}
-                >
-                  <div>
-                    <div className="list-item-title">{p.name}</div>
-                    <div className="list-item-sub">${p.sale_price.toFixed(2)} • {p.tax_rate}%</div>
-                  </div>
-                  <span className={`badge ${p.is_active ? "badge-success" : "badge-secondary"}`}>
-                    {p.is_active ? "Active" : "Off"}
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
         </div>
       </div>
     </div>

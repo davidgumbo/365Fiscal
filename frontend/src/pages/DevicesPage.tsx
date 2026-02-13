@@ -1023,32 +1023,6 @@ export default function DevicesPage() {
         </div>
       )}
 
-      {/* activity log */}
-      {actionLog.length > 0 && (
-        <details style={{ marginBottom: 16 }}>
-          <summary
-            style={{
-              fontWeight: 600,
-              cursor: "pointer",
-              fontSize: 13,
-              color: "var(--muted)",
-            }}
-          >
-            Activity Log ({actionLog.length})
-          </summary>
-          <div className="device-log">
-            {actionLog.map((entry, i) => (
-              <div key={i} className={`device-log-entry ${entry.type}`}>
-                <span className="device-log-time">
-                  {new Date(entry.timestamp).toLocaleTimeString()}
-                </span>
-                <span>{entry.text}</span>
-              </div>
-            ))}
-          </div>
-        </details>
-      )}
-
       {/* delete confirmation modal */}
       {confirmDelete && (
         <div className="modal-overlay" onClick={() => setConfirmDelete(null)}>
@@ -1256,6 +1230,31 @@ export default function DevicesPage() {
           </div>
         </Fragment>
       ))}
+      {/* activity log */}
+      {actionLog.length > 0 && (
+        <details style={{ marginBottom: 16 }}>
+          <summary
+            style={{
+              fontWeight: 600,
+              cursor: "pointer",
+              fontSize: 13,
+              color: "var(--muted)",
+            }}
+          >
+            Activity Log ({actionLog.length})
+          </summary>
+          <div className="device-log">
+            {actionLog.map((entry, i) => (
+              <div key={i} className={`device-log-entry ${entry.type}`}>
+                <span className="device-log-time">
+                  {new Date(entry.timestamp).toLocaleTimeString()}
+                </span>
+                <span>{entry.text}</span>
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
     </div>
   );
 }

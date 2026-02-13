@@ -92,7 +92,8 @@ const toDateInputValue = (value: string | null) => {
   return date.toISOString().split("T")[0];
 };
 
-const toIsoDate = (value: string) => (value ? new Date(value).toISOString() : null);
+const toIsoDate = (value: string) =>
+  value ? new Date(value).toISOString() : null;
 
 const formatMoney = (value: number, symbol: string) => {
   const safe = Number.isFinite(value) ? value : 0;
@@ -109,7 +110,11 @@ const lineTotals = (line: PurchaseOrderLine) => {
   return { subtotal, tax, total: subtotal + tax };
 };
 
-export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageMode }) {
+export default function PurchasesPage({
+  mode = "list",
+}: {
+  mode?: PurchasesPageMode;
+}) {
   const navigate = useNavigate();
   const { purchaseId } = useParams();
   const routePurchaseId = purchaseId ? Number(purchaseId) : null;
@@ -121,7 +126,8 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
   const [products, setProducts] = useState<Product[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
-  const [companySettings, setCompanySettings] = useState<CompanySettings | null>(null);
+  const [companySettings, setCompanySettings] =
+    useState<CompanySettings | null>(null);
   const [loadingData, setLoadingData] = useState(false);
 
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
@@ -207,7 +213,7 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
 
   const selectedOrder = useMemo(
     () => orders.find((o) => o.id === selectedOrderId) ?? null,
-    [orders, selectedOrderId]
+    [orders, selectedOrderId],
   );
 
   useEffect(() => {
@@ -234,7 +240,7 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
               uom: line.uom || product?.uom || "Units",
             };
           })
-        : [emptyLine()]
+        : [emptyLine()],
     );
     setIsEditing(false);
   }, [selectedOrder, products]);
@@ -256,7 +262,7 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
 
   const updateLine = (index: number, updates: Partial<PurchaseOrderLine>) => {
     setLines((prev) =>
-      prev.map((line, idx) => (idx === index ? { ...line, ...updates } : line))
+      prev.map((line, idx) => (idx === index ? { ...line, ...updates } : line)),
     );
   };
 
@@ -286,7 +292,7 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
         acc.total += total;
         return acc;
       },
-      { subtotal: 0, tax: 0, total: 0 }
+      { subtotal: 0, tax: 0, total: 0 },
     );
     return sums;
   }, [lines]);
@@ -319,7 +325,8 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
     const lineRows = (selectedOrder.lines || []).map((line) => {
       const product = products.find((p) => p.id === line.product_id);
       const totals = lineTotals(line);
-      const qtyLabel = `${line.quantity} ${line.uom || product?.uom || "Units"}`.trim();
+      const qtyLabel =
+        `${line.quantity} ${line.uom || product?.uom || "Units"}`.trim();
       return {
         name: product?.name || line.description || "-",
         description: line.description || product?.name || "-",
@@ -426,7 +433,7 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
                 <td style="text-align:right;">${formatMoney(row.unit_price, currencySymbol)}</td>
                 <td style="text-align:right;">${row.vat_rate}</td>
                 <td style="text-align:right;">${formatMoney(row.total, currencySymbol)}</td>
-              </tr>`
+              </tr>`,
               )
               .join("")}
           </tbody>
@@ -489,7 +496,7 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
         navigate(`/purchases/${created.id}`);
       }
       const updated = await apiFetch<PurchaseOrder[]>(
-        `/purchases?company_id=${companyId}`
+        `/purchases?company_id=${companyId}`,
       );
       setOrders(updated);
       setIsEditing(false);
@@ -504,7 +511,7 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
       method: "POST",
     });
     const updated = await apiFetch<PurchaseOrder[]>(
-      `/purchases?company_id=${companyId}`
+      `/purchases?company_id=${companyId}`,
     );
     setOrders(updated);
   };
@@ -517,9 +524,7 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
         .map((line) => ({
           id: line.id as number,
           received_quantity:
-            line.received_quantity > 0
-              ? line.received_quantity
-              : line.quantity,
+            line.received_quantity > 0 ? line.received_quantity : line.quantity,
         })),
     };
     await apiFetch<PurchaseOrder>(`/purchases/${selectedOrderId}/receive`, {
@@ -527,7 +532,7 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
       body: JSON.stringify(payload),
     });
     const updated = await apiFetch<PurchaseOrder[]>(
-      `/purchases?company_id=${companyId}`
+      `/purchases?company_id=${companyId}`,
     );
     setOrders(updated);
   };
@@ -538,7 +543,7 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
       method: "POST",
     });
     const updated = await apiFetch<PurchaseOrder[]>(
-      `/purchases?company_id=${companyId}`
+      `/purchases?company_id=${companyId}`,
     );
     setOrders(updated);
   };
@@ -553,8 +558,11 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
       if (fromDate && dateValue && dateValue < fromDate) return false;
       if (toDate && dateValue && dateValue > toDate) return false;
       if (!term) return true;
-      const vendorName = contacts.find((c) => c.id === o.vendor_id)?.name?.toLowerCase() || "";
-      return o.reference.toLowerCase().includes(term) || vendorName.includes(term);
+      const vendorName =
+        contacts.find((c) => c.id === o.vendor_id)?.name?.toLowerCase() || "";
+      return (
+        o.reference.toLowerCase().includes(term) || vendorName.includes(term)
+      );
     });
   }, [orders, listSearch, listStatus, listFrom, listTo, contacts]);
 
@@ -564,12 +572,11 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
   return (
     <div className="purchases-page invoice-form">
       <div className="page-header">
-        <div>
-          <h1>Purchases</h1>
-        </div>
         <div className="header-actions">
           {mode !== "list" && (
-            <button className="outline" onClick={() => navigate("/purchases")}>Back to List</button>
+            <button className="outline" onClick={() => navigate("/purchases")}>
+              Back to List
+            </button>
           )}
         </div>
       </div>
@@ -581,11 +588,103 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
             <div className="o-sidebar-section">
               <div className="o-sidebar-title">STATUS</div>
               {[
-                { key: "", label: "ALL PURCHASES", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg> },
-                { key: "draft", label: "DRAFT", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> },
-                { key: "confirmed", label: "CONFIRMED", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg> },
-                { key: "received", label: "RECEIVED", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m9 12 2 2 4-4"/></svg> },
-                { key: "cancelled", label: "CANCELLED", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg> },
+                {
+                  key: "",
+                  label: "ALL PURCHASES",
+                  icon: (
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#6366f1"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+                      <path d="M3 6h18" />
+                      <path d="M16 10a4 4 0 0 1-8 0" />
+                    </svg>
+                  ),
+                },
+                {
+                  key: "draft",
+                  label: "DRAFT",
+                  icon: (
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#f59e0b"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M12 20h9" />
+                      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                    </svg>
+                  ),
+                },
+                {
+                  key: "confirmed",
+                  label: "CONFIRMED",
+                  icon: (
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#3b82f6"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                      <path d="m9 11 3 3L22 4" />
+                    </svg>
+                  ),
+                },
+                {
+                  key: "received",
+                  label: "RECEIVED",
+                  icon: (
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#10b981"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <rect x="3" y="3" width="18" height="18" rx="2" />
+                      <path d="m9 12 2 2 4-4" />
+                    </svg>
+                  ),
+                },
+                {
+                  key: "cancelled",
+                  label: "CANCELLED",
+                  icon: (
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#ef4444"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="m15 9-6 6" />
+                      <path d="m9 9 6 6" />
+                    </svg>
+                  ),
+                },
               ].map((item) => (
                 <div
                   key={item.key || "all"}
@@ -593,7 +692,25 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
                   onClick={() => setListStatus(item.key)}
                   style={{ cursor: "pointer" }}
                 >
-                  <span style={{ display: "flex", alignItems: "center", gap: 10, opacity: 0.85 }}>{item.icon}<span style={{ letterSpacing: "0.5px", fontSize: 12, fontWeight: 500 }}>{item.label}</span></span>
+                  <span
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      opacity: 0.85,
+                    }}
+                  >
+                    {item.icon}
+                    <span
+                      style={{
+                        letterSpacing: "0.5px",
+                        fontSize: 12,
+                        fontWeight: 500,
+                      }}
+                    >
+                      {item.label}
+                    </span>
+                  </span>
                   <span className="o-sidebar-count">
                     {item.key === ""
                       ? orders.length
@@ -602,15 +719,23 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
                 </div>
               ))}
             </div>
-
-          
           </div>
 
           <div>
             <div className="content-top-bar">
               <div className="top-search">
                 <span className="search-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
                 </span>
                 <input
                   placeholder="Search purchases…"
@@ -622,9 +747,20 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
                 className="o-btn o-btn-secondary"
                 style={{ display: "flex", alignItems: "center", gap: 6 }}
                 onClick={() => {
-                  const headers = ["Reference", "Vendor", "Status", "Order Date", "Expected Date", "Subtotal", "Tax", "Total"];
+                  const headers = [
+                    "Reference",
+                    "Vendor",
+                    "Status",
+                    "Order Date",
+                    "Expected Date",
+                    "Subtotal",
+                    "Tax",
+                    "Total",
+                  ];
                   const rows = filteredOrders.map((order) => {
-                    const vendor = contacts.find((c) => c.id === order.vendor_id);
+                    const vendor = contacts.find(
+                      (c) => c.id === order.vendor_id,
+                    );
                     return [
                       order.reference,
                       vendor?.name || "",
@@ -636,15 +772,36 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
                       order.total_amount || 0,
                     ];
                   });
-                  const csvContent = [headers, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
-                  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+                  const csvContent = [headers, ...rows]
+                    .map((row) =>
+                      row
+                        .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
+                        .join(","),
+                    )
+                    .join("\n");
+                  const blob = new Blob([csvContent], {
+                    type: "text/csv;charset=utf-8;",
+                  });
                   const link = document.createElement("a");
                   link.href = URL.createObjectURL(blob);
                   link.download = `purchases_${new Date().toISOString().split("T")[0]}.csv`;
                   link.click();
                 }}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
                 Export
               </button>
               <button
@@ -654,65 +811,92 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
                   navigate("/purchases/new");
                 }}
               >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
                 New Purchase
               </button>
             </div>
             <div className="card shadow-sm">
               <div className="card-body">
-              <div className="table-responsive">
-                <table className="table table-hover align-middle">
-                  <thead>
-                    <tr>
-                      <th>Reference</th>
-                      <th>Vendor</th>
-                      <th>Status</th>
-                      <th>Order Date</th>
-                      <th className="text-end">Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredOrders.length === 0 ? (
+                <div className="table-responsive">
+                  <table className="table table-hover align-middle">
+                    <thead>
                       <tr>
-                        <td colSpan={5} className="text-center text-muted py-4">
-                          {loadingData ? "Loading purchases..." : "No purchase orders found."}
+                        <th>Reference</th>
+                        <th>Vendor</th>
+                        <th>Status</th>
+                        <th>Order Date</th>
+                        <th className="text-end">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredOrders.length === 0 ? (
+                        <tr>
+                          <td
+                            colSpan={5}
+                            className="text-center text-muted py-4"
+                          >
+                            {loadingData
+                              ? "Loading purchases..."
+                              : "No purchase orders found."}
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredOrders.map((order) => (
+                          <tr
+                            key={order.id}
+                            style={{ cursor: "pointer" }}
+                            onClick={() => navigate(`/purchases/${order.id}`)}
+                          >
+                            <td
+                              style={{ fontFamily: "monospace", fontSize: 12 }}
+                            >
+                              {order.reference}
+                            </td>
+                            <td>
+                              {contacts.find((c) => c.id === order.vendor_id)
+                                ?.name || "-"}
+                            </td>
+                            <td>
+                              <span
+                                className={`badge ${order.status === "received" ? "badge-success" : order.status === "confirmed" ? "badge-info" : order.status === "cancelled" ? "badge-danger" : "badge-secondary"}`}
+                              >
+                                {order.status}
+                              </span>
+                            </td>
+                            <td>{toDateInputValue(order.order_date)}</td>
+                            <td className="text-end">
+                              {formatMoney(order.total_amount, currencySymbol)}
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                    <tfoot>
+                      <tr style={{ background: "#f8fafc", fontWeight: 600 }}>
+                        <td colSpan={4} className="text-end">
+                          Grand Total:
+                        </td>
+                        <td className="text-end">
+                          {formatMoney(
+                            filteredOrders.reduce(
+                              (sum, order) => sum + (order.total_amount || 0),
+                              0,
+                            ),
+                            currencySymbol,
+                          )}
                         </td>
                       </tr>
-                    ) : (
-                      filteredOrders.map((order) => (
-                        <tr
-                          key={order.id}
-                          style={{ cursor: "pointer" }}
-                          onClick={() => navigate(`/purchases/${order.id}`)}
-                        >
-                          <td style={{ fontFamily: "monospace", fontSize: 12 }}>
-                            {order.reference}
-                          </td>
-                          <td>{contacts.find((c) => c.id === order.vendor_id)?.name || "-"}</td>
-                          <td>
-                            <span className={`badge ${order.status === "received" ? "badge-success" : order.status === "confirmed" ? "badge-info" : order.status === "cancelled" ? "badge-danger" : "badge-secondary"}`}>
-                              {order.status}
-                            </span>
-                          </td>
-                          <td>{toDateInputValue(order.order_date)}</td>
-                          <td className="text-end">{formatMoney(order.total_amount, currencySymbol)}</td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                  <tfoot>
-                    <tr style={{ background: "#f8fafc", fontWeight: 600 }}>
-                      <td colSpan={4} className="text-end">Grand Total:</td>
-                      <td className="text-end">
-                        {formatMoney(
-                          filteredOrders.reduce((sum, order) => sum + (order.total_amount || 0), 0),
-                          currencySymbol
-                        )}
-                      </td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
+                    </tfoot>
+                  </table>
+                </div>
               </div>
             </div>
           </div>
@@ -724,7 +908,9 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
           <div className="card-body invoice-form">
             <div className="d-flex flex-wrap justify-content-between align-items-center mb-3">
               <div>
-                <h2 className="mb-1">{selectedOrder?.reference || "New Purchase"}</h2>
+                <h2 className="mb-1">
+                  {selectedOrder?.reference || "New Purchase"}
+                </h2>
                 <div className="statusbar">
                   {["draft", "confirmed", "received"].map((step) => (
                     <span
@@ -738,28 +924,53 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
               </div>
               <div className="form-actions">
                 {selectedOrderId && (
-                  <button className="btn btn-outline-secondary btn-sm" onClick={printOrder}>
+                  <button
+                    className="btn btn-outline-secondary btn-sm"
+                    onClick={printOrder}
+                  >
                     Print
                   </button>
                 )}
                 {canEdit && (
-                  <button className="btn btn-primary btn-sm" onClick={saveOrder} disabled={saving}>
+                  <button
+                    className="btn btn-primary btn-sm"
+                    onClick={saveOrder}
+                    disabled={saving}
+                  >
                     {saving ? "Saving..." : "Save"}
                   </button>
                 )}
                 {!canEdit && currentStatus === "draft" && (
-                  <button className="btn btn-outline-secondary btn-sm" onClick={() => setIsEditing(true)}>
+                  <button
+                    className="btn btn-outline-secondary btn-sm"
+                    onClick={() => setIsEditing(true)}
+                  >
                     Edit
                   </button>
                 )}
                 {selectedOrderId && currentStatus === "draft" && (
-                  <button className="btn btn-success btn-sm" onClick={confirmOrder}>Confirm</button>
+                  <button
+                    className="btn btn-success btn-sm"
+                    onClick={confirmOrder}
+                  >
+                    Confirm
+                  </button>
                 )}
                 {selectedOrderId && currentStatus === "confirmed" && (
-                  <button className="btn btn-success btn-sm" onClick={receiveOrder}>Receive</button>
+                  <button
+                    className="btn btn-success btn-sm"
+                    onClick={receiveOrder}
+                  >
+                    Receive
+                  </button>
                 )}
                 {selectedOrderId && currentStatus !== "received" && (
-                  <button className="btn btn-outline-danger btn-sm" onClick={cancelOrder}>Cancel</button>
+                  <button
+                    className="btn btn-outline-danger btn-sm"
+                    onClick={cancelOrder}
+                  >
+                    Cancel
+                  </button>
                 )}
               </div>
             </div>
@@ -770,12 +981,19 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
                 <select
                   className="form-select input-underline"
                   value={form.vendor_id ?? ""}
-                  onChange={(e) => setForm((prev) => ({ ...prev, vendor_id: Number(e.target.value) || null }))}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      vendor_id: Number(e.target.value) || null,
+                    }))
+                  }
                   disabled={!canEdit}
                 >
                   <option value="">Select vendor</option>
                   {contacts.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -785,7 +1003,9 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
                   type="date"
                   className="form-control input-underline"
                   value={form.order_date}
-                  onChange={(e) => setForm((prev) => ({ ...prev, order_date: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, order_date: e.target.value }))
+                  }
                   disabled={!canEdit}
                 />
               </div>
@@ -795,7 +1015,12 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
                   type="date"
                   className="form-control input-underline"
                   value={form.expected_date}
-                  onChange={(e) => setForm((prev) => ({ ...prev, expected_date: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      expected_date: e.target.value,
+                    }))
+                  }
                   disabled={!canEdit}
                 />
               </div>
@@ -804,12 +1029,19 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
                 <select
                   className="form-select input-underline"
                   value={form.warehouse_id ?? ""}
-                  onChange={(e) => setForm((prev) => ({ ...prev, warehouse_id: Number(e.target.value) || null }))}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      warehouse_id: Number(e.target.value) || null,
+                    }))
+                  }
                   disabled={!canEdit}
                 >
                   <option value="">Select warehouse</option>
                   {warehouses.map((w) => (
-                    <option key={w.id} value={w.id}>{w.name}</option>
+                    <option key={w.id} value={w.id}>
+                      {w.name}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -818,12 +1050,19 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
                 <select
                   className="form-select input-underline"
                   value={form.location_id ?? ""}
-                  onChange={(e) => setForm((prev) => ({ ...prev, location_id: Number(e.target.value) || null }))}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      location_id: Number(e.target.value) || null,
+                    }))
+                  }
                   disabled={!canEdit}
                 >
                   <option value="">Select location</option>
                   {locations.map((l) => (
-                    <option key={l.id} value={l.id}>{l.name}</option>
+                    <option key={l.id} value={l.id}>
+                      {l.name}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -832,7 +1071,9 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
                 <input
                   className="form-control input-underline"
                   value={form.currency}
-                  onChange={(e) => setForm((prev) => ({ ...prev, currency: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, currency: e.target.value }))
+                  }
                   disabled={!canEdit}
                 />
               </div>
@@ -842,7 +1083,9 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
                   className="form-control input-underline"
                   rows={2}
                   value={form.notes}
-                  onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, notes: e.target.value }))
+                  }
                   disabled={!canEdit}
                 />
               </div>
@@ -853,7 +1096,12 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
                 <div className="d-flex align-items-center justify-content-between mb-2">
                   <h5 className="mb-0">Order Lines</h5>
                   {canEdit && (
-                    <button className="btn btn-sm btn-outline-primary" onClick={addLine}>+ Add Line</button>
+                    <button
+                      className="btn btn-sm btn-outline-primary"
+                      onClick={addLine}
+                    >
+                      + Add Line
+                    </button>
                   )}
                 </div>
                 <div className="table-responsive">
@@ -882,12 +1130,19 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
                               <select
                                 className="form-select form-select-sm input-ghost"
                                 value={line.product_id ?? ""}
-                                onChange={(e) => selectProduct(index, Number(e.target.value) || null)}
+                                onChange={(e) =>
+                                  selectProduct(
+                                    index,
+                                    Number(e.target.value) || null,
+                                  )
+                                }
                                 disabled={!canEdit}
                               >
                                 <option value="">Select</option>
                                 {products.map((p) => (
-                                  <option key={p.id} value={p.id}>{p.name}</option>
+                                  <option key={p.id} value={p.id}>
+                                    {p.name}
+                                  </option>
                                 ))}
                               </select>
                             </td>
@@ -895,7 +1150,11 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
                               <input
                                 className="form-control form-control-sm input-ghost"
                                 value={line.description}
-                                onChange={(e) => updateLine(index, { description: e.target.value })}
+                                onChange={(e) =>
+                                  updateLine(index, {
+                                    description: e.target.value,
+                                  })
+                                }
                                 disabled={!canEdit}
                               />
                             </td>
@@ -905,7 +1164,11 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
                                 type="number"
                                 min="0"
                                 value={line.quantity}
-                                onChange={(e) => updateLine(index, { quantity: Number(e.target.value) || 0 })}
+                                onChange={(e) =>
+                                  updateLine(index, {
+                                    quantity: Number(e.target.value) || 0,
+                                  })
+                                }
                                 disabled={!canEdit}
                               />
                             </td>
@@ -917,7 +1180,8 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
                                 value={line.received_quantity}
                                 onChange={(e) =>
                                   updateLine(index, {
-                                    received_quantity: Number(e.target.value) || 0,
+                                    received_quantity:
+                                      Number(e.target.value) || 0,
                                   })
                                 }
                                 disabled={currentStatus !== "confirmed"}
@@ -927,7 +1191,9 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
                               <input
                                 className="form-control form-control-sm input-ghost"
                                 value={line.uom}
-                                onChange={(e) => updateLine(index, { uom: e.target.value })}
+                                onChange={(e) =>
+                                  updateLine(index, { uom: e.target.value })
+                                }
                                 disabled={!canEdit}
                               />
                             </td>
@@ -937,7 +1203,11 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
                                 type="number"
                                 min="0"
                                 value={line.unit_price}
-                                onChange={(e) => updateLine(index, { unit_price: Number(e.target.value) || 0 })}
+                                onChange={(e) =>
+                                  updateLine(index, {
+                                    unit_price: Number(e.target.value) || 0,
+                                  })
+                                }
                                 disabled={!canEdit}
                               />
                             </td>
@@ -947,7 +1217,11 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
                                 type="number"
                                 min="0"
                                 value={line.discount}
-                                onChange={(e) => updateLine(index, { discount: Number(e.target.value) || 0 })}
+                                onChange={(e) =>
+                                  updateLine(index, {
+                                    discount: Number(e.target.value) || 0,
+                                  })
+                                }
                                 disabled={!canEdit}
                               />
                             </td>
@@ -957,15 +1231,26 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
                                 type="number"
                                 min="0"
                                 value={line.vat_rate}
-                                onChange={(e) => updateLine(index, { vat_rate: Number(e.target.value) || 0 })}
+                                onChange={(e) =>
+                                  updateLine(index, {
+                                    vat_rate: Number(e.target.value) || 0,
+                                  })
+                                }
                                 disabled={!canEdit}
                               />
                             </td>
-                            <td className="text-end fw-semibold">{formatMoney(totals.subtotal, currencySymbol)}</td>
-                            <td className="text-end fw-semibold">{formatMoney(totals.total, currencySymbol)}</td>
+                            <td className="text-end fw-semibold">
+                              {formatMoney(totals.subtotal, currencySymbol)}
+                            </td>
+                            <td className="text-end fw-semibold">
+                              {formatMoney(totals.total, currencySymbol)}
+                            </td>
                             {canEdit && (
                               <td className="text-center">
-                                <button className="btn btn-sm btn-light border" onClick={() => removeLine(index)}>
+                                <button
+                                  className="btn btn-sm btn-light border"
+                                  onClick={() => removeLine(index)}
+                                >
                                   ✕
                                 </button>
                               </td>
@@ -980,7 +1265,9 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
                   <div style={{ minWidth: 260 }}>
                     <div className="d-flex justify-content-between mb-1">
                       <span>Subtotal</span>
-                      <strong>{formatMoney(totals.subtotal, currencySymbol)}</strong>
+                      <strong>
+                        {formatMoney(totals.subtotal, currencySymbol)}
+                      </strong>
                     </div>
                     <div className="d-flex justify-content-between mb-1">
                       <span>VAT</span>
@@ -988,7 +1275,9 @@ export default function PurchasesPage({ mode = "list" }: { mode?: PurchasesPageM
                     </div>
                     <div className="d-flex justify-content-between">
                       <span>Total</span>
-                      <strong>{formatMoney(totals.total, currencySymbol)}</strong>
+                      <strong>
+                        {formatMoney(totals.total, currencySymbol)}
+                      </strong>
                     </div>
                   </div>
                 </div>
