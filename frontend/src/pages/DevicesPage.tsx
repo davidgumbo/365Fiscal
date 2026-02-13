@@ -904,7 +904,6 @@ export default function DevicesPage() {
             alignItems: "center",
             gap: 12,
             flex: 1,
-            marginTop: "1rem",
           }}
         >
           <button
@@ -1120,7 +1119,7 @@ export default function DevicesPage() {
                         title="Delete"
                         onClick={() => setConfirmDelete(d)}
                       >
-                        <TrashIcon />
+                        <Trash2 />
                       </button>
                     </div>
                   </div>
