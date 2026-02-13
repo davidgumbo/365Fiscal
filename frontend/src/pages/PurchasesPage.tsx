@@ -122,7 +122,9 @@ export default function PurchasesPage({
   const { me } = useMe();
   const allCompanies = useCompanies();
   const isAdmin = Boolean(me?.is_admin);
-  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(
+    null,
+  );
   const [companyQuery, setCompanyQuery] = useState("");
 
   // Portal users auto-select their first company
@@ -133,7 +135,8 @@ export default function PurchasesPage({
   }, [isAdmin, me?.company_ids, selectedCompanyId]);
 
   const companyId = selectedCompanyId;
-  const company = me?.companies?.find((c) => c.id === companyId) ||
+  const company =
+    me?.companies?.find((c) => c.id === companyId) ||
     allCompanies.find((c) => c.id === companyId);
 
   const filteredCompanies = useMemo(() => {
@@ -143,7 +146,7 @@ export default function PurchasesPage({
       (c) =>
         c.name.toLowerCase().includes(q) ||
         (c.tin && c.tin.toLowerCase().includes(q)) ||
-        (c.vat && c.vat.toLowerCase().includes(q))
+        (c.vat && c.vat.toLowerCase().includes(q)),
     );
   }, [allCompanies, companyQuery]);
 
@@ -609,7 +612,7 @@ export default function PurchasesPage({
     return (
       <div className="content">
         <div
-          className="o-control-panel"
+          className=""
           style={{
             display: "flex",
             width: "auto",
@@ -617,10 +620,7 @@ export default function PurchasesPage({
             marginBottom: 24,
           }}
         >
-          <div className="o-breadcrumb">
-            <span className="o-breadcrumb-current">Purchases</span>
-          </div>
-          <div className="settings-search" style={{ width: "20vw" }}>
+          <div className="company-search">
             <input
               type="text"
               placeholder="Search company by name, VAT, or TIN"
@@ -642,7 +642,16 @@ export default function PurchasesPage({
               onClick={() => setSelectedCompanyId(c.id)}
             >
               <div className="device-company-icon">
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="36"
+                  height="36"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
                   <path d="M9 22v-4h6v4" />
                   <line x1="8" y1="6" x2="8" y2="6.01" />
@@ -658,18 +667,38 @@ export default function PurchasesPage({
               </div>
               <div className="device-company-info">
                 <div className="device-company-name">{c.name}</div>
-                {c.tin && <div className="device-company-detail">TIN: {c.tin}</div>}
-                {c.vat && <div className="device-company-detail">VAT: {c.vat}</div>}
+                {c.tin && (
+                  <div className="device-company-detail">TIN: {c.tin}</div>
+                )}
+                {c.vat && (
+                  <div className="device-company-detail">VAT: {c.vat}</div>
+                )}
               </div>
               <div className="device-company-arrow">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <polyline points="9 18 15 12 9 6" />
                 </svg>
               </div>
             </button>
           ))}
           {!filteredCompanies.length && (
-            <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: 40, color: "var(--muted)" }}>
+            <div
+              style={{
+                gridColumn: "1 / -1",
+                textAlign: "center",
+                padding: 40,
+                color: "var(--muted)",
+              }}
+            >
               {companyQuery.trim()
                 ? "No companies match your search."
                 : "No companies found. Create a company first."}
@@ -696,160 +725,26 @@ export default function PurchasesPage({
         <>
           {/* Company breadcrumb for admin */}
           {isAdmin && companyId && (
-            <div className="o-control-panel" style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
+            <div
+              className="o-control-panel"
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: 16,
+              }}
+            >
               <div className="o-breadcrumb">
-                <span className="o-breadcrumb-item" style={{ cursor: "pointer" }} onClick={goBackToCompanies}>Purchases</span>
-                <span className="o-breadcrumb-separator">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
-                </span>
-                <span className="o-breadcrumb-current">{company?.name || "Company"}</span>
-              </div>
-            </div>
-          )}
-        <div className="two-panel two-panel-left">
-          {/* Sidebar */}
-          <div className="o-sidebar">
-            <div className="o-sidebar-section">
-              <div className="o-sidebar-title">STATUS</div>
-              {[
-                {
-                  key: "",
-                  label: "ALL PURCHASES",
-                  icon: (
-                    <svg
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="var(--indigo-500)"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
-                      <path d="M3 6h18" />
-                      <path d="M16 10a4 4 0 0 1-8 0" />
-                    </svg>
-                  ),
-                },
-                {
-                  key: "draft",
-                  label: "DRAFT",
-                  icon: (
-                    <svg
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="var(--amber-500)"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M12 20h9" />
-                      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                    </svg>
-                  ),
-                },
-                {
-                  key: "confirmed",
-                  label: "CONFIRMED",
-                  icon: (
-                    <svg
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="var(--blue-500)"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                      <path d="m9 11 3 3L22 4" />
-                    </svg>
-                  ),
-                },
-                {
-                  key: "received",
-                  label: "RECEIVED",
-                  icon: (
-                    <svg
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="var(--emerald-500)"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <rect x="3" y="3" width="18" height="18" rx="2" />
-                      <path d="m9 12 2 2 4-4" />
-                    </svg>
-                  ),
-                },
-                {
-                  key: "cancelled",
-                  label: "CANCELLED",
-                  icon: (
-                    <svg
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="var(--red-500)"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <circle cx="12" cy="12" r="10" />
-                      <path d="m15 9-6 6" />
-                      <path d="m9 9 6 6" />
-                    </svg>
-                  ),
-                },
-              ].map((item) => (
-                <div
-                  key={item.key || "all"}
-                  className={`o-sidebar-item ${listStatus === item.key ? "active" : ""}`}
-                  onClick={() => setListStatus(item.key)}
+                <span
+                  className="o-breadcrumb-item"
                   style={{ cursor: "pointer" }}
+                  onClick={goBackToCompanies}
                 >
-                  <span
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 10,
-                      opacity: 0.85,
-                    }}
-                  >
-                    {item.icon}
-                    <span
-                      style={{
-                        letterSpacing: "0.5px",
-                        fontSize: 12,
-                        fontWeight: 500,
-                      }}
-                    >
-                      {item.label}
-                    </span>
-                  </span>
-                  <span className="o-sidebar-count">
-                    {item.key === ""
-                      ? orders.length
-                      : orders.filter((p) => p.status === item.key).length}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <div className="content-top-bar">
-              <div className="top-search">
-                <span className="search-icon">
+                  Purchases
+                </span>
+                <span className="o-breadcrumb-separator">
                   <svg
+                    width="14"
+                    height="14"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -857,174 +752,347 @@ export default function PurchasesPage({
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   >
-                    <circle cx="11" cy="11" r="8" />
-                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    <polyline points="9 18 15 12 9 6" />
                   </svg>
                 </span>
-                <input
-                  placeholder="Search purchases…"
-                  value={listSearch}
-                  onChange={(e) => setListSearch(e.target.value)}
-                />
+                <span className="o-breadcrumb-current">
+                  {company?.name || "Company"}
+                </span>
               </div>
-              <button
-                className="o-btn o-btn-secondary"
-                style={{ display: "flex", alignItems: "center", gap: 6 }}
-                onClick={() => {
-                  const headers = [
-                    "Reference",
-                    "Vendor",
-                    "Status",
-                    "Order Date",
-                    "Expected Date",
-                    "Subtotal",
-                    "Tax",
-                    "Total",
-                  ];
-                  const rows = filteredOrders.map((order) => {
-                    const vendor = contacts.find(
-                      (c) => c.id === order.vendor_id,
-                    );
-                    return [
-                      order.reference,
-                      vendor?.name || "",
-                      order.status,
-                      toDateInputValue(order.order_date),
-                      toDateInputValue(order.expected_date),
-                      order.subtotal || 0,
-                      order.tax_amount || 0,
-                      order.total_amount || 0,
-                    ];
-                  });
-                  const csvContent = [headers, ...rows]
-                    .map((row) =>
-                      row
-                        .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
-                        .join(","),
-                    )
-                    .join("\n");
-                  const blob = new Blob([csvContent], {
-                    type: "text/csv;charset=utf-8;",
-                  });
-                  const link = document.createElement("a");
-                  link.href = URL.createObjectURL(blob);
-                  link.download = `purchases_${new Date().toISOString().split("T")[0]}.csv`;
-                  link.click();
-                }}
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="7 10 12 15 17 10" />
-                  <line x1="12" y1="15" x2="12" y2="3" />
-                </svg>
-                Export
-              </button>
-              <button
-                className="btn-create"
-                onClick={() => {
-                  startNew();
-                  navigate("/purchases/new");
-                }}
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-                New Purchase
-              </button>
             </div>
-            <div className="card shadow-sm">
-              <div className="card-body">
-                <div className="table-responsive">
-                  <table className="table table-hover align-middle">
-                    <thead>
-                      <tr>
-                        <th>Reference</th>
-                        <th>Vendor</th>
-                        <th>Status</th>
-                        <th>Order Date</th>
-                        <th className="text-end">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredOrders.length === 0 ? (
+          )}
+          <div className="two-panel two-panel-left">
+            {/* Sidebar */}
+            <div className="o-sidebar">
+              <div className="o-sidebar-section">
+                <div className="o-sidebar-title">STATUS</div>
+                {[
+                  {
+                    key: "",
+                    label: "ALL PURCHASES",
+                    icon: (
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="var(--indigo-500)"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+                        <path d="M3 6h18" />
+                        <path d="M16 10a4 4 0 0 1-8 0" />
+                      </svg>
+                    ),
+                  },
+                  {
+                    key: "draft",
+                    label: "DRAFT",
+                    icon: (
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="var(--amber-500)"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                      </svg>
+                    ),
+                  },
+                  {
+                    key: "confirmed",
+                    label: "CONFIRMED",
+                    icon: (
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="var(--blue-500)"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                        <path d="m9 11 3 3L22 4" />
+                      </svg>
+                    ),
+                  },
+                  {
+                    key: "received",
+                    label: "RECEIVED",
+                    icon: (
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="var(--emerald-500)"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <path d="m9 12 2 2 4-4" />
+                      </svg>
+                    ),
+                  },
+                  {
+                    key: "cancelled",
+                    label: "CANCELLED",
+                    icon: (
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="var(--red-500)"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="m15 9-6 6" />
+                        <path d="m9 9 6 6" />
+                      </svg>
+                    ),
+                  },
+                ].map((item) => (
+                  <div
+                    key={item.key || "all"}
+                    className={`o-sidebar-item ${listStatus === item.key ? "active" : ""}`}
+                    onClick={() => setListStatus(item.key)}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <span
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        opacity: 0.85,
+                      }}
+                    >
+                      {item.icon}
+                      <span
+                        style={{
+                          letterSpacing: "0.5px",
+                          fontSize: 12,
+                          fontWeight: 500,
+                        }}
+                      >
+                        {item.label}
+                      </span>
+                    </span>
+                    <span className="o-sidebar-count">
+                      {item.key === ""
+                        ? orders.length
+                        : orders.filter((p) => p.status === item.key).length}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <div className="content-top-bar">
+                <div className="top-search">
+                  <span className="search-icon">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <circle cx="11" cy="11" r="8" />
+                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                  </span>
+                  <input
+                    placeholder="Search purchases…"
+                    value={listSearch}
+                    onChange={(e) => setListSearch(e.target.value)}
+                  />
+                </div>
+                <button
+                  className="o-btn o-btn-secondary"
+                  style={{ display: "flex", alignItems: "center", gap: 6 }}
+                  onClick={() => {
+                    const headers = [
+                      "Reference",
+                      "Vendor",
+                      "Status",
+                      "Order Date",
+                      "Expected Date",
+                      "Subtotal",
+                      "Tax",
+                      "Total",
+                    ];
+                    const rows = filteredOrders.map((order) => {
+                      const vendor = contacts.find(
+                        (c) => c.id === order.vendor_id,
+                      );
+                      return [
+                        order.reference,
+                        vendor?.name || "",
+                        order.status,
+                        toDateInputValue(order.order_date),
+                        toDateInputValue(order.expected_date),
+                        order.subtotal || 0,
+                        order.tax_amount || 0,
+                        order.total_amount || 0,
+                      ];
+                    });
+                    const csvContent = [headers, ...rows]
+                      .map((row) =>
+                        row
+                          .map(
+                            (cell) => `"${String(cell).replace(/"/g, '""')}"`,
+                          )
+                          .join(","),
+                      )
+                      .join("\n");
+                    const blob = new Blob([csvContent], {
+                      type: "text/csv;charset=utf-8;",
+                    });
+                    const link = document.createElement("a");
+                    link.href = URL.createObjectURL(blob);
+                    link.download = `purchases_${new Date().toISOString().split("T")[0]}.csv`;
+                    link.click();
+                  }}
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                  Export
+                </button>
+                <button
+                  className="btn-create"
+                  onClick={() => {
+                    startNew();
+                    navigate("/purchases/new");
+                  }}
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                  New Purchase
+                </button>
+              </div>
+              <div className="card shadow-sm">
+                <div className="card-body">
+                  <div className="table-responsive">
+                    <table className="table table-hover align-middle">
+                      <thead>
                         <tr>
-                          <td
-                            colSpan={5}
-                            className="text-center text-muted py-4"
-                          >
-                            {loadingData
-                              ? "Loading purchases..."
-                              : "No purchase orders found."}
-                          </td>
+                          <th>Reference</th>
+                          <th>Vendor</th>
+                          <th>Status</th>
+                          <th>Order Date</th>
+                          <th className="text-end">Total</th>
                         </tr>
-                      ) : (
-                        filteredOrders.map((order) => (
-                          <tr
-                            key={order.id}
-                            style={{ cursor: "pointer" }}
-                            onClick={() => navigate(`/purchases/${order.id}`)}
-                          >
+                      </thead>
+                      <tbody>
+                        {filteredOrders.length === 0 ? (
+                          <tr>
                             <td
-                              style={{ fontFamily: "monospace", fontSize: 12 }}
+                              colSpan={5}
+                              className="text-center text-muted py-4"
                             >
-                              {order.reference}
-                            </td>
-                            <td>
-                              {contacts.find((c) => c.id === order.vendor_id)
-                                ?.name || "-"}
-                            </td>
-                            <td>
-                              <span
-                                className={`badge ${order.status === "received" ? "badge-success" : order.status === "confirmed" ? "badge-info" : order.status === "cancelled" ? "badge-danger" : "badge-secondary"}`}
-                              >
-                                {order.status}
-                              </span>
-                            </td>
-                            <td>{toDateInputValue(order.order_date)}</td>
-                            <td className="text-end">
-                              {formatMoney(order.total_amount, currencySymbol)}
+                              {loadingData
+                                ? "Loading purchases..."
+                                : "No purchase orders found."}
                             </td>
                           </tr>
-                        ))
-                      )}
-                    </tbody>
-                    <tfoot>
-                      <tr style={{ background: "var(--slate-50)", fontWeight: 600 }}>
-                        <td colSpan={4} className="text-end">
-                          Grand Total:
-                        </td>
-                        <td className="text-end">
-                          {formatMoney(
-                            filteredOrders.reduce(
-                              (sum, order) => sum + (order.total_amount || 0),
-                              0,
-                            ),
-                            currencySymbol,
-                          )}
-                        </td>
-                      </tr>
-                    </tfoot>
-                  </table>
+                        ) : (
+                          filteredOrders.map((order) => (
+                            <tr
+                              key={order.id}
+                              style={{ cursor: "pointer" }}
+                              onClick={() => navigate(`/purchases/${order.id}`)}
+                            >
+                              <td
+                                style={{
+                                  fontFamily: "monospace",
+                                  fontSize: 12,
+                                }}
+                              >
+                                {order.reference}
+                              </td>
+                              <td>
+                                {contacts.find((c) => c.id === order.vendor_id)
+                                  ?.name || "-"}
+                              </td>
+                              <td>
+                                <span
+                                  className={`badge ${order.status === "received" ? "badge-success" : order.status === "confirmed" ? "badge-info" : order.status === "cancelled" ? "badge-danger" : "badge-secondary"}`}
+                                >
+                                  {order.status}
+                                </span>
+                              </td>
+                              <td>{toDateInputValue(order.order_date)}</td>
+                              <td className="text-end">
+                                {formatMoney(
+                                  order.total_amount,
+                                  currencySymbol,
+                                )}
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                      <tfoot>
+                        <tr
+                          style={{
+                            background: "var(--slate-50)",
+                            fontWeight: 600,
+                          }}
+                        >
+                          <td colSpan={4} className="text-end">
+                            Grand Total:
+                          </td>
+                          <td className="text-end">
+                            {formatMoney(
+                              filteredOrders.reduce(
+                                (sum, order) => sum + (order.total_amount || 0),
+                                0,
+                              ),
+                              currencySymbol,
+                            )}
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
         </>
       )}
 

@@ -130,14 +130,7 @@ type CompanySettings = {
   document_watermark_opacity?: string;
 };
 
-const currencyOptions = [
-  "USD",
-  "ZWG",
-  "ZAR",
-  "EUR",
-  "GBP",
-  
-];
+const currencyOptions = ["USD", "ZWG", "ZAR", "EUR", "GBP"];
 
 const formatCurrency = (value: number, currency: string) => {
   try {
@@ -181,7 +174,9 @@ export default function InvoicesPage({
   const { me } = useMe();
   const allCompanies = useCompanies();
   const isAdmin = Boolean(me?.is_admin);
-  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(
+    null,
+  );
   const [companyQuery, setCompanyQuery] = useState("");
 
   // Portal users auto-select their first company
@@ -192,7 +187,8 @@ export default function InvoicesPage({
   }, [isAdmin, me?.company_ids, selectedCompanyId]);
 
   const companyId = selectedCompanyId;
-  const company = me?.companies?.find((c) => c.id === companyId) ||
+  const company =
+    me?.companies?.find((c) => c.id === companyId) ||
     allCompanies.find((c) => c.id === companyId);
 
   const filteredCompanies = useMemo(() => {
@@ -202,7 +198,7 @@ export default function InvoicesPage({
       (c) =>
         c.name.toLowerCase().includes(q) ||
         (c.tin && c.tin.toLowerCase().includes(q)) ||
-        (c.vat && c.vat.toLowerCase().includes(q))
+        (c.vat && c.vat.toLowerCase().includes(q)),
     );
   }, [allCompanies, companyQuery]);
 
@@ -676,7 +672,9 @@ export default function InvoicesPage({
       setEditDeviceId(deviceId);
     }
     if (!deviceId) {
-      setError("No fiscal device available. Create a device on the Devices page first.");
+      setError(
+        "No fiscal device available. Create a device on the Devices page first.",
+      );
       return;
     }
 
@@ -694,7 +692,7 @@ export default function InvoicesPage({
       await loadAll();
     } catch (err: any) {
       setError(err.message || "Failed to fiscalize invoice");
-      await loadAll();  // Reload to show stored zimra_errors
+      await loadAll(); // Reload to show stored zimra_errors
     }
   };
 
@@ -1002,31 +1000,46 @@ export default function InvoicesPage({
               </div>
             </div>
 
-            ${selectedInvoice.zimra_status === "submitted" ? (() => {
-              const dev = devices.find(d => d.id === selectedInvoice.device_id);
-              return `
+            ${
+              selectedInvoice.zimra_status === "submitted"
+                ? (() => {
+                    const dev = devices.find(
+                      (d) => d.id === selectedInvoice.device_id,
+                    );
+                    return `
             <div style="margin-top:24px; border-top:1px solid var(--slate-200); padding-top:18px;">
               <div style="text-align:center;">
-                ${zimraVerifyUrl ? `
+                ${
+                  zimraVerifyUrl
+                    ? `
                 <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(zimraVerifyUrl)}" width="180" height="180" style="margin-bottom:10px;" />
-                ` : ""}
+                `
+                    : ""
+                }
                 <div style="font-size:12px; color:var(--gray-700); line-height:1.7;">
                   <div><strong>Verification code:</strong> ${selectedInvoice.zimra_verification_code || "-"}</div>
                   <div><strong>Fiscal Day:</strong> ${selectedInvoice.zimra_receipt_counter || "-"}</div>
                   <div><strong>Device ID:</strong> ${dev?.device_id || "-"}</div>
                   <div><strong>Invoice Number:</strong> ${selectedInvoice.zimra_receipt_global_no || "-"}</div>
                 </div>
-                ${zimraVerifyUrl ? `
+                ${
+                  zimraVerifyUrl
+                    ? `
                 <div style="margin-top:8px; font-size:11px; color:var(--gray-500);">
                   Verify this receipt manually at
                 </div>
                 <div style="font-size:11px; color:var(--blue-600); text-decoration:underline; word-break:break-all;">
                   ${zimraVerifyUrl}
                 </div>
-                ` : ""}
+                `
+                    : ""
+                }
               </div>
             </div>
-            `; })() : ""}
+            `;
+                  })()
+                : ""
+            }
 
             ${footerHtml ? `<div class="doc-footer">${footerHtml}</div>` : ""}
           </div>
@@ -1073,7 +1086,7 @@ export default function InvoicesPage({
     return (
       <div className="content">
         <div
-          className="o-control-panel"
+          className=""
           style={{
             display: "flex",
             width: "auto",
@@ -1081,10 +1094,7 @@ export default function InvoicesPage({
             marginBottom: 24,
           }}
         >
-          <div className="o-breadcrumb">
-            <span className="o-breadcrumb-current">Invoices</span>
-          </div>
-          <div className="settings-search" style={{ width: "20vw" }}>
+          <div className="company-search">
             <input
               type="text"
               placeholder="Search company by name, VAT, or TIN"
@@ -1106,7 +1116,16 @@ export default function InvoicesPage({
               onClick={() => setSelectedCompanyId(c.id)}
             >
               <div className="device-company-icon">
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="36"
+                  height="36"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
                   <path d="M9 22v-4h6v4" />
                   <line x1="8" y1="6" x2="8" y2="6.01" />
@@ -1122,18 +1141,38 @@ export default function InvoicesPage({
               </div>
               <div className="device-company-info">
                 <div className="device-company-name">{c.name}</div>
-                {c.tin && <div className="device-company-detail">TIN: {c.tin}</div>}
-                {c.vat && <div className="device-company-detail">VAT: {c.vat}</div>}
+                {c.tin && (
+                  <div className="device-company-detail">TIN: {c.tin}</div>
+                )}
+                {c.vat && (
+                  <div className="device-company-detail">VAT: {c.vat}</div>
+                )}
               </div>
               <div className="device-company-arrow">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <polyline points="9 18 15 12 9 6" />
                 </svg>
               </div>
             </button>
           ))}
           {!filteredCompanies.length && (
-            <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: 40, color: "var(--muted)" }}>
+            <div
+              style={{
+                gridColumn: "1 / -1",
+                textAlign: "center",
+                padding: 40,
+                color: "var(--muted)",
+              }}
+            >
               {companyQuery.trim()
                 ? "No companies match your search."
                 : "No companies found. Create a company first."}
@@ -1165,222 +1204,514 @@ export default function InvoicesPage({
         <>
           {/* Company breadcrumb for admin */}
           {isAdmin && companyId && (
-            <div className="o-control-panel" style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
+            <div
+              className="o-control-panel"
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: 16,
+              }}
+            >
               <div className="o-breadcrumb">
-                <span className="o-breadcrumb-item" style={{ cursor: "pointer" }} onClick={goBackToCompanies}>Invoices</span>
-                <span className="o-breadcrumb-separator">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+                <span
+                  className="o-breadcrumb-item"
+                  style={{ cursor: "pointer" }}
+                  onClick={goBackToCompanies}
+                >
+                  Invoices
                 </span>
-                <span className="o-breadcrumb-current">{company?.name || "Company"}</span>
+                <span className="o-breadcrumb-separator">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
+                </span>
+                <span className="o-breadcrumb-current">
+                  {company?.name || "Company"}
+                </span>
               </div>
             </div>
           )}
           <div className="two-panel two-panel-left">
-          {/* Sidebar */}
-          <div className="o-sidebar">
-            <div className="o-sidebar-section">
-              <div className="o-sidebar-title">STATUS</div>
-              {[
-                { key: "", label: "ALL INVOICES", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--indigo-500)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg> },
-                { key: "draft", label: "DRAFT", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--amber-500)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> },
-                { key: "posted", label: "POSTED", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue-500)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg> },
-                { key: "paid", label: "PAID", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--emerald-500)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg> },
-                { key: "fiscalized", label: "FISCALIZED", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--violet-500)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg> },
-              ].map((item) => (
-                <div
-                  key={item.key || "all"}
-                  className={`o-sidebar-item ${listStatus === item.key ? "active" : ""}`}
-                  onClick={() => setListStatus(item.key)}
-                  style={{ cursor: "pointer" }}
-                >
-                  <span style={{ display: "flex", alignItems: "center", gap: 10, opacity: 0.85 }}>{item.icon}<span style={{ letterSpacing: "0.5px", fontSize: 12, fontWeight: 500 }}>{item.label}</span></span>
-                  <span className="o-sidebar-count">
-                    {item.key === ""
-                      ? invoices.length
-                      : invoices.filter((inv) => inv.status === item.key).length}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            <div className="o-sidebar-section">
-             
-              {[
-                { key: "", label: "ALL TYPES", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg> },
-                { key: "invoice", label: "INVOICE", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg> },
-                { key: "credit_note", label: "CREDIT NOTE", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="m15 11-6 6"/><path d="m9 11 6 6"/></svg> },
-              ].map((item) => (
-                <div
-                  key={item.key || "all"}
-                  className={`o-sidebar-item ${listType === item.key ? "active" : ""}`}
-                  onClick={() => setListType(item.key)}
-                  style={{ cursor: "pointer" }}
-                >
-                  <span style={{ display: "flex", alignItems: "center", gap: 10, opacity: 0.85 }}>{item.icon}<span style={{ letterSpacing: "0.5px", fontSize: 12, fontWeight: 500 }}>{item.label}</span></span>
-                  <span className="o-sidebar-count">
-                    {item.key === ""
-                      ? invoices.length
-                      : invoices.filter((inv) => inv.invoice_type === item.key).length}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-          
-          </div>
-
-          <div>
-            <div className="content-top-bar">
-              <div className="top-search">
-                <span className="search-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                </span>
-                <input
-                  placeholder="Search invoices…"
-                  value={listSearch}
-                  onChange={(e) => setListSearch(e.target.value)}
-                />
+            {/* Sidebar */}
+            <div className="o-sidebar">
+              <div className="o-sidebar-section">
+                <div className="o-sidebar-title">STATUS</div>
+                {[
+                  {
+                    key: "",
+                    label: "ALL INVOICES",
+                    icon: (
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="var(--indigo-500)"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <path d="M3 9h18" />
+                        <path d="M9 21V9" />
+                      </svg>
+                    ),
+                  },
+                  {
+                    key: "draft",
+                    label: "DRAFT",
+                    icon: (
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="var(--amber-500)"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                      </svg>
+                    ),
+                  },
+                  {
+                    key: "posted",
+                    label: "POSTED",
+                    icon: (
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="var(--blue-500)"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                        <path d="m9 11 3 3L22 4" />
+                      </svg>
+                    ),
+                  },
+                  {
+                    key: "paid",
+                    label: "PAID",
+                    icon: (
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="var(--emerald-500)"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8" />
+                        <path d="M12 18V6" />
+                      </svg>
+                    ),
+                  },
+                  {
+                    key: "fiscalized",
+                    label: "FISCALIZED",
+                    icon: (
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="var(--violet-500)"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                        <path d="m9 12 2 2 4-4" />
+                      </svg>
+                    ),
+                  },
+                ].map((item) => (
+                  <div
+                    key={item.key || "all"}
+                    className={`o-sidebar-item ${listStatus === item.key ? "active" : ""}`}
+                    onClick={() => setListStatus(item.key)}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <span
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        opacity: 0.85,
+                      }}
+                    >
+                      {item.icon}
+                      <span
+                        style={{
+                          letterSpacing: "0.5px",
+                          fontSize: 12,
+                          fontWeight: 500,
+                        }}
+                      >
+                        {item.label}
+                      </span>
+                    </span>
+                    <span className="o-sidebar-count">
+                      {item.key === ""
+                        ? invoices.length
+                        : invoices.filter((inv) => inv.status === item.key)
+                            .length}
+                    </span>
+                  </div>
+                ))}
               </div>
-              <button
-                className="o-btn o-btn-secondary"
-                style={{ display: "flex", alignItems: "center", gap: 6 }}
-                onClick={() => {
-                  const headers = ["Reference", "Type", "Customer", "Date", "Status", "Payment", "Subtotal", "Tax", "Total", "Paid", "Due"];
-                  const rows = invoices.map((inv) => {
-                    const cust = contactById.get(inv.customer_id ?? 0);
-                    return [
-                      inv.reference,
-                      inv.invoice_type === "credit_note" ? "Credit Note" : "Invoice",
-                      cust?.name || "",
-                      inv.invoice_date ? new Date(inv.invoice_date).toLocaleDateString() : "",
-                      inv.status,
-                      getPaymentStatus(inv.amount_paid, inv.amount_due),
-                      inv.subtotal || 0,
-                      inv.tax_amount || 0,
-                      inv.total_amount || 0,
-                      inv.amount_paid || 0,
-                      inv.amount_due || 0,
-                    ];
-                  });
-                  const csvContent = [headers, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
-                  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-                  const link = document.createElement("a");
-                  link.href = URL.createObjectURL(blob);
-                  link.download = `invoices_${new Date().toISOString().split("T")[0]}.csv`;
-                  link.click();
-                }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Export
-              </button>
-              <button
-                className="btn-create"
-                onClick={() => {
-                  beginNew();
-                  navigate("/invoices/new");
-                }}
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                New Invoice
-              </button>
+
+              <div className="o-sidebar-section">
+                {[
+                  {
+                    key: "",
+                    label: "ALL TYPES",
+                    icon: (
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <rect x="3" y="3" width="7" height="7" rx="1" />
+                        <rect x="14" y="3" width="7" height="7" rx="1" />
+                        <rect x="14" y="14" width="7" height="7" rx="1" />
+                        <rect x="3" y="14" width="7" height="7" rx="1" />
+                      </svg>
+                    ),
+                  },
+                  {
+                    key: "invoice",
+                    label: "INVOICE",
+                    icon: (
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <path d="M14 2v6h6" />
+                        <path d="M16 13H8" />
+                        <path d="M16 17H8" />
+                        <path d="M10 9H8" />
+                      </svg>
+                    ),
+                  },
+                  {
+                    key: "credit_note",
+                    label: "CREDIT NOTE",
+                    icon: (
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <path d="M14 2v6h6" />
+                        <path d="m15 11-6 6" />
+                        <path d="m9 11 6 6" />
+                      </svg>
+                    ),
+                  },
+                ].map((item) => (
+                  <div
+                    key={item.key || "all"}
+                    className={`o-sidebar-item ${listType === item.key ? "active" : ""}`}
+                    onClick={() => setListType(item.key)}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <span
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        opacity: 0.85,
+                      }}
+                    >
+                      {item.icon}
+                      <span
+                        style={{
+                          letterSpacing: "0.5px",
+                          fontSize: 12,
+                          fontWeight: 500,
+                        }}
+                      >
+                        {item.label}
+                      </span>
+                    </span>
+                    <span className="o-sidebar-count">
+                      {item.key === ""
+                        ? invoices.length
+                        : invoices.filter(
+                            (inv) => inv.invoice_type === item.key,
+                          ).length}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <div className="card shadow-sm card-bg-shadow">
-              <div className="card-body p-0">
-                <div className="table-responsive">
-                  <table className="table table-hover align-middle mb-0">
-                    <thead className="table-light">
-                      <tr>
-                        <th>Reference</th>
-                        <th>Customer</th>
-                        <th>Date</th>
-                        <th>Status</th>
-                        <th>Payment</th>
-                        <th className="text-end">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {loading && (
+            <div>
+              <div className="content-top-bar">
+                <div className="top-search">
+                  <span className="search-icon">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <circle cx="11" cy="11" r="8" />
+                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                  </span>
+                  <input
+                    placeholder="Search invoices…"
+                    value={listSearch}
+                    onChange={(e) => setListSearch(e.target.value)}
+                  />
+                </div>
+                <button
+                  className="o-btn o-btn-secondary"
+                  style={{ display: "flex", alignItems: "center", gap: 6 }}
+                  onClick={() => {
+                    const headers = [
+                      "Reference",
+                      "Type",
+                      "Customer",
+                      "Date",
+                      "Status",
+                      "Payment",
+                      "Subtotal",
+                      "Tax",
+                      "Total",
+                      "Paid",
+                      "Due",
+                    ];
+                    const rows = invoices.map((inv) => {
+                      const cust = contactById.get(inv.customer_id ?? 0);
+                      return [
+                        inv.reference,
+                        inv.invoice_type === "credit_note"
+                          ? "Credit Note"
+                          : "Invoice",
+                        cust?.name || "",
+                        inv.invoice_date
+                          ? new Date(inv.invoice_date).toLocaleDateString()
+                          : "",
+                        inv.status,
+                        getPaymentStatus(inv.amount_paid, inv.amount_due),
+                        inv.subtotal || 0,
+                        inv.tax_amount || 0,
+                        inv.total_amount || 0,
+                        inv.amount_paid || 0,
+                        inv.amount_due || 0,
+                      ];
+                    });
+                    const csvContent = [headers, ...rows]
+                      .map((row) =>
+                        row
+                          .map(
+                            (cell) => `"${String(cell).replace(/"/g, '""')}"`,
+                          )
+                          .join(","),
+                      )
+                      .join("\n");
+                    const blob = new Blob([csvContent], {
+                      type: "text/csv;charset=utf-8;",
+                    });
+                    const link = document.createElement("a");
+                    link.href = URL.createObjectURL(blob);
+                    link.download = `invoices_${new Date().toISOString().split("T")[0]}.csv`;
+                    link.click();
+                  }}
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                  Export
+                </button>
+                <button
+                  className="btn-create"
+                  onClick={() => {
+                    beginNew();
+                    navigate("/invoices/new");
+                  }}
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                  New Invoice
+                </button>
+              </div>
+
+              <div className="card shadow-sm card-bg-shadow">
+                <div className="card-body p-0">
+                  <div className="table-responsive">
+                    <table className="table table-hover align-middle mb-0">
+                      <thead className="table-light">
                         <tr>
-                          <td colSpan={6} className="text-center py-5 text-muted">
-                            Loading invoices…
-                          </td>
+                          <th>Reference</th>
+                          <th>Customer</th>
+                          <th>Date</th>
+                          <th>Status</th>
+                          <th>Payment</th>
+                          <th className="text-end">Total</th>
                         </tr>
-                      )}
-                      {!loading && invoices.length === 0 && (
-                        <tr>
-                          <td colSpan={6} className="text-center py-5 text-muted">
-                            No invoices yet. Click <strong>+ New Invoice</strong>{" "}
-                            to create one.
-                          </td>
-                        </tr>
-                      )}
-                      {invoices.map((inv) => {
-                        const cust = contactById.get(inv.customer_id ?? 0);
-                        return (
-                          <tr
-                            key={inv.id}
-                            role="button"
-                            onClick={() => navigate(`/invoices/${inv.id}`)}
-                          >
-                            <td>
-                              <div className="fw-semibold">{inv.reference}</div>
-                              <small className="text-muted">
-                                {inv.invoice_type === "credit_note"
-                                  ? "Credit Note"
-                                  : "Invoice"}
-                              </small>
-                            </td>
-                            <td>{cust?.name || "—"}</td>
-                            <td className="text-muted">
-                              {inv.invoice_date
-                                ? new Date(inv.invoice_date).toLocaleDateString()
-                                : "—"}
-                            </td>
-                            <td>
-                              <span
-                                className={`badge ${inv.status === "paid" ? "bg-success" : inv.status === "posted" ? "bg-info" : inv.status === "fiscalized" ? "bg-primary" : "bg-secondary"}`}
-                              >
-                                {inv.status}
-                              </span>
-                            </td>
-                            <td>
-                              <span
-                                className={`badge bg-${getPaymentStatus(inv.amount_paid, inv.amount_due) === "Paid" ? "success" : getPaymentStatus(inv.amount_paid, inv.amount_due) === "Partial" ? "warning" : "secondary"}`}
-                              >
-                                {getPaymentStatus(
-                                  inv.amount_paid,
-                                  inv.amount_due,
-                                )}
-                              </span>
-                            </td>
-                            <td className="text-end fw-semibold">
-                              {formatCurrency(
-                                inv.total_amount || 0,
-                                inv.currency || "USD",
-                              )}
+                      </thead>
+                      <tbody>
+                        {loading && (
+                          <tr>
+                            <td
+                              colSpan={6}
+                              className="text-center py-5 text-muted"
+                            >
+                              Loading invoices…
                             </td>
                           </tr>
-                        );
-                      })}
-                    </tbody>
-                    <tfoot>
-                      <tr style={{ background: "var(--slate-50)", fontWeight: 600 }}>
-                        <td colSpan={5} className="text-end">Grand Total:</td>
-                        <td className="text-end">
-                          {formatCurrency(
-                            invoices.reduce((sum, inv) => sum + (inv.total_amount || 0), 0),
-                            "USD"
-                          )}
-                        </td>
-                      </tr>
-                    </tfoot>
-                  </table>
+                        )}
+                        {!loading && invoices.length === 0 && (
+                          <tr>
+                            <td
+                              colSpan={6}
+                              className="text-center py-5 text-muted"
+                            >
+                              No invoices yet. Click{" "}
+                              <strong>+ New Invoice</strong> to create one.
+                            </td>
+                          </tr>
+                        )}
+                        {invoices.map((inv) => {
+                          const cust = contactById.get(inv.customer_id ?? 0);
+                          return (
+                            <tr
+                              key={inv.id}
+                              role="button"
+                              onClick={() => navigate(`/invoices/${inv.id}`)}
+                            >
+                              <td>
+                                <div className="fw-semibold">
+                                  {inv.reference}
+                                </div>
+                                <small className="text-muted">
+                                  {inv.invoice_type === "credit_note"
+                                    ? "Credit Note"
+                                    : "Invoice"}
+                                </small>
+                              </td>
+                              <td>{cust?.name || "—"}</td>
+                              <td className="text-muted">
+                                {inv.invoice_date
+                                  ? new Date(
+                                      inv.invoice_date,
+                                    ).toLocaleDateString()
+                                  : "—"}
+                              </td>
+                              <td>
+                                <span
+                                  className={`badge ${inv.status === "paid" ? "bg-success" : inv.status === "posted" ? "bg-info" : inv.status === "fiscalized" ? "bg-primary" : "bg-secondary"}`}
+                                >
+                                  {inv.status}
+                                </span>
+                              </td>
+                              <td>
+                                <span
+                                  className={`badge bg-${getPaymentStatus(inv.amount_paid, inv.amount_due) === "Paid" ? "success" : getPaymentStatus(inv.amount_paid, inv.amount_due) === "Partial" ? "warning" : "secondary"}`}
+                                >
+                                  {getPaymentStatus(
+                                    inv.amount_paid,
+                                    inv.amount_due,
+                                  )}
+                                </span>
+                              </td>
+                              <td className="text-end fw-semibold">
+                                {formatCurrency(
+                                  inv.total_amount || 0,
+                                  inv.currency || "USD",
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                      <tfoot>
+                        <tr
+                          style={{
+                            background: "var(--slate-50)",
+                            fontWeight: 600,
+                          }}
+                        >
+                          <td colSpan={5} className="text-end">
+                            Grand Total:
+                          </td>
+                          <td className="text-end">
+                            {formatCurrency(
+                              invoices.reduce(
+                                (sum, inv) => sum + (inv.total_amount || 0),
+                                0,
+                              ),
+                              "USD",
+                            )}
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
         </>
       )}
 
@@ -1945,7 +2276,17 @@ export default function InvoicesPage({
                     <div className="card border-0 bg-light h-100">
                       <div className="card-body py-2">
                         <small className="text-muted">Fiscalization</small>
-                        <div className="fw-bold text-uppercase" style={{ color: selectedInvoice.zimra_status === "error" ? "var(--red-500)" : selectedInvoice.zimra_status === "submitted" ? "var(--green-700)" : undefined }}>
+                        <div
+                          className="fw-bold text-uppercase"
+                          style={{
+                            color:
+                              selectedInvoice.zimra_status === "error"
+                                ? "var(--red-500)"
+                                : selectedInvoice.zimra_status === "submitted"
+                                  ? "var(--green-700)"
+                                  : undefined,
+                          }}
+                        >
                           {selectedInvoice.zimra_status || "not_submitted"}
                         </div>
                         {selectedInvoice.zimra_verification_code && (
@@ -1953,76 +2294,237 @@ export default function InvoicesPage({
                             Code: {selectedInvoice.zimra_verification_code}
                           </small>
                         )}
-                        {selectedInvoice.zimra_status === "submitted" && selectedInvoice.zimra_verification_url && (
-                          <div style={{ marginTop: 4 }}>
-                            <a href={selectedInvoice.zimra_verification_url.replace(/\/Receipt\/?/i, "/")} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "var(--accent)" }}>
-                              Verify on ZIMRA ↗
-                            </a>
-                          </div>
-                        )}
-                        {selectedInvoice.zimra_status === "error" && selectedInvoice.zimra_errors && (
-                          <div style={{ marginTop: 6, padding: "6px 8px", background: "var(--red-50)", border: "1px solid var(--red-200)", borderRadius: 6, fontSize: 11, color: "var(--red-900)", maxHeight: 120, overflowY: "auto", wordBreak: "break-word" }}>
-                            {selectedInvoice.zimra_errors}
-                          </div>
-                        )}
+                        {selectedInvoice.zimra_status === "submitted" &&
+                          selectedInvoice.zimra_verification_url && (
+                            <div style={{ marginTop: 4 }}>
+                              <a
+                                href={selectedInvoice.zimra_verification_url.replace(
+                                  /\/Receipt\/?/i,
+                                  "/",
+                                )}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ fontSize: 11, color: "var(--accent)" }}
+                              >
+                                Verify on ZIMRA ↗
+                              </a>
+                            </div>
+                          )}
+                        {selectedInvoice.zimra_status === "error" &&
+                          selectedInvoice.zimra_errors && (
+                            <div
+                              style={{
+                                marginTop: 6,
+                                padding: "6px 8px",
+                                background: "var(--red-50)",
+                                border: "1px solid var(--red-200)",
+                                borderRadius: 6,
+                                fontSize: 11,
+                                color: "var(--red-900)",
+                                maxHeight: 120,
+                                overflowY: "auto",
+                                wordBreak: "break-word",
+                              }}
+                            >
+                              {selectedInvoice.zimra_errors}
+                            </div>
+                          )}
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* ZIMRA Fiscal Details Panel */}
-                {selectedInvoice.zimra_status === "submitted" && (() => {
-                  const dev = devices.find(d => d.id === selectedInvoice.device_id);
-                  return (
-                    <div className="card border-0 mb-4" style={{ background: "var(--green-50)", border: "1px solid var(--green-200)", borderRadius: 10 }}>
-                      <div className="card-body" style={{ padding: "14px 18px" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, flexWrap: "wrap" }}>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--green-800)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>
-                              ZIMRA Fiscal Details
-                            </div>
-                            <div style={{ fontSize: 12, lineHeight: 1.8, color: "var(--gray-700)" }}>
-                              <div><strong>Verification Code:</strong> {selectedInvoice.zimra_verification_code || "—"}</div>
-                              <div><strong>Receipt #:</strong> {selectedInvoice.zimra_receipt_counter || "—"} / Global #{selectedInvoice.zimra_receipt_global_no || "—"}</div>
-                              <div><strong>Receipt ID:</strong> {selectedInvoice.zimra_receipt_id || "—"}</div>
-                              <div><strong>Fiscalized:</strong> {selectedInvoice.fiscalized_at ? new Date(selectedInvoice.fiscalized_at).toLocaleString() : "—"}</div>
-                            </div>
-                            <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid var(--green-200)", fontSize: 12, lineHeight: 1.8, color: "var(--gray-700)" }}>
-                              <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.3, marginBottom: 2, color: "var(--green-800)" }}>Device Information</div>
-                              <div><strong>Device ID:</strong> {dev?.device_id || "—"}</div>
-                              <div><strong>Serial No:</strong> {dev?.serial_number || "—"}</div>
-                              <div><strong>Model:</strong> {dev?.model || "—"}</div>
+                {selectedInvoice.zimra_status === "submitted" &&
+                  (() => {
+                    const dev = devices.find(
+                      (d) => d.id === selectedInvoice.device_id,
+                    );
+                    return (
+                      <div
+                        className="card border-0 mb-4"
+                        style={{
+                          background: "var(--green-50)",
+                          border: "1px solid var(--green-200)",
+                          borderRadius: 10,
+                        }}
+                      >
+                        <div
+                          className="card-body"
+                          style={{ padding: "14px 18px" }}
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "flex-start",
+                              gap: 16,
+                              flexWrap: "wrap",
+                            }}
+                          >
+                            <div style={{ flex: 1 }}>
+                              <div
+                                style={{
+                                  fontSize: 13,
+                                  fontWeight: 700,
+                                  color: "var(--green-800)",
+                                  textTransform: "uppercase",
+                                  letterSpacing: 0.5,
+                                  marginBottom: 6,
+                                }}
+                              >
+                                ZIMRA Fiscal Details
+                              </div>
+                              <div
+                                style={{
+                                  fontSize: 12,
+                                  lineHeight: 1.8,
+                                  color: "var(--gray-700)",
+                                }}
+                              >
+                                <div>
+                                  <strong>Verification Code:</strong>{" "}
+                                  {selectedInvoice.zimra_verification_code ||
+                                    "—"}
+                                </div>
+                                <div>
+                                  <strong>Receipt #:</strong>{" "}
+                                  {selectedInvoice.zimra_receipt_counter || "—"}{" "}
+                                  / Global #
+                                  {selectedInvoice.zimra_receipt_global_no ||
+                                    "—"}
+                                </div>
+                                <div>
+                                  <strong>Receipt ID:</strong>{" "}
+                                  {selectedInvoice.zimra_receipt_id || "—"}
+                                </div>
+                                <div>
+                                  <strong>Fiscalized:</strong>{" "}
+                                  {selectedInvoice.fiscalized_at
+                                    ? new Date(
+                                        selectedInvoice.fiscalized_at,
+                                      ).toLocaleString()
+                                    : "—"}
+                                </div>
+                              </div>
+                              <div
+                                style={{
+                                  marginTop: 8,
+                                  paddingTop: 8,
+                                  borderTop: "1px solid var(--green-200)",
+                                  fontSize: 12,
+                                  lineHeight: 1.8,
+                                  color: "var(--gray-700)",
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    fontSize: 11,
+                                    fontWeight: 600,
+                                    textTransform: "uppercase",
+                                    letterSpacing: 0.3,
+                                    marginBottom: 2,
+                                    color: "var(--green-800)",
+                                  }}
+                                >
+                                  Device Information
+                                </div>
+                                <div>
+                                  <strong>Device ID:</strong>{" "}
+                                  {dev?.device_id || "—"}
+                                </div>
+                                <div>
+                                  <strong>Serial No:</strong>{" "}
+                                  {dev?.serial_number || "—"}
+                                </div>
+                                <div>
+                                  <strong>Model:</strong> {dev?.model || "—"}
+                                </div>
+                              </div>
+                              {selectedInvoice.zimra_verification_url && (
+                                <div style={{ marginTop: 8 }}>
+                                  <a
+                                    href={selectedInvoice.zimra_verification_url.replace(
+                                      /\/Receipt\/?/i,
+                                      "/",
+                                    )}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{
+                                      fontSize: 11,
+                                      color: "var(--green-800)",
+                                      wordBreak: "break-all",
+                                    }}
+                                  >
+                                    {selectedInvoice.zimra_verification_url.replace(
+                                      /\/Receipt\/?/i,
+                                      "/",
+                                    )}
+                                  </a>
+                                </div>
+                              )}
+
+                              {selectedInvoice.zimra_payload && (
+                                <details style={{ marginTop: 10 }}>
+                                  <summary
+                                    style={{
+                                      cursor: "pointer",
+                                      fontSize: 11,
+                                      color: "var(--green-800)",
+                                      fontWeight: 600,
+                                    }}
+                                  >
+                                    View ZIMRA payload
+                                  </summary>
+                                  <pre
+                                    style={{
+                                      marginTop: 8,
+                                      padding: 10,
+                                      background: "var(--white-500)",
+                                      border: "1px solid var(--green-200)",
+                                      borderRadius: 6,
+                                      fontSize: 11,
+                                      maxHeight: 240,
+                                      overflow: "auto",
+                                      whiteSpace: "pre-wrap",
+                                      wordBreak: "break-word",
+                                    }}
+                                  >
+                                    {selectedInvoice.zimra_payload}
+                                  </pre>
+                                </details>
+                              )}
                             </div>
                             {selectedInvoice.zimra_verification_url && (
-                              <div style={{ marginTop: 8 }}>
-                                <a href={selectedInvoice.zimra_verification_url.replace(/\/Receipt\/?/i, "/")} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "var(--green-800)", wordBreak: "break-all" }}>
-                                  {selectedInvoice.zimra_verification_url.replace(/\/Receipt\/?/i, "/")}
-                                </a>
+                              <div
+                                style={{ textAlign: "center", flexShrink: 0 }}
+                              >
+                                <img
+                                  src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(selectedInvoice.zimra_verification_url.replace(/\/Receipt\/?/i, "/"))}`}
+                                  width={120}
+                                  height={120}
+                                  style={{
+                                    border: "1px solid var(--green-200)",
+                                    borderRadius: 6,
+                                  }}
+                                  alt="QR"
+                                />
+                                <div
+                                  style={{
+                                    fontSize: 10,
+                                    color: "var(--gray-500)",
+                                    marginTop: 4,
+                                  }}
+                                >
+                                  Scan to verify
+                                </div>
                               </div>
                             )}
-
-                            {selectedInvoice.zimra_payload && (
-                              <details style={{ marginTop: 10 }}>
-                                <summary style={{ cursor: "pointer", fontSize: 11, color: "var(--green-800)", fontWeight: 600 }}>
-                                  View ZIMRA payload
-                                </summary>
-                                <pre style={{ marginTop: 8, padding: 10, background: "var(--white-500)", border: "1px solid var(--green-200)", borderRadius: 6, fontSize: 11, maxHeight: 240, overflow: "auto", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-                                  {selectedInvoice.zimra_payload}
-                                </pre>
-                              </details>
-                            )}
                           </div>
-                          {selectedInvoice.zimra_verification_url && (
-                            <div style={{ textAlign: "center", flexShrink: 0 }}>
-                              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(selectedInvoice.zimra_verification_url.replace(/\/Receipt\/?/i, "/"))}`} width={120} height={120} style={{ border: "1px solid var(--green-200)", borderRadius: 6 }} alt="QR" />
-                              <div style={{ fontSize: 10, color: "var(--gray-500)", marginTop: 4 }}>Scan to verify</div>
-                            </div>
-                          )}
                         </div>
                       </div>
-                    </div>
-                  );
-                })()}
+                    );
+                  })()}
 
                 {/* Fields */}
                 <div className="row g-3 mb-4">
