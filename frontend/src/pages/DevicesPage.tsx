@@ -895,6 +895,7 @@ export default function DevicesPage() {
           display: "flex",
           justifyContent: "space-between",
           marginBottom: 20,
+          width: "98%",
         }}
       >
         <div
