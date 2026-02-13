@@ -42,6 +42,51 @@ def list_contacts(
     return db.query(Contact).filter(Contact.company_id == company_id).all()
 
 
+@router.post("/batch-delete")
+def batch_delete_contacts(
+    payload: BatchContactIds,
+    db: Session = Depends(get_db),
+    user=Depends(require_portal_user),
+):
+    """Delete multiple contacts by IDs."""
+    contacts = db.query(Contact).filter(Contact.id.in_(payload.ids)).all()
+    if not contacts:
+        raise HTTPException(status_code=404, detail="No contacts found")
+    for contact in contacts:
+        ensure_company_access(db, user, contact.company_id)
+    for contact in contacts:
+        db.delete(contact)
+    db.commit()
+    return {"deleted": len(contacts)}
+
+
+@router.post("/export-csv")
+def export_contacts_csv(
+    payload: BatchContactIds,
+    db: Session = Depends(get_db),
+    user=Depends(require_portal_user),
+):
+    """Export selected contacts as CSV."""
+    contacts = db.query(Contact).filter(Contact.id.in_(payload.ids)).all()
+    if not contacts:
+        raise HTTPException(status_code=404, detail="No contacts found")
+    for contact in contacts:
+        ensure_company_access(db, user, contact.company_id)
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Name", "VAT", "TIN", "Phone", "Email", "Address", "Reference"])
+    for c in contacts:
+        writer.writerow([c.name, c.vat, c.tin, c.phone, c.email or "", c.address, c.reference])
+    output.seek(0)
+
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=contacts_export.csv"},
+    )
+
+
 @router.patch("/{contact_id}", response_model=ContactRead)
 def update_contact(
     contact_id: int,
@@ -98,48 +143,3 @@ def delete_contact(
     db.delete(contact)
     db.commit()
     return None
-
-
-@router.post("/batch-delete")
-def batch_delete_contacts(
-    payload: BatchContactIds,
-    db: Session = Depends(get_db),
-    user=Depends(require_portal_user),
-):
-    """Delete multiple contacts by IDs."""
-    contacts = db.query(Contact).filter(Contact.id.in_(payload.ids)).all()
-    if not contacts:
-        raise HTTPException(status_code=404, detail="No contacts found")
-    for contact in contacts:
-        ensure_company_access(db, user, contact.company_id)
-    for contact in contacts:
-        db.delete(contact)
-    db.commit()
-    return {"deleted": len(contacts)}
-
-
-@router.post("/export-csv")
-def export_contacts_csv(
-    payload: BatchContactIds,
-    db: Session = Depends(get_db),
-    user=Depends(require_portal_user),
-):
-    """Export selected contacts as CSV."""
-    contacts = db.query(Contact).filter(Contact.id.in_(payload.ids)).all()
-    if not contacts:
-        raise HTTPException(status_code=404, detail="No contacts found")
-    for contact in contacts:
-        ensure_company_access(db, user, contact.company_id)
-
-    output = io.StringIO()
-    writer = csv.writer(output)
-    writer.writerow(["Name", "VAT", "TIN", "Phone", "Email", "Address", "Reference"])
-    for c in contacts:
-        writer.writerow([c.name, c.vat, c.tin, c.phone, c.email or "", c.address, c.reference])
-    output.seek(0)
-
-    return StreamingResponse(
-        iter([output.getvalue()]),
-        media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=contacts_export.csv"},
-    )
