@@ -130,6 +130,7 @@ const portalApps: AppItem[] = [
   { to: "/contacts", label: "Contacts", icon: ContactIcon, color: "var(--white-500)", bgColor: "var(--emerald-500)" },
   { to: "/quotations", label: "Quotations", icon: QuoteIcon, color: "var(--white-500)", bgColor: "var(--indigo-500)" },
   { to: "/inventory", label: "Inventory", icon: InventoryIcon, color: "var(--white-500)", bgColor: "var(--violet-600)" },
+  { to: "/my-devices", label: "Devices", icon: DeviceIcon, color: "var(--white-500)", bgColor: "var(--pink-500)" },
   { to: "/reports", label: "Reports", icon: ReportsIcon, color: "var(--white-500)", bgColor: "var(--teal-500)" },
   { to: "/settings", label: "Settings", icon: SettingsIcon, color: "var(--white-500)", bgColor: "var(--slate-500)" },
 ];

@@ -7993,3 +7993,246 @@ button.danger:disabled {
     padding: 5px 10px;
   }
 }
+
+/* ── Portal Devices Page ── */
+.portal-device-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.portal-device-card {
+  background: var(--card);
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.portal-device-card:hover {
+  border-color: var(--blue-500);
+  box-shadow: var(--shadow);
+  transform: translateY(-2px);
+}
+
+.portal-device-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.portal-device-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: var(--blue-50);
+  color: var(--blue-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.portal-device-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.portal-device-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.portal-device-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.portal-device-meta {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.portal-device-card-footer {
+  display: flex;
+  gap: 20px;
+  padding-top: 12px;
+  border-top: 1px solid var(--stroke-light);
+}
+
+.portal-device-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.portal-device-stat-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.portal-device-stat-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* Detail view */
+.portal-device-msg {
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.portal-device-msg.success {
+  background: #dcfce7;
+  color: var(--green-600);
+  border: 1px solid #bbf7d0;
+}
+
+.portal-device-msg.error {
+  background: #fef2f2;
+  color: var(--red-600);
+  border: 1px solid #fecaca;
+}
+
+.portal-device-stats-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.portal-device-stat-box {
+  background: var(--card);
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  text-align: center;
+}
+
+.portal-device-stat-box-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.portal-device-stat-box-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* Tabs */
+.portal-device-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--stroke);
+  margin-bottom: 0;
+}
+
+.portal-device-tab {
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.portal-device-tab:hover {
+  color: var(--ink);
+}
+
+.portal-device-tab.active {
+  color: var(--blue-600);
+  border-bottom-color: var(--blue-600);
+}
+
+.portal-device-tab-content {
+  background: var(--card);
+  border: 1px solid var(--stroke);
+  border-top: none;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  min-height: 200px;
+}
+
+.portal-device-tab-content .table {
+  margin: 0;
+  border: none;
+  border-radius: 0;
+}
+
+/* Close day button */
+.portal-btn-close-day {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--red-500);
+  background: var(--red-500);
+  color: white;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.portal-btn-close-day:hover:not(:disabled) {
+  background: var(--red-600);
+  border-color: var(--red-600);
+}
+
+.portal-btn-close-day:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Log action badge */
+.portal-log-action {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--blue-50);
+  color: var(--blue-700);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+/* Responsive portal devices */
+@media (max-width: 600px) {
+  .portal-device-grid {
+    grid-template-columns: 1fr;
+  }
+  .portal-device-stats-bar {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .portal-device-tabs {
+    overflow-x: auto;
+  }
+}

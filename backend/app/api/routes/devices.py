@@ -2,6 +2,7 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, UploadFile, File, Query, HTTPException, status
 from sqlalchemy.orm import Session
+from typing import Optional
 
 from app.api.deps import (
     get_db,
@@ -13,7 +14,9 @@ from app.api.deps import (
 )
 from app.models.device import Device
 from app.models.company_certificate import CompanyCertificate
+from app.models.audit_log import AuditLog
 from app.schemas.device import DeviceCreate, DeviceRead, DeviceUpdate
+from app.schemas.audit_log import AuditLogRead
 from app.services.fdms import get_status, open_day, close_day, get_config, ping_device, register_device
 
 router = APIRouter(prefix="/devices", tags=["devices"])
@@ -237,7 +240,7 @@ def register(device_id: int, db: Session = Depends(get_db), user=Depends(require
 
 
 @router.post("/{device_id}/open-day")
-def open_fiscal_day(device_id: int, db: Session = Depends(get_db), user=Depends(require_admin)):
+def open_fiscal_day(device_id: int, db: Session = Depends(get_db), user=Depends(require_portal_user)):
     device = db.query(Device).filter(Device.id == device_id).first()
     if not device:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Device not found")
@@ -255,7 +258,7 @@ def open_fiscal_day(device_id: int, db: Session = Depends(get_db), user=Depends(
 
 
 @router.post("/{device_id}/close-day")
-def close_fiscal_day(device_id: int, db: Session = Depends(get_db), user=Depends(require_admin)):
+def close_fiscal_day(device_id: int, db: Session = Depends(get_db), user=Depends(require_portal_user)):
     device = db.query(Device).filter(Device.id == device_id).first()
     if not device:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Device not found")
@@ -269,3 +272,30 @@ def close_fiscal_day(device_id: int, db: Session = Depends(get_db), user=Depends
         return result
     except Exception as exc:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc))
+
+
+@router.get("/{device_id}/logs", response_model=list[AuditLogRead])
+def get_device_logs(
+    device_id: int,
+    limit: int = Query(100, le=500),
+    offset: int = 0,
+    db: Session = Depends(get_db),
+    user=Depends(require_portal_user),
+):
+    """Get audit/traffic logs for a specific device (portal-safe)."""
+    device = db.query(Device).filter(Device.id == device_id).first()
+    if not device:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Device not found")
+    ensure_company_access(db, user, device.company_id)
+    logs = (
+        db.query(AuditLog)
+        .filter(
+            AuditLog.resource_type == "device",
+            AuditLog.resource_id == device_id,
+        )
+        .order_by(AuditLog.action_at.desc())
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+    return logs

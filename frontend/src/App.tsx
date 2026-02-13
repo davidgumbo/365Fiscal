@@ -14,6 +14,7 @@ import LoginPage from "./pages/LoginPage";
 import PortalLoginPage from "./pages/PortalLoginPage";
 import SettingsPage from "./pages/SettingsPage";
 import DevicesPage from "./pages/DevicesPage";
+import PortalDevicesPage from "./pages/PortalDevicesPage";
 import ReportsPage from "./pages/ReportsPage";
 import UsersRolesPage from "./pages/UsersRolesPage";
 import AuditLogsPage from "./pages/AuditLogsPage";
@@ -54,6 +55,7 @@ const portalNav = [
   { to: "/contacts", label: "Contacts", icon: ContactIcon },
   { to: "/quotations", label: "Quotations", icon: QuoteIcon },
   { to: "/inventory", label: "Inventory", icon: InventoryIcon },
+  { to: "/my-devices", label: "Devices", icon: DeviceIcon },
   { to: "/reports", label: "Reports", icon: ReportsIcon },
   { to: "/settings", label: "Settings", icon: SettingsIcon },
 ];
@@ -285,6 +287,7 @@ function AppContent() {
               <Route path="/reports" element={<ReportsPage />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/devices" element={<DevicesPage />} />
+              <Route path="/my-devices" element={<PortalDevicesPage />} />
               <Route path="/users-roles" element={<UsersRolesPage />} />
               <Route path="/audit-logs" element={<AuditLogsPage />} />
               <Route path="/payments" element={<PaymentsPage />} />
