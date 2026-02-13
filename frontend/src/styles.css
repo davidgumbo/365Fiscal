@@ -2981,11 +2981,16 @@ button.danger:hover {
   animation: modalSlideIn 0.2s ease-out;
 }
 
-.modal-centered {
+.modal-centered,
+.modal--centered {
   width: min(90vw, 600px);
-  margin: 0 auto;
+  margin: 0;
   display: block;
   visibility: visible;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 @keyframes modalSlideIn {

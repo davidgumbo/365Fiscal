@@ -538,7 +538,7 @@ export default function CompaniesPage() {
           onClick={closeEditModal}
         >
           <div
-            className="modal modal-centered"
+            className="modal modal--centered"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="modal-header">
