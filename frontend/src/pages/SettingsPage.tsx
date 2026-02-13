@@ -736,10 +736,6 @@ export default function SettingsPage() {
       <div className="settings-topbar">
         <div className="settings-top-left">
           <div className="settings-title">Settings</div>
-          <div className="settings-top-tabs">
-            <button className={`settings-tab ${activeTopTab === "general" ? "active" : ""}`} onClick={() => setActiveTopTab("general")}>General Settings</button>
-            <button className={`settings-tab ${activeTopTab === "users" ? "active" : ""}`} onClick={() => setActiveTopTab("users")}>Users &amp; Companies</button>
-          </div>
         </div>
         <div className="settings-top-actions">
           <button className="primary" onClick={saveCompanySettings} disabled={!hasUnsavedChanges || activeTopTab !== "general"}>Save</button>
@@ -755,37 +751,44 @@ export default function SettingsPage() {
 
       <div className="settings-content">
         <aside className="settings-sidebar">
-          <div className="settings-sidebar-title">Sections</div>
-          {activeTopTab === "general" && (
-            <>
-              <button
-                className={`settings-sidebar-item ${activeSection === "company" ? "active" : ""}`}
-                onClick={() => setActiveSection("company")}
-              >
-                Company
-              </button>
-              <button
-                className={`settings-sidebar-item ${activeSection === "document-layout" ? "active" : ""}`}
-                onClick={() => setActiveSection("document-layout")}
-              >
-                Document Layout
-              </button>
-              <button
-                className={`settings-sidebar-item ${activeSection === "zimra-tax" ? "active" : ""}`}
-                onClick={() => setActiveSection("zimra-tax")}
-              >
-                ZIMRA Taxes
-              </button>
-            </>
-          )}
-          {activeTopTab === "users" && (
-            <button
-              className={`settings-sidebar-item ${activeSection === (me.is_admin ? "admins" : "users-companies") ? "active" : ""}`}
-              onClick={() => setActiveSection(me.is_admin ? "admins" : "users-companies")}
-            >
-              {me.is_admin ? "Administrators" : "Users & Companies"}
-            </button>
-          )}
+          <div className="settings-sidebar-title">General Settings</div>
+          <button
+            className={`settings-sidebar-item ${activeSection === "company" ? "active" : ""}`}
+            onClick={() => {
+              setActiveTopTab("general");
+              setActiveSection("company");
+            }}
+          >
+            Company
+          </button>
+          <button
+            className={`settings-sidebar-item ${activeSection === "document-layout" ? "active" : ""}`}
+            onClick={() => {
+              setActiveTopTab("general");
+              setActiveSection("document-layout");
+            }}
+          >
+            Document Layout
+          </button>
+          <button
+            className={`settings-sidebar-item ${activeSection === "zimra-tax" ? "active" : ""}`}
+            onClick={() => {
+              setActiveTopTab("general");
+              setActiveSection("zimra-tax");
+            }}
+          >
+            ZIMRA Taxes
+          </button>
+          <div className="settings-sidebar-title">Users &amp; Companies</div>
+          <button
+            className={`settings-sidebar-item ${activeSection === (me.is_admin ? "admins" : "users-companies") ? "active" : ""}`}
+            onClick={() => {
+              setActiveTopTab("users");
+              setActiveSection(me.is_admin ? "admins" : "users-companies");
+            }}
+          >
+            {me.is_admin ? "Administrators" : "Users & Companies"}
+          </button>
         </aside>
         <main className="settings-main">
           {status && (
