@@ -4432,15 +4432,12 @@ button.danger:hover {
   display: grid;
   grid-template-columns: 1fr 340px;
   align-items: start;
+  min-height: 0;
 }
 
 .two-panel-left {
-  grid-template-columns: 260px 1fr;
+  grid-template-columns: 340px 1fr;
   gap: 0;
-}
-
-.two-panel {
-  min-height: 0;
 }
 
 .two-panel .o-sidebar {
