@@ -207,12 +207,13 @@ export default function AppLauncherPage() {
 
       {/* Footer */}
       <footer className="app-launcher-footer">
-        <img 
+        {/* <img 
           className="footer-logo" 
           src="/geenet.trim.png" 
           alt="GeeNet" 
           onError={(e) => { e.currentTarget.style.display = 'none'; }}
-        />
+        /> */}
+        Powered by <a href="https://www.geenet.com" target="_blank" rel="noopener noreferrer">GeeNet</a>
       </footer>
     </div>
   );
