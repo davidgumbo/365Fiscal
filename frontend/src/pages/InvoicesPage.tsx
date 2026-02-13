@@ -969,10 +969,12 @@ export default function InvoicesPage({
               </div>
             </div>
 
-            ${selectedInvoice.zimra_status === "submitted" ? `
+            ${selectedInvoice.zimra_status === "submitted" ? (() => {
+              const dev = devices.find(d => d.id === selectedInvoice.device_id);
+              return `
             <div style="margin-top:18px; border:1px solid var(--line); border-radius:10px; padding:14px 18px;">
               <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap;">
-                <div>
+                <div style="flex:1;">
                   <div style="font-size:13px; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">ZIMRA Fiscal Details</div>
                   <div style="font-size:12px; line-height:1.8; color:var(--muted);">
                     <div><strong>Status:</strong> Fiscalized ✓</div>
@@ -981,16 +983,27 @@ export default function InvoicesPage({
                     <div><strong>Receipt ID:</strong> ${selectedInvoice.zimra_receipt_id || "-"}</div>
                     <div><strong>Fiscalized:</strong> ${selectedInvoice.fiscalized_at ? new Date(selectedInvoice.fiscalized_at).toLocaleString() : "-"}</div>
                   </div>
+                  <div style="margin-top:8px; padding-top:8px; border-top:1px solid var(--line); font-size:12px; line-height:1.8; color:var(--muted);">
+                    <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.3px; margin-bottom:2px; color:var(--accent);">Device Information</div>
+                    <div><strong>Device ID:</strong> ${dev?.device_id || "-"}</div>
+                    <div><strong>Serial No:</strong> ${dev?.serial_number || "-"}</div>
+                    <div><strong>Model:</strong> ${dev?.model || "-"}</div>
+                  </div>
+                  ${selectedInvoice.zimra_verification_url ? `
+                  <div style="margin-top:8px;">
+                    <a href="${selectedInvoice.zimra_verification_url}" target="_blank" style="font-size:11px; color:var(--accent); word-break:break-all;">${selectedInvoice.zimra_verification_url}</a>
+                  </div>
+                  ` : ""}
                 </div>
                 ${selectedInvoice.zimra_verification_url ? `
-                <div style="text-align:center;">
-                  <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(selectedInvoice.zimra_verification_url)}" width="100" height="100" style="border:1px solid var(--line); border-radius:6px;" />
+                <div style="text-align:center; flex-shrink:0;">
+                  <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(selectedInvoice.zimra_verification_url)}" width="120" height="120" style="border:1px solid var(--line); border-radius:6px;" />
                   <div style="font-size:10px; color:var(--muted); margin-top:4px;">Scan to verify</div>
                 </div>
                 ` : ""}
               </div>
             </div>
-            ` : ""}
+            `; })() : ""}
 
             ${footerHtml ? `<div class="doc-footer">${footerHtml}</div>` : ""}
           </div>
@@ -1817,6 +1830,13 @@ export default function InvoicesPage({
                             Code: {selectedInvoice.zimra_verification_code}
                           </small>
                         )}
+                        {selectedInvoice.zimra_status === "submitted" && selectedInvoice.zimra_verification_url && (
+                          <div style={{ marginTop: 4 }}>
+                            <a href={selectedInvoice.zimra_verification_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "var(--accent)" }}>
+                              Verify on ZIMRA ↗
+                            </a>
+                          </div>
+                        )}
                         {selectedInvoice.zimra_status === "error" && selectedInvoice.zimra_errors && (
                           <div style={{ marginTop: 6, padding: "6px 8px", background: "#fff3f3", border: "1px solid #f5c2c7", borderRadius: 6, fontSize: 11, color: "#842029", maxHeight: 120, overflowY: "auto", wordBreak: "break-word" }}>
                             {selectedInvoice.zimra_errors}
@@ -1826,6 +1846,49 @@ export default function InvoicesPage({
                     </div>
                   </div>
                 </div>
+
+                {/* ZIMRA Fiscal Details Panel */}
+                {selectedInvoice.zimra_status === "submitted" && (() => {
+                  const dev = devices.find(d => d.id === selectedInvoice.device_id);
+                  return (
+                    <div className="card border-0 mb-4" style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 10 }}>
+                      <div className="card-body" style={{ padding: "14px 18px" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, flexWrap: "wrap" }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: "#166534", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>
+                              ZIMRA Fiscal Details
+                            </div>
+                            <div style={{ fontSize: 12, lineHeight: 1.8, color: "#374151" }}>
+                              <div><strong>Verification Code:</strong> {selectedInvoice.zimra_verification_code || "—"}</div>
+                              <div><strong>Receipt #:</strong> {selectedInvoice.zimra_receipt_counter || "—"} / Global #{selectedInvoice.zimra_receipt_global_no || "—"}</div>
+                              <div><strong>Receipt ID:</strong> {selectedInvoice.zimra_receipt_id || "—"}</div>
+                              <div><strong>Fiscalized:</strong> {selectedInvoice.fiscalized_at ? new Date(selectedInvoice.fiscalized_at).toLocaleString() : "—"}</div>
+                            </div>
+                            <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid #bbf7d0", fontSize: 12, lineHeight: 1.8, color: "#374151" }}>
+                              <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.3, marginBottom: 2, color: "#166534" }}>Device Information</div>
+                              <div><strong>Device ID:</strong> {dev?.device_id || "—"}</div>
+                              <div><strong>Serial No:</strong> {dev?.serial_number || "—"}</div>
+                              <div><strong>Model:</strong> {dev?.model || "—"}</div>
+                            </div>
+                            {selectedInvoice.zimra_verification_url && (
+                              <div style={{ marginTop: 8 }}>
+                                <a href={selectedInvoice.zimra_verification_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#166534", wordBreak: "break-all" }}>
+                                  {selectedInvoice.zimra_verification_url}
+                                </a>
+                              </div>
+                            )}
+                          </div>
+                          {selectedInvoice.zimra_verification_url && (
+                            <div style={{ textAlign: "center", flexShrink: 0 }}>
+                              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(selectedInvoice.zimra_verification_url)}`} width={120} height={120} style={{ border: "1px solid #bbf7d0", borderRadius: 6 }} alt="QR" />
+                              <div style={{ fontSize: 10, color: "#6b7280", marginTop: 4 }}>Scan to verify</div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* Fields */}
                 <div className="row g-3 mb-4">
