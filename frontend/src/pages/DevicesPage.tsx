@@ -922,14 +922,15 @@ export default function DevicesPage() {
               {selectedCompany?.name}
             </span>
           </div>
+
+          <button
+            className="primary"
+            onClick={() => setView("new-device")}
+            style={{ display: "flex", alignItems: "center", gap: 6 }}
+          >
+            <PlusIcon /> New Device
+          </button>
         </div>
-        <button
-          className="primary"
-          onClick={() => setView("new-device")}
-          style={{ display: "flex", alignItems: "center", gap: 6 }}
-        >
-          <PlusIcon /> New Device
-        </button>
       </div>
 
       {/* global alert */}
