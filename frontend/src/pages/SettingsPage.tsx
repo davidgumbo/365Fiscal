@@ -142,6 +142,7 @@ export default function SettingsPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<{ email: string; password: string }>({ email: "", password: "" });
   const [activeTopTab, setActiveTopTab] = useState<"general" | "users">("general");
+  const [activeSection, setActiveSection] = useState<string>("company");
   const [showConfigureLayout, setShowConfigureLayout] = useState(false);
   const [showEditLayout, setShowEditLayout] = useState(false);
   const [companySettings, setCompanySettings] = useState<CompanySettings | null>(null);
@@ -185,6 +186,14 @@ export default function SettingsPage() {
   useEffect(() => {
     setActiveTopTab("general");
   }, []);
+
+  useEffect(() => {
+    if (activeTopTab === "general") {
+      setActiveSection("company");
+      return;
+    }
+    setActiveSection(me?.is_admin ? "admins" : "users-companies");
+  }, [activeTopTab, me?.is_admin]);
 
   // Track changes
   useEffect(() => {
@@ -745,6 +754,39 @@ export default function SettingsPage() {
       </div>
 
       <div className="settings-content">
+        <aside className="settings-sidebar">
+          <div className="settings-sidebar-title">Sections</div>
+          {activeTopTab === "general" && (
+            <>
+              <button
+                className={`settings-sidebar-item ${activeSection === "company" ? "active" : ""}`}
+                onClick={() => setActiveSection("company")}
+              >
+                Company
+              </button>
+              <button
+                className={`settings-sidebar-item ${activeSection === "document-layout" ? "active" : ""}`}
+                onClick={() => setActiveSection("document-layout")}
+              >
+                Document Layout
+              </button>
+              <button
+                className={`settings-sidebar-item ${activeSection === "zimra-tax" ? "active" : ""}`}
+                onClick={() => setActiveSection("zimra-tax")}
+              >
+                ZIMRA Taxes
+              </button>
+            </>
+          )}
+          {activeTopTab === "users" && (
+            <button
+              className={`settings-sidebar-item ${activeSection === (me.is_admin ? "admins" : "users-companies") ? "active" : ""}`}
+              onClick={() => setActiveSection(me.is_admin ? "admins" : "users-companies")}
+            >
+              {me.is_admin ? "Administrators" : "Users & Companies"}
+            </button>
+          )}
+        </aside>
         <main className="settings-main">
           {status && (
             <div className="alert alert-success" style={{ marginBottom: 16 }}>
@@ -768,7 +810,8 @@ export default function SettingsPage() {
                 </label>
               </div>
 
-              <section className="settings-section">
+              {activeSection === "company" && (
+                <section id="company" className="settings-section">
                 <div className="settings-section-header">
                   <h4>Companies</h4>
                   <button className="settings-link" onClick={() => navigate("/companies")}>Manage Companies</button>
@@ -794,9 +837,11 @@ export default function SettingsPage() {
                     <button className="settings-link" onClick={() => navigate("/companies")}>Update Info</button>
                   </div>
                 </div>
-              </section>
+                </section>
+              )}
 
-              <section className="settings-section">
+              {activeSection === "document-layout" && (
+                <section id="document-layout" className="settings-section">
                 <div className="settings-section-header">
                   <h4>Document Layout</h4>
                   <div style={{ display: "flex", gap: 8 }}>
@@ -901,10 +946,12 @@ export default function SettingsPage() {
                     {previewCard()}
                   </div>
                 </div>
-              </section>
+                </section>
+              )}
 
               {/* ZIMRA Tax Configuration */}
-              <section className="settings-section">
+              {activeSection === "zimra-tax" && (
+                <section id="zimra-tax" className="settings-section">
                 <div className="settings-section-header">
                   <h4>ZIMRA Tax Configuration</h4>
                 </div>
@@ -1016,114 +1063,116 @@ export default function SettingsPage() {
                 <button className="outline" onClick={createTax} style={{ marginTop: 8 }}>
                   <PlusIcon /> Add Tax Manually
                 </button>
-              </section>
+                </section>
+              )}
 
             </>
           )}
 
           {activeTopTab === "users" && me.is_admin && (
-            <>
-              <div className="tax-header">
-                <div>
+            activeSection === "admins" && (
+              <section id="admins" className="settings-section">
+                <div className="settings-section-header">
                   <h4>Administrators</h4>
                   <p className="page-sub">Manage system administrators.</p>
                 </div>
-              </div>
-              {adminError && (
-                <div className="alert alert-danger" style={{ marginBottom: 16 }}>
-                  {adminError}
+                {adminError && (
+                  <div className="alert alert-danger" style={{ marginBottom: 16 }}>
+                    {adminError}
+                  </div>
+                )}
+                <div className="settings-user-grid" style={{ marginBottom: 16 }}>
+                  <label className="input">
+                    Email
+                    <input
+                      type="email"
+                      value={adminEmail}
+                      onChange={(e) => setAdminEmail(e.target.value)}
+                      placeholder="admin@example.com"
+                    />
+                  </label>
+                  <label className="input">
+                    Password
+                    <input
+                      type="password"
+                      value={adminPassword}
+                      onChange={(e) => setAdminPassword(e.target.value)}
+                      placeholder="••••••••"
+                    />
+                  </label>
+                  <button className="primary" onClick={createAdmin} disabled={!adminEmail || !adminPassword}>
+                    <PlusIcon /> Add Admin
+                  </button>
                 </div>
-              )}
-              <div className="settings-user-grid" style={{ marginBottom: 16 }}>
-                <label className="input">
-                  Email
-                  <input
-                    type="email"
-                    value={adminEmail}
-                    onChange={(e) => setAdminEmail(e.target.value)}
-                    placeholder="admin@example.com"
-                  />
-                </label>
-                <label className="input">
-                  Password
-                  <input
-                    type="password"
-                    value={adminPassword}
-                    onChange={(e) => setAdminPassword(e.target.value)}
-                    placeholder="••••••••"
-                  />
-                </label>
-                <button className="primary" onClick={createAdmin} disabled={!adminEmail || !adminPassword}>
-                  <PlusIcon /> Add Admin
-                </button>
-              </div>
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Email</th>
-                    <th>Active</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {admins.map((admin) => (
-                    <tr key={admin.id}>
-                      <td>
-                        {editingId === admin.id ? (
-                          <input
-                            type="email"
-                            value={editForm.email}
-                            onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                          />
-                        ) : (
-                          admin.email
-                        )}
-                      </td>
-                      <td>
-                        <label className="switch">
-                          <input
-                            type="checkbox"
-                            checked={admin.is_active}
-                            onChange={(e) => updateAdmin(admin.id, { is_active: e.target.checked })}
-                          />
-                          <span className="slider" />
-                        </label>
-                      </td>
-                      <td>
-                        {editingId === admin.id ? (
-                          <>
-                            <button className="icon-btn" onClick={() => updateAdmin(admin.id, { email: editForm.email, password: editForm.password || undefined })}>
-                              <CheckIcon />
-                            </button>
-                            <button className="icon-btn" onClick={() => setEditingId(null)}>
-                              <XIcon />
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <button className="icon-btn" onClick={() => { setEditingId(admin.id); setEditForm({ email: admin.email, password: "" }); }}>
-                              <EditIcon />
-                            </button>
-                            <button className="icon-btn" onClick={() => deleteAdmin(admin.id)}>
-                              <TrashIcon />
-                            </button>
-                          </>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                  {!admins.length && (
+                <table className="table">
+                  <thead>
                     <tr>
-                      <td colSpan={3}>No administrators found</td>
+                      <th>Email</th>
+                      <th>Active</th>
+                      <th>Actions</th>
                     </tr>
-                  )}
-                </tbody>
-              </table>
-            </>
+                  </thead>
+                  <tbody>
+                    {admins.map((admin) => (
+                      <tr key={admin.id}>
+                        <td>
+                          {editingId === admin.id ? (
+                            <input
+                              type="email"
+                              value={editForm.email}
+                              onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                            />
+                          ) : (
+                            admin.email
+                          )}
+                        </td>
+                        <td>
+                          <label className="switch">
+                            <input
+                              type="checkbox"
+                              checked={admin.is_active}
+                              onChange={(e) => updateAdmin(admin.id, { is_active: e.target.checked })}
+                            />
+                            <span className="slider" />
+                          </label>
+                        </td>
+                        <td>
+                          {editingId === admin.id ? (
+                            <>
+                              <button className="icon-btn" onClick={() => updateAdmin(admin.id, { email: editForm.email, password: editForm.password || undefined })}>
+                                <CheckIcon />
+                              </button>
+                              <button className="icon-btn" onClick={() => setEditingId(null)}>
+                                <XIcon />
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button className="icon-btn" onClick={() => { setEditingId(admin.id); setEditForm({ email: admin.email, password: "" }); }}>
+                                <EditIcon />
+                              </button>
+                              <button className="icon-btn" onClick={() => deleteAdmin(admin.id)}>
+                                <TrashIcon />
+                              </button>
+                            </>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                    {!admins.length && (
+                      <tr>
+                        <td colSpan={3}>No administrators found</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </section>
+            )
           )}
 
           {activeTopTab === "users" && !me.is_admin && (
-            <section className="settings-section">
+            activeSection === "users-companies" && (
+              <section id="users-companies" className="settings-section">
               <div className="settings-section-header">
                 <h4>Users &amp; Companies</h4>
               </div>
@@ -1149,7 +1198,8 @@ export default function SettingsPage() {
                   </ul>
                 </div>
               </div>
-            </section>
+              </section>
+            )
           )}
 
         </main>
