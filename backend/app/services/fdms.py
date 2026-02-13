@@ -508,12 +508,32 @@ def _build_receipt(invoice: Invoice, lines: list[Any], device_id_str: str, db=No
     return receipt
 
 
+def _ensure_device_online(device: Device, db) -> None:
+    """Ping the device if it hasn't been pinged recently to keep it online with ZIMRA."""
+    from datetime import timedelta
+    freq = device.reporting_frequency or 5
+    now = datetime.utcnow()
+    if device.last_ping_at and (now - device.last_ping_at) < timedelta(minutes=max(1, freq - 1)):
+        return  # pinged recently enough
+    try:
+        result = ping_device(device, db)
+        device.last_ping_at = now
+        if result.get("reportingFrequency"):
+            device.reporting_frequency = int(result["reportingFrequency"])
+        db.commit()
+    except Exception:
+        pass  # don't fail fiscalization if ping fails
+
+
 def submit_invoice(invoice: Invoice, db) -> dict:
     if not invoice.device_id:
         raise ValueError("Invoice has no device assigned")
     device = db.query(Device).filter(Device.id == invoice.device_id).first()
     if not device:
         raise ValueError("Device not found")
+
+    # Keep device online with ZIMRA before submitting
+    _ensure_device_online(device, db)
 
     lines: list[Any] = list(invoice.lines) if invoice.lines else []
     if not lines and invoice.quotation_id:

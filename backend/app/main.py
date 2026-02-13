@@ -129,6 +129,62 @@ def ensure_default_portal_user():
         db.close()
 
 
+# --------------- Background device ping scheduler ---------------
+import threading
+import time
+import logging
+
+_ping_logger = logging.getLogger("device_ping")
+
+
+def _ping_all_devices():
+    """Ping every registered device that has a certificate to keep them online."""
+    from app.models.device import Device
+    from app.services.fdms import ping_device
+    from datetime import datetime
+
+    db = SessionLocal()
+    try:
+        devices = (
+            db.query(Device)
+            .filter(Device.crt_data.isnot(None), Device.key_data.isnot(None))
+            .all()
+        )
+        for device in devices:
+            try:
+                result = ping_device(device, db)
+                device.last_ping_at = datetime.utcnow()
+                if result.get("reportingFrequency"):
+                    device.reporting_frequency = int(result["reportingFrequency"])
+                db.commit()
+                _ping_logger.info("Pinged device %s (ID %s) OK", device.device_id, device.id)
+            except Exception as e:
+                _ping_logger.warning("Ping failed for device %s: %s", device.device_id, e)
+                db.rollback()
+    except Exception as e:
+        _ping_logger.error("Ping loop error: %s", e)
+    finally:
+        db.close()
+
+
+def _ping_loop():
+    """Background thread that pings devices every 3 minutes."""
+    while True:
+        try:
+            _ping_all_devices()
+        except Exception as e:
+            _ping_logger.error("Ping loop exception: %s", e)
+        time.sleep(180)  # 3 minutes
+
+
+@app.on_event("startup")
+def start_ping_scheduler():
+    """Start the background ping thread on app startup."""
+    t = threading.Thread(target=_ping_loop, daemon=True, name="device-ping")
+    t.start()
+    _ping_logger.info("Device ping scheduler started (every 3 min)")
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}

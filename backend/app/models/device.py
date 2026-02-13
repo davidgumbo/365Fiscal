@@ -28,5 +28,7 @@ class Device(Base, TimestampMixin):
     last_receipt_hash: Mapped[str] = mapped_column(String(512), default="")
     last_receipt_signature: Mapped[str] = mapped_column(String(2048), default="")
     qr_url: Mapped[str] = mapped_column(String(255), default="")
+    last_ping_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    reporting_frequency: Mapped[int] = mapped_column(Integer, default=5)  # minutes
 
     company = relationship("Company", back_populates="devices")
