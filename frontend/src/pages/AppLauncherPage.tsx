@@ -1,5 +1,17 @@
+import { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import { useMe } from "../hooks/useMe";
+import { apiFetch } from "../api";
+
+type ActivationStatus = {
+  company_id: number;
+  company_name: string;
+  has_subscription: boolean;
+  plan: string;
+  status: string;
+  expires_at: string | null;
+  days_remaining: number | null;
+};
 
 // App icons as SVG components with explicit dimensions
 const DashboardIcon = () => (
@@ -101,6 +113,15 @@ const CompanyIcon = () => (
   </svg>
 );
 
+const SubscriptionIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="4" width="18" height="16" rx="2" />
+    <line x1="3" y1="10" x2="21" y2="10" />
+    <line x1="7" y1="15" x2="7" y2="15.01" />
+    <line x1="11" y1="15" x2="17" y2="15" />
+  </svg>
+);
+
 interface AppItem {
   to: string;
   label: string;
@@ -120,6 +141,7 @@ const adminApps: AppItem[] = [
   { to: "/inventory", label: "Inventory", icon: InventoryIcon, color: "var(--white-500)", bgColor: "var(--violet-600)" },
   { to: "/devices", label: "Devices", icon: DeviceIcon, color: "var(--white-500)", bgColor: "var(--pink-500)" },
   { to: "/reports", label: "Reports", icon: ReportsIcon, color: "var(--white-500)", bgColor: "var(--teal-500)" },
+  { to: "/subscriptions", label: "Subscriptions", icon: SubscriptionIcon, color: "var(--white-500)", bgColor: "var(--amber-500)" },
   { to: "/settings", label: "Settings", icon: SettingsIcon, color: "var(--white-500)", bgColor: "var(--slate-500)" },
 ];
 
@@ -141,13 +163,57 @@ export default function AppLauncherPage() {
   const apps = isAdmin ? adminApps : portalApps;
   const displayName = me?.email ?? "User";
 
+  // Portal activation gate
+  const [activationStatus, setActivationStatus] = useState<ActivationStatus[] | null>(null);
+  const [activationLoading, setActivationLoading] = useState(false);
+  const [activationCode, setActivationCode] = useState("");
+  const [activateError, setActivateError] = useState("");
+  const [activateSuccess, setActivateSuccess] = useState("");
+  const [activating, setActivating] = useState(false);
+
+  useEffect(() => {
+    if (!isAdmin && me) {
+      setActivationLoading(true);
+      apiFetch<ActivationStatus[]>("/subscriptions/my-status")
+        .then((data) => setActivationStatus(data))
+        .catch(() => setActivationStatus([]))
+        .finally(() => setActivationLoading(false));
+    }
+  }, [isAdmin, me]);
+
+  const hasActiveSubscription = activationStatus?.some(
+    (s) => s.has_subscription && s.status === "active"
+  );
+
+  const handleActivate = async () => {
+    if (!activationCode.trim()) return;
+    setActivating(true);
+    setActivateError("");
+    setActivateSuccess("");
+    try {
+      await apiFetch("/subscriptions/activate", {
+        method: "POST",
+        body: JSON.stringify({ code: activationCode.trim() }),
+      });
+      setActivateSuccess("Subscription activated successfully!");
+      setActivationCode("");
+      // Reload status
+      const data = await apiFetch<ActivationStatus[]>("/subscriptions/my-status");
+      setActivationStatus(data);
+    } catch (err: any) {
+      setActivateError(err.message || "Invalid or expired activation code.");
+    } finally {
+      setActivating(false);
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("access_token");
     window.location.href = "/login";
   };
 
   // Show loading state
-  if (loading) {
+  if (loading || activationLoading) {
     return (
       <div className="app-launcher-page">
         <div className="app-launcher-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -155,6 +221,89 @@ export default function AppLauncherPage() {
             <div style={{ fontSize: '18px', fontWeight: 600 }}>Loading...</div>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  // Portal activation gate — no active subscription
+  if (!isAdmin && !hasActiveSubscription) {
+    return (
+      <div className="app-launcher-page">
+        <header className="app-launcher-header">
+          <div className="app-launcher-logo">
+            <img src="/365.png" alt="365 Fiscal" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+          </div>
+          <div className="app-launcher-user">
+            <span className="user-name">{displayName}</span>
+            <div className="user-avatar-small">{displayName.charAt(0).toUpperCase()}</div>
+            <button className="app-launcher-logout" onClick={handleLogout} title="Log out">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+            </button>
+          </div>
+        </header>
+        <div className="app-launcher-container" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ maxWidth: 440, width: "100%", textAlign: "center" }}>
+            <div style={{
+              width: 80, height: 80, borderRadius: "50%",
+              background: "linear-gradient(135deg, var(--violet-100), var(--violet-200))",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              margin: "0 auto 24px",
+            }}>
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--violet-500)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            </div>
+            <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8, color: "var(--fg)" }}>Activate Your Subscription</h2>
+            <p style={{ color: "var(--muted)", fontSize: 14, marginBottom: 28, lineHeight: 1.6 }}>
+              Enter the activation code provided by your administrator to unlock access to all applications.
+            </p>
+            {activateError && (
+              <div style={{ marginBottom: 16, padding: "10px 16px", borderRadius: 8, background: "var(--red-50)", color: "var(--red-600)", border: "1px solid var(--red-200)", fontSize: 13 }}>
+                {activateError}
+              </div>
+            )}
+            {activateSuccess && (
+              <div style={{ marginBottom: 16, padding: "10px 16px", borderRadius: 8, background: "var(--emerald-50)", color: "var(--emerald-600)", border: "1px solid var(--emerald-200)", fontSize: 13 }}>
+                {activateSuccess}
+              </div>
+            )}
+            <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+              <input
+                type="text"
+                value={activationCode}
+                onChange={(e) => setActivationCode(e.target.value.toUpperCase())}
+                placeholder="XXXX-XXXX-XXXX-XXXX"
+                maxLength={19}
+                style={{
+                  flex: 1, padding: "12px 16px", fontSize: 16, fontFamily: "monospace",
+                  letterSpacing: 2, textAlign: "center", borderRadius: 10,
+                  border: "2px solid var(--border)", outline: "none", fontWeight: 700,
+                  background: "var(--bg-card)", color: "var(--fg)",
+                }}
+                onKeyDown={(e) => e.key === "Enter" && handleActivate()}
+              />
+            </div>
+            <button
+              className="o-btn o-btn-primary"
+              onClick={handleActivate}
+              disabled={activating || activationCode.trim().length < 10}
+              style={{ width: "100%", padding: "12px 0", fontSize: 15, fontWeight: 700, borderRadius: 10 }}
+            >
+              {activating ? "Activating..." : "Activate"}
+            </button>
+            <p style={{ color: "var(--muted)", fontSize: 12, marginTop: 20 }}>
+              Don't have a code? Contact your company administrator.
+            </p>
+          </div>
+        </div>
+        <footer className="app-launcher-footer">
+          Powered by <a href="https://www.geenet.com" target="_blank" rel="noopener noreferrer">GeeNet</a>
+        </footer>
       </div>
     );
   }

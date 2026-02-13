@@ -19,6 +19,7 @@ import ReportsPage from "./pages/ReportsPage";
 import UsersRolesPage from "./pages/UsersRolesPage";
 import AuditLogsPage from "./pages/AuditLogsPage";
 import PaymentsPage from "./pages/PaymentsPage";
+import SubscriptionsPage from "./pages/SubscriptionsPage";
 import { apiFetch } from "./api";
 import { useMe } from "./hooks/useMe";
 import BackIcon from "./assets/back.svg?react";
@@ -44,6 +45,7 @@ const adminNav = [
   { to: "/reports", label: "Reports", icon: ReportsIcon },
   { to: "/users-roles", label: "Users & Roles", icon: UsersIcon },
   { to: "/audit-logs", label: "Audit Logs", icon: AuditIcon },
+  { to: "/subscriptions", label: "Subscriptions", icon: SettingsIcon },
   { to: "/settings", label: "Settings", icon: SettingsIcon },
 ];
 
@@ -291,6 +293,7 @@ function AppContent() {
               <Route path="/users-roles" element={<UsersRolesPage />} />
               <Route path="/audit-logs" element={<AuditLogsPage />} />
               <Route path="/payments" element={<PaymentsPage />} />
+              <Route path="/subscriptions" element={<SubscriptionsPage />} />
             </Routes>
           </div>
         </main>

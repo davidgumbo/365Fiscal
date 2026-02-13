@@ -233,6 +233,19 @@ export default function SettingsPage() {
   >(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
+  // Subscription status state
+  type SubStatus = {
+    company_id: number;
+    company_name: string;
+    has_subscription: boolean;
+    plan: string;
+    status: string;
+    expires_at: string | null;
+    days_remaining: number | null;
+  };
+  const [subStatuses, setSubStatuses] = useState<SubStatus[]>([]);
+  const [subLoading, setSubLoading] = useState(false);
+
   // Default to General tab for all users; admins will also see Users tab
   useEffect(() => {
     setActiveTopTab("general");
@@ -254,6 +267,17 @@ export default function SettingsPage() {
       setHasUnsavedChanges(changed);
     }
   }, [settingsForm, initialSettings, activeTopTab]);
+
+  // Load subscription status when section is opened
+  useEffect(() => {
+    if (activeSection === "subscription") {
+      setSubLoading(true);
+      apiFetch<SubStatus[]>("/subscriptions/my-status")
+        .then((data) => setSubStatuses(data))
+        .catch(() => setSubStatuses([]))
+        .finally(() => setSubLoading(false));
+    }
+  }, [activeSection]);
 
   useEffect(() => {
     if (companies.length && companyId === null) {
@@ -948,6 +972,16 @@ export default function SettingsPage() {
           >
             {me.is_admin ? "Administrators" : "Users & Companies"}
           </button>
+          <div className="settings-sidebar-title">Subscription</div>
+          <button
+            className={`settings-sidebar-item ${activeSection === "subscription" ? "active" : ""}`}
+            onClick={() => {
+              setActiveTopTab("general");
+              setActiveSection("subscription");
+            }}
+          >
+            My Subscription
+          </button>
         </aside>
         <main className="settings-main">
           {status && (
@@ -1577,6 +1611,78 @@ export default function SettingsPage() {
                 </div>
               </section>
             )}
+
+          {/* Subscription section */}
+          {activeSection === "subscription" && (
+            <section id="subscription" className="settings-section">
+              <div className="settings-section-header">
+                <h4>Subscription</h4>
+                <p className="page-sub">View your subscription status and validity.</p>
+              </div>
+              {subLoading ? (
+                <div style={{ textAlign: "center", padding: 40, color: "var(--muted)" }}>Loading subscription info...</div>
+              ) : subStatuses.length === 0 ? (
+                <div style={{ textAlign: "center", padding: 40, color: "var(--muted)" }}>
+                  <p>No subscription information available.</p>
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                  {subStatuses.map((s) => {
+                    const statusColor = s.status === "active" ? "var(--emerald-500)" : s.status === "expired" ? "var(--red-500)" : "var(--amber-500)";
+                    const daysColor = s.days_remaining !== null && s.days_remaining <= 30 ? "var(--red-500)" : s.days_remaining !== null && s.days_remaining <= 90 ? "var(--amber-500)" : "var(--emerald-500)";
+                    return (
+                      <div key={s.company_id} className="settings-card" style={{ border: "1px solid var(--border)", borderRadius: 12, padding: 24 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                          <div>
+                            <div className="settings-card-title" style={{ fontSize: 16 }}>{s.company_name}</div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 6 }}>
+                              <span style={{
+                                textTransform: "capitalize", fontSize: 14, fontWeight: 700,
+                                color: s.plan === "enterprise" ? "var(--amber-500)" : s.plan === "professional" ? "var(--violet-500)" : "var(--blue-500)"
+                              }}>
+                                {s.plan || "—"}
+                              </span>
+                              <span style={{
+                                display: "inline-block", padding: "2px 10px", borderRadius: 20, fontSize: 11,
+                                fontWeight: 700, textTransform: "uppercase", color: "white", background: statusColor,
+                              }}>
+                                {s.status || (s.has_subscription ? "active" : "none")}
+                              </span>
+                            </div>
+                          </div>
+                          {s.has_subscription && s.days_remaining !== null && (
+                            <div style={{ textAlign: "right" }}>
+                              <div style={{ fontSize: 28, fontWeight: 800, color: daysColor }}>{Math.max(s.days_remaining, 0)}</div>
+                              <div style={{ fontSize: 11, color: "var(--muted)" }}>days remaining</div>
+                            </div>
+                          )}
+                        </div>
+                        {s.has_subscription && (
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                            <div>
+                              <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase", letterSpacing: 0.5 }}>Expires</div>
+                              <div style={{ fontSize: 14, fontWeight: 600 }}>
+                                {s.expires_at ? new Date(s.expires_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "—"}
+                              </div>
+                            </div>
+                            <div>
+                              <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase", letterSpacing: 0.5 }}>Status</div>
+                              <div style={{ fontSize: 14, fontWeight: 600, textTransform: "capitalize" }}>{s.status}</div>
+                            </div>
+                          </div>
+                        )}
+                        {!s.has_subscription && (
+                          <div style={{ color: "var(--muted)", fontSize: 13 }}>
+                            No active subscription. Contact your administrator for an activation code.
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          )}
         </main>
       </div>
 
