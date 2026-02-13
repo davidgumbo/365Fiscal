@@ -4755,8 +4755,8 @@ button.danger:hover {
 
 /* ── Sidebar Panel (base) ── */
 .sidebar-panel {
-  background: var(--slate-800);
-  border: none;
+  /* background: var(--gray-400); */
+  border: solid 2px var(--gray-200);
   border-radius: 16px;
   padding: 0;
   position: sticky;
