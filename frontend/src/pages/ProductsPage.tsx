@@ -207,7 +207,7 @@ export default function ProductsPage() {
   return (
     <div className="page-container">
       <div className="two-panel">
-        <div className="sidebar-panel">
+        <div className="sidebar-panel-left">
           <h4>Products List</h4>
           <div style={{ maxHeight: "600px", overflowY: "auto" }}>
             {products.length === 0 ? (
