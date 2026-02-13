@@ -7721,3 +7721,117 @@ button.danger:disabled {
     gap: 12px;
   }
 }
+
+/* ── Batch selection bar ── */
+.batch-action-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  margin-bottom: 12px;
+  background: var(--blue-50);
+  border: 1px solid var(--blue-200);
+  border-radius: var(--radius-md);
+  animation: slideDown 0.15s ease-out;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.batch-count {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--blue-700);
+  margin-right: 4px;
+}
+
+.batch-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--stroke);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  background: var(--white);
+  color: var(--ink);
+}
+
+.batch-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.batch-btn.export-btn {
+  color: var(--blue-700);
+  border-color: var(--blue-200);
+  background: var(--white);
+}
+
+.batch-btn.export-btn:hover:not(:disabled) {
+  background: var(--blue-100);
+  border-color: var(--blue-500);
+}
+
+.batch-btn.delete-btn {
+  color: var(--red-600);
+  border-color: #fecaca;
+  background: var(--white);
+}
+
+.batch-btn.delete-btn:hover:not(:disabled) {
+  background: #fef2f2;
+  border-color: var(--red-500);
+}
+
+.batch-btn.clear-btn {
+  color: var(--muted);
+  border-color: transparent;
+  background: transparent;
+  padding: 6px 10px;
+}
+
+.batch-btn.clear-btn:hover {
+  color: var(--ink);
+  background: rgba(0,0,0,0.04);
+}
+
+/* Checkbox styling */
+.batch-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--blue-600);
+  cursor: pointer;
+}
+
+/* Selected row highlight */
+.table tbody tr.row-selected {
+  background: var(--blue-50);
+}
+
+.table tbody tr.row-selected:hover {
+  background: var(--blue-100);
+}
+
+/* Selected card highlight */
+.card-selected {
+  outline: 2px solid var(--blue-500);
+  background: var(--blue-50) !important;
+}
+
+/* Responsive batch bar */
+@media (max-width: 600px) {
+  .batch-action-bar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .batch-btn {
+    font-size: 12px;
+    padding: 5px 10px;
+  }
+}
