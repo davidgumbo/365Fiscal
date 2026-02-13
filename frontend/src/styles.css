@@ -3978,6 +3978,17 @@ button.danger:hover {
   border: 1px solid rgba(11, 87, 208, 0.2);
 }
 
+
+.comapany-search input {
+  padding: 8px 14px;
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  width: 100%;
+  background: var(--blue-50);
+  font-size: 13px;
+  transition: border-color 150ms, box-shadow 150ms;
+}
+
 /* ── Professional Settings Layout ── */
 .settings-page {
   display: flex;

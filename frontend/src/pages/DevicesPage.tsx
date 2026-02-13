@@ -612,7 +612,7 @@ export default function DevicesPage() {
           }}
         >
           <div
-            className="settings-search"
+            className="company-search"
             style={{ width: "30vw", margin: "0 auto" }}
           >
             <input
