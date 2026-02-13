@@ -846,6 +846,21 @@ export default function SettingsPage() {
 
   return (
     <div className="settings-page">
+      <div className="settings-company-select">
+        <label className="input">
+          {/* Company */}
+          <select
+            value={companyId ?? ""}
+            onChange={(e) => setCompanyId(Number(e.target.value))}
+          >
+            {companies.map((c: Company) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
       {hasUnsavedChanges && activeTopTab === "general" && (
         <div className="alert alert-warning" style={{ marginBottom: 16 }}>
           <strong>Unsaved changes</strong> — Don't forget to save your changes.
@@ -896,38 +911,43 @@ export default function SettingsPage() {
             <input type="text" placeholder="Search..." />
           </div>
           <div className="settings-sidebar-title">General Settings</div>
-          {activeTopTab === "general" && (
-            <>
-              <button
-                className={`settings-sidebar-item ${activeSection === "company" ? "active" : ""}`}
-                onClick={() => setActiveSection("company")}
-              >
-                Company
-              </button>
-              <button
-                className={`settings-sidebar-item ${activeSection === "document-layout" ? "active" : ""}`}
-                onClick={() => setActiveSection("document-layout")}
-              >
-                Document Layout
-              </button>
-              <button
-                className={`settings-sidebar-item ${activeSection === "zimra-tax" ? "active" : ""}`}
-                onClick={() => setActiveSection("zimra-tax")}
-              >
-                ZIMRA Taxes
-              </button>
-            </>
-          )}
-          {activeTopTab === "users" && (
-            <button
-              className={`settings-sidebar-item ${activeSection === (me.is_admin ? "admins" : "users-companies") ? "active" : ""}`}
-              onClick={() =>
-                setActiveSection(me.is_admin ? "admins" : "users-companies")
-              }
-            >
-              {me.is_admin ? "Administrators" : "Users & Companies"}
-            </button>
-          )}
+          <button
+            className={`settings-sidebar-item ${activeSection === "company" ? "active" : ""}`}
+            onClick={() => {
+              setActiveTopTab("general");
+              setActiveSection("company");
+            }}
+          >
+            Company
+          </button>
+          <button
+            className={`settings-sidebar-item ${activeSection === "document-layout" ? "active" : ""}`}
+            onClick={() => {
+              setActiveTopTab("general");
+              setActiveSection("document-layout");
+            }}
+          >
+            Document Layout
+          </button>
+          <button
+            className={`settings-sidebar-item ${activeSection === "zimra-tax" ? "active" : ""}`}
+            onClick={() => {
+              setActiveTopTab("general");
+              setActiveSection("zimra-tax");
+            }}
+          >
+            ZIMRA Taxes
+          </button>
+          <div className="settings-sidebar-title">Users &amp; Companies</div>
+          <button
+            className={`settings-sidebar-item ${activeSection === (me.is_admin ? "admins" : "users-companies") ? "active" : ""}`}
+            onClick={() => {
+              setActiveTopTab("users");
+              setActiveSection(me.is_admin ? "admins" : "users-companies");
+            }}
+          >
+            {me.is_admin ? "Administrators" : "Users & Companies"}
+          </button>
         </aside>
         <main className="settings-main">
           {status && (
@@ -949,22 +969,6 @@ export default function SettingsPage() {
 
           {activeTopTab === "general" && (
             <>
-              <div className="settings-company-select">
-                <label className="input">
-                  Company
-                  <select
-                    value={companyId ?? ""}
-                    onChange={(e) => setCompanyId(Number(e.target.value))}
-                  >
-                    {companies.map((c: Company) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-
               {activeSection === "company" && (
                 <section id="company" className="settings-section">
                   <div className="settings-section-header">
