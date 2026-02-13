@@ -28,3 +28,4 @@ class Company(Base, TimestampMixin):
     certificates = relationship("CompanyCertificate", back_populates="company")
     stock_moves = relationship("StockMove", back_populates="company")
     settings = relationship("CompanySettings", back_populates="company", uselist=False)
+    subscription = relationship("Subscription", back_populates="company", uselist=False)

@@ -29,13 +29,13 @@ const PurchaseIcon = () => (
   </svg>
 );
 
-const ProductIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-    <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-    <line x1="12" y1="22.08" x2="12" y2="12" />
-  </svg>
-);
+// const ProductIcon = () => (
+//   <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+//     <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+//     <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+//     <line x1="12" y1="22.08" x2="12" y2="12" />
+//   </svg>
+// );
 
 const ContactIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -114,7 +114,7 @@ const adminApps: AppItem[] = [
   { to: "/companies", label: "Companies", icon: CompanyIcon, color: "var(--white-500)", bgColor: "var(--violet-500)" },
   { to: "/invoices", label: "Invoices", icon: InvoiceIcon, color: "var(--white-500)", bgColor: "var(--red-500)" },
   { to: "/purchases", label: "Purchases", icon: PurchaseIcon, color: "var(--white-500)", bgColor: "var(--sky-500)" },
-  { to: "/products", label: "Products", icon: ProductIcon, color: "var(--white-500)", bgColor: "var(--cyan-500)" },
+  // { to: "/products", label: "Products", icon: ProductIcon, color: "var(--white-500)", bgColor: "var(--cyan-500)" },
   { to: "/contacts", label: "Contacts", icon: ContactIcon, color: "var(--white-500)", bgColor: "var(--emerald-500)" },
   { to: "/quotations", label: "Quotations", icon: QuoteIcon, color: "var(--white-500)", bgColor: "var(--indigo-500)" },
   { to: "/inventory", label: "Inventory", icon: InventoryIcon, color: "var(--white-500)", bgColor: "var(--violet-600)" },

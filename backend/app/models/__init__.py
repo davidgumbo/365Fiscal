@@ -22,3 +22,4 @@ from app.models.company_settings import CompanySettings
 from app.models.role import Role, SYSTEM_ROLES
 from app.models.audit_log import AuditLog, AuditAction, ResourceType
 from app.models.payment import Payment, PaymentMethod
+from app.models.subscription import Subscription, ActivationCode
