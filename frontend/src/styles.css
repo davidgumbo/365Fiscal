@@ -4436,8 +4436,10 @@ button.danger:hover {
 }
 
 .two-panel-left {
-  grid-template-columns: 260px 1fr;
-  gap: 0;
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  align-items: start;
+  min-height: 0;
 }
 
 .two-panel .o-sidebar {
