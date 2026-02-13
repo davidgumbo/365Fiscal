@@ -683,7 +683,6 @@ textarea {
 }
 
 .page-title {
-  font-family: "Fraunces", serif;
   font-size: 28px;
   margin-bottom: 4px;
 }
@@ -2982,7 +2981,7 @@ button.danger:hover {
   animation: modalSlideIn 0.2s ease-out;
 }
 
-.modal--centered {
+.modal-centered {
   width: min(90vw, 600px);
   margin: 0 auto;
   display: block;
