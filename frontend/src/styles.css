@@ -4490,6 +4490,7 @@ button.danger:hover {
   display: grid;
   grid-template-columns: 1fr 340px;
   align-items: start;
+  gap: 1rem;
   min-height: 0;
 }
 
@@ -4497,7 +4498,8 @@ button.danger:hover {
   display: grid;
   grid-template-columns: 340px 1fr;
   align-items: start;
-  min-height: 0;
+  gap: 1rem;
+  min-height: 0
 }
 
 .two-panel .o-sidebar {
