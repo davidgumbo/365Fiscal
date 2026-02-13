@@ -606,8 +606,8 @@ export default function DevicesPage() {
           <div className="o-breadcrumb">
             <span className="o-breadcrumb-current">Devices</span>
           </div>
-          <div className="o-searchbox" style={{ marginLeft: "auto" }}>
-            <span className="o-searchbox-icon">🔍</span>
+
+          <div className="settings-search">
             <input
               type="text"
               placeholder="Search company by name, VAT, or TIN"
