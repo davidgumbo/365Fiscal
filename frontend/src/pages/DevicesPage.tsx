@@ -611,10 +611,7 @@ export default function DevicesPage() {
             marginBottom: 24,
           }}
         >
-          <div
-            className="company-search"
-            style={{ width: "30vw", margin: "0 auto" }}
-          >
+          <div className="company-search">
             <input
               type="text"
               placeholder="Search company by name, VAT, or TIN"

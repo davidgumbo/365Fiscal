@@ -5312,6 +5312,34 @@ button.danger:hover {
   font-size: 12px;
 }
 
+/* Company search (Devices page) */
+.company-search {
+  width: min(520px, 90vw);
+  margin: 0 auto;
+}
+
+.company-search input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--slate-200);
+  background: var(--white-500);
+  font-size: 13px;
+  color: var(--slate-700);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.company-search input::placeholder {
+  color: var(--slate-400);
+}
+
+.company-search input:focus {
+  outline: none;
+  border-color: var(--blue-500);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
 /* Odoo Content Area */
 .o-content {
   display: flex;
