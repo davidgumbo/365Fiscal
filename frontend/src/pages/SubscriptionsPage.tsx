@@ -302,7 +302,7 @@ export default function SubscriptionsPage() {
               {generatedCode}
             </div>
             <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 20 }}>
-              Share this code with the portal user. It can only be used once and expires in 30 days.
+              Share this code with the portal user.
             </p>
             <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
               <button className="o-btn o-btn-primary" onClick={() => copyCode(generatedCode)}>
@@ -349,7 +349,7 @@ export default function SubscriptionsPage() {
               {/* Header */}
               <div style={{ padding: "24px 28px", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
-                  <div style={{ fontSize: 12, color: "var(--muted)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>Current Plan</div>
+                 
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                     <span style={{ fontSize: 22, fontWeight: 800, color: planInfo?.color || "var(--fg)" }}>{planInfo?.label || currentSub.plan}</span>
                     <span style={{
@@ -437,12 +437,7 @@ export default function SubscriptionsPage() {
             <div style={{ marginTop: 24, background: "var(--bg-card)", borderRadius: 12, border: "1px solid var(--border)", padding: 28 }}>
               <h4 style={{ margin: "0 0 20px", fontWeight: 700 }}>Create Subscription</h4>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, display: "block", marginBottom: 4 }}>Plan</label>
-                  <select className="form-control" value={subForm.plan} onChange={(e) => setSubForm({ ...subForm, plan: e.target.value })}>
-                    {PLANS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
-                  </select>
-                </div>
+               
                 <div>
                   <label style={{ fontSize: 12, fontWeight: 600, display: "block", marginBottom: 4 }}>Duration (days)</label>
                   <input className="form-control" type="number" value={subForm.duration_days} onChange={(e) => setSubForm({ ...subForm, duration_days: +e.target.value })} />
