@@ -602,12 +602,20 @@ export default function DevicesPage() {
   if (view === "companies") {
     return (
       <div className="content">
-        <div className="o-control-panel" style={{ marginBottom: 24 }}>
+        <div
+          className="o-control-panel"
+          style={{
+            display: "flex",
+            width: "auto",
+            justifyContent: "space-between",
+            marginBottom: 24,
+          }}
+        >
           <div className="o-breadcrumb">
             <span className="o-breadcrumb-current">Devices</span>
           </div>
 
-          <div className="settings-search">
+          <div className="settings-search" style={{ width: "20vw" }}>
             <input
               type="text"
               placeholder="Search company by name, VAT, or TIN"
