@@ -27,6 +27,16 @@ def _write_temp_file(data: bytes, suffix: str) -> str:
     return tmp.name
 
 
+def _unpadded_device_id(device: Device) -> str:
+    """Return the device ID stripped of leading zeros for use in ZIMRA API URL paths.
+
+    ZIMRA expects the numeric device ID without leading zeros in URL paths
+    (e.g. 32322 not 0000032322), while the padded form is used in signatures
+    and QR code generation.
+    """
+    return str(int(device.device_id))
+
+
 def _get_company_cert_paths(company_id: int, db) -> tuple[str, str]:
     cert = db.query(CompanyCertificate).filter(CompanyCertificate.company_id == company_id).first()
     if not cert or not cert.crt_data or not cert.key_data:
@@ -59,11 +69,8 @@ def _call_fdms(
     # ZIMRA requires these headers on EVERY request
     headers = {
         "Content-Type": "application/json",
-        "Accept": "application/json",
         "DeviceModelName": device.model or "365Fiscal",
         "DeviceModelVersion": "1.0",
-        "DeviceID": str(device.device_id),
-        "DeviceSerialNo": device.serial_number or "",
     }
 
     cert_paths: tuple[str, str] | None = None
@@ -101,18 +108,21 @@ def _call_fdms(
 
 def get_status(device: Device, db) -> dict:
     """GET /Device/v1/{deviceID}/GetStatus – returns fiscal day status, counters etc."""
-    return _call_fdms(device, db, f"Device/v1/{device.device_id}/GetStatus", method="GET")
+    did = _unpadded_device_id(device)
+    return _call_fdms(device, db, f"Device/v1/{did}/GetStatus", method="GET")
 
 
 def get_config(device: Device, db) -> dict:
     """GET /Device/v1/{deviceID}/GetConfig – returns device configuration & tax tables."""
-    return _call_fdms(device, db, f"Device/v1/{device.device_id}/GetConfig", method="GET")
+    did = _unpadded_device_id(device)
+    return _call_fdms(device, db, f"Device/v1/{did}/GetConfig", method="GET")
 
 
 def ping_device(device: Device, db) -> dict:
     """POST /Device/v1/{deviceID}/Ping – heartbeat, returns reportingFrequency."""
-    payload = {"deviceID": str(device.device_id)}
-    return _call_fdms(device, db, f"Device/v1/{device.device_id}/Ping", method="POST", payload=payload)
+    did = _unpadded_device_id(device)
+    payload = {"deviceID": int(did)}
+    return _call_fdms(device, db, f"Device/v1/{did}/Ping", method="POST", payload=payload)
 
 
 def _generate_ecc_csr(device: Device) -> tuple[str, str]:
@@ -158,7 +168,7 @@ def register_device(device: Device, db) -> dict:
     }
     result = _call_fdms(
         device, db,
-        f"Public/v1/{device.device_id}/RegisterDevice",
+        f"Public/v1/{_unpadded_device_id(device)}/RegisterDevice",
         payload=payload,
         use_certificate=False,
     )
@@ -208,7 +218,7 @@ def open_day(device: Device, db) -> dict:
         "fiscalDayNo": next_day_no,
         "fiscalDayOpened": now,
     }
-    return _call_fdms(device, db, f"Device/v1/{device.device_id}/OpenDay", payload=payload)
+    return _call_fdms(device, db, f"Device/v1/{_unpadded_device_id(device)}/OpenDay", payload=payload)
 
 
 def _sort_fiscal_counters(counters: list[dict]) -> list[dict]:
@@ -281,7 +291,7 @@ def _sign_close_day(device: Device, db, current_day: int, fiscal_day_date: str, 
     concat = deviceID + fiscalDayNo + fiscalDayDate + counters_concat
     Returns {"hash": b64, "signature": b64, "concat": str}
     """
-    device_id_str = str(int(device.device_id))
+    device_id_str = _unpadded_device_id(device)
     counters_concat = _build_counters_concat(counters)
     concat = f"{device_id_str}{current_day}{fiscal_day_date}{counters_concat}"
 
@@ -339,7 +349,7 @@ def close_day(device: Device, db) -> dict:
         },
         "receiptCounter": receipt_counter,
     }
-    return _call_fdms(device, db, f"Device/v1/{device.device_id}/CloseDay", payload=payload)
+    return _call_fdms(device, db, f"Device/v1/{_unpadded_device_id(device)}/CloseDay", payload=payload)
 
 
 def _to_cents(value: Decimal) -> str:
@@ -349,7 +359,8 @@ def _to_cents(value: Decimal) -> str:
 def _sign_receipt(receipt: dict, private_key_pem: bytes) -> dict:
     key = serialization.load_pem_private_key(private_key_pem, password=None)
 
-    device_id = str(receipt.get("deviceID", ""))
+    # Use integer form of device ID (no leading zeros) for signature concatenation
+    device_id = str(int(receipt.get("deviceID", 0)))
     receipt_type = str(receipt.get("receiptType", "")).upper()
     currency = str(receipt.get("receiptCurrency", "")).upper()
     global_no = str(int(receipt.get("receiptGlobalNo", 0)))
@@ -480,7 +491,7 @@ def _build_receipt(invoice: Invoice, lines: list[Any], device_id_str: str, db=No
         receipt_type = "FiscalInvoice"
 
     receipt = {
-        "deviceID": device_id_str,
+        "deviceID": int(device_id_str),
         "receiptType": receipt_type,
         "receiptCurrency": (invoice.currency or "USD").upper(),
         "receiptCounter": receipt_counter,
@@ -552,7 +563,8 @@ def submit_invoice(invoice: Invoice, db) -> dict:
     invoice.zimra_receipt_counter = (device.last_receipt_counter or 0) + 1
     invoice.zimra_receipt_global_no = (device.last_receipt_global_no or 0) + 1
 
-    receipt = _build_receipt(invoice, lines, str(device.device_id), db=db)
+    did = _unpadded_device_id(device)
+    receipt = _build_receipt(invoice, lines, did, db=db)
     if invoice.zimra_receipt_counter > 1 and device.last_receipt_hash:
         receipt["previousReceiptHash"] = device.last_receipt_hash
 
@@ -570,8 +582,8 @@ def submit_invoice(invoice: Invoice, db) -> dict:
         "signature": sig["signature"],
     }
 
-    submit_payload = {"deviceID": str(device.device_id), "receipt": receipt}
-    result = _call_fdms(device, db, f"Device/v1/{device.device_id}/SubmitReceipt", payload=submit_payload)
+    submit_payload = {"deviceID": int(did), "receipt": receipt}
+    result = _call_fdms(device, db, f"Device/v1/{did}/SubmitReceipt", payload=submit_payload)
 
     invoice.zimra_status = "submitted"
     invoice.zimra_receipt_id = result.get("receiptID", "")
