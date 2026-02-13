@@ -1,5 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../api";
+import { useMe } from "../hooks/useMe";
 import { useCompanies, Company } from "../hooks/useCompanies";
 
 // ============= TYPES =============
@@ -246,8 +248,26 @@ const TrashIcon = () => (
 );
 
 export default function InventoryPage() {
+  const navigate = useNavigate();
+  const { me } = useMe();
   const companies = useCompanies();
+  const isAdmin = Boolean(me?.is_admin);
   const [companyId, setCompanyId] = useState<number | null>(null);
+  const [companyQuery, setCompanyQuery] = useState("");
+
+  const filteredCompanies = useMemo(() => {
+    if (!companyQuery.trim()) return companies;
+    const q = companyQuery.toLowerCase();
+    return companies.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        (c.tin && c.tin.toLowerCase().includes(q)) ||
+        (c.vat && c.vat.toLowerCase().includes(q))
+    );
+  }, [companies, companyQuery]);
+
+  const selectedCompany = companies.find((c) => c.id === companyId) ?? null;
+
   const [mainView, setMainView] = useState<MainView>("overview");
   const [subView, setSubView] = useState<SubView>("list");
 
@@ -347,11 +367,12 @@ export default function InventoryPage() {
   const [filterState, setFilterState] = useState<string>("all");
 
   // ============= EFFECTS =============
+  // Portal users auto-select their first company
   useEffect(() => {
-    if (companies.length && companyId === null) {
+    if (!isAdmin && companies.length && companyId === null) {
       setCompanyId(companies[0].id);
     }
-  }, [companies, companyId]);
+  }, [isAdmin, companies, companyId]);
 
   useEffect(() => {
     if (companyId) {
@@ -822,8 +843,109 @@ export default function InventoryPage() {
   const warehouseLocations = (warehouseId: number) =>
     locations.filter((l) => l.warehouse_id === warehouseId);
 
+  const goBackToCompanies = () => {
+    setCompanyId(null);
+    setProducts([]);
+    setCategories([]);
+    setWarehouses([]);
+    setLocations([]);
+    setStockMoves([]);
+    setStockQuants([]);
+    setTaxSettings([]);
+    navigate("/inventory");
+  };
+
+  // ─── Admin company selection view ───
+  if (isAdmin && !companyId) {
+    return (
+      <div className="content">
+        <div
+          className="o-control-panel"
+          style={{
+            display: "flex",
+            width: "auto",
+            justifyContent: "space-between",
+            marginBottom: 24,
+          }}
+        >
+          <div className="o-breadcrumb">
+            <span className="o-breadcrumb-current">Inventory</span>
+          </div>
+          <div className="settings-search" style={{ width: "20vw" }}>
+            <input
+              type="text"
+              placeholder="Search company by name, VAT, or TIN"
+              value={companyQuery}
+              onChange={(e) => setCompanyQuery(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <p style={{ color: "var(--muted)", marginBottom: 20, fontSize: 14 }}>
+          Select a company to view its inventory.
+        </p>
+
+        <div className="device-company-grid">
+          {filteredCompanies.map((c) => (
+            <button
+              key={c.id}
+              className="device-company-card"
+              onClick={() => setCompanyId(c.id)}
+            >
+              <div className="device-company-icon">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
+                  <path d="M9 22v-4h6v4" />
+                  <line x1="8" y1="6" x2="8" y2="6.01" />
+                  <line x1="16" y1="6" x2="16" y2="6.01" />
+                  <line x1="12" y1="6" x2="12" y2="6.01" />
+                  <line x1="8" y1="10" x2="8" y2="10.01" />
+                  <line x1="16" y1="10" x2="16" y2="10.01" />
+                  <line x1="12" y1="10" x2="12" y2="10.01" />
+                  <line x1="8" y1="14" x2="8" y2="14.01" />
+                  <line x1="16" y1="14" x2="16" y2="14.01" />
+                  <line x1="12" y1="14" x2="12" y2="14.01" />
+                </svg>
+              </div>
+              <div className="device-company-info">
+                <div className="device-company-name">{c.name}</div>
+                {c.tin && <div className="device-company-detail">TIN: {c.tin}</div>}
+                {c.vat && <div className="device-company-detail">VAT: {c.vat}</div>}
+              </div>
+              <div className="device-company-arrow">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </div>
+            </button>
+          ))}
+          {!filteredCompanies.length && (
+            <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: 40, color: "var(--muted)" }}>
+              {companyQuery.trim()
+                ? "No companies match your search."
+                : "No companies found. Create a company first."}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   // ============= RENDER =============
   return (
+    <>
+      {/* Company breadcrumb for admin */}
+      {isAdmin && companyId && (
+        <div className="o-control-panel" style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, padding: "0 8px" }}>
+          <div className="o-breadcrumb">
+            <span className="o-breadcrumb-item" style={{ cursor: "pointer" }} onClick={goBackToCompanies}>Inventory</span>
+            <span className="o-breadcrumb-separator">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+            </span>
+            <span className="o-breadcrumb-current">{selectedCompany?.name || "Company"}</span>
+          </div>
+        </div>
+      )}
     <div
       className="page-container"
       style={{
@@ -3457,5 +3579,6 @@ export default function InventoryPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }
