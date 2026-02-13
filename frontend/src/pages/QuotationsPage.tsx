@@ -17,7 +17,14 @@ type Contact = {
   tin?: string;
 };
 
-type Product = { id: number; name: string; sale_price: number; tax_rate: number; uom?: string; hs_code?: string };
+type Product = {
+  id: number;
+  name: string;
+  sale_price: number;
+  tax_rate: number;
+  uom?: string;
+  hs_code?: string;
+};
 
 type Warehouse = { id: number; name: string };
 
@@ -61,14 +68,18 @@ const emptyLine = (): QuotationLine => ({
   quantity: 1,
   uom: "Units",
   unit_price: 0,
-  vat_rate: 0
+  vat_rate: 0,
 });
 
 const normalizeUom = (value: string) => (value === "PCS" ? "Units" : value);
 
 type QuotationsPageMode = "list" | "new" | "detail";
 
-export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPageMode }) {
+export default function QuotationsPage({
+  mode = "list",
+}: {
+  mode?: QuotationsPageMode;
+}) {
   const navigate = useNavigate();
   const { quotationId } = useParams();
   const routeQuotationId = quotationId ? Number(quotationId) : null;
@@ -85,18 +96,23 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
       (c) =>
         c.name.toLowerCase().includes(q) ||
         (c.tin && c.tin.toLowerCase().includes(q)) ||
-        (c.vat && c.vat.toLowerCase().includes(q))
+        (c.vat && c.vat.toLowerCase().includes(q)),
     );
   }, [companies, companyQuery]);
 
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [quotations, setQuotations] = useState<Quotation[]>([]);
-  const [companySettings, setCompanySettings] = useState<CompanySettings | null>(null);
+  const [companySettings, setCompanySettings] =
+    useState<CompanySettings | null>(null);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
-  const [productWarehouseId, setProductWarehouseId] = useState<number | null>(null);
-  const [productLocationId, setProductLocationId] = useState<number | null>(null);
+  const [productWarehouseId, setProductWarehouseId] = useState<number | null>(
+    null,
+  );
+  const [productLocationId, setProductLocationId] = useState<number | null>(
+    null,
+  );
   const [createProductOpen, setCreateProductOpen] = useState(false);
   const [productName, setProductName] = useState("");
   const [productPrice, setProductPrice] = useState("");
@@ -105,7 +121,9 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
   const [productHsCode, setProductHsCode] = useState("");
   const [productUom, setProductUom] = useState("Units");
   const [productInitialStock, setProductInitialStock] = useState("");
-  const [selectedQuotationId, setSelectedQuotationId] = useState<number | null>(null);
+  const [selectedQuotationId, setSelectedQuotationId] = useState<number | null>(
+    null,
+  );
   const [isEditing, setIsEditing] = useState(false);
   const [listSearch, setListSearch] = useState("");
   const [listStatus, setListStatus] = useState("");
@@ -114,7 +132,7 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
   const [form, setForm] = useState({
     customer_id: null as number | null,
     payment_terms: "Cash",
-    expires_at: ""
+    expires_at: "",
   });
   const [lines, setLines] = useState<QuotationLine[]>([emptyLine()]);
   const [saving, setSaving] = useState(false);
@@ -130,10 +148,9 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
     const [c, p, q, w, settingsData] = await Promise.all([
       apiFetch<Contact[]>(`/contacts?company_id=${cid}`),
       apiFetch<Product[]>(`/products/with-stock?company_id=${cid}`),
-      apiFetch<Quotation[]>(`/quotations?company_id=${cid}`)
-      ,
+      apiFetch<Quotation[]>(`/quotations?company_id=${cid}`),
       apiFetch<Warehouse[]>(`/warehouses?company_id=${cid}`),
-      apiFetch<CompanySettings>(`/company-settings?company_id=${cid}`)
+      apiFetch<CompanySettings>(`/company-settings?company_id=${cid}`),
     ]);
     setContacts(c);
     setProducts(p);
@@ -197,7 +214,7 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
 
   const selectedCompany = useMemo(
     () => companies.find((c: Company) => c.id === companyId) ?? null,
-    [companies, companyId]
+    [companies, companyId],
   );
 
   const filteredQuotations = useMemo(() => {
@@ -213,8 +230,11 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
         if (toDate && expDate > toDate) return false;
       }
       if (!term) return true;
-      const customerName = contacts.find((c) => c.id === q.customer_id)?.name?.toLowerCase() ?? "";
-      return q.reference.toLowerCase().includes(term) || customerName.includes(term);
+      const customerName =
+        contacts.find((c) => c.id === q.customer_id)?.name?.toLowerCase() ?? "";
+      return (
+        q.reference.toLowerCase().includes(term) || customerName.includes(term)
+      );
     });
   }, [quotations, contacts, listSearch, listStatus, listFrom, listTo]);
 
@@ -223,7 +243,9 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
     setForm({
       customer_id: selectedQuotation.customer_id,
       payment_terms: selectedQuotation.payment_terms || "Cash",
-      expires_at: selectedQuotation.expires_at ? selectedQuotation.expires_at.split("T")[0] : ""
+      expires_at: selectedQuotation.expires_at
+        ? selectedQuotation.expires_at.split("T")[0]
+        : "",
     });
     setLines(
       selectedQuotation.lines?.length
@@ -231,17 +253,21 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
             const product = products.find((p) => p.id === line.product_id);
             return {
               ...line,
-              uom: line.uom || product?.uom || ""
+              uom: line.uom || product?.uom || "",
             };
           })
-        : [emptyLine()]
+        : [emptyLine()],
     );
     setIsEditing(false);
   }, [selectedQuotation, products]);
 
   const startNew = () => {
     setSelectedQuotationId(null);
-    setForm({ customer_id: contacts[0]?.id ?? null, payment_terms: "Cash", expires_at: "" });
+    setForm({
+      customer_id: contacts[0]?.id ?? null,
+      payment_terms: "Cash",
+      expires_at: "",
+    });
     setLines([emptyLine()]);
     setIsEditing(true);
   };
@@ -252,18 +278,20 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
     const payload = {
       customer_id: form.customer_id,
       payment_terms: form.payment_terms,
-      expires_at: form.expires_at ? new Date(form.expires_at).toISOString() : null,
-      lines
+      expires_at: form.expires_at
+        ? new Date(form.expires_at).toISOString()
+        : null,
+      lines,
     };
     if (selectedQuotationId) {
       await apiFetch<Quotation>(`/quotations/${selectedQuotationId}`, {
         method: "PATCH",
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
     } else {
       const created = await apiFetch<Quotation>("/quotations", {
         method: "POST",
-        body: JSON.stringify({ ...payload, company_id: companyId })
+        body: JSON.stringify({ ...payload, company_id: companyId }),
       });
       setSelectedQuotationId(created.id);
       navigate(`/quotations/${created.id}`);
@@ -277,7 +305,7 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
     if (!companyId || !selectedQuotationId) return;
     await apiFetch<Quotation>(`/quotations/${selectedQuotationId}`, {
       method: "PATCH",
-      body: JSON.stringify({ status })
+      body: JSON.stringify({ status }),
     });
     loadData(companyId);
   };
@@ -285,7 +313,9 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
   const sendQuotation = async () => {
     if (!companyId || !selectedQuotationId) return;
     try {
-      await apiFetch(`/quotations/${selectedQuotationId}/send`, { method: "POST" });
+      await apiFetch(`/quotations/${selectedQuotationId}/send`, {
+        method: "POST",
+      });
       loadData(companyId);
     } catch (err: any) {
       alert(err.message || "Failed to send quotation");
@@ -295,7 +325,9 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
   const acceptQuotation = async () => {
     if (!companyId || !selectedQuotationId) return;
     try {
-      await apiFetch(`/quotations/${selectedQuotationId}/accept`, { method: "POST" });
+      await apiFetch(`/quotations/${selectedQuotationId}/accept`, {
+        method: "POST",
+      });
       loadData(companyId);
     } catch (err: any) {
       alert(err.message || "Failed to accept quotation");
@@ -305,7 +337,9 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
   const rejectQuotation = async () => {
     if (!companyId || !selectedQuotationId) return;
     try {
-      await apiFetch(`/quotations/${selectedQuotationId}/reject`, { method: "POST" });
+      await apiFetch(`/quotations/${selectedQuotationId}/reject`, {
+        method: "POST",
+      });
       loadData(companyId);
     } catch (err: any) {
       alert(err.message || "Failed to reject quotation");
@@ -315,7 +349,10 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
   const convertToInvoice = async () => {
     if (!companyId || !selectedQuotationId) return;
     try {
-      const result = await apiFetch<{ invoice_id: number }>(`/quotations/${selectedQuotationId}/convert`, { method: "POST" });
+      const result = await apiFetch<{ invoice_id: number }>(
+        `/quotations/${selectedQuotationId}/convert`,
+        { method: "POST" },
+      );
       alert(`Invoice created successfully! Invoice ID: ${result.invoice_id}`);
       loadData(companyId);
     } catch (err: any) {
@@ -324,23 +361,28 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
   };
 
   const updateLine = (index: number, patch: Partial<QuotationLine>) => {
-    setLines((prev) => prev.map((line, idx) => (idx === index ? { ...line, ...patch } : line)));
+    setLines((prev) =>
+      prev.map((line, idx) => (idx === index ? { ...line, ...patch } : line)),
+    );
   };
 
   const addLine = () => setLines((prev) => [...prev, emptyLine()]);
 
-  const removeLine = (index: number) => setLines((prev) => prev.filter((_, idx) => idx !== index));
+  const removeLine = (index: number) =>
+    setLines((prev) => prev.filter((_, idx) => idx !== index));
 
   const statusLabel = selectedQuotation?.status ?? "draft";
   const canEdit = isEditing && statusLabel === "draft";
   const lineTotal = (line: QuotationLine) =>
-    line.quantity * line.unit_price * (1 + (line.vat_rate / 100));
+    line.quantity * line.unit_price * (1 + line.vat_rate / 100);
   const totalAmount = lines.reduce((sum, line) => sum + lineTotal(line), 0);
 
   const printQuotation = () => {
     if (!selectedQuotation) return;
     const company = selectedCompany;
-    const customer = contacts.find((c) => c.id === selectedQuotation.customer_id);
+    const customer = contacts.find(
+      (c) => c.id === selectedQuotation.customer_id,
+    );
     const formatAddressLines = (
       address?: string,
       city?: string,
@@ -372,14 +414,17 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
       /\n/g,
       "<br />",
     );
-    const layoutKey = (companySettings?.document_layout || "external_layout_standard").replace("external_layout_", "layout-");
+    const layoutKey = (
+      companySettings?.document_layout || "external_layout_standard"
+    ).replace("external_layout_", "layout-");
     const logoMarkup = companySettings?.logo_data
       ? `<img class="logo" src="${companySettings.logo_data}" alt="Logo" />`
       : "";
     const rows = (selectedQuotation.lines || [])
       .map((line) => {
         const total = lineTotal(line);
-        const qtyLabel = `${(line.quantity || 0).toFixed(2)} ${line.uom || ""}`.trim();
+        const qtyLabel =
+          `${(line.quantity || 0).toFixed(2)} ${line.uom || ""}`.trim();
         return `
           <tr>
             <td>${line.description || ""}</td>
@@ -391,7 +436,9 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
         `;
       })
       .join("");
-    const expires = selectedQuotation.expires_at ? new Date(selectedQuotation.expires_at).toLocaleDateString() : "—";
+    const expires = selectedQuotation.expires_at
+      ? new Date(selectedQuotation.expires_at).toLocaleDateString()
+      : "—";
     const dateLabel = new Date().toLocaleDateString();
     const html = `
       <html>
@@ -538,12 +585,12 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
       uom: productUom.trim() || "Units",
       initial_stock: Number(productInitialStock || 0),
       warehouse_id: productWarehouseId,
-      location_id: productLocationId
+      location_id: productLocationId,
     };
     try {
       await apiFetch<Product>("/products", {
         method: "POST",
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
       resetProductForm();
       setCreateProductOpen(false);
@@ -571,7 +618,7 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
     return (
       <div className="content">
         <div
-          className="o-control-panel"
+          className=""
           style={{
             display: "flex",
             width: "auto",
@@ -579,10 +626,7 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
             marginBottom: 24,
           }}
         >
-          <div className="o-breadcrumb">
-            <span className="o-breadcrumb-current">Quotations</span>
-          </div>
-          <div className="settings-search" style={{ width: "20vw" }}>
+          <div className="company-search">
             <input
               type="text"
               placeholder="Search company by name, VAT, or TIN"
@@ -604,7 +648,16 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
               onClick={() => setCompanyId(c.id)}
             >
               <div className="device-company-icon">
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="36"
+                  height="36"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
                   <path d="M9 22v-4h6v4" />
                   <line x1="8" y1="6" x2="8" y2="6.01" />
@@ -620,18 +673,38 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
               </div>
               <div className="device-company-info">
                 <div className="device-company-name">{c.name}</div>
-                {c.tin && <div className="device-company-detail">TIN: {c.tin}</div>}
-                {c.vat && <div className="device-company-detail">VAT: {c.vat}</div>}
+                {c.tin && (
+                  <div className="device-company-detail">TIN: {c.tin}</div>
+                )}
+                {c.vat && (
+                  <div className="device-company-detail">VAT: {c.vat}</div>
+                )}
               </div>
               <div className="device-company-arrow">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <polyline points="9 18 15 12 9 6" />
                 </svg>
               </div>
             </button>
           ))}
           {!filteredCompanies.length && (
-            <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: 40, color: "var(--muted)" }}>
+            <div
+              style={{
+                gridColumn: "1 / -1",
+                textAlign: "center",
+                padding: 40,
+                color: "var(--muted)",
+              }}
+            >
               {companyQuery.trim()
                 ? "No companies match your search."
                 : "No companies found. Create a company first."}
@@ -648,140 +721,387 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
         <>
           {/* Company breadcrumb for admin */}
           {isAdmin && companyId && (
-            <div className="o-control-panel" style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
+            <div
+              className="o-control-panel"
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: 16,
+              }}
+            >
               <div className="o-breadcrumb">
-                <span className="o-breadcrumb-item" style={{ cursor: "pointer" }} onClick={goBackToCompanies}>Quotations</span>
-                <span className="o-breadcrumb-separator">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+                <span
+                  className="o-breadcrumb-item"
+                  style={{ cursor: "pointer" }}
+                  onClick={goBackToCompanies}
+                >
+                  Quotations
                 </span>
-                <span className="o-breadcrumb-current">{selectedCompany?.name || "Company"}</span>
+                <span className="o-breadcrumb-separator">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
+                </span>
+                <span className="o-breadcrumb-current">
+                  {selectedCompany?.name || "Company"}
+                </span>
               </div>
             </div>
           )}
-        <div className="two-panel two-panel-left">
-          {/* Sidebar */}
-          <div className="o-sidebar">
-            <div className="o-sidebar-section">
-              <div className="o-sidebar-title">STATUS</div>
-              {[
-                { key: "", label: "ALL QUOTATIONS", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--indigo-500)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/></svg> },
-                { key: "draft", label: "DRAFT", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--amber-500)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> },
-                { key: "sent", label: "SENT", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--sky-500)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg> },
-                { key: "accepted", label: "ACCEPTED", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--emerald-500)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg> },
-                { key: "rejected", label: "REJECTED", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--red-500)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg> },
-                { key: "converted", label: "SALE ORDER", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--violet-500)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg> },
-              ].map((item) => (
-                <div
-                  key={item.key || "all"}
-                  className={`o-sidebar-item ${listStatus === item.key ? "active" : ""}`}
-                  onClick={() => setListStatus(item.key)}
-                  style={{ cursor: "pointer" }}
-                >
-                  <span style={{ display: "flex", alignItems: "center", gap: 10, opacity: 0.85 }}>{item.icon}<span style={{ letterSpacing: "0.5px", fontSize: 12, fontWeight: 500 }}>{item.label}</span></span>
-                  <span className="o-sidebar-count">
-                    {item.key === ""
-                      ? quotations.length
-                      : quotations.filter((q) => q.status === item.key).length}
+          <div className="two-panel two-panel-left">
+            {/* Sidebar */}
+            <div className="o-sidebar">
+              <div className="o-sidebar-section">
+                <div className="o-sidebar-title">STATUS</div>
+                {[
+                  {
+                    key: "",
+                    label: "ALL QUOTATIONS",
+                    icon: (
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="var(--indigo-500)"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <path d="M14 2v6h6" />
+                        <path d="M16 13H8" />
+                        <path d="M16 17H8" />
+                      </svg>
+                    ),
+                  },
+                  {
+                    key: "draft",
+                    label: "DRAFT",
+                    icon: (
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="var(--amber-500)"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                      </svg>
+                    ),
+                  },
+                  {
+                    key: "sent",
+                    label: "SENT",
+                    icon: (
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="var(--sky-500)"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="m22 2-7 20-4-9-9-4Z" />
+                        <path d="M22 2 11 13" />
+                      </svg>
+                    ),
+                  },
+                  {
+                    key: "accepted",
+                    label: "ACCEPTED",
+                    icon: (
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="var(--emerald-500)"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                        <path d="m9 11 3 3L22 4" />
+                      </svg>
+                    ),
+                  },
+                  {
+                    key: "rejected",
+                    label: "REJECTED",
+                    icon: (
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="var(--red-500)"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="m15 9-6 6" />
+                        <path d="m9 9 6 6" />
+                      </svg>
+                    ),
+                  },
+                  {
+                    key: "converted",
+                    label: "SALE ORDER",
+                    icon: (
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="var(--violet-500)"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <circle cx="8" cy="21" r="1" />
+                        <circle cx="19" cy="21" r="1" />
+                        <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+                      </svg>
+                    ),
+                  },
+                ].map((item) => (
+                  <div
+                    key={item.key || "all"}
+                    className={`o-sidebar-item ${listStatus === item.key ? "active" : ""}`}
+                    onClick={() => setListStatus(item.key)}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <span
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        opacity: 0.85,
+                      }}
+                    >
+                      {item.icon}
+                      <span
+                        style={{
+                          letterSpacing: "0.5px",
+                          fontSize: 12,
+                          fontWeight: 500,
+                        }}
+                      >
+                        {item.label}
+                      </span>
+                    </span>
+                    <span className="o-sidebar-count">
+                      {item.key === ""
+                        ? quotations.length
+                        : quotations.filter((q) => q.status === item.key)
+                            .length}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <div className="content-top-bar">
+                <div className="top-search">
+                  <span className="search-icon">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <circle cx="11" cy="11" r="8" />
+                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
                   </span>
+                  <input
+                    placeholder="Search quotations…"
+                    value={listSearch}
+                    onChange={(e) => setListSearch(e.target.value)}
+                  />
                 </div>
-              ))}
-            </div>
-
-          </div>
-
-          <div>
-            <div className="content-top-bar">
-              <div className="top-search">
-                <span className="search-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                </span>
-                <input
-                  placeholder="Search quotations…"
-                  value={listSearch}
-                  onChange={(e) => setListSearch(e.target.value)}
-                />
-              </div>
-              <button
-                className="o-btn o-btn-secondary"
-                style={{ display: "flex", alignItems: "center", gap: 6 }}
-                onClick={() => {
-                  const headers = ["Reference", "Customer", "Status", "Payment Terms", "Expiry Date", "Total"];
-                  const rows = filteredQuotations.map((q) => {
-                    const customer = contacts.find((c) => c.id === q.customer_id);
-                    const total = q.lines?.reduce((sum, line) => sum + lineTotal(line), 0) || 0;
-                    return [
-                      q.reference,
-                      customer?.name || "",
-                      q.status === "converted" ? "Sale Order" : q.status,
-                      q.payment_terms || "",
-                      q.expires_at ? new Date(q.expires_at).toLocaleDateString() : "",
-                      total.toFixed(2),
+                <button
+                  className="o-btn o-btn-secondary"
+                  style={{ display: "flex", alignItems: "center", gap: 6 }}
+                  onClick={() => {
+                    const headers = [
+                      "Reference",
+                      "Customer",
+                      "Status",
+                      "Payment Terms",
+                      "Expiry Date",
+                      "Total",
                     ];
-                  });
-                  const csvContent = [headers, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
-                  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-                  const link = document.createElement("a");
-                  link.href = URL.createObjectURL(blob);
-                  link.download = `quotations_${new Date().toISOString().split("T")[0]}.csv`;
-                  link.click();
-                }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Export
-              </button>
-              <button
-                className="btn-create"
-                onClick={() => {
-                  startNew();
-                  navigate("/quotations/new");
-                }}
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                New Quotation
-              </button>
-            </div>
-            <div className="card shadow-sm">
-              <div className="card-body p-0">
-                <div className="table-responsive">
-                  <table className="table table-hover align-middle mb-0">
-                    <thead className="table-light">
-                      <tr>
-                        <th>Reference</th>
-                        <th>Customer</th>
-                        <th>Status</th>
-                        <th className="text-end">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredQuotations.map((q) => (
-                        <tr key={q.id} role="button" onClick={() => navigate(`/quotations/${q.id}`)}>
-                          <td>
-                            <div className="fw-semibold">{q.reference}</div>
-                          </td>
-                          <td>{contacts.find((c) => c.id === q.customer_id)?.name ?? ""}</td>
-                          <td>
-                            <span className={`badge ${q.status === "accepted" ? "bg-success" : q.status === "sent" ? "bg-info" : q.status === "rejected" ? "bg-danger" : q.status === "converted" ? "bg-primary" : "bg-secondary"}`}>
-                              {q.status === "converted" ? "sale order" : q.status}
-                            </span>
-                          </td>
-                          <td className="text-end fw-semibold">{q.lines?.reduce((sum, line) => sum + lineTotal(line), 0).toFixed(2)}</td>
+                    const rows = filteredQuotations.map((q) => {
+                      const customer = contacts.find(
+                        (c) => c.id === q.customer_id,
+                      );
+                      const total =
+                        q.lines?.reduce(
+                          (sum, line) => sum + lineTotal(line),
+                          0,
+                        ) || 0;
+                      return [
+                        q.reference,
+                        customer?.name || "",
+                        q.status === "converted" ? "Sale Order" : q.status,
+                        q.payment_terms || "",
+                        q.expires_at
+                          ? new Date(q.expires_at).toLocaleDateString()
+                          : "",
+                        total.toFixed(2),
+                      ];
+                    });
+                    const csvContent = [headers, ...rows]
+                      .map((row) =>
+                        row
+                          .map(
+                            (cell) => `"${String(cell).replace(/"/g, '""')}"`,
+                          )
+                          .join(","),
+                      )
+                      .join("\n");
+                    const blob = new Blob([csvContent], {
+                      type: "text/csv;charset=utf-8;",
+                    });
+                    const link = document.createElement("a");
+                    link.href = URL.createObjectURL(blob);
+                    link.download = `quotations_${new Date().toISOString().split("T")[0]}.csv`;
+                    link.click();
+                  }}
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                  Export
+                </button>
+                <button
+                  className="btn-create"
+                  onClick={() => {
+                    startNew();
+                    navigate("/quotations/new");
+                  }}
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                  New Quotation
+                </button>
+              </div>
+              <div className="card shadow-sm">
+                <div className="card-body p-0">
+                  <div className="table-responsive">
+                    <table className="table table-hover align-middle mb-0">
+                      <thead className="table-light">
+                        <tr>
+                          <th>Reference</th>
+                          <th>Customer</th>
+                          <th>Status</th>
+                          <th className="text-end">Total</th>
                         </tr>
-                      ))}
-                    </tbody>
-                    <tfoot>
-                      <tr style={{ background: "var(--slate-50)", fontWeight: 600 }}>
-                        <td colSpan={3} className="text-end">Grand Total:</td>
-                        <td className="text-end">
-                          {filteredQuotations.reduce((sum, q) => sum + (q.lines?.reduce((s, line) => s + lineTotal(line), 0) || 0), 0).toFixed(2)}
-                        </td>
-                      </tr>
-                    </tfoot>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {filteredQuotations.map((q) => (
+                          <tr
+                            key={q.id}
+                            role="button"
+                            onClick={() => navigate(`/quotations/${q.id}`)}
+                          >
+                            <td>
+                              <div className="fw-semibold">{q.reference}</div>
+                            </td>
+                            <td>
+                              {contacts.find((c) => c.id === q.customer_id)
+                                ?.name ?? ""}
+                            </td>
+                            <td>
+                              <span
+                                className={`badge ${q.status === "accepted" ? "bg-success" : q.status === "sent" ? "bg-info" : q.status === "rejected" ? "bg-danger" : q.status === "converted" ? "bg-primary" : "bg-secondary"}`}
+                              >
+                                {q.status === "converted"
+                                  ? "sale order"
+                                  : q.status}
+                              </span>
+                            </td>
+                            <td className="text-end fw-semibold">
+                              {q.lines
+                                ?.reduce(
+                                  (sum, line) => sum + lineTotal(line),
+                                  0,
+                                )
+                                .toFixed(2)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot>
+                        <tr
+                          style={{
+                            background: "var(--slate-50)",
+                            fontWeight: 600,
+                          }}
+                        >
+                          <td colSpan={3} className="text-end">
+                            Grand Total:
+                          </td>
+                          <td className="text-end">
+                            {filteredQuotations
+                              .reduce(
+                                (sum, q) =>
+                                  sum +
+                                  (q.lines?.reduce(
+                                    (s, line) => s + lineTotal(line),
+                                    0,
+                                  ) || 0),
+                                0,
+                              )
+                              .toFixed(2)}
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
         </>
       )}
 
@@ -789,9 +1109,20 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
         <div>
           <div className="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
             <div className="d-flex align-items-center gap-2">
-              <button className="btn btn-sm btn-light border" onClick={() => navigate("/quotations")}>← Back</button>
-              <h4 className="fw-bold mb-0">{mode === "new" ? "New Quotation" : selectedQuotation?.reference || "Quotation"}</h4>
-              <span className={`badge ms-2 ${statusLabel === "accepted" ? "bg-success" : statusLabel === "sent" ? "bg-info" : statusLabel === "rejected" ? "bg-danger" : statusLabel === "converted" ? "bg-primary" : "bg-secondary"}`}>
+              <button
+                className="btn btn-sm btn-light border"
+                onClick={() => navigate("/quotations")}
+              >
+                ← Back
+              </button>
+              <h4 className="fw-bold mb-0">
+                {mode === "new"
+                  ? "New Quotation"
+                  : selectedQuotation?.reference || "Quotation"}
+              </h4>
+              <span
+                className={`badge ms-2 ${statusLabel === "accepted" ? "bg-success" : statusLabel === "sent" ? "bg-info" : statusLabel === "rejected" ? "bg-danger" : statusLabel === "converted" ? "bg-primary" : "bg-secondary"}`}
+              >
                 {statusLabel === "converted" ? "Sale Order" : statusLabel}
               </span>
             </div>
@@ -807,19 +1138,64 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
               </button>
               {isEditing ? (
                 <>
-                  <button className="btn btn-sm btn-primary" onClick={saveQuotation} disabled={saving}>Save</button>
-                  <button className="btn btn-sm btn-light border" onClick={() => setIsEditing(false)}>Discard</button>
+                  <button
+                    className="btn btn-sm btn-primary"
+                    onClick={saveQuotation}
+                    disabled={saving}
+                  >
+                    Save
+                  </button>
+                  <button
+                    className="btn btn-sm btn-light border"
+                    onClick={() => setIsEditing(false)}
+                  >
+                    Discard
+                  </button>
                 </>
               ) : (
-                <button className="btn btn-sm btn-light border" onClick={() => setIsEditing(true)}>Edit</button>
+                <button
+                  className="btn btn-sm btn-light border"
+                  onClick={() => setIsEditing(true)}
+                >
+                  Edit
+                </button>
               )}
               {selectedQuotationId ? (
                 <>
-                  <button className="btn btn-sm btn-light border" onClick={sendQuotation} disabled={statusLabel !== "draft"}>Send</button>
-                  <button className="btn btn-sm btn-light border" onClick={acceptQuotation} disabled={statusLabel !== "sent"}>Accept</button>
-                  <button className="btn btn-sm btn-light border" onClick={rejectQuotation} disabled={statusLabel !== "draft" && statusLabel !== "sent"}>Reject</button>
-                  <button className="btn btn-sm btn-primary" onClick={convertToInvoice} disabled={statusLabel !== "accepted"}>Create Sale Order</button>
-                  <button className="btn btn-sm btn-light border" onClick={printQuotation}>Print</button>
+                  <button
+                    className="btn btn-sm btn-light border"
+                    onClick={sendQuotation}
+                    disabled={statusLabel !== "draft"}
+                  >
+                    Send
+                  </button>
+                  <button
+                    className="btn btn-sm btn-light border"
+                    onClick={acceptQuotation}
+                    disabled={statusLabel !== "sent"}
+                  >
+                    Accept
+                  </button>
+                  <button
+                    className="btn btn-sm btn-light border"
+                    onClick={rejectQuotation}
+                    disabled={statusLabel !== "draft" && statusLabel !== "sent"}
+                  >
+                    Reject
+                  </button>
+                  <button
+                    className="btn btn-sm btn-primary"
+                    onClick={convertToInvoice}
+                    disabled={statusLabel !== "accepted"}
+                  >
+                    Create Sale Order
+                  </button>
+                  <button
+                    className="btn btn-sm btn-light border"
+                    onClick={printQuotation}
+                  >
+                    Print
+                  </button>
                 </>
               ) : null}
             </div>
@@ -848,7 +1224,12 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
                   <select
                     className="form-select input-underline"
                     value={form.customer_id ?? ""}
-                    onChange={(e) => setForm((prev) => ({ ...prev, customer_id: Number(e.target.value) }))}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        customer_id: Number(e.target.value),
+                      }))
+                    }
                     disabled={!canEdit}
                   >
                     {contacts.map((c) => (
@@ -859,11 +1240,18 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
                   </select>
                 </div>
                 <div className="col-md-6">
-                  <label className="form-label fw-semibold">Payment Terms</label>
+                  <label className="form-label fw-semibold">
+                    Payment Terms
+                  </label>
                   <input
                     className="form-control input-underline"
                     value={form.payment_terms}
-                    onChange={(e) => setForm((prev) => ({ ...prev, payment_terms: e.target.value }))}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        payment_terms: e.target.value,
+                      }))
+                    }
                     disabled={!canEdit}
                   />
                 </div>
@@ -873,7 +1261,12 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
                     className="form-control input-underline"
                     type="date"
                     value={form.expires_at}
-                    onChange={(e) => setForm((prev) => ({ ...prev, expires_at: e.target.value }))}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        expires_at: e.target.value,
+                      }))
+                    }
                     disabled={!canEdit}
                   />
                 </div>
@@ -883,8 +1276,18 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
                 <div className="fw-semibold">Quotation Lines</div>
                 {canEdit && (
                   <div className="d-flex gap-2">
-                    <button className="btn btn-sm btn-light border" onClick={addLine}>+ Add Line</button>
-                    <button className="btn btn-sm btn-light border" onClick={() => setCreateProductOpen(true)}>+ New Product</button>
+                    <button
+                      className="btn btn-sm btn-light border"
+                      onClick={addLine}
+                    >
+                      + Add Line
+                    </button>
+                    <button
+                      className="btn btn-sm btn-light border"
+                      onClick={() => setCreateProductOpen(true)}
+                    >
+                      + New Product
+                    </button>
                   </div>
                 )}
               </div>
@@ -904,8 +1307,12 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
                   </thead>
                   <tbody>
                     {lines.map((line, index) => {
-                      const product = products.find((p) => p.id === line.product_id);
-                      const displayUom = normalizeUom(product?.uom || line.uom || "Units");
+                      const product = products.find(
+                        (p) => p.id === line.product_id,
+                      );
+                      const displayUom = normalizeUom(
+                        product?.uom || line.uom || "Units",
+                      );
                       return (
                         <tr key={`${index}-${line.product_id ?? "new"}`}>
                           <td>
@@ -913,13 +1320,15 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
                               className="form-select form-select-sm"
                               value={line.product_id ?? ""}
                               onChange={(e) => {
-                                const selected = products.find((p) => p.id === Number(e.target.value));
+                                const selected = products.find(
+                                  (p) => p.id === Number(e.target.value),
+                                );
                                 updateLine(index, {
                                   product_id: Number(e.target.value),
                                   description: selected?.name ?? "",
                                   unit_price: selected?.sale_price ?? 0,
                                   vat_rate: selected?.tax_rate ?? 0,
-                                  uom: selected?.uom || "Units"
+                                  uom: selected?.uom || "Units",
                                 });
                               }}
                               disabled={!canEdit}
@@ -936,7 +1345,11 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
                             <input
                               className="form-control form-control-sm"
                               value={line.description}
-                              onChange={(e) => updateLine(index, { description: e.target.value })}
+                              onChange={(e) =>
+                                updateLine(index, {
+                                  description: e.target.value,
+                                })
+                              }
                               disabled={!canEdit}
                             />
                           </td>
@@ -945,7 +1358,11 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
                               className="form-control form-control-sm text-end"
                               type="number"
                               value={line.quantity}
-                              onChange={(e) => updateLine(index, { quantity: Number(e.target.value) })}
+                              onChange={(e) =>
+                                updateLine(index, {
+                                  quantity: Number(e.target.value),
+                                })
+                              }
                               disabled={!canEdit}
                             />
                           </td>
@@ -961,7 +1378,11 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
                               className="form-control form-control-sm text-end"
                               type="number"
                               value={line.unit_price}
-                              onChange={(e) => updateLine(index, { unit_price: Number(e.target.value) })}
+                              onChange={(e) =>
+                                updateLine(index, {
+                                  unit_price: Number(e.target.value),
+                                })
+                              }
                               disabled={!canEdit}
                             />
                           </td>
@@ -970,14 +1391,24 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
                               className="form-control form-control-sm text-end input-ghost"
                               type="number"
                               value={line.vat_rate}
-                              onChange={(e) => updateLine(index, { vat_rate: Number(e.target.value) })}
+                              onChange={(e) =>
+                                updateLine(index, {
+                                  vat_rate: Number(e.target.value),
+                                })
+                              }
                               disabled={!canEdit}
                             />
                           </td>
-                          <td className="text-end fw-semibold">{lineTotal(line).toFixed(2)}</td>
+                          <td className="text-end fw-semibold">
+                            {lineTotal(line).toFixed(2)}
+                          </td>
                           {canEdit && (
                             <td className="text-center">
-                              <button className="btn btn-sm btn-light border" onClick={() => removeLine(index)} disabled={lines.length === 1}>
+                              <button
+                                className="btn btn-sm btn-light border"
+                                onClick={() => removeLine(index)}
+                                disabled={lines.length === 1}
+                              >
                                 ✕
                               </button>
                             </td>
@@ -990,79 +1421,167 @@ export default function QuotationsPage({ mode = "list" }: { mode?: QuotationsPag
               </div>
               <div className="d-flex justify-content-between align-items-center mt-2">
                 <div />
-                <div className="fw-semibold">Total: {totalAmount.toFixed(2)}</div>
+                <div className="fw-semibold">
+                  Total: {totalAmount.toFixed(2)}
+                </div>
               </div>
             </div>
           </div>
           {createProductOpen && (
             <>
-              <div className="modal-backdrop fade show" style={{ zIndex: 1040 }} />
+              <div
+                className="modal-backdrop fade show"
+                style={{ zIndex: 1040 }}
+              />
               <div
                 className="modal"
                 tabIndex={-1}
                 role="dialog"
-                style={{ position: "fixed", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem", zIndex: 1050, background: "transparent" }}
-                onClick={(e) => { if (e.target === e.currentTarget) setCreateProductOpen(false); }}
+                style={{
+                  position: "fixed",
+                  inset: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: "1rem",
+                  zIndex: 1050,
+                  background: "transparent",
+                }}
+                onClick={(e) => {
+                  if (e.target === e.currentTarget) setCreateProductOpen(false);
+                }}
               >
-                <div className="modal-dialog modal-lg modal-dialog-centered" style={{ margin: 0, width: "100%", maxWidth: 720 }}>
+                <div
+                  className="modal-dialog modal-lg modal-dialog-centered"
+                  style={{ margin: 0, width: "100%", maxWidth: 720 }}
+                >
                   <div className="modal-content shadow-lg border-0">
                     <div className="modal-header border-bottom">
-                      <h5 className="modal-title fw-semibold">Create Product</h5>
-                      <button type="button" className="btn-close" onClick={() => setCreateProductOpen(false)} />
+                      <h5 className="modal-title fw-semibold">
+                        Create Product
+                      </h5>
+                      <button
+                        type="button"
+                        className="btn-close"
+                        onClick={() => setCreateProductOpen(false)}
+                      />
                     </div>
                     <div className="modal-body py-4">
                       <div className="row g-3">
                         <div className="col-md-6">
                           <label className="form-label">Product Name</label>
-                          <input className="form-control" value={productName} onChange={(e) => setProductName(e.target.value)} />
+                          <input
+                            className="form-control"
+                            value={productName}
+                            onChange={(e) => setProductName(e.target.value)}
+                          />
                         </div>
                         <div className="col-md-3">
                           <label className="form-label">Sale Price</label>
-                          <input className="form-control" type="number" value={productPrice} onChange={(e) => setProductPrice(e.target.value)} />
+                          <input
+                            className="form-control"
+                            type="number"
+                            value={productPrice}
+                            onChange={(e) => setProductPrice(e.target.value)}
+                          />
                         </div>
                         <div className="col-md-3">
                           <label className="form-label">Tax Rate %</label>
-                          <input className="form-control" type="number" value={productTaxRate} onChange={(e) => setProductTaxRate(e.target.value)} />
+                          <input
+                            className="form-control"
+                            type="number"
+                            value={productTaxRate}
+                            onChange={(e) => setProductTaxRate(e.target.value)}
+                          />
                         </div>
                         <div className="col-md-3">
                           <label className="form-label">Reference / SKU</label>
-                          <input className="form-control" value={productReference} onChange={(e) => setProductReference(e.target.value)} placeholder="e.g., PROD-001" />
+                          <input
+                            className="form-control"
+                            value={productReference}
+                            onChange={(e) =>
+                              setProductReference(e.target.value)
+                            }
+                            placeholder="e.g., PROD-001"
+                          />
                         </div>
                         <div className="col-md-3">
                           <label className="form-label">HS Code</label>
-                          <input className="form-control" value={productHsCode} onChange={(e) => setProductHsCode(e.target.value)} placeholder="Harmonized code" />
+                          <input
+                            className="form-control"
+                            value={productHsCode}
+                            onChange={(e) => setProductHsCode(e.target.value)}
+                            placeholder="Harmonized code"
+                          />
                         </div>
                         <div className="col-md-3">
                           <label className="form-label">UoM</label>
-                          <input className="form-control" value={productUom} onChange={(e) => setProductUom(e.target.value)} />
+                          <input
+                            className="form-control"
+                            value={productUom}
+                            onChange={(e) => setProductUom(e.target.value)}
+                          />
                         </div>
                         <div className="col-md-3">
                           <label className="form-label">Initial Stock</label>
-                          <input className="form-control" type="number" value={productInitialStock} onChange={(e) => setProductInitialStock(e.target.value)} />
+                          <input
+                            className="form-control"
+                            type="number"
+                            value={productInitialStock}
+                            onChange={(e) =>
+                              setProductInitialStock(e.target.value)
+                            }
+                          />
                         </div>
                         <div className="col-md-3">
                           <label className="form-label">Warehouse</label>
-                          <select className="form-select" value={productWarehouseId ?? ""} onChange={(e) => setProductWarehouseId(Number(e.target.value))}>
+                          <select
+                            className="form-select"
+                            value={productWarehouseId ?? ""}
+                            onChange={(e) =>
+                              setProductWarehouseId(Number(e.target.value))
+                            }
+                          >
                             <option value="">Select warehouse</option>
                             {warehouses.map((w) => (
-                              <option key={w.id} value={w.id}>{w.name}</option>
+                              <option key={w.id} value={w.id}>
+                                {w.name}
+                              </option>
                             ))}
                           </select>
                         </div>
                         <div className="col-md-3">
                           <label className="form-label">Location</label>
-                          <select className="form-select" value={productLocationId ?? ""} onChange={(e) => setProductLocationId(Number(e.target.value))}>
+                          <select
+                            className="form-select"
+                            value={productLocationId ?? ""}
+                            onChange={(e) =>
+                              setProductLocationId(Number(e.target.value))
+                            }
+                          >
                             <option value="">Select location</option>
                             {locations.map((l) => (
-                              <option key={l.id} value={l.id}>{l.name}</option>
+                              <option key={l.id} value={l.id}>
+                                {l.name}
+                              </option>
                             ))}
                           </select>
                         </div>
                       </div>
                     </div>
                     <div className="modal-footer border-top">
-                      <button className="btn btn-light border" onClick={() => setCreateProductOpen(false)}>Cancel</button>
-                      <button className="btn btn-primary" onClick={createProduct}>Create Product</button>
+                      <button
+                        className="btn btn-light border"
+                        onClick={() => setCreateProductOpen(false)}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        className="btn btn-primary"
+                        onClick={createProduct}
+                      >
+                        Create Product
+                      </button>
                     </div>
                   </div>
                 </div>

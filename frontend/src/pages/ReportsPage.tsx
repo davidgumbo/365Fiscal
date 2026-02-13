@@ -210,7 +210,9 @@ export default function ReportsPage() {
   const { me } = useMe();
   const allCompanies = useCompanies();
   const isAdmin = Boolean(me?.is_admin);
-  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(
+    null,
+  );
   const [companyQuery, setCompanyQuery] = useState("");
 
   // Portal users auto-select their first company
@@ -221,7 +223,8 @@ export default function ReportsPage() {
   }, [isAdmin, me?.company_ids, selectedCompanyId]);
 
   const companyId = selectedCompanyId;
-  const company = me?.companies?.find((c) => c.id === companyId) ||
+  const company =
+    me?.companies?.find((c) => c.id === companyId) ||
     allCompanies.find((c) => c.id === companyId);
 
   const filteredCompanies = useMemo(() => {
@@ -231,7 +234,7 @@ export default function ReportsPage() {
       (c) =>
         c.name.toLowerCase().includes(q) ||
         (c.tin && c.tin.toLowerCase().includes(q)) ||
-        (c.vat && c.vat.toLowerCase().includes(q))
+        (c.vat && c.vat.toLowerCase().includes(q)),
     );
   }, [allCompanies, companyQuery]);
 
@@ -618,7 +621,13 @@ export default function ReportsPage() {
     } finally {
       setLoading(false);
     }
-  }, [activeReport, loadSalesReport, loadStockReport, loadPaymentReport, loadVatReport]);
+  }, [
+    activeReport,
+    loadSalesReport,
+    loadStockReport,
+    loadPaymentReport,
+    loadVatReport,
+  ]);
 
   useEffect(() => {
     if (!companyId || !dateRange.from || !dateRange.to) return;
@@ -887,7 +896,7 @@ export default function ReportsPage() {
     return (
       <div className="content">
         <div
-          className="o-control-panel"
+          className=""
           style={{
             display: "flex",
             width: "auto",
@@ -895,10 +904,7 @@ export default function ReportsPage() {
             marginBottom: 24,
           }}
         >
-          <div className="o-breadcrumb">
-            <span className="o-breadcrumb-current">Reports</span>
-          </div>
-          <div className="settings-search" style={{ width: "20vw" }}>
+          <div className="company-search">
             <input
               type="text"
               placeholder="Search company by name, VAT, or TIN"
@@ -920,7 +926,16 @@ export default function ReportsPage() {
               onClick={() => setSelectedCompanyId(c.id)}
             >
               <div className="device-company-icon">
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="36"
+                  height="36"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
                   <path d="M9 22v-4h6v4" />
                   <line x1="8" y1="6" x2="8" y2="6.01" />
@@ -936,18 +951,38 @@ export default function ReportsPage() {
               </div>
               <div className="device-company-info">
                 <div className="device-company-name">{c.name}</div>
-                {c.tin && <div className="device-company-detail">TIN: {c.tin}</div>}
-                {c.vat && <div className="device-company-detail">VAT: {c.vat}</div>}
+                {c.tin && (
+                  <div className="device-company-detail">TIN: {c.tin}</div>
+                )}
+                {c.vat && (
+                  <div className="device-company-detail">VAT: {c.vat}</div>
+                )}
               </div>
               <div className="device-company-arrow">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <polyline points="9 18 15 12 9 6" />
                 </svg>
               </div>
             </button>
           ))}
           {!filteredCompanies.length && (
-            <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: 40, color: "var(--muted)" }}>
+            <div
+              style={{
+                gridColumn: "1 / -1",
+                textAlign: "center",
+                padding: 40,
+                color: "var(--muted)",
+              }}
+            >
               {companyQuery.trim()
                 ? "No companies match your search."
                 : "No companies found. Create a company first."}
@@ -962,13 +997,39 @@ export default function ReportsPage() {
     <div className="reports-page">
       {/* Company breadcrumb for admin */}
       {isAdmin && companyId && (
-        <div className="o-control-panel" style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
+        <div
+          className="o-control-panel"
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            marginBottom: 16,
+          }}
+        >
           <div className="o-breadcrumb">
-            <span className="o-breadcrumb-item" style={{ cursor: "pointer" }} onClick={goBackToCompanies}>Reports</span>
-            <span className="o-breadcrumb-separator">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+            <span
+              className="o-breadcrumb-item"
+              style={{ cursor: "pointer" }}
+              onClick={goBackToCompanies}
+            >
+              Reports
             </span>
-            <span className="o-breadcrumb-current">{company?.name || "Company"}</span>
+            <span className="o-breadcrumb-separator">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </span>
+            <span className="o-breadcrumb-current">
+              {company?.name || "Company"}
+            </span>
           </div>
         </div>
       )}
@@ -978,10 +1039,86 @@ export default function ReportsPage() {
           <div className="o-sidebar-section">
             <div className="o-sidebar-title">REPORTS</div>
             {[
-              { key: "sales", label: "SALES REPORT", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--emerald-500)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg> },
-              { key: "stock", label: "STOCK REPORT", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--amber-500)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> },
-              { key: "payments", label: "PAYMENTS REPORT", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue-500)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><path d="M2 10h20"/></svg> },
-              { key: "vat", label: "VAT REPORT", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--violet-500)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg> },
+              {
+                key: "sales",
+                label: "SALES REPORT",
+                icon: (
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="var(--emerald-500)"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M3 3v18h18" />
+                    <path d="m19 9-5 5-4-4-3 3" />
+                  </svg>
+                ),
+              },
+              {
+                key: "stock",
+                label: "STOCK REPORT",
+                icon: (
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="var(--amber-500)"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="m7.5 4.27 9 5.15" />
+                    <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+                    <path d="m3.3 7 8.7 5 8.7-5" />
+                    <path d="M12 22V12" />
+                  </svg>
+                ),
+              },
+              {
+                key: "payments",
+                label: "PAYMENTS REPORT",
+                icon: (
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="var(--blue-500)"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect width="20" height="14" x="2" y="5" rx="2" />
+                    <path d="M2 10h20" />
+                  </svg>
+                ),
+              },
+              {
+                key: "vat",
+                label: "VAT REPORT",
+                icon: (
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="var(--violet-500)"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />
+                    <path d="M13 5v2" />
+                    <path d="M13 17v2" />
+                    <path d="M13 11v2" />
+                  </svg>
+                ),
+              },
             ].map((item) => (
               <div
                 key={item.key}
@@ -989,7 +1126,25 @@ export default function ReportsPage() {
                 onClick={() => setActiveReport(item.key as ReportType)}
                 style={{ cursor: "pointer" }}
               >
-                <span style={{ display: "flex", alignItems: "center", gap: 10, opacity: 0.85 }}>{item.icon}<span style={{ letterSpacing: "0.5px", fontSize: 12, fontWeight: 500 }}>{item.label}</span></span>
+                <span
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    opacity: 0.85,
+                  }}
+                >
+                  {item.icon}
+                  <span
+                    style={{
+                      letterSpacing: "0.5px",
+                      fontSize: 12,
+                      fontWeight: 500,
+                    }}
+                  >
+                    {item.label}
+                  </span>
+                </span>
               </div>
             ))}
           </div>
@@ -1005,7 +1160,9 @@ export default function ReportsPage() {
                 className="form-control form-control-sm"
                 style={{ width: 140 }}
                 value={dateRange.from}
-                onChange={(e) => setDateRange((prev) => ({ ...prev, from: e.target.value }))}
+                onChange={(e) =>
+                  setDateRange((prev) => ({ ...prev, from: e.target.value }))
+                }
               />
               <label style={{ fontSize: 13, fontWeight: 500 }}>To:</label>
               <input
@@ -1013,7 +1170,9 @@ export default function ReportsPage() {
                 className="form-control form-control-sm"
                 style={{ width: 140 }}
                 value={dateRange.to}
-                onChange={(e) => setDateRange((prev) => ({ ...prev, to: e.target.value }))}
+                onChange={(e) =>
+                  setDateRange((prev) => ({ ...prev, to: e.target.value }))
+                }
               />
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -1023,7 +1182,20 @@ export default function ReportsPage() {
                 onClick={loadReport}
                 disabled={loading}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="23 4 23 10 17 10" />
+                  <polyline points="1 20 1 14 7 14" />
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                </svg>
                 {loading ? "Loading..." : "Refresh"}
               </button>
               <button
@@ -1032,7 +1204,20 @@ export default function ReportsPage() {
                 onClick={exportCSV}
                 disabled={loading}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
                 Export CSV
               </button>
               <button
@@ -1041,548 +1226,574 @@ export default function ReportsPage() {
                 onClick={exportPDF}
                 disabled={loading}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="16" y1="13" x2="8" y2="13" />
+                  <line x1="16" y1="17" x2="8" y2="17" />
+                  <polyline points="10 9 9 9 8 9" />
+                </svg>
                 Export PDF
               </button>
             </div>
           </div>
 
-      {/* Error */}
-      {error && (
-        <div className="alert alert-danger" style={{ margin: "16px 0" }}>
-          {error}
-          <button
-            onClick={() => setError("")}
-            style={{
-              float: "right",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              fontSize: 18,
-            }}
-          >
-            ×
-          </button>
-        </div>
-      )}
-
-      {/* Loading */}
-      {loading && (
-        <div
-          style={{
-            textAlign: "center",
-            padding: "60px 20px",
-            color: "var(--gray-500)",
-          }}
-        >
-          Loading report data...
-        </div>
-      )}
-
-      {/* ─── Sales Report ─── */}
-      {!loading && activeReport === "sales" && salesReport && (
-        <div className="report-content">
-          <div className="metrics-row">
-            <MetricCard
-              label="Total Sales"
-              value={formatCurrency(salesReport.total_sales)}
-            />
-            <MetricCard
-              label="Total Invoices"
-              value={String(salesReport.total_invoices)}
-            />
-            <MetricCard
-              label="Paid Invoices"
-              value={String(salesReport.paid_invoices)}
-              variant="success"
-            />
-            <MetricCard
-              label="Pending Invoices"
-              value={String(salesReport.pending_invoices)}
-              variant="warning"
-            />
-            <MetricCard
-              label="Total Tax"
-              value={formatCurrency(salesReport.total_tax)}
-            />
-            <MetricCard
-              label="Avg Invoice"
-              value={formatCurrency(salesReport.average_invoice)}
-            />
-          </div>
-
-          <div className="report-grid">
-            <div className="report-card">
-              <h3>Top Selling Products</h3>
-              {salesReport.top_products.length === 0 ? (
-                <p className="empty-state">No product sales in this period.</p>
-              ) : (
-                <table className="report-table">
-                  <thead>
-                    <tr>
-                      <th>Product</th>
-                      <th className="text-right">Qty Sold</th>
-                      <th className="text-right">Revenue</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {salesReport.top_products.map((p, i) => (
-                      <tr key={i}>
-                        <td>{p.name}</td>
-                        <td className="text-right">{p.quantity}</td>
-                        <td className="text-right">
-                          {formatCurrency(p.revenue)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-
-            <div className="report-card">
-              <h3>Sales Trend</h3>
-              {salesReport.sales_by_month.length === 0 ? (
-                <p className="empty-state">No sales data in this period.</p>
-              ) : (
-                <div className="chart-container">
-                  <div className="bar-chart">
-                    {salesReport.sales_by_month.map((item, i) => (
-                      <div
-                        key={i}
-                        className="bar-item"
-                        title={`${item.month}: ${formatCurrency(item.amount)} (${item.count} invoices)`}
-                      >
-                        <div className="bar-value">
-                          {formatCurrency(item.amount)}
-                        </div>
-                        <div
-                          className="bar"
-                          style={{
-                            height: `${(item.amount / maxBarValue) * 100}%`,
-                          }}
-                        />
-                        <span className="bar-label">{item.month}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ─── Stock Report ─── */}
-      {!loading && activeReport === "stock" && stockReport && (
-        <div className="report-content">
-          <div className="metrics-row">
-            <MetricCard
-              label="Active Products"
-              value={String(stockReport.total_products)}
-            />
-            <MetricCard
-              label="Inventory Value"
-              value={formatCurrency(stockReport.total_value)}
-            />
-            <MetricCard
-              label="Low Stock Items"
-              value={String(stockReport.low_stock_items.length)}
-              variant={
-                stockReport.low_stock_items.length > 0 ? "danger" : "success"
-              }
-            />
-            <MetricCard
-              label="Tracked Items"
-              value={String(stockReport.stock_summary.length)}
-            />
-          </div>
-
-          <div className="report-grid">
-            {stockReport.low_stock_items.length > 0 && (
-              <div className="report-card">
-                <h3>⚠️ Low Stock Alerts</h3>
-                <table className="report-table">
-                  <thead>
-                    <tr>
-                      <th>Product</th>
-                      <th className="text-right">On Hand</th>
-                      <th className="text-right">Available</th>
-                      <th className="text-right">Reorder Level</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {stockReport.low_stock_items.map((item, i) => (
-                      <tr key={i}>
-                        <td>{item.name}</td>
-                        <td className="text-right">{item.on_hand}</td>
-                        <td className="text-right">{item.available}</td>
-                        <td className="text-right">{item.reorder}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            <div className="report-card">
-              <h3>Stock Summary</h3>
-              {stockReport.stock_summary.length === 0 ? (
-                <p className="empty-state">No stock data available.</p>
-              ) : (
-                <table className="report-table">
-                  <thead>
-                    <tr>
-                      <th>Product</th>
-                      <th className="text-right">On Hand</th>
-                      <th className="text-right">Available</th>
-                      <th className="text-right">Reserved</th>
-                      <th className="text-right">Value</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {stockReport.stock_summary.map((s, i) => (
-                      <tr key={i}>
-                        <td>{s.name}</td>
-                        <td className="text-right">{s.on_hand}</td>
-                        <td className="text-right">{s.available}</td>
-                        <td className="text-right">{s.reserved}</td>
-                        <td className="text-right">
-                          {formatCurrency(s.value)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </div>
-
-          {stockReport.recent_movements.length > 0 && (
-            <div className="report-card full-width">
-              <h3>Recent Stock Movements</h3>
-              <table className="report-table">
-                <thead>
-                  <tr>
-                    <th>Product</th>
-                    <th>Type</th>
-                    <th className="text-right">Qty</th>
-                    <th>Reference</th>
-                    <th>Date</th>
-                    <th>State</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stockReport.recent_movements.map((m, i) => (
-                    <tr key={i}>
-                      <td>{m.product}</td>
-                      <td>
-                        <span
-                          className={`badge ${m.type === "IN" ? "badge-success" : m.type === "OUT" ? "badge-warning" : "badge-info"}`}
-                        >
-                          {m.type}
-                        </span>
-                      </td>
-                      <td className="text-right">{m.quantity}</td>
-                      <td>{m.reference}</td>
-                      <td>{m.date}</td>
-                      <td>
-                        <span
-                          className={`badge ${m.state === "done" ? "badge-success" : m.state === "cancelled" ? "badge-danger" : "badge-secondary"}`}
-                        >
-                          {m.state}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {/* Error */}
+          {error && (
+            <div className="alert alert-danger" style={{ margin: "16px 0" }}>
+              {error}
+              <button
+                onClick={() => setError("")}
+                style={{
+                  float: "right",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: 18,
+                }}
+              >
+                ×
+              </button>
             </div>
           )}
-        </div>
-      )}
 
-      {/* ─── Payments Report ─── */}
-      {!loading && activeReport === "payments" && paymentReport && (
-        <div className="report-content">
-          <div className="metrics-row">
-            <MetricCard
-              label="Total Payments"
-              value={String(paymentReport.total_payments)}
-            />
-            <MetricCard
-              label="Total Amount"
-              value={formatCurrency(paymentReport.total_amount)}
-            />
-            <MetricCard
-              label="Reconciled"
-              value={`${paymentReport.reconciled_count} (${formatCurrency(paymentReport.reconciled_amount)})`}
-              variant="success"
-            />
-            <MetricCard
-              label="Pending"
-              value={`${paymentReport.pending_count} (${formatCurrency(paymentReport.pending_amount)})`}
-              variant="warning"
-            />
-          </div>
+          {/* Loading */}
+          {loading && (
+            <div
+              style={{
+                textAlign: "center",
+                padding: "60px 20px",
+                color: "var(--gray-500)",
+              }}
+            >
+              Loading report data...
+            </div>
+          )}
 
-          <div className="report-grid">
-            <div className="report-card">
-              <h3>Payments by Method</h3>
-              {paymentReport.by_method.length === 0 ? (
-                <p className="empty-state">No payments in this period.</p>
-              ) : (
-                <>
+          {/* ─── Sales Report ─── */}
+          {!loading && activeReport === "sales" && salesReport && (
+            <div className="report-content">
+              <div className="metrics-row">
+                <MetricCard
+                  label="Total Sales"
+                  value={formatCurrency(salesReport.total_sales)}
+                />
+                <MetricCard
+                  label="Total Invoices"
+                  value={String(salesReport.total_invoices)}
+                />
+                <MetricCard
+                  label="Paid Invoices"
+                  value={String(salesReport.paid_invoices)}
+                  variant="success"
+                />
+                <MetricCard
+                  label="Pending Invoices"
+                  value={String(salesReport.pending_invoices)}
+                  variant="warning"
+                />
+                <MetricCard
+                  label="Total Tax"
+                  value={formatCurrency(salesReport.total_tax)}
+                />
+                <MetricCard
+                  label="Avg Invoice"
+                  value={formatCurrency(salesReport.average_invoice)}
+                />
+              </div>
+
+              <div className="report-grid">
+                <div className="report-card">
+                  <h3>Top Selling Products</h3>
+                  {salesReport.top_products.length === 0 ? (
+                    <p className="empty-state">
+                      No product sales in this period.
+                    </p>
+                  ) : (
+                    <table className="report-table">
+                      <thead>
+                        <tr>
+                          <th>Product</th>
+                          <th className="text-right">Qty Sold</th>
+                          <th className="text-right">Revenue</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {salesReport.top_products.map((p, i) => (
+                          <tr key={i}>
+                            <td>{p.name}</td>
+                            <td className="text-right">{p.quantity}</td>
+                            <td className="text-right">
+                              {formatCurrency(p.revenue)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+
+                <div className="report-card">
+                  <h3>Sales Trend</h3>
+                  {salesReport.sales_by_month.length === 0 ? (
+                    <p className="empty-state">No sales data in this period.</p>
+                  ) : (
+                    <div className="chart-container">
+                      <div className="bar-chart">
+                        {salesReport.sales_by_month.map((item, i) => (
+                          <div
+                            key={i}
+                            className="bar-item"
+                            title={`${item.month}: ${formatCurrency(item.amount)} (${item.count} invoices)`}
+                          >
+                            <div className="bar-value">
+                              {formatCurrency(item.amount)}
+                            </div>
+                            <div
+                              className="bar"
+                              style={{
+                                height: `${(item.amount / maxBarValue) * 100}%`,
+                              }}
+                            />
+                            <span className="bar-label">{item.month}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ─── Stock Report ─── */}
+          {!loading && activeReport === "stock" && stockReport && (
+            <div className="report-content">
+              <div className="metrics-row">
+                <MetricCard
+                  label="Active Products"
+                  value={String(stockReport.total_products)}
+                />
+                <MetricCard
+                  label="Inventory Value"
+                  value={formatCurrency(stockReport.total_value)}
+                />
+                <MetricCard
+                  label="Low Stock Items"
+                  value={String(stockReport.low_stock_items.length)}
+                  variant={
+                    stockReport.low_stock_items.length > 0
+                      ? "danger"
+                      : "success"
+                  }
+                />
+                <MetricCard
+                  label="Tracked Items"
+                  value={String(stockReport.stock_summary.length)}
+                />
+              </div>
+
+              <div className="report-grid">
+                {stockReport.low_stock_items.length > 0 && (
+                  <div className="report-card">
+                    <h3>⚠️ Low Stock Alerts</h3>
+                    <table className="report-table">
+                      <thead>
+                        <tr>
+                          <th>Product</th>
+                          <th className="text-right">On Hand</th>
+                          <th className="text-right">Available</th>
+                          <th className="text-right">Reorder Level</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {stockReport.low_stock_items.map((item, i) => (
+                          <tr key={i}>
+                            <td>{item.name}</td>
+                            <td className="text-right">{item.on_hand}</td>
+                            <td className="text-right">{item.available}</td>
+                            <td className="text-right">{item.reorder}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                <div className="report-card">
+                  <h3>Stock Summary</h3>
+                  {stockReport.stock_summary.length === 0 ? (
+                    <p className="empty-state">No stock data available.</p>
+                  ) : (
+                    <table className="report-table">
+                      <thead>
+                        <tr>
+                          <th>Product</th>
+                          <th className="text-right">On Hand</th>
+                          <th className="text-right">Available</th>
+                          <th className="text-right">Reserved</th>
+                          <th className="text-right">Value</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {stockReport.stock_summary.map((s, i) => (
+                          <tr key={i}>
+                            <td>{s.name}</td>
+                            <td className="text-right">{s.on_hand}</td>
+                            <td className="text-right">{s.available}</td>
+                            <td className="text-right">{s.reserved}</td>
+                            <td className="text-right">
+                              {formatCurrency(s.value)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              </div>
+
+              {stockReport.recent_movements.length > 0 && (
+                <div className="report-card full-width">
+                  <h3>Recent Stock Movements</h3>
                   <table className="report-table">
                     <thead>
                       <tr>
-                        <th>Method</th>
-                        <th className="text-right">Count</th>
-                        <th className="text-right">Amount</th>
+                        <th>Product</th>
+                        <th>Type</th>
+                        <th className="text-right">Qty</th>
+                        <th>Reference</th>
+                        <th>Date</th>
+                        <th>State</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {paymentReport.by_method.map((m, i) => (
+                      {stockReport.recent_movements.map((m, i) => (
                         <tr key={i}>
-                          <td style={{ textTransform: "capitalize" }}>
-                            {m.method}
+                          <td>{m.product}</td>
+                          <td>
+                            <span
+                              className={`badge ${m.type === "IN" ? "badge-success" : m.type === "OUT" ? "badge-warning" : "badge-info"}`}
+                            >
+                              {m.type}
+                            </span>
                           </td>
-                          <td className="text-right">{m.count}</td>
-                          <td className="text-right">
-                            {formatCurrency(m.amount)}
+                          <td className="text-right">{m.quantity}</td>
+                          <td>{m.reference}</td>
+                          <td>{m.date}</td>
+                          <td>
+                            <span
+                              className={`badge ${m.state === "done" ? "badge-success" : m.state === "cancelled" ? "badge-danger" : "badge-secondary"}`}
+                            >
+                              {m.state}
+                            </span>
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
-                  {/* Horizontal bar chart for payment methods */}
-                  <div style={{ marginTop: 16 }}>
-                    {paymentReport.by_method.map((m, i) => {
-                      const maxAmt = Math.max(
-                        ...paymentReport.by_method.map((x) => x.amount),
-                        1,
-                      );
-                      const pct = (m.amount / maxAmt) * 100;
-                      return (
-                        <div key={i} style={{ marginBottom: 8 }}>
-                          <div
-                            style={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              fontSize: 12,
-                              marginBottom: 3,
-                            }}
-                          >
-                            <span style={{ textTransform: "capitalize" }}>
-                              {m.method}
-                            </span>
-                            <span style={{ fontWeight: 600 }}>
-                              {formatCurrency(m.amount)}
-                            </span>
-                          </div>
-                          <div
-                            style={{
-                              height: 8,
-                              background: "var(--gray-100)",
-                              borderRadius: 4,
-                              overflow: "hidden",
-                            }}
-                          >
-                            <div
-                              style={{
-                                width: `${pct}%`,
-                                height: "100%",
-                                background: "var(--blue-600)",
-                                borderRadius: 4,
-                                transition: "width 0.5s",
-                              }}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </>
+                </div>
               )}
             </div>
+          )}
 
-            <div className="report-card">
-              <h3>Recent Payments</h3>
-              {paymentReport.recent_payments.length === 0 ? (
-                <p className="empty-state">No payments in this period.</p>
-              ) : (
-                <table className="report-table">
-                  <thead>
-                    <tr>
-                      <th>Reference</th>
-                      <th>Invoice</th>
-                      <th className="text-right">Amount</th>
-                      <th>Date</th>
-                      <th>Method</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {paymentReport.recent_payments.map((p, i) => (
-                      <tr key={i}>
-                        <td style={{ fontFamily: "monospace", fontSize: 12 }}>
-                          {p.reference}
-                        </td>
-                        <td style={{ fontFamily: "monospace", fontSize: 12 }}>
-                          {p.invoice}
-                        </td>
+          {/* ─── Payments Report ─── */}
+          {!loading && activeReport === "payments" && paymentReport && (
+            <div className="report-content">
+              <div className="metrics-row">
+                <MetricCard
+                  label="Total Payments"
+                  value={String(paymentReport.total_payments)}
+                />
+                <MetricCard
+                  label="Total Amount"
+                  value={formatCurrency(paymentReport.total_amount)}
+                />
+                <MetricCard
+                  label="Reconciled"
+                  value={`${paymentReport.reconciled_count} (${formatCurrency(paymentReport.reconciled_amount)})`}
+                  variant="success"
+                />
+                <MetricCard
+                  label="Pending"
+                  value={`${paymentReport.pending_count} (${formatCurrency(paymentReport.pending_amount)})`}
+                  variant="warning"
+                />
+              </div>
+
+              <div className="report-grid">
+                <div className="report-card">
+                  <h3>Payments by Method</h3>
+                  {paymentReport.by_method.length === 0 ? (
+                    <p className="empty-state">No payments in this period.</p>
+                  ) : (
+                    <>
+                      <table className="report-table">
+                        <thead>
+                          <tr>
+                            <th>Method</th>
+                            <th className="text-right">Count</th>
+                            <th className="text-right">Amount</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {paymentReport.by_method.map((m, i) => (
+                            <tr key={i}>
+                              <td style={{ textTransform: "capitalize" }}>
+                                {m.method}
+                              </td>
+                              <td className="text-right">{m.count}</td>
+                              <td className="text-right">
+                                {formatCurrency(m.amount)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      {/* Horizontal bar chart for payment methods */}
+                      <div style={{ marginTop: 16 }}>
+                        {paymentReport.by_method.map((m, i) => {
+                          const maxAmt = Math.max(
+                            ...paymentReport.by_method.map((x) => x.amount),
+                            1,
+                          );
+                          const pct = (m.amount / maxAmt) * 100;
+                          return (
+                            <div key={i} style={{ marginBottom: 8 }}>
+                              <div
+                                style={{
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  fontSize: 12,
+                                  marginBottom: 3,
+                                }}
+                              >
+                                <span style={{ textTransform: "capitalize" }}>
+                                  {m.method}
+                                </span>
+                                <span style={{ fontWeight: 600 }}>
+                                  {formatCurrency(m.amount)}
+                                </span>
+                              </div>
+                              <div
+                                style={{
+                                  height: 8,
+                                  background: "var(--gray-100)",
+                                  borderRadius: 4,
+                                  overflow: "hidden",
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    width: `${pct}%`,
+                                    height: "100%",
+                                    background: "var(--blue-600)",
+                                    borderRadius: 4,
+                                    transition: "width 0.5s",
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <div className="report-card">
+                  <h3>Recent Payments</h3>
+                  {paymentReport.recent_payments.length === 0 ? (
+                    <p className="empty-state">No payments in this period.</p>
+                  ) : (
+                    <table className="report-table">
+                      <thead>
+                        <tr>
+                          <th>Reference</th>
+                          <th>Invoice</th>
+                          <th className="text-right">Amount</th>
+                          <th>Date</th>
+                          <th>Method</th>
+                          <th>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {paymentReport.recent_payments.map((p, i) => (
+                          <tr key={i}>
+                            <td
+                              style={{ fontFamily: "monospace", fontSize: 12 }}
+                            >
+                              {p.reference}
+                            </td>
+                            <td
+                              style={{ fontFamily: "monospace", fontSize: 12 }}
+                            >
+                              {p.invoice}
+                            </td>
+                            <td className="text-right">
+                              {formatCurrency(p.amount)}
+                            </td>
+                            <td>{p.date}</td>
+                            <td style={{ textTransform: "capitalize" }}>
+                              {p.method}
+                            </td>
+                            <td>
+                              <span
+                                className={`badge ${p.status === "reconciled" ? "badge-success" : p.status === "posted" ? "badge-info" : p.status === "cancelled" ? "badge-danger" : "badge-secondary"}`}
+                              >
+                                {p.status}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ─── VAT Report ─── */}
+          {!loading && activeReport === "vat" && vatReport && (
+            <div className="report-content">
+              <div className="metrics-row">
+                <MetricCard
+                  label="Sales Total"
+                  value={formatCurrency(vatReport.sales_total)}
+                />
+                <MetricCard
+                  label="Purchases Total"
+                  value={formatCurrency(vatReport.purchases_total)}
+                />
+                <MetricCard
+                  label="Profit"
+                  value={formatCurrency(vatReport.profit)}
+                  variant={vatReport.profit >= 0 ? "success" : "danger"}
+                />
+                <MetricCard
+                  label="Output VAT"
+                  value={formatCurrency(vatReport.output_tax)}
+                  variant="success"
+                />
+                <MetricCard
+                  label="Input VAT"
+                  value={formatCurrency(vatReport.input_tax)}
+                />
+                <MetricCard
+                  label="Net VAT"
+                  value={formatCurrency(vatReport.net_tax)}
+                  variant={vatReport.net_tax >= 0 ? "warning" : "success"}
+                />
+              </div>
+
+              <div className="report-grid">
+                <div className="report-card">
+                  <h3>Summary</h3>
+                  <table className="report-table">
+                    <tbody>
+                      <tr>
+                        <td>Invoices</td>
                         <td className="text-right">
-                          {formatCurrency(p.amount)}
-                        </td>
-                        <td>{p.date}</td>
-                        <td style={{ textTransform: "capitalize" }}>
-                          {p.method}
-                        </td>
-                        <td>
-                          <span
-                            className={`badge ${p.status === "reconciled" ? "badge-success" : p.status === "posted" ? "badge-info" : p.status === "cancelled" ? "badge-danger" : "badge-secondary"}`}
-                          >
-                            {p.status}
-                          </span>
+                          {vatReport.invoices_count}
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
+                      <tr>
+                        <td>Purchases</td>
+                        <td className="text-right">
+                          {vatReport.purchases_count}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Sales Total</td>
+                        <td className="text-right">
+                          {formatCurrency(vatReport.sales_total)}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Purchases Total</td>
+                        <td className="text-right">
+                          {formatCurrency(vatReport.purchases_total)}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Profit</td>
+                        <td className="text-right">
+                          {formatCurrency(vatReport.profit)}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div className="report-card">
+                  <h3>VAT Position</h3>
+                  <table className="report-table">
+                    <thead>
+                      <tr>
+                        <th>Metric</th>
+                        <th className="text-right">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>Output VAT (Sales)</td>
+                        <td className="text-right">
+                          {formatCurrency(vatReport.output_tax)}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Input VAT (Purchases)</td>
+                        <td className="text-right">
+                          {formatCurrency(vatReport.input_tax)}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Net VAT</td>
+                        <td className="text-right">
+                          {formatCurrency(vatReport.net_tax)}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>VAT Status</td>
+                        <td className="text-right">{netVatStatus}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Empty state when no data */}
+          {!loading &&
+            !error &&
+            ((activeReport === "sales" && !salesReport) ||
+              (activeReport === "stock" && !stockReport) ||
+              (activeReport === "payments" && !paymentReport) ||
+              (activeReport === "vat" && !vatReport)) && (
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: "60px 20px",
+                  color: "var(--gray-500)",
+                }}
+              >
+                <p>
+                  Select a date range and click <strong>Refresh</strong> to load
+                  report data.
+                </p>
+              </div>
+            )}
         </div>
-      )}
-
-      {/* ─── VAT Report ─── */}
-      {!loading && activeReport === "vat" && vatReport && (
-        <div className="report-content">
-          <div className="metrics-row">
-            <MetricCard
-              label="Sales Total"
-              value={formatCurrency(vatReport.sales_total)}
-            />
-            <MetricCard
-              label="Purchases Total"
-              value={formatCurrency(vatReport.purchases_total)}
-            />
-            <MetricCard
-              label="Profit"
-              value={formatCurrency(vatReport.profit)}
-              variant={vatReport.profit >= 0 ? "success" : "danger"}
-            />
-            <MetricCard
-              label="Output VAT"
-              value={formatCurrency(vatReport.output_tax)}
-              variant="success"
-            />
-            <MetricCard
-              label="Input VAT"
-              value={formatCurrency(vatReport.input_tax)}
-            />
-            <MetricCard
-              label="Net VAT"
-              value={formatCurrency(vatReport.net_tax)}
-              variant={vatReport.net_tax >= 0 ? "warning" : "success"}
-            />
-          </div>
-
-          <div className="report-grid">
-            <div className="report-card">
-              <h3>Summary</h3>
-              <table className="report-table">
-                <tbody>
-                  <tr>
-                    <td>Invoices</td>
-                    <td className="text-right">{vatReport.invoices_count}</td>
-                  </tr>
-                  <tr>
-                    <td>Purchases</td>
-                    <td className="text-right">{vatReport.purchases_count}</td>
-                  </tr>
-                  <tr>
-                    <td>Sales Total</td>
-                    <td className="text-right">
-                      {formatCurrency(vatReport.sales_total)}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>Purchases Total</td>
-                    <td className="text-right">
-                      {formatCurrency(vatReport.purchases_total)}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>Profit</td>
-                    <td className="text-right">
-                      {formatCurrency(vatReport.profit)}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div className="report-card">
-              <h3>VAT Position</h3>
-              <table className="report-table">
-                <thead>
-                  <tr>
-                    <th>Metric</th>
-                    <th className="text-right">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>Output VAT (Sales)</td>
-                    <td className="text-right">
-                      {formatCurrency(vatReport.output_tax)}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>Input VAT (Purchases)</td>
-                    <td className="text-right">
-                      {formatCurrency(vatReport.input_tax)}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>Net VAT</td>
-                    <td className="text-right">
-                      {formatCurrency(vatReport.net_tax)}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>VAT Status</td>
-                    <td className="text-right">{netVatStatus}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Empty state when no data */}
-      {!loading &&
-        !error &&
-        ((activeReport === "sales" && !salesReport) ||
-          (activeReport === "stock" && !stockReport) ||
-          (activeReport === "payments" && !paymentReport) ||
-          (activeReport === "vat" && !vatReport)) && (
-          <div
-            style={{
-              textAlign: "center",
-              padding: "60px 20px",
-              color: "var(--gray-500)",
-            }}
-          >
-            <p>
-              Select a date range and click <strong>Refresh</strong> to load
-              report data.
-            </p>
-          </div>
-        )}
-        </div>
-
       </div>
     </div>
   );

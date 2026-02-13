@@ -603,7 +603,7 @@ export default function DevicesPage() {
     return (
       <div className="content">
         <div
-          className="o-control-panel"
+          className=""
           style={{
             display: "flex",
             width: "auto",
@@ -611,10 +611,7 @@ export default function DevicesPage() {
             marginBottom: 24,
           }}
         >
-          <div
-            className="settings-search"
-            style={{ width: "30vw", margin: "0 auto" }}
-          >
+          <div className="company-search">
             <input
               type="text"
               placeholder="Search company by name, VAT, or TIN"
