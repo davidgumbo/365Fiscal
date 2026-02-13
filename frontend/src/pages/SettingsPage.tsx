@@ -850,21 +850,6 @@ export default function SettingsPage() {
         <div className="alert alert-warning" style={{ marginBottom: 16 }}>
           <strong>Unsaved changes</strong> — Don't forget to save your changes.
           <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
-            <div className="settings-company-select">
-              <label className="input">
-                {/* Company */}
-                <select
-                  value={companyId ?? ""}
-                  onChange={(e) => setCompanyId(Number(e.target.value))}
-                >
-                  {companies.map((c: Company) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
             <button
               className="primary"
               style={{ fontSize: 12, padding: "6px 12px" }}
@@ -888,6 +873,21 @@ export default function SettingsPage() {
           <div className="settings-title">Settings</div>
         </div>
         <div className="settings-top-actions">
+          <div className="settings-company-select">
+            <label className="input">
+              {/* Company */}
+              <select
+                value={companyId ?? ""}
+                onChange={(e) => setCompanyId(Number(e.target.value))}
+              >
+                {companies.map((c: Company) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
           <button
             className="primary"
             onClick={saveCompanySettings}
