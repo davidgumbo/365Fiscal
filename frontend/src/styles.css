@@ -3987,6 +3987,7 @@ button.danger:hover {
   background: var(--blue-50);
   font-size: 13px;
   transition: border-color 150ms, box-shadow 150ms;
+  position: sticky
 }
 
 /* ── Professional Settings Layout ── */

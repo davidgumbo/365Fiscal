@@ -603,7 +603,7 @@ export default function DevicesPage() {
     return (
       <div className="content">
         <div
-          className="o-control-panel"
+          className=""
           style={{
             display: "flex",
             width: "auto",
