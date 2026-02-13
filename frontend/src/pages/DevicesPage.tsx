@@ -3,8 +3,6 @@ import { apiFetch, apiRequest } from "../api";
 import { useCompanies, Company } from "../hooks/useCompanies";
 import { useListView } from "../context/ListViewContext";
 
-import { Trash2 } from "lucide-react";
-
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
@@ -1151,7 +1149,7 @@ export default function DevicesPage() {
                         title="Delete"
                         onClick={() => setConfirmDelete(d)}
                       >
-                        <Trash2 />
+                        <TrashIcon />
                       </button>
                     </div>
                   </div>
