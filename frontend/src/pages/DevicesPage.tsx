@@ -3,6 +3,8 @@ import { apiFetch, apiRequest } from "../api";
 import { useCompanies, Company } from "../hooks/useCompanies";
 import { useListView } from "../context/ListViewContext";
 
+import { Trash2 } from "lucide-react";
+
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
