@@ -698,7 +698,7 @@ export default function CompaniesPage() {
                       <span className="company-name">{c.name}</span>
                     </td>
                     <td>
-                      <code style={{ color: "#3b82f6" }}>{c.tin}</code>
+                      <code style={{ color: "var(--blue-500)" }}>{c.tin}</code>
                     </td>
                     <td>
                       {c.vat ? (
@@ -712,7 +712,7 @@ export default function CompaniesPage() {
                       {c.email ? (
                         <a
                           href={`mailto:${c.email}`}
-                          style={{ color: "#3b82f6" }}
+                          style={{ color: "var(--blue-500)" }}
                         >
                           {c.email}
                         </a>

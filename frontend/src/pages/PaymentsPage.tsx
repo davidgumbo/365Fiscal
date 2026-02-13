@@ -124,14 +124,14 @@ export default function PaymentsPage() {
 
   const getMethodBadgeColor = (method: string) => {
     const colors: Record<string, string> = {
-      cash: "#16a34a",
-      bank_transfer: "#2563eb",
-      mobile_money: "#7c3aed",
-      card: "#dc2626",
-      cheque: "#ea580c",
-      other: "#64748b",
+      cash: "var(--green-600)",
+      bank_transfer: "var(--blue-600)",
+      mobile_money: "var(--violet-600)",
+      card: "var(--red-600)",
+      cheque: "var(--orange-600)",
+      other: "var(--slate-500)",
     };
-    return colors[method] || "#64748b";
+    return colors[method] || "var(--slate-500)";
   };
 
   return (
@@ -154,28 +154,28 @@ export default function PaymentsPage() {
       {summary && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 16, marginBottom: 24 }}>
           <div className="card" style={{ padding: 20 }}>
-            <div style={{ fontSize: 28, fontWeight: 700, color: "#1e293b" }}>
+            <div style={{ fontSize: 28, fontWeight: 700, color: "var(--slate-800)" }}>
               {summary.total_payments}
             </div>
-            <div style={{ fontSize: 13, color: "#64748b" }}>Total Payments</div>
+            <div style={{ fontSize: 13, color: "var(--slate-500)" }}>Total Payments</div>
           </div>
           <div className="card" style={{ padding: 20 }}>
-            <div style={{ fontSize: 28, fontWeight: 700, color: "#16a34a" }}>
+            <div style={{ fontSize: 28, fontWeight: 700, color: "var(--green-600)" }}>
               {formatCurrency(summary.total_amount)}
             </div>
-            <div style={{ fontSize: 13, color: "#64748b" }}>Total Amount</div>
+            <div style={{ fontSize: 13, color: "var(--slate-500)" }}>Total Amount</div>
           </div>
           <div className="card" style={{ padding: 20 }}>
-            <div style={{ fontSize: 28, fontWeight: 700, color: "#2563eb" }}>
+            <div style={{ fontSize: 28, fontWeight: 700, color: "var(--blue-600)" }}>
               {summary.reconciled_count}
             </div>
-            <div style={{ fontSize: 13, color: "#64748b" }}>Reconciled</div>
+            <div style={{ fontSize: 13, color: "var(--slate-500)" }}>Reconciled</div>
           </div>
           <div className="card" style={{ padding: 20 }}>
-            <div style={{ fontSize: 28, fontWeight: 700, color: "#f59e0b" }}>
+            <div style={{ fontSize: 28, fontWeight: 700, color: "var(--amber-500)" }}>
               {summary.pending_count}
             </div>
-            <div style={{ fontSize: 13, color: "#64748b" }}>Pending</div>
+            <div style={{ fontSize: 13, color: "var(--slate-500)" }}>Pending</div>
           </div>
         </div>
       )}
@@ -214,7 +214,7 @@ export default function PaymentsPage() {
 
       {/* Payments Table */}
       {loading ? (
-        <div style={{ padding: 40, textAlign: "center", color: "#64748b" }}>
+        <div style={{ padding: 40, textAlign: "center", color: "var(--slate-500)" }}>
           Loading payments...
         </div>
       ) : (
@@ -234,7 +234,7 @@ export default function PaymentsPage() {
             <tbody>
               {payments.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: "center", padding: 40, color: "#64748b" }}>
+                  <td colSpan={7} style={{ textAlign: "center", padding: 40, color: "var(--slate-500)" }}>
                     No payments found
                   </td>
                 </tr>
@@ -245,7 +245,7 @@ export default function PaymentsPage() {
                     <td>
                       <span style={{ fontWeight: 500 }}>{payment.invoice_reference}</span>
                     </td>
-                    <td style={{ fontSize: 13, color: "#64748b" }}>{payment.reference || "-"}</td>
+                    <td style={{ fontSize: 13, color: "var(--slate-500)" }}>{payment.reference || "-"}</td>
                     <td>
                       <span
                         style={{
@@ -269,11 +269,11 @@ export default function PaymentsPage() {
                     </td>
                     <td>
                       {payment.is_reconciled ? (
-                        <span style={{ color: "#16a34a", display: "flex", alignItems: "center", gap: 4 }}>
+                        <span style={{ color: "var(--green-600)", display: "flex", alignItems: "center", gap: 4 }}>
                           <CheckIcon /> Reconciled
                         </span>
                       ) : (
-                        <span style={{ color: "#f59e0b", display: "flex", alignItems: "center", gap: 4 }}>
+                        <span style={{ color: "var(--amber-500)", display: "flex", alignItems: "center", gap: 4 }}>
                           <ClockIcon /> Pending
                         </span>
                       )}
@@ -298,8 +298,8 @@ export default function PaymentsPage() {
 
       <style>{`
         .alert-error {
-          background: #fee2e2;
-          color: #dc2626;
+          background: var(--red-100);
+          color: var(--red-600);
           padding: 12px 16px;
           border-radius: 8px;
           display: flex;

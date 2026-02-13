@@ -970,12 +970,12 @@ export default function DevicesPage() {
               </span>
             )}
             {certStatus === "ready" && (
-              <span style={{ color: "var(--success, #27ae60)", fontSize: 13 }}>
+              <span style={{ color: "var(--success, var(--green-500))", fontSize: 13 }}>
                 ✓ Certificate and key are configured
               </span>
             )}
             {certStatus === "missing" && (
-              <span style={{ color: "var(--danger, #c0392b)", fontSize: 13 }}>
+              <span style={{ color: "var(--danger, var(--orange-700))", fontSize: 13 }}>
                 ⚠ Certificate or key missing — upload below
               </span>
             )}

@@ -203,14 +203,14 @@ export default function UsersRolesPage() {
 
   const getRoleBadgeColor = (roleName: string) => {
     const colors: Record<string, string> = {
-      system_admin: "#dc2626",
-      company_admin: "#7c3aed",
-      accountant: "#2563eb",
-      sales_user: "#16a34a",
-      inventory_manager: "#ea580c",
-      read_only: "#64748b",
+      system_admin: "var(--red-600)",
+      company_admin: "var(--violet-600)",
+      accountant: "var(--blue-600)",
+      sales_user: "var(--green-600)",
+      inventory_manager: "var(--orange-600)",
+      read_only: "var(--slate-500)",
     };
-    return colors[roleName] || "#64748b";
+    return colors[roleName] || "var(--slate-500)";
   };
 
   if (loading) {
@@ -331,7 +331,7 @@ export default function UsersRolesPage() {
                             width: 32,
                             height: 32,
                             borderRadius: "50%",
-                            background: "#e2e8f0",
+                            background: "var(--slate-200)",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
@@ -351,7 +351,7 @@ export default function UsersRolesPage() {
                         style={{
                           padding: "4px 8px",
                           borderRadius: 6,
-                          border: "1px solid #e2e8f0",
+                          border: "1px solid var(--slate-200)",
                           background: getRoleBadgeColor(cu.role) + "20",
                           color: getRoleBadgeColor(cu.role),
                           fontWeight: 600,
@@ -372,8 +372,8 @@ export default function UsersRolesPage() {
                           borderRadius: 999,
                           fontSize: 12,
                           fontWeight: 600,
-                          background: cu.is_active ? "#dcfce7" : "#fee2e2",
-                          color: cu.is_active ? "#16a34a" : "#dc2626",
+                          background: cu.is_active ? "var(--green-100)" : "var(--red-100)",
+                          color: cu.is_active ? "var(--green-600)" : "var(--red-600)",
                         }}
                       >
                         {cu.is_active ? "Active" : "Inactive"}
@@ -386,8 +386,8 @@ export default function UsersRolesPage() {
                         style={{
                           padding: "4px 10px",
                           fontSize: 12,
-                          background: cu.is_active ? "#fee2e2" : "#dcfce7",
-                          color: cu.is_active ? "#dc2626" : "#16a34a",
+                          background: cu.is_active ? "var(--red-100)" : "var(--green-100)",
+                          color: cu.is_active ? "var(--red-600)" : "var(--green-600)",
                           border: "none",
                           borderRadius: 6,
                           cursor: "pointer",
@@ -415,7 +415,7 @@ export default function UsersRolesPage() {
                 style={{
                   padding: 20,
                   cursor: "pointer",
-                  border: selectedRole?.id === role.id ? "2px solid #3b82f6" : "1px solid #e2e8f0",
+                  border: selectedRole?.id === role.id ? "2px solid var(--blue-500)" : "1px solid var(--slate-200)",
                 }}
                 onClick={() => setSelectedRole(selectedRole?.id === role.id ? null : role)}
               >
@@ -436,7 +436,7 @@ export default function UsersRolesPage() {
                   </div>
                   <div>
                     <h3 style={{ margin: 0, fontSize: 16 }}>{role.display_name}</h3>
-                    <span style={{ fontSize: 12, color: "#64748b" }}>Level: {role.level}</span>
+                    <span style={{ fontSize: 12, color: "var(--slate-500)" }}>Level: {role.level}</span>
                   </div>
                   {role.is_system_role && (
                     <span
@@ -445,20 +445,20 @@ export default function UsersRolesPage() {
                         fontSize: 10,
                         padding: "2px 8px",
                         borderRadius: 999,
-                        background: "#f1f5f9",
-                        color: "#64748b",
+                        background: "var(--slate-100)",
+                        color: "var(--slate-500)",
                       }}
                     >
                       SYSTEM
                     </span>
                   )}
                 </div>
-                <p style={{ fontSize: 13, color: "#64748b", margin: 0 }}>{role.description}</p>
+                <p style={{ fontSize: 13, color: "var(--slate-500)", margin: 0 }}>{role.description}</p>
 
                 {/* Expanded permissions view */}
                 {selectedRole?.id === role.id && (
-                  <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid #e2e8f0" }}>
-                    <h4 style={{ fontSize: 13, marginBottom: 12, color: "#334155" }}>Permissions</h4>
+                  <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--slate-200)" }}>
+                    <h4 style={{ fontSize: 13, marginBottom: 12, color: "var(--slate-700)" }}>Permissions</h4>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                       {[
                         { key: "can_create_invoices", label: "Create Invoices" },
@@ -479,7 +479,7 @@ export default function UsersRolesPage() {
                             alignItems: "center",
                             gap: 6,
                             fontSize: 12,
-                            color: (role as any)[perm.key] ? "#16a34a" : "#94a3b8",
+                            color: (role as any)[perm.key] ? "var(--green-600)" : "var(--slate-400)",
                           }}
                         >
                           {(role as any)[perm.key] ? <CheckIcon /> : <XIcon />}
@@ -499,7 +499,7 @@ export default function UsersRolesPage() {
         .tab-nav {
           display: flex;
           gap: 8px;
-          border-bottom: 1px solid #e2e8f0;
+          border-bottom: 1px solid var(--slate-200);
           padding-bottom: 0;
         }
         .tab-btn {
@@ -510,17 +510,17 @@ export default function UsersRolesPage() {
           background: transparent;
           border: none;
           border-bottom: 2px solid transparent;
-          color: #64748b;
+          color: var(--slate-500);
           font-weight: 600;
           cursor: pointer;
           transition: all 0.15s;
         }
         .tab-btn:hover {
-          color: #1e293b;
+          color: var(--slate-800);
         }
         .tab-btn.active {
-          color: #3b82f6;
-          border-bottom-color: #3b82f6;
+          color: var(--blue-500);
+          border-bottom-color: var(--blue-500);
         }
         .section-header {
           display: flex;
@@ -533,8 +533,8 @@ export default function UsersRolesPage() {
           font-size: 18px;
         }
         .alert-error {
-          background: #fee2e2;
-          color: #dc2626;
+          background: var(--red-100);
+          color: var(--red-600);
           padding: 12px 16px;
           border-radius: 8px;
           display: flex;
@@ -545,7 +545,7 @@ export default function UsersRolesPage() {
           display: flex;
           justify-content: center;
           padding: 40px;
-          color: #64748b;
+          color: var(--slate-500);
         }
       `}</style>
     </div>

@@ -874,11 +874,11 @@ export default function InvoicesPage({
         <head>
           <title>${selectedInvoice.reference}</title>
           <style>
-            :root { --ink: #0f172a; --muted: #6b7280; --line: #e5e7eb; --soft: #f8fafc; --accent: #1e4f9b; }
+            :root { --ink: var(--slate-900); --muted: var(--gray-500); --line: var(--gray-200); --soft: var(--slate-50); --accent: var(--blue-800); }
             * { box-sizing: border-box; }
-            body { font-family: "Segoe UI", Inter, Arial, sans-serif; padding: 0; margin: 0; color: var(--ink); background: #fff; }
+            body { font-family: "Segoe UI", Inter, Arial, sans-serif; padding: 0; margin: 0; color: var(--ink); background: var(--white-500); }
             .doc { padding: 26px 30px 34px; position: relative; }
-            .watermark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 64px; font-weight: 700; color: #94a3b8; opacity: ${companySettings?.document_watermark_opacity || "0.08"}; pointer-events: none; transform: rotate(-25deg); }
+            .watermark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 64px; font-weight: 700; color: var(--slate-400); opacity: ${companySettings?.document_watermark_opacity || "0.08"}; pointer-events: none; transform: rotate(-25deg); }
             .layout-boxed { border: 1px solid var(--line); }
             .layout-bubble { border: 1px solid var(--line); box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08); }
             .header-row { display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; }
@@ -896,13 +896,13 @@ export default function InvoicesPage({
             .addresses h4 { margin: 0 0 6px; font-size: 11px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--accent); }
             .addresses .block { line-height: 1.5; }
             table { width: 100%; border-collapse: collapse; margin-top: 18px; font-size: 12px; }
-            thead th { background: var(--accent); color: #fff; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 10px; text-align: left; }
+            thead th { background: var(--accent); color: var(--white-500); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 10px; text-align: left; }
             tbody td { padding: 8px 10px; border-bottom: 1px solid var(--line); }
-            tbody tr:nth-child(even) td { background: #f9fafb; }
+            tbody tr:nth-child(even) td { background: var(--gray-50); }
             .totals { margin-top: 16px; display: flex; justify-content: flex-end; }
             .totals-card { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
             .totals-row { display: flex; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 12px; }
-            .totals-row:last-child { border-bottom: none; font-weight: 700; background: #f8fafc; }
+            .totals-row:last-child { border-bottom: none; font-weight: 700; background: var(--slate-50); }
             .doc-footer { margin-top: 18px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 11px; color: var(--muted); text-align: center; }
           </style>
         </head>
@@ -979,22 +979,22 @@ export default function InvoicesPage({
             ${selectedInvoice.zimra_status === "submitted" ? (() => {
               const dev = devices.find(d => d.id === selectedInvoice.device_id);
               return `
-            <div style="margin-top:24px; border-top:1px solid #e2e8f0; padding-top:18px;">
+            <div style="margin-top:24px; border-top:1px solid var(--slate-200); padding-top:18px;">
               <div style="text-align:center;">
                 ${zimraVerifyUrl ? `
                 <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(zimraVerifyUrl)}" width="180" height="180" style="margin-bottom:10px;" />
                 ` : ""}
-                <div style="font-size:12px; color:#374151; line-height:1.7;">
+                <div style="font-size:12px; color:var(--gray-700); line-height:1.7;">
                   <div><strong>Verification code:</strong> ${selectedInvoice.zimra_verification_code || "-"}</div>
                   <div><strong>Fiscal Day:</strong> ${selectedInvoice.zimra_receipt_counter || "-"}</div>
                   <div><strong>Device ID:</strong> ${dev?.device_id || "-"}</div>
                   <div><strong>Invoice Number:</strong> ${selectedInvoice.zimra_receipt_global_no || "-"}</div>
                 </div>
                 ${zimraVerifyUrl ? `
-                <div style="margin-top:8px; font-size:11px; color:#6b7280;">
+                <div style="margin-top:8px; font-size:11px; color:var(--gray-500);">
                   Verify this receipt manually at
                 </div>
-                <div style="font-size:11px; color:#2563eb; text-decoration:underline; word-break:break-all;">
+                <div style="font-size:11px; color:var(--blue-600); text-decoration:underline; word-break:break-all;">
                   ${zimraVerifyUrl}
                 </div>
                 ` : ""}
@@ -1056,11 +1056,11 @@ export default function InvoicesPage({
             <div className="o-sidebar-section">
               <div className="o-sidebar-title">STATUS</div>
               {[
-                { key: "", label: "ALL INVOICES", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg> },
-                { key: "draft", label: "DRAFT", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> },
-                { key: "posted", label: "POSTED", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg> },
-                { key: "paid", label: "PAID", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg> },
-                { key: "fiscalized", label: "FISCALIZED", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg> },
+                { key: "", label: "ALL INVOICES", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--indigo-500)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg> },
+                { key: "draft", label: "DRAFT", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--amber-500)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> },
+                { key: "posted", label: "POSTED", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue-500)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg> },
+                { key: "paid", label: "PAID", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--emerald-500)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg> },
+                { key: "fiscalized", label: "FISCALIZED", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--violet-500)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg> },
               ].map((item) => (
                 <div
                   key={item.key || "all"}
@@ -1240,7 +1240,7 @@ export default function InvoicesPage({
                       })}
                     </tbody>
                     <tfoot>
-                      <tr style={{ background: "#f8fafc", fontWeight: 600 }}>
+                      <tr style={{ background: "var(--slate-50)", fontWeight: 600 }}>
                         <td colSpan={5} className="text-end">Grand Total:</td>
                         <td className="text-end">
                           {formatCurrency(
@@ -1819,7 +1819,7 @@ export default function InvoicesPage({
                     <div className="card border-0 bg-light h-100">
                       <div className="card-body py-2">
                         <small className="text-muted">Fiscalization</small>
-                        <div className="fw-bold text-uppercase" style={{ color: selectedInvoice.zimra_status === "error" ? "#dc3545" : selectedInvoice.zimra_status === "submitted" ? "#198754" : undefined }}>
+                        <div className="fw-bold text-uppercase" style={{ color: selectedInvoice.zimra_status === "error" ? "var(--red-500)" : selectedInvoice.zimra_status === "submitted" ? "var(--green-700)" : undefined }}>
                           {selectedInvoice.zimra_status || "not_submitted"}
                         </div>
                         {selectedInvoice.zimra_verification_code && (
@@ -1835,7 +1835,7 @@ export default function InvoicesPage({
                           </div>
                         )}
                         {selectedInvoice.zimra_status === "error" && selectedInvoice.zimra_errors && (
-                          <div style={{ marginTop: 6, padding: "6px 8px", background: "#fff3f3", border: "1px solid #f5c2c7", borderRadius: 6, fontSize: 11, color: "#842029", maxHeight: 120, overflowY: "auto", wordBreak: "break-word" }}>
+                          <div style={{ marginTop: 6, padding: "6px 8px", background: "var(--red-50)", border: "1px solid var(--red-200)", borderRadius: 6, fontSize: 11, color: "var(--red-900)", maxHeight: 120, overflowY: "auto", wordBreak: "break-word" }}>
                             {selectedInvoice.zimra_errors}
                           </div>
                         )}
@@ -1848,28 +1848,28 @@ export default function InvoicesPage({
                 {selectedInvoice.zimra_status === "submitted" && (() => {
                   const dev = devices.find(d => d.id === selectedInvoice.device_id);
                   return (
-                    <div className="card border-0 mb-4" style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 10 }}>
+                    <div className="card border-0 mb-4" style={{ background: "var(--green-50)", border: "1px solid var(--green-200)", borderRadius: 10 }}>
                       <div className="card-body" style={{ padding: "14px 18px" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, flexWrap: "wrap" }}>
                           <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: "#166534", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--green-800)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>
                               ZIMRA Fiscal Details
                             </div>
-                            <div style={{ fontSize: 12, lineHeight: 1.8, color: "#374151" }}>
+                            <div style={{ fontSize: 12, lineHeight: 1.8, color: "var(--gray-700)" }}>
                               <div><strong>Verification Code:</strong> {selectedInvoice.zimra_verification_code || "—"}</div>
                               <div><strong>Receipt #:</strong> {selectedInvoice.zimra_receipt_counter || "—"} / Global #{selectedInvoice.zimra_receipt_global_no || "—"}</div>
                               <div><strong>Receipt ID:</strong> {selectedInvoice.zimra_receipt_id || "—"}</div>
                               <div><strong>Fiscalized:</strong> {selectedInvoice.fiscalized_at ? new Date(selectedInvoice.fiscalized_at).toLocaleString() : "—"}</div>
                             </div>
-                            <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid #bbf7d0", fontSize: 12, lineHeight: 1.8, color: "#374151" }}>
-                              <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.3, marginBottom: 2, color: "#166534" }}>Device Information</div>
+                            <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid var(--green-200)", fontSize: 12, lineHeight: 1.8, color: "var(--gray-700)" }}>
+                              <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.3, marginBottom: 2, color: "var(--green-800)" }}>Device Information</div>
                               <div><strong>Device ID:</strong> {dev?.device_id || "—"}</div>
                               <div><strong>Serial No:</strong> {dev?.serial_number || "—"}</div>
                               <div><strong>Model:</strong> {dev?.model || "—"}</div>
                             </div>
                             {selectedInvoice.zimra_verification_url && (
                               <div style={{ marginTop: 8 }}>
-                                <a href={selectedInvoice.zimra_verification_url.replace(/\/Receipt\/?/i, "/")} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#166534", wordBreak: "break-all" }}>
+                                <a href={selectedInvoice.zimra_verification_url.replace(/\/Receipt\/?/i, "/")} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "var(--green-800)", wordBreak: "break-all" }}>
                                   {selectedInvoice.zimra_verification_url.replace(/\/Receipt\/?/i, "/")}
                                 </a>
                               </div>
@@ -1877,10 +1877,10 @@ export default function InvoicesPage({
 
                             {selectedInvoice.zimra_payload && (
                               <details style={{ marginTop: 10 }}>
-                                <summary style={{ cursor: "pointer", fontSize: 11, color: "#166534", fontWeight: 600 }}>
+                                <summary style={{ cursor: "pointer", fontSize: 11, color: "var(--green-800)", fontWeight: 600 }}>
                                   View ZIMRA payload
                                 </summary>
-                                <pre style={{ marginTop: 8, padding: 10, background: "#ffffff", border: "1px solid #bbf7d0", borderRadius: 6, fontSize: 11, maxHeight: 240, overflow: "auto", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                                <pre style={{ marginTop: 8, padding: 10, background: "var(--white-500)", border: "1px solid var(--green-200)", borderRadius: 6, fontSize: 11, maxHeight: 240, overflow: "auto", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
                                   {selectedInvoice.zimra_payload}
                                 </pre>
                               </details>
@@ -1888,8 +1888,8 @@ export default function InvoicesPage({
                           </div>
                           {selectedInvoice.zimra_verification_url && (
                             <div style={{ textAlign: "center", flexShrink: 0 }}>
-                              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(selectedInvoice.zimra_verification_url.replace(/\/Receipt\/?/i, "/"))}`} width={120} height={120} style={{ border: "1px solid #bbf7d0", borderRadius: 6 }} alt="QR" />
-                              <div style={{ fontSize: 10, color: "#6b7280", marginTop: 4 }}>Scan to verify</div>
+                              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(selectedInvoice.zimra_verification_url.replace(/\/Receipt\/?/i, "/"))}`} width={120} height={120} style={{ border: "1px solid var(--green-200)", borderRadius: 6 }} alt="QR" />
+                              <div style={{ fontSize: 10, color: "var(--gray-500)", marginTop: 4 }}>Scan to verify</div>
                             </div>
                           )}
                         </div>

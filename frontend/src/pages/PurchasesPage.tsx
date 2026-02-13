@@ -343,7 +343,7 @@ export default function PurchasesPage({
     const footerText = companySettings?.document_footer || "";
     const footerHtml = footerText.replace(/\n/g, "<br />");
     const html = `<!DOCTYPE html><html><head><title>Purchase ${selectedOrder.reference}</title><style>
-      :root { --ink: #0f172a; --muted: #6b7280; --line: #e5e7eb; --soft: #f8fafc; --accent: #1e4f9b; }
+      :root { --ink: var(--slate-900); --muted: var(--gray-500); --line: var(--gray-200); --soft: var(--slate-50); --accent: var(--blue-800); }
       @page { size: A4; margin: 14mm; }
       * { box-sizing: border-box; }
       body { font-family: "Segoe UI", Inter, Arial, sans-serif; color: var(--ink); margin: 0; padding: 18px; font-size: 12px; }
@@ -363,13 +363,13 @@ export default function PurchasesPage({
       .addresses h4 { margin: 0 0 6px; font-size: 11px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--accent); }
       .addresses .block { line-height: 1.5; }
       table { width: 100%; border-collapse: collapse; margin-top: 18px; font-size: 12px; }
-      thead th { background: var(--accent); color: #fff; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 10px; text-align: left; }
+      thead th { background: var(--accent); color: var(--white-500); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 10px; text-align: left; }
       tbody td { padding: 8px 10px; border-bottom: 1px solid var(--line); }
-      tbody tr:nth-child(even) td { background: #f9fafb; }
+      tbody tr:nth-child(even) td { background: var(--gray-50); }
       .totals { margin-top: 16px; display: flex; justify-content: flex-end; }
       .totals-card { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
       .totals-row { display: flex; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 12px; }
-      .totals-row:last-child { border-bottom: none; font-weight: 700; background: #f8fafc; }
+      .totals-row:last-child { border-bottom: none; font-weight: 700; background: var(--slate-50); }
       .doc-footer { margin-top: 18px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 11px; color: var(--muted); text-align: center; }
     </style></head><body>
       <div class="doc">
@@ -597,7 +597,7 @@ export default function PurchasesPage({
                       height="18"
                       viewBox="0 0 24 24"
                       fill="none"
-                      stroke="#6366f1"
+                      stroke="var(--indigo-500)"
                       strokeWidth="1.5"
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -617,7 +617,7 @@ export default function PurchasesPage({
                       height="18"
                       viewBox="0 0 24 24"
                       fill="none"
-                      stroke="#f59e0b"
+                      stroke="var(--amber-500)"
                       strokeWidth="1.5"
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -636,7 +636,7 @@ export default function PurchasesPage({
                       height="18"
                       viewBox="0 0 24 24"
                       fill="none"
-                      stroke="#3b82f6"
+                      stroke="var(--blue-500)"
                       strokeWidth="1.5"
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -655,7 +655,7 @@ export default function PurchasesPage({
                       height="18"
                       viewBox="0 0 24 24"
                       fill="none"
-                      stroke="#10b981"
+                      stroke="var(--emerald-500)"
                       strokeWidth="1.5"
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -674,7 +674,7 @@ export default function PurchasesPage({
                       height="18"
                       viewBox="0 0 24 24"
                       fill="none"
-                      stroke="#ef4444"
+                      stroke="var(--red-500)"
                       strokeWidth="1.5"
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -880,7 +880,7 @@ export default function PurchasesPage({
                       )}
                     </tbody>
                     <tfoot>
-                      <tr style={{ background: "#f8fafc", fontWeight: 600 }}>
+                      <tr style={{ background: "var(--slate-50)", fontWeight: 600 }}>
                         <td colSpan={4} className="text-end">
                           Grand Total:
                         </td>
