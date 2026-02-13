@@ -952,7 +952,7 @@ export default function DevicesPage() {
       )}
 
       {/* cert status card */}
-      <div className="card" style={{ marginBottom: 20 }}>
+      {/* <div className="card" style={{ marginBottom: 20 }}>
         <div
           style={{
             display: "flex",
@@ -1009,7 +1009,7 @@ export default function DevicesPage() {
             </label>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* device cards */}
       {loadingDevices && (
