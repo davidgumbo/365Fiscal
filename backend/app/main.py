@@ -47,7 +47,7 @@ def ensure_system_roles():
                 db.add(role)
         db.commit()
     except Exception as e:
-        print(f"Error initializing system roles: {e}")
+        # Race condition: another worker may have already inserted the rows
         db.rollback()
     finally:
         db.close()
@@ -73,6 +73,9 @@ def ensure_default_admin():
             existing.is_admin = True
             existing.is_active = True
         db.commit()
+    except Exception:
+        # Race condition: another worker already created the admin user
+        db.rollback()
     finally:
         db.close()
 
@@ -126,6 +129,9 @@ def ensure_default_portal_user():
             if company_admin_role:
                 link.role_id = company_admin_role.id
         db.commit()
+    except Exception:
+        # Race condition: another worker already created the portal user/company
+        db.rollback()
     finally:
         db.close()
 
