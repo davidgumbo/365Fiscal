@@ -972,33 +972,34 @@ export default function InvoicesPage({
             ${selectedInvoice.zimra_status === "submitted" ? (() => {
               const dev = devices.find(d => d.id === selectedInvoice.device_id);
               return `
-            <div style="margin-top:18px; border:1px solid var(--line); border-radius:10px; padding:14px 18px;">
+            <div style="margin-top:18px; border:1px solid #e2e8f0; border-radius:10px; padding:14px 18px; background:#f0fdf4;">
               <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap;">
                 <div style="flex:1;">
-                  <div style="font-size:13px; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">ZIMRA Fiscal Details</div>
-                  <div style="font-size:12px; line-height:1.8; color:var(--muted);">
+                  <div style="font-size:13px; font-weight:700; color:#166534; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">ZIMRA Fiscal Details</div>
+                  <div style="font-size:12px; line-height:1.8; color:#374151;">
                     <div><strong>Status:</strong> Fiscalized ✓</div>
                     <div><strong>Verification Code:</strong> ${selectedInvoice.zimra_verification_code || "-"}</div>
                     <div><strong>Receipt #:</strong> ${selectedInvoice.zimra_receipt_counter || "-"} / Global #${selectedInvoice.zimra_receipt_global_no || "-"}</div>
                     <div><strong>Receipt ID:</strong> ${selectedInvoice.zimra_receipt_id || "-"}</div>
                     <div><strong>Fiscalized:</strong> ${selectedInvoice.fiscalized_at ? new Date(selectedInvoice.fiscalized_at).toLocaleString() : "-"}</div>
                   </div>
-                  <div style="margin-top:8px; padding-top:8px; border-top:1px solid var(--line); font-size:12px; line-height:1.8; color:var(--muted);">
-                    <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.3px; margin-bottom:2px; color:var(--accent);">Device Information</div>
+                  <div style="margin-top:8px; padding-top:8px; border-top:1px solid #bbf7d0; font-size:12px; line-height:1.8; color:#374151;">
+                    <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.3px; margin-bottom:2px; color:#166534;">Device Information</div>
                     <div><strong>Device ID:</strong> ${dev?.device_id || "-"}</div>
                     <div><strong>Serial No:</strong> ${dev?.serial_number || "-"}</div>
                     <div><strong>Model:</strong> ${dev?.model || "-"}</div>
                   </div>
                   ${selectedInvoice.zimra_verification_url ? `
-                  <div style="margin-top:8px;">
-                    <a href="${selectedInvoice.zimra_verification_url}" target="_blank" style="font-size:11px; color:var(--accent); word-break:break-all;">${selectedInvoice.zimra_verification_url}</a>
+                  <div style="margin-top:8px; padding-top:8px; border-top:1px solid #bbf7d0;">
+                    <div style="font-size:11px; font-weight:600; color:#166534; margin-bottom:2px;">VERIFICATION LINK</div>
+                    <div style="font-size:11px; color:#2563eb; text-decoration:underline; word-break:break-all;">${selectedInvoice.zimra_verification_url}</div>
                   </div>
                   ` : ""}
                 </div>
                 ${selectedInvoice.zimra_verification_url ? `
                 <div style="text-align:center; flex-shrink:0;">
-                  <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(selectedInvoice.zimra_verification_url)}" width="120" height="120" style="border:1px solid var(--line); border-radius:6px;" />
-                  <div style="font-size:10px; color:var(--muted); margin-top:4px;">Scan to verify</div>
+                  <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(selectedInvoice.zimra_verification_url)}" width="120" height="120" style="border:1px solid #bbf7d0; border-radius:6px;" />
+                  <div style="font-size:10px; color:#6b7280; margin-top:4px;">Scan to verify</div>
                 </div>
                 ` : ""}
               </div>
