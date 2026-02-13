@@ -134,6 +134,8 @@ const TrashIcon = () => (
     strokeWidth={1.5}
     stroke="currentColor"
     className="size-6"
+    width="16"
+    height="16"
   >
     <path
       strokeLinecap="round"
@@ -889,7 +891,13 @@ export default function DevicesPage() {
       {/* breadcrumb + actions bar */}
       <div className="o-control-panel" style={{ marginBottom: 20 }}>
         <div
-          style={{ display: "flex", alignItems: "center", gap: 12, flex: 1 }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            flex: 1,
+            marginTop: "1rem",
+          }}
         >
           <button
             className="outline"
@@ -994,6 +1002,27 @@ export default function DevicesPage() {
         </div>
       </div>
 
+      {/* device cards */}
+      {loadingDevices && (
+        <p style={{ color: "var(--muted)", padding: 20 }}>Loading devices…</p>
+      )}
+
+      {!loadingDevices && !devices.length && (
+        <div
+          className="card"
+          style={{ textAlign: "center", padding: 40, color: "var(--muted)" }}
+        >
+          <p style={{ fontSize: 16, marginBottom: 12 }}>No devices yet</p>
+          <button
+            className="primary"
+            onClick={() => setView("new-device")}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+          >
+            <PlusIcon /> Add First Device
+          </button>
+        </div>
+      )}
+
       {/* activity log */}
       {actionLog.length > 0 && (
         <details style={{ marginBottom: 16 }}>
@@ -1018,27 +1047,6 @@ export default function DevicesPage() {
             ))}
           </div>
         </details>
-      )}
-
-      {/* device cards */}
-      {loadingDevices && (
-        <p style={{ color: "var(--muted)", padding: 20 }}>Loading devices…</p>
-      )}
-
-      {!loadingDevices && !devices.length && (
-        <div
-          className="card"
-          style={{ textAlign: "center", padding: 40, color: "var(--muted)" }}
-        >
-          <p style={{ fontSize: 16, marginBottom: 12 }}>No devices yet</p>
-          <button
-            className="primary"
-            onClick={() => setView("new-device")}
-            style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
-          >
-            <PlusIcon /> Add First Device
-          </button>
-        </div>
       )}
 
       {/* delete confirmation modal */}
