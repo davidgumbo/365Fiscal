@@ -4,13 +4,11 @@ import { useMe } from "../hooks/useMe";
 import { apiFetch } from "../api";
 
 type ActivationStatus = {
-  company_id: number;
-  company_name: string;
-  has_subscription: boolean;
-  plan: string;
-  status: string;
+  activated: boolean;
+  plan: string | null;
+  status: string | null;
   expires_at: string | null;
-  days_remaining: number | null;
+  company_name: string | null;
 };
 
 // App icons as SVG components with explicit dimensions
@@ -182,7 +180,7 @@ export default function AppLauncherPage() {
   }, [isAdmin, me]);
 
   const hasActiveSubscription = activationStatus?.some(
-    (s) => s.has_subscription && s.status === "active"
+    (s) => s.activated && s.status === "active"
   );
 
   const handleActivate = async () => {

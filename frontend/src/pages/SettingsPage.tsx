@@ -235,13 +235,11 @@ export default function SettingsPage() {
 
   // Subscription status state
   type SubStatus = {
-    company_id: number;
-    company_name: string;
-    has_subscription: boolean;
-    plan: string;
-    status: string;
+    activated: boolean;
+    plan: string | null;
+    status: string | null;
     expires_at: string | null;
-    days_remaining: number | null;
+    company_name: string | null;
   };
   const [subStatuses, setSubStatuses] = useState<SubStatus[]>([]);
   const [subLoading, setSubLoading] = useState(false);
@@ -1627,11 +1625,12 @@ export default function SettingsPage() {
                 </div>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  {subStatuses.map((s) => {
+                  {subStatuses.map((s, idx) => {
                     const statusColor = s.status === "active" ? "var(--emerald-500)" : s.status === "expired" ? "var(--red-500)" : "var(--amber-500)";
-                    const daysColor = s.days_remaining !== null && s.days_remaining <= 30 ? "var(--red-500)" : s.days_remaining !== null && s.days_remaining <= 90 ? "var(--amber-500)" : "var(--emerald-500)";
+                    const daysRemaining = s.expires_at ? Math.ceil((new Date(s.expires_at).getTime() - Date.now()) / 86400000) : null;
+                    const daysColor = daysRemaining !== null && daysRemaining <= 30 ? "var(--red-500)" : daysRemaining !== null && daysRemaining <= 90 ? "var(--amber-500)" : "var(--emerald-500)";
                     return (
-                      <div key={s.company_id} className="settings-card" style={{ border: "1px solid var(--border)", borderRadius: 12, padding: 24 }}>
+                      <div key={idx} className="settings-card" style={{ border: "1px solid var(--border)", borderRadius: 12, padding: 24 }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                           <div>
                             <div className="settings-card-title" style={{ fontSize: 16 }}>{s.company_name}</div>
@@ -1646,18 +1645,18 @@ export default function SettingsPage() {
                                 display: "inline-block", padding: "2px 10px", borderRadius: 20, fontSize: 11,
                                 fontWeight: 700, textTransform: "uppercase", color: "white", background: statusColor,
                               }}>
-                                {s.status || (s.has_subscription ? "active" : "none")}
+                                {s.status || (s.activated ? "active" : "none")}
                               </span>
                             </div>
                           </div>
-                          {s.has_subscription && s.days_remaining !== null && (
+                          {s.activated && daysRemaining !== null && (
                             <div style={{ textAlign: "right" }}>
-                              <div style={{ fontSize: 28, fontWeight: 800, color: daysColor }}>{Math.max(s.days_remaining, 0)}</div>
+                              <div style={{ fontSize: 28, fontWeight: 800, color: daysColor }}>{Math.max(daysRemaining, 0)}</div>
                               <div style={{ fontSize: 11, color: "var(--muted)" }}>days remaining</div>
                             </div>
                           )}
                         </div>
-                        {s.has_subscription && (
+                        {s.activated && (
                           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                             <div>
                               <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase", letterSpacing: 0.5 }}>Expires</div>
@@ -1671,7 +1670,7 @@ export default function SettingsPage() {
                             </div>
                           </div>
                         )}
-                        {!s.has_subscription && (
+                        {!s.activated && (
                           <div style={{ color: "var(--muted)", fontSize: 13 }}>
                             No active subscription. Contact your administrator for an activation code.
                           </div>

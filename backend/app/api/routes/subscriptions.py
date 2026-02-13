@@ -1,6 +1,6 @@
 import secrets
 import string
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -133,7 +133,7 @@ def create_subscription(
     if existing:
         raise HTTPException(status_code=400, detail="Company already has a subscription. Update it instead.")
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     sub = Subscription(
         company_id=payload.company_id,
         plan=payload.plan,
@@ -208,7 +208,7 @@ def generate_activation_code(
         max_users=payload.max_users,
         max_devices=payload.max_devices,
         max_invoices_per_month=payload.max_invoices_per_month,
-        expires_at=datetime.utcnow() + timedelta(days=30),  # Code valid for 30 days
+        expires_at=datetime.now(timezone.utc) + timedelta(days=30),  # Code valid for 30 days
     )
     db.add(ac)
     db.commit()
@@ -258,7 +258,7 @@ def activate_subscription(
         raise HTTPException(status_code=404, detail="Invalid activation code")
     if ac.is_used:
         raise HTTPException(status_code=400, detail="This code has already been used")
-    if ac.expires_at and ac.expires_at < datetime.utcnow():
+    if ac.expires_at and ac.expires_at < datetime.now(timezone.utc):
         raise HTTPException(status_code=400, detail="This code has expired")
 
     # Check user belongs to the company
@@ -272,7 +272,7 @@ def activate_subscription(
         raise HTTPException(status_code=403, detail="You are not a member of the company this code is for")
 
     # Create or update subscription for the company
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     sub = db.query(Subscription).filter(Subscription.company_id == ac.company_id).first()
 
     if sub:
@@ -334,7 +334,7 @@ def my_subscription_status(
 
         if sub:
             # Auto-expire if past date
-            if sub.expires_at and sub.expires_at < datetime.utcnow() and sub.status == "active":
+            if sub.expires_at and sub.expires_at < datetime.now(timezone.utc) and sub.status == "active":
                 sub.status = "expired"
                 db.commit()
 
