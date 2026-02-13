@@ -3,6 +3,8 @@ import { apiFetch, apiRequest } from "../api";
 import { useCompanies, Company } from "../hooks/useCompanies";
 import { useListView } from "../context/ListViewContext";
 
+import { Trash2 } from "lucide-react";
+
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
@@ -609,11 +611,10 @@ export default function DevicesPage() {
             marginBottom: 24,
           }}
         >
-          <div className="o-breadcrumb">
-            <span className="o-breadcrumb-current">Devices</span>
-          </div>
-
-          <div className="settings-search" style={{ width: "20vw" }}>
+          <div
+            className="settings-search"
+            style={{ width: "30vw", margin: "0 auto" }}
+          >
             <input
               type="text"
               placeholder="Search company by name, VAT, or TIN"
@@ -622,10 +623,6 @@ export default function DevicesPage() {
             />
           </div>
         </div>
-
-        <p style={{ color: "var(--muted)", marginBottom: 20, fontSize: 14 }}>
-          Select a company to manage its fiscal devices.
-        </p>
 
         <div className="device-company-grid">
           {filteredCompanies.map((c) => (
@@ -1149,7 +1146,7 @@ export default function DevicesPage() {
                         title="Delete"
                         onClick={() => setConfirmDelete(d)}
                       >
-                        <TrashIcon />
+                        <Trash2 />
                       </button>
                     </div>
                   </div>
