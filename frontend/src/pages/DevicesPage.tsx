@@ -212,6 +212,7 @@ export default function DevicesPage() {
   /* ---- navigation state ---- */
   const [view, setView] = useState<PageView>("companies");
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  const [companyQuery, setCompanyQuery] = useState("");
 
   /* ---- data ---- */
   const [devices, setDevices] = useState<Device[]>([]);
@@ -581,6 +582,16 @@ export default function DevicesPage() {
     return [{ label: "", items: devices }];
   }, [devices, state.groupBy]);
 
+  const filteredCompanies = useMemo(() => {
+    const q = companyQuery.trim().toLowerCase();
+    if (!q) return companies;
+    return companies.filter((c) =>
+      [c.name, c.vat, c.tin].some((value) =>
+        value ? String(value).toLowerCase().includes(q) : false,
+      ),
+    );
+  }, [companies, companyQuery]);
+
   const isLoading = (id: number, action: string) =>
     !!actionLoading[`${id}-${action}`];
 
@@ -595,6 +606,15 @@ export default function DevicesPage() {
           <div className="o-breadcrumb">
             <span className="o-breadcrumb-current">Devices</span>
           </div>
+          <div className="o-searchbox" style={{ marginLeft: "auto" }}>
+            <span className="o-searchbox-icon">🔍</span>
+            <input
+              type="text"
+              placeholder="Search company by name, VAT, or TIN"
+              value={companyQuery}
+              onChange={(e) => setCompanyQuery(e.target.value)}
+            />
+          </div>
         </div>
 
         <p style={{ color: "var(--muted)", marginBottom: 20, fontSize: 14 }}>
@@ -602,7 +622,7 @@ export default function DevicesPage() {
         </p>
 
         <div className="device-company-grid">
-          {companies.map((c) => (
+          {filteredCompanies.map((c) => (
             <button
               key={c.id}
               className="device-company-card"
@@ -625,7 +645,7 @@ export default function DevicesPage() {
               </div>
             </button>
           ))}
-          {!companies.length && (
+          {!filteredCompanies.length && (
             <div
               style={{
                 gridColumn: "1 / -1",
@@ -634,7 +654,9 @@ export default function DevicesPage() {
                 color: "var(--muted)",
               }}
             >
-              No companies found. Create a company first.
+              {companyQuery.trim()
+                ? "No companies match your search."
+                : "No companies found. Create a company first."}
             </div>
           )}
         </div>

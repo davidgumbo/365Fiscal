@@ -4770,7 +4770,7 @@ button.danger:hover {
   margin: 0 0 16px 0;
   font-size: 1rem;
   font-weight: 600;
-  color: var(--slate-100);
+  color: var(--slate-800);
 }
 
 /* ── Filter Sidebar (professional dark nav) ── */
