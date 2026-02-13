@@ -6221,7 +6221,9 @@ tr:hover .o-quick-actions {
   min-height: 100vh;
   background: var(--zinc-50);
   background: linear-gradient(155deg, rgba(252, 252, 252, 1) 0%, rgba(2, 20, 51, 1) 100%);
-  background-image: url(./assets/app-launcher-bg.webp);
+  background-image: url(./assets/app-launcher-bg.webp) ;
+  background-repeat: no-repeat;
+  background-size: cover;
   flex-direction: column;
 }
 
