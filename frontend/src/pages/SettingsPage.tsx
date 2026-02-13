@@ -439,28 +439,28 @@ export default function SettingsPage() {
         <head>
           <title>Document Preview</title>
           <style>
-            body { font-family: Inter, Arial, sans-serif; padding: 32px; color: #0f172a; background: #f8fafc; }
+            body { font-family: Inter, Arial, sans-serif; padding: 32px; color: var(--slate-900); background: var(--slate-50); }
             h1 { font-size: 22px; margin-bottom: 6px; }
             h2 { font-size: 16px; margin: 0; }
-            .muted { color: #64748b; font-size: 12px; }
+            .muted { color: var(--slate-500); font-size: 12px; }
             .section { margin-top: 20px; }
-            .doc { padding: 24px; border-radius: 16px; background: #fff; margin-bottom: 24px; }
-            .layout-boxed { border: 1px solid #e2e8f0; }
+            .doc { padding: 24px; border-radius: 16px; background: var(--white-500); margin-bottom: 24px; }
+            .layout-boxed { border: 1px solid var(--slate-200); }
             .layout-bold h1 { font-size: 26px; font-weight: 800; }
-            .layout-bubble { border: 1px solid #e2e8f0; box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08); }
+            .layout-bubble { border: 1px solid var(--slate-200); box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08); }
             .layout-standard { }
             .header { display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; }
-            .watermark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 64px; font-weight: 700; color: #94a3b8; opacity: ${settingsForm.document_watermark_opacity || "0.08"}; pointer-events: none; }
+            .watermark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 64px; font-weight: 700; color: var(--slate-400); opacity: ${settingsForm.document_watermark_opacity || "0.08"}; pointer-events: none; }
             .doc { position: relative; }
             .logo { height: 48px; max-width: 180px; object-fit: contain; }
             .company-block { text-align: right; }
             table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-            th, td { border-bottom: 1px solid #e2e8f0; padding: 8px; font-size: 12px; }
-            th { text-align: left; background: #f8fafc; }
+            th, td { border-bottom: 1px solid var(--slate-200); padding: 8px; font-size: 12px; }
+            th { text-align: left; background: var(--slate-50); }
             .totals { margin-top: 16px; width: 260px; float: right; }
             .totals div { display: flex; justify-content: space-between; margin-bottom: 6px; }
             .info-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
-            .info-card { border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; }
+            .info-card { border: 1px solid var(--slate-200); border-radius: 12px; padding: 12px; }
           </style>
         </head>
         <body>
@@ -610,9 +610,9 @@ export default function SettingsPage() {
   };
 
   const previewCard = () => (
-    <div className="card shadow-sm" style={{ background: "#f8fafc" }}>
+    <div className="card shadow-sm" style={{ background: "var(--slate-50)" }}>
       <div className="card-body">
-        <div style={{ fontSize: 12, color: "#64748b", marginBottom: 8 }}>
+        <div style={{ fontSize: 12, color: "var(--slate-500)", marginBottom: 8 }}>
           Live Preview
         </div>
         {(() => {
@@ -620,13 +620,13 @@ export default function SettingsPage() {
             settingsForm.document_layout || "external_layout_standard";
           const layoutKey = layout.replace("external_layout_", "");
           const baseStyle: React.CSSProperties = {
-            background: "#fff",
+            background: "var(--white-500)",
             borderRadius: 12,
             padding: 12,
             border:
               layoutKey === "boxed" || layoutKey === "bubble"
-                ? "1px solid #e2e8f0"
-                : "1px solid #e2e8f0",
+                ? "1px solid var(--slate-200)"
+                : "1px solid var(--slate-200)",
             boxShadow:
               layoutKey === "bubble"
                 ? "0 10px 24px rgba(15, 23, 42, 0.08)"
@@ -646,7 +646,7 @@ export default function SettingsPage() {
                     justifyContent: "center",
                     fontSize: 42,
                     fontWeight: 700,
-                    color: "#94a3b8",
+                    color: "var(--slate-400)",
                     opacity: Number(
                       settingsForm.document_watermark_opacity || "0.08",
                     ),
@@ -684,12 +684,12 @@ export default function SettingsPage() {
                   >
                     {selectedCompany?.name || "Company"}
                   </div>
-                  <div style={{ fontSize: 11, color: "#94a3b8" }}>
+                  <div style={{ fontSize: 11, color: "var(--slate-400)" }}>
                     {selectedCompany?.address || ""}
                   </div>
                 </div>
                 <div
-                  style={{ textAlign: "right", fontSize: 11, color: "#94a3b8" }}
+                  style={{ textAlign: "right", fontSize: 11, color: "var(--slate-400)" }}
                 >
                   <div>{selectedCompany?.email || "-"}</div>
                   <div>{selectedCompany?.phone || "-"}</div>
@@ -697,7 +697,7 @@ export default function SettingsPage() {
                 </div>
               </div>
               {settingsForm.document_header && (
-                <div style={{ marginTop: 8, fontSize: 11, color: "#64748b" }}>
+                <div style={{ marginTop: 8, fontSize: 11, color: "var(--slate-500)" }}>
                   {settingsForm.document_header}
                 </div>
               )}
@@ -707,30 +707,30 @@ export default function SettingsPage() {
                 <div
                   style={{
                     flex: 1,
-                    border: "1px solid #e2e8f0",
+                    border: "1px solid var(--slate-200)",
                     borderRadius: 8,
                     padding: 8,
                   }}
                 >
                   <div style={{ fontWeight: 600 }}>Customer</div>
-                  <div style={{ color: "#94a3b8" }}>Acme Corp</div>
+                  <div style={{ color: "var(--slate-400)" }}>Acme Corp</div>
                 </div>
                 <div
                   style={{
                     flex: 1,
-                    border: "1px solid #e2e8f0",
+                    border: "1px solid var(--slate-200)",
                     borderRadius: 8,
                     padding: 8,
                   }}
                 >
                   <div style={{ fontWeight: 600 }}>Payment</div>
-                  <div style={{ color: "#94a3b8" }}>
+                  <div style={{ color: "var(--slate-400)" }}>
                     Terms: {settingsForm.payment_terms_default || "-"}
                   </div>
                 </div>
               </div>
               {settingsForm.document_footer && (
-                <div style={{ marginTop: 8, fontSize: 11, color: "#64748b" }}>
+                <div style={{ marginTop: 8, fontSize: 11, color: "var(--slate-500)" }}>
                   {settingsForm.document_footer}
                 </div>
               )}
@@ -873,6 +873,21 @@ export default function SettingsPage() {
           <div className="settings-title">Settings</div>
         </div>
         <div className="settings-top-actions">
+          <div className="settings-company-select">
+            <label className="input">
+              {/* Company */}
+              <select
+                value={companyId ?? ""}
+                onChange={(e) => setCompanyId(Number(e.target.value))}
+              >
+                {companies.map((c: Company) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
           <button
             className="primary"
             onClick={saveCompanySettings}
@@ -890,44 +905,49 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="two-panel-left">
+      <div className="two-panel-left" style={{ margin: "1rem" }}>
         <aside className="settings-sidebar">
           <div className="settings-search">
             <input type="text" placeholder="Search..." />
           </div>
           <div className="settings-sidebar-title">General Settings</div>
-          {activeTopTab === "general" && (
-            <>
-              <button
-                className={`settings-sidebar-item ${activeSection === "company" ? "active" : ""}`}
-                onClick={() => setActiveSection("company")}
-              >
-                Company
-              </button>
-              <button
-                className={`settings-sidebar-item ${activeSection === "document-layout" ? "active" : ""}`}
-                onClick={() => setActiveSection("document-layout")}
-              >
-                Document Layout
-              </button>
-              <button
-                className={`settings-sidebar-item ${activeSection === "zimra-tax" ? "active" : ""}`}
-                onClick={() => setActiveSection("zimra-tax")}
-              >
-                ZIMRA Taxes
-              </button>
-            </>
-          )}
-          {activeTopTab === "users" && (
-            <button
-              className={`settings-sidebar-item ${activeSection === (me.is_admin ? "admins" : "users-companies") ? "active" : ""}`}
-              onClick={() =>
-                setActiveSection(me.is_admin ? "admins" : "users-companies")
-              }
-            >
-              {me.is_admin ? "Administrators" : "Users & Companies"}
-            </button>
-          )}
+          <button
+            className={`settings-sidebar-item ${activeSection === "company" ? "active" : ""}`}
+            onClick={() => {
+              setActiveTopTab("general");
+              setActiveSection("company");
+            }}
+          >
+            Company
+          </button>
+          <button
+            className={`settings-sidebar-item ${activeSection === "document-layout" ? "active" : ""}`}
+            onClick={() => {
+              setActiveTopTab("general");
+              setActiveSection("document-layout");
+            }}
+          >
+            Document Layout
+          </button>
+          <button
+            className={`settings-sidebar-item ${activeSection === "zimra-tax" ? "active" : ""}`}
+            onClick={() => {
+              setActiveTopTab("general");
+              setActiveSection("zimra-tax");
+            }}
+          >
+            ZIMRA Taxes
+          </button>
+          <div className="settings-sidebar-title">Users &amp; Companies</div>
+          <button
+            className={`settings-sidebar-item ${activeSection === (me.is_admin ? "admins" : "users-companies") ? "active" : ""}`}
+            onClick={() => {
+              setActiveTopTab("users");
+              setActiveSection(me.is_admin ? "admins" : "users-companies");
+            }}
+          >
+            {me.is_admin ? "Administrators" : "Users & Companies"}
+          </button>
         </aside>
         <main className="settings-main">
           {status && (
@@ -949,22 +969,6 @@ export default function SettingsPage() {
 
           {activeTopTab === "general" && (
             <>
-              <div className="settings-company-select">
-                <label className="input">
-                  Company
-                  <select
-                    value={companyId ?? ""}
-                    onChange={(e) => setCompanyId(Number(e.target.value))}
-                  >
-                    {companies.map((c: Company) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-
               {activeSection === "company" && (
                 <section id="company" className="settings-section">
                   <div className="settings-section-header">
@@ -1326,18 +1330,18 @@ export default function SettingsPage() {
                             <td>
                               {tax.is_zimra_tax ? (
                                 <span
-                                  style={{ color: "#16a34a", fontWeight: 600 }}
+                                  style={{ color: "var(--green-600)", fontWeight: 600 }}
                                 >
                                   ✓
                                 </span>
                               ) : (
-                                <span style={{ color: "#94a3b8" }}>—</span>
+                                <span style={{ color: "var(--slate-400)" }}>—</span>
                               )}
                             </td>
                             <td>
                               <span
                                 style={{
-                                  color: tax.is_active ? "#16a34a" : "#ef4444",
+                                  color: tax.is_active ? "var(--green-600)" : "var(--red-500)",
                                 }}
                               >
                                 {tax.is_active ? "Yes" : "No"}
@@ -1371,7 +1375,7 @@ export default function SettingsPage() {
                   ) : (
                     <div
                       style={{
-                        color: "#94a3b8",
+                        color: "var(--slate-400)",
                         fontSize: 13,
                         padding: "12px 0",
                       }}

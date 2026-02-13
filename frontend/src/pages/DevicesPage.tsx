@@ -3,6 +3,8 @@ import { apiFetch, apiRequest } from "../api";
 import { useCompanies, Company } from "../hooks/useCompanies";
 import { useListView } from "../context/ListViewContext";
 
+import { Trash2 } from "lucide-react";
+
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
@@ -210,6 +212,7 @@ export default function DevicesPage() {
   /* ---- navigation state ---- */
   const [view, setView] = useState<PageView>("companies");
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  const [companyQuery, setCompanyQuery] = useState("");
 
   /* ---- data ---- */
   const [devices, setDevices] = useState<Device[]>([]);
@@ -579,6 +582,16 @@ export default function DevicesPage() {
     return [{ label: "", items: devices }];
   }, [devices, state.groupBy]);
 
+  const filteredCompanies = useMemo(() => {
+    const q = companyQuery.trim().toLowerCase();
+    if (!q) return companies;
+    return companies.filter((c) =>
+      [c.name, c.vat, c.tin].some((value) =>
+        value ? String(value).toLowerCase().includes(q) : false,
+      ),
+    );
+  }, [companies, companyQuery]);
+
   const isLoading = (id: number, action: string) =>
     !!actionLoading[`${id}-${action}`];
 
@@ -589,9 +602,26 @@ export default function DevicesPage() {
   if (view === "companies") {
     return (
       <div className="content">
-        <div className="o-control-panel" style={{ marginBottom: 24 }}>
+        <div
+          className="o-control-panel"
+          style={{
+            display: "flex",
+            width: "auto",
+            justifyContent: "space-between",
+            marginBottom: 24,
+          }}
+        >
           <div className="o-breadcrumb">
             <span className="o-breadcrumb-current">Devices</span>
+          </div>
+
+          <div className="settings-search" style={{ width: "20vw" }}>
+            <input
+              type="text"
+              placeholder="Search company by name, VAT, or TIN"
+              value={companyQuery}
+              onChange={(e) => setCompanyQuery(e.target.value)}
+            />
           </div>
         </div>
 
@@ -600,7 +630,7 @@ export default function DevicesPage() {
         </p>
 
         <div className="device-company-grid">
-          {companies.map((c) => (
+          {filteredCompanies.map((c) => (
             <button
               key={c.id}
               className="device-company-card"
@@ -623,7 +653,7 @@ export default function DevicesPage() {
               </div>
             </button>
           ))}
-          {!companies.length && (
+          {!filteredCompanies.length && (
             <div
               style={{
                 gridColumn: "1 / -1",
@@ -632,7 +662,9 @@ export default function DevicesPage() {
                 color: "var(--muted)",
               }}
             >
-              No companies found. Create a company first.
+              {companyQuery.trim()
+                ? "No companies match your search."
+                : "No companies found. Create a company first."}
             </div>
           )}
         </div>
@@ -889,14 +921,21 @@ export default function DevicesPage() {
   return (
     <div className="content">
       {/* breadcrumb + actions bar */}
-      <div className="o-control-panel" style={{ marginBottom: 20 }}>
+      <div
+        className="o-control-panel"
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          marginBottom: 20,
+          width: "98%",
+        }}
+      >
         <div
           style={{
             display: "flex",
             alignItems: "center",
             gap: 12,
             flex: 1,
-            marginTop: "1rem",
           }}
         >
           <button
@@ -943,7 +982,7 @@ export default function DevicesPage() {
       )}
 
       {/* cert status card */}
-      <div className="card" style={{ marginBottom: 20 }}>
+      {/* <div className="card" style={{ marginBottom: 20 }}>
         <div
           style={{
             display: "flex",
@@ -961,12 +1000,12 @@ export default function DevicesPage() {
               </span>
             )}
             {certStatus === "ready" && (
-              <span style={{ color: "var(--success, #27ae60)", fontSize: 13 }}>
+              <span style={{ color: "var(--success, var(--green-500))", fontSize: 13 }}>
                 ✓ Certificate and key are configured
               </span>
             )}
             {certStatus === "missing" && (
-              <span style={{ color: "var(--danger, #c0392b)", fontSize: 13 }}>
+              <span style={{ color: "var(--danger, var(--orange-700))", fontSize: 13 }}>
                 ⚠ Certificate or key missing — upload below
               </span>
             )}
@@ -1000,7 +1039,7 @@ export default function DevicesPage() {
             </label>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* device cards */}
       {loadingDevices && (
@@ -1112,7 +1151,7 @@ export default function DevicesPage() {
                         title="Delete"
                         onClick={() => setConfirmDelete(d)}
                       >
-                        <TrashIcon />
+                        <Trash2 />
                       </button>
                     </div>
                   </div>

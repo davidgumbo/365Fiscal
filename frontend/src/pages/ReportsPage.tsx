@@ -793,18 +793,18 @@ export default function ReportsPage() {
 
     const html = `<!DOCTYPE html><html><head><title>${title}</title><style>
       @page { size: A4; margin: 15mm; }
-      body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1a1a2e; margin: 0; padding: 20px; font-size: 12px; }
+      body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--gray-900); margin: 0; padding: 20px; font-size: 12px; }
       h2 { margin: 0 0 4px; font-size: 20px; }
-      h3 { margin: 24px 0 8px; font-size: 1rem; border-bottom: 2px solid #e8ecf1; padding-bottom: 6px; }
-      .period { color: #6c757d; margin-bottom: 20px; }
+      h3 { margin: 24px 0 8px; font-size: 1rem; border-bottom: 2px solid var(--slate-200); padding-bottom: 6px; }
+      .period { color: var(--gray-500); margin-bottom: 20px; }
       .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 16px 0; }
-      .summary-box { background: #f8f9fb; border: 1px solid #e8ecf1; border-radius: 8px; padding: 12px; }
-      .summary-box .label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #6c757d; margin-bottom: 4px; }
+      .summary-box { background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 8px; padding: 12px; }
+      .summary-box .label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--gray-500); margin-bottom: 4px; }
       .summary-box .val { font-size: 18px; font-weight: 700; }
       table { width: 100%; border-collapse: collapse; margin: 8px 0 16px; }
-      th { background: #f1f3f5; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 10px; text-align: left; border-bottom: 2px solid #dee2e6; }
-      td { padding: 7px 10px; border-bottom: 1px solid #f0f0f0; }
-      tr:nth-child(even) { background: #fafbfc; }
+      th { background: var(--gray-100); font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 10px; text-align: left; border-bottom: 2px solid var(--zinc-200); }
+      td { padding: 7px 10px; border-bottom: 1px solid var(--zinc-100); }
+      tr:nth-child(even) { background: var(--gray-50); }
       @media print { body { padding: 0; } }
     </style></head><body>
       <h2>${title}</h2>
@@ -853,10 +853,10 @@ export default function ReportsPage() {
           <div className="o-sidebar-section">
             <div className="o-sidebar-title">REPORTS</div>
             {[
-              { key: "sales", label: "SALES REPORT", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg> },
-              { key: "stock", label: "STOCK REPORT", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> },
-              { key: "payments", label: "PAYMENTS REPORT", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><path d="M2 10h20"/></svg> },
-              { key: "vat", label: "VAT REPORT", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg> },
+              { key: "sales", label: "SALES REPORT", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--emerald-500)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg> },
+              { key: "stock", label: "STOCK REPORT", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--amber-500)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg> },
+              { key: "payments", label: "PAYMENTS REPORT", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue-500)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><path d="M2 10h20"/></svg> },
+              { key: "vat", label: "VAT REPORT", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--violet-500)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg> },
             ].map((item) => (
               <div
                 key={item.key}
@@ -947,7 +947,7 @@ export default function ReportsPage() {
           style={{
             textAlign: "center",
             padding: "60px 20px",
-            color: "#6c757d",
+            color: "var(--gray-500)",
           }}
         >
           Loading report data...
@@ -1258,7 +1258,7 @@ export default function ReportsPage() {
                           <div
                             style={{
                               height: 8,
-                              background: "#f1f3f5",
+                              background: "var(--gray-100)",
                               borderRadius: 4,
                               overflow: "hidden",
                             }}
@@ -1267,7 +1267,7 @@ export default function ReportsPage() {
                               style={{
                                 width: `${pct}%`,
                                 height: "100%",
-                                background: "#4361ee",
+                                background: "var(--blue-600)",
                                 borderRadius: 4,
                                 transition: "width 0.5s",
                               }}
@@ -1447,7 +1447,7 @@ export default function ReportsPage() {
             style={{
               textAlign: "center",
               padding: "60px 20px",
-              color: "#6c757d",
+              color: "var(--gray-500)",
             }}
           >
             <p>

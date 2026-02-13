@@ -75,14 +75,14 @@ const formatAction = (action: string) => {
 };
 
 const getActionColor = (action: string): string => {
-  if (action.includes("create")) return "#16a34a";
-  if (action.includes("delete") || action.includes("cancel")) return "#dc2626";
-  if (action.includes("update") || action.includes("edit")) return "#2563eb";
-  if (action.includes("fiscalize")) return "#7c3aed";
-  if (action.includes("payment")) return "#0891b2";
-  if (action.includes("confirm") || action.includes("post")) return "#ea580c";
-  if (action.includes("login")) return "#64748b";
-  return "#64748b";
+  if (action.includes("create")) return "var(--green-600)";
+  if (action.includes("delete") || action.includes("cancel")) return "var(--red-600)";
+  if (action.includes("update") || action.includes("edit")) return "var(--blue-600)";
+  if (action.includes("fiscalize")) return "var(--violet-600)";
+  if (action.includes("payment")) return "var(--cyan-600)";
+  if (action.includes("confirm") || action.includes("post")) return "var(--orange-600)";
+  if (action.includes("login")) return "var(--slate-500)";
+  return "var(--slate-500)";
 };
 
 const getResourceIcon = (resourceType: string): string => {
@@ -207,28 +207,28 @@ export default function AuditLogsPage() {
       {summary && (
         <div className="summary-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16, marginBottom: 24 }}>
           <div className="summary-card card" style={{ padding: 20 }}>
-            <div style={{ fontSize: 32, fontWeight: 700, color: "#1e293b" }}>
+            <div style={{ fontSize: 32, fontWeight: 700, color: "var(--slate-800)" }}>
               {summary.total_actions.toLocaleString()}
             </div>
-            <div style={{ fontSize: 13, color: "#64748b" }}>Total Actions (Last {daysFilter} days)</div>
+            <div style={{ fontSize: 13, color: "var(--slate-500)" }}>Total Actions (Last {daysFilter} days)</div>
           </div>
           <div className="summary-card card" style={{ padding: 20 }}>
-            <div style={{ fontSize: 32, fontWeight: 700, color: "#16a34a" }}>
+            <div style={{ fontSize: 32, fontWeight: 700, color: "var(--green-600)" }}>
               {Object.values(summary.actions_by_type).reduce((a, b) => a + b, 0) - (summary.recent_errors?.length || 0)}
             </div>
-            <div style={{ fontSize: 13, color: "#64748b" }}>Successful Actions</div>
+            <div style={{ fontSize: 13, color: "var(--slate-500)" }}>Successful Actions</div>
           </div>
           <div className="summary-card card" style={{ padding: 20 }}>
-            <div style={{ fontSize: 32, fontWeight: 700, color: "#dc2626" }}>
+            <div style={{ fontSize: 32, fontWeight: 700, color: "var(--red-600)" }}>
               {summary.recent_errors?.length || 0}
             </div>
-            <div style={{ fontSize: 13, color: "#64748b" }}>Recent Errors</div>
+            <div style={{ fontSize: 13, color: "var(--slate-500)" }}>Recent Errors</div>
           </div>
           <div className="summary-card card" style={{ padding: 20 }}>
-            <div style={{ fontSize: 32, fontWeight: 700, color: "#2563eb" }}>
+            <div style={{ fontSize: 32, fontWeight: 700, color: "var(--blue-600)" }}>
               {Object.keys(summary.actions_by_user).length}
             </div>
-            <div style={{ fontSize: 13, color: "#64748b" }}>Active Users</div>
+            <div style={{ fontSize: 13, color: "var(--slate-500)" }}>Active Users</div>
           </div>
         </div>
       )}
@@ -294,7 +294,7 @@ export default function AuditLogsPage() {
 
       {/* Logs Table */}
       {loading ? (
-        <div className="loading-spinner" style={{ padding: 40, textAlign: "center", color: "#64748b" }}>
+        <div className="loading-spinner" style={{ padding: 40, textAlign: "center", color: "var(--slate-500)" }}>
           Loading audit logs...
         </div>
       ) : (
@@ -313,14 +313,14 @@ export default function AuditLogsPage() {
             <tbody>
               {logs.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: "center", padding: 40, color: "#64748b" }}>
+                  <td colSpan={6} style={{ textAlign: "center", padding: 40, color: "var(--slate-500)" }}>
                     No audit logs found matching your filters
                   </td>
                 </tr>
               ) : (
                 logs.map((log) => (
                   <tr key={log.id}>
-                    <td style={{ whiteSpace: "nowrap", fontSize: 12, color: "#64748b" }}>
+                    <td style={{ whiteSpace: "nowrap", fontSize: 12, color: "var(--slate-500)" }}>
                       {formatDate(log.action_at)}
                     </td>
                     <td>
@@ -330,7 +330,7 @@ export default function AuditLogsPage() {
                             width: 28,
                             height: 28,
                             borderRadius: "50%",
-                            background: "#e2e8f0",
+                            background: "var(--slate-200)",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
@@ -367,7 +367,7 @@ export default function AuditLogsPage() {
                           <div style={{ fontSize: 13, fontWeight: 500 }}>
                             {log.resource_reference || `#${log.resource_id}`}
                           </div>
-                          <div style={{ fontSize: 11, color: "#94a3b8" }}>
+                          <div style={{ fontSize: 11, color: "var(--slate-400)" }}>
                             {log.resource_type}
                           </div>
                         </div>
@@ -377,7 +377,7 @@ export default function AuditLogsPage() {
                       <div
                         style={{
                           fontSize: 12,
-                          color: "#64748b",
+                          color: "var(--slate-500)",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
@@ -389,11 +389,11 @@ export default function AuditLogsPage() {
                     </td>
                     <td>
                       {log.status === "success" ? (
-                        <span style={{ color: "#16a34a", display: "flex", alignItems: "center", gap: 4 }}>
+                        <span style={{ color: "var(--green-600)", display: "flex", alignItems: "center", gap: 4 }}>
                           <CheckCircleIcon /> Success
                         </span>
                       ) : (
-                        <span style={{ color: "#dc2626", display: "flex", alignItems: "center", gap: 4 }}>
+                        <span style={{ color: "var(--red-600)", display: "flex", alignItems: "center", gap: 4 }}>
                           <AlertCircleIcon /> Error
                         </span>
                       )}
@@ -408,8 +408,8 @@ export default function AuditLogsPage() {
 
       <style>{`
         .alert-error {
-          background: #fee2e2;
-          color: #dc2626;
+          background: var(--red-100);
+          color: var(--red-600);
           padding: 12px 16px;
           border-radius: 8px;
           display: flex;
@@ -417,8 +417,8 @@ export default function AuditLogsPage() {
           justify-content: space-between;
         }
         .summary-card {
-          background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-          border: 1px solid #e2e8f0;
+          background: linear-gradient(135deg, var(--white-500) 0%, var(--slate-50) 100%);
+          border: 1px solid var(--slate-200);
         }
       `}</style>
     </div>

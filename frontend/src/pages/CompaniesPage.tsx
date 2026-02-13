@@ -5,14 +5,32 @@ import { useListView } from "../context/ListViewContext";
 
 // Icon components
 const EditIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
   </svg>
 );
 
 const TrashIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <polyline points="3 6 5 6 21 6" />
     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
     <line x1="10" y1="11" x2="10" y2="17" />
@@ -21,14 +39,32 @@ const TrashIcon = () => (
 );
 
 const PlusIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <line x1="12" y1="5" x2="12" y2="19" />
     <line x1="5" y1="12" x2="19" y2="12" />
   </svg>
 );
 
 const BuildingIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
     <path d="M9 22v-4h6v4" />
     <line x1="8" y1="6" x2="8" y2="6.01" />
@@ -44,7 +80,16 @@ const BuildingIcon = () => (
 );
 
 const XIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <line x1="18" y1="6" x2="6" y2="18" />
     <line x1="6" y1="6" x2="18" y2="18" />
   </svg>
@@ -80,7 +125,7 @@ export default function CompaniesPage() {
     email: "",
     phone: "",
     tin: "",
-    vat: ""
+    vat: "",
   });
   const [editForm, setEditForm] = useState({
     name: "",
@@ -88,7 +133,7 @@ export default function CompaniesPage() {
     email: "",
     phone: "",
     tin: "",
-    vat: ""
+    vat: "",
   });
   const [editPortalUserId, setEditPortalUserId] = useState<number | null>(null);
   const [editPortalEmail, setEditPortalEmail] = useState("");
@@ -108,10 +153,14 @@ export default function CompaniesPage() {
     try {
       setError(null);
       if (me?.is_admin) {
-        const data = await apiFetch<Company[]>(`/companies${query ? `?${query}` : ""}`);
+        const data = await apiFetch<Company[]>(
+          `/companies${query ? `?${query}` : ""}`,
+        );
         setCompanies(data);
       } else {
-        const data = await apiFetch<Company[]>(`/companies/me${query ? `?${query}` : ""}`);
+        const data = await apiFetch<Company[]>(
+          `/companies/me${query ? `?${query}` : ""}`,
+        );
         setCompanies(data);
       }
     } catch (err: any) {
@@ -137,7 +186,7 @@ export default function CompaniesPage() {
       setSaving(true);
       const company = await apiFetch<Company>("/companies", {
         method: "POST",
-        body: JSON.stringify(form)
+        body: JSON.stringify(form),
       });
       let portalCreated = false;
       const portalEmailSnapshot = portalEmail;
@@ -145,19 +194,33 @@ export default function CompaniesPage() {
         try {
           await apiFetch(`/companies/${company.id}/portal-user`, {
             method: "PATCH",
-            body: JSON.stringify({ email: portalEmail, password: portalPassword })
+            body: JSON.stringify({
+              email: portalEmail,
+              password: portalPassword,
+            }),
           });
           portalCreated = true;
         } catch (portalErr: any) {
-          setError(`Company created but portal user failed: ${portalErr.message}`);
+          setError(
+            `Company created but portal user failed: ${portalErr.message}`,
+          );
         }
         setPortalEmail("");
         setPortalPassword("");
       }
-      setForm({ name: "", address: "", email: "", phone: "", tin: "", vat: "" });
+      setForm({
+        name: "",
+        address: "",
+        email: "",
+        phone: "",
+        tin: "",
+        vat: "",
+      });
       setShowAddModal(false);
       if (portalCreated) {
-        setStatus(`Company "${company.name}" created successfully! Portal user can now log in at /login with email: ${portalEmailSnapshot}`);
+        setStatus(
+          `Company "${company.name}" created successfully! Portal user can now log in at /login with email: ${portalEmailSnapshot}`,
+        );
       } else if (portalEmailSnapshot) {
         // Error already set above
       } else {
@@ -180,17 +243,19 @@ export default function CompaniesPage() {
       email: company.email || "",
       phone: company.phone || "",
       tin: company.tin || "",
-      vat: company.vat || ""
+      vat: company.vat || "",
     });
     setEditPortalPassword("");
     setEditPortalUserId(null);
     setEditPortalEmail("");
     setError(null);
     setShowEditModal(true);
-    
+
     // Load portal user info in background
     try {
-      const portalUsers = await apiFetch<{id: number; email: string}[]>(`/company-users/portal-users?company_id=${company.id}`);
+      const portalUsers = await apiFetch<{ id: number; email: string }[]>(
+        `/company-users/portal-users?company_id=${company.id}`,
+      );
       if (portalUsers && portalUsers.length) {
         setEditPortalUserId(portalUsers[0].id);
         setEditPortalEmail(portalUsers[0].email);
@@ -204,7 +269,14 @@ export default function CompaniesPage() {
   const closeEditModal = () => {
     setShowEditModal(false);
     setEditingCompany(null);
-    setEditForm({ name: "", address: "", email: "", phone: "", tin: "", vat: "" });
+    setEditForm({
+      name: "",
+      address: "",
+      email: "",
+      phone: "",
+      tin: "",
+      vat: "",
+    });
     setEditPortalUserId(null);
     setEditPortalEmail("");
     setEditPortalPassword("");
@@ -221,19 +293,25 @@ export default function CompaniesPage() {
       setSaving(true);
       await apiFetch(`/companies/${editingCompany.id}`, {
         method: "PATCH",
-        body: JSON.stringify(editForm)
+        body: JSON.stringify(editForm),
       });
       // Update or create portal user if email/password provided
       if (editPortalEmail && editPortalPassword) {
         await apiFetch(`/companies/${editingCompany.id}/portal-user`, {
           method: "PATCH",
-          body: JSON.stringify({ email: editPortalEmail, password: editPortalPassword })
+          body: JSON.stringify({
+            email: editPortalEmail,
+            password: editPortalPassword,
+          }),
         });
       } else if (editPortalUserId && editPortalPassword) {
         // Just update password for existing user
-        await apiFetch(`/company-users/portal-users/${editPortalUserId}/password?password=${encodeURIComponent(editPortalPassword)}`, {
-          method: "PATCH"
-        });
+        await apiFetch(
+          `/company-users/portal-users/${editPortalUserId}/password?password=${encodeURIComponent(editPortalPassword)}`,
+          {
+            method: "PATCH",
+          },
+        );
       }
       closeEditModal();
       setStatus("Company updated successfully");
@@ -246,7 +324,12 @@ export default function CompaniesPage() {
   };
 
   const deleteCompany = async (companyId: number) => {
-    if (!confirm("Are you sure you want to delete this company? This action cannot be undone.")) return;
+    if (
+      !confirm(
+        "Are you sure you want to delete this company? This action cannot be undone.",
+      )
+    )
+      return;
     try {
       setError(null);
       await apiFetch(`/companies/${companyId}`, { method: "DELETE" });
@@ -266,7 +349,7 @@ export default function CompaniesPage() {
       const noVat = companies.filter((company) => !company.vat);
       return [
         { label: "Has VAT", items: hasVat },
-        { label: "No VAT", items: noVat }
+        { label: "No VAT", items: noVat },
       ];
     }
     return [{ label: "", items: companies }];
@@ -285,11 +368,14 @@ export default function CompaniesPage() {
       {/* Page Header */}
       <div className="page-header">
         <div className="page-title">
-          <BuildingIcon />
           <h2>Companies</h2>
         </div>
         {me?.is_admin && (
-          <button className="primary" onClick={() => setShowAddModal(true)}>
+          <button
+            className="primary"
+            style={{ display: "flex" }}
+            onClick={() => setShowAddModal(true)}
+          >
             <PlusIcon />
             ADD COMPANY
           </button>
@@ -301,11 +387,32 @@ export default function CompaniesPage() {
 
       {/* Add Company Modal */}
       {showAddModal && (
-        <div className="modal-overlay" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }} onClick={() => setShowAddModal(false)}>
-          <div className="modal modal--centered" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="modal-overlay"
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0,0,0,0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+          }}
+          onClick={() => setShowAddModal(false)}
+        >
+          <div
+            className="modal modal-centered"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="modal-header">
               <h3>Register New Company</h3>
-              <button className="icon-btn" onClick={() => setShowAddModal(false)}>
+              <button
+                className="icon-btn"
+                onClick={() => setShowAddModal(false)}
+              >
                 <XIcon />
               </button>
             </div>
@@ -344,7 +451,9 @@ export default function CompaniesPage() {
                     type="text"
                     placeholder="Company address"
                     value={form.address}
-                    onChange={(e) => setForm({ ...form, address: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, address: e.target.value })
+                    }
                   />
                 </label>
                 <label className="input">
@@ -353,7 +462,9 @@ export default function CompaniesPage() {
                     type="email"
                     placeholder="company@example.com"
                     value={form.email}
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, email: e.target.value })
+                    }
                   />
                 </label>
                 <label className="input">
@@ -362,7 +473,9 @@ export default function CompaniesPage() {
                     type="text"
                     placeholder="+263 xxx xxx xxx"
                     value={form.phone}
-                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, phone: e.target.value })
+                    }
                   />
                 </label>
               </div>
@@ -391,8 +504,14 @@ export default function CompaniesPage() {
               </div>
             </div>
             <div className="modal-footer">
-              <button className="ghost" onClick={() => setShowAddModal(false)}>Cancel</button>
-              <button className="primary" onClick={createCompany} disabled={saving}>
+              <button className="ghost" onClick={() => setShowAddModal(false)}>
+                Cancel
+              </button>
+              <button
+                className="primary"
+                onClick={createCompany}
+                disabled={saving}
+              >
                 {saving ? "Creating..." : "Create Company"}
               </button>
             </div>
@@ -402,8 +521,26 @@ export default function CompaniesPage() {
 
       {/* Edit Company Modal */}
       {showEditModal && (
-        <div className="modal-overlay" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }} onClick={closeEditModal}>
-          <div className="modal modal--centered" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="modal-overlay"
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0,0,0,0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+          }}
+          onClick={closeEditModal}
+        >
+          <div
+            className="modal modal--centered"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="modal-header">
               <h3>Edit Company</h3>
               <button className="icon-btn" onClick={closeEditModal}>
@@ -411,7 +548,11 @@ export default function CompaniesPage() {
               </button>
             </div>
             <div className="modal-body">
-              {error && <div className="alert alert-error" style={{ marginBottom: 16 }}>{error}</div>}
+              {error && (
+                <div className="alert alert-error" style={{ marginBottom: 16 }}>
+                  {error}
+                </div>
+              )}
               <div className="form-grid">
                 <label className="input">
                   Company Name *
@@ -419,7 +560,9 @@ export default function CompaniesPage() {
                     type="text"
                     placeholder="Enter company name"
                     value={editForm.name}
-                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, name: e.target.value })
+                    }
                   />
                 </label>
                 <label className="input">
@@ -428,7 +571,9 @@ export default function CompaniesPage() {
                     type="text"
                     placeholder="Tax Identification Number"
                     value={editForm.tin}
-                    onChange={(e) => setEditForm({ ...editForm, tin: e.target.value })}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, tin: e.target.value })
+                    }
                   />
                 </label>
                 <label className="input">
@@ -437,7 +582,9 @@ export default function CompaniesPage() {
                     type="text"
                     placeholder="VAT Number"
                     value={editForm.vat}
-                    onChange={(e) => setEditForm({ ...editForm, vat: e.target.value })}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, vat: e.target.value })
+                    }
                   />
                 </label>
                 <label className="input">
@@ -446,7 +593,9 @@ export default function CompaniesPage() {
                     type="text"
                     placeholder="Company address"
                     value={editForm.address}
-                    onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, address: e.target.value })
+                    }
                   />
                 </label>
                 <label className="input">
@@ -455,7 +604,9 @@ export default function CompaniesPage() {
                     type="email"
                     placeholder="company@example.com"
                     value={editForm.email}
-                    onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, email: e.target.value })
+                    }
                   />
                 </label>
                 <label className="input">
@@ -464,7 +615,9 @@ export default function CompaniesPage() {
                     type="text"
                     placeholder="+263 xxx xxx xxx"
                     value={editForm.phone}
-                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, phone: e.target.value })
+                    }
                   />
                 </label>
               </div>
@@ -479,13 +632,21 @@ export default function CompaniesPage() {
                       value={editPortalEmail}
                       onChange={(e) => setEditPortalEmail(e.target.value)}
                     />
-                    {editPortalUserId && <small style={{ color: "var(--muted)", marginTop: 4 }}>Current portal user exists</small>}
+                    {editPortalUserId && (
+                      <small style={{ color: "var(--muted)", marginTop: 4 }}>
+                        Current portal user exists
+                      </small>
+                    )}
                   </label>
                   <label className="input">
-                    {editPortalUserId ? "New Password (leave blank to keep)" : "Portal Password"}
+                    {editPortalUserId
+                      ? "New Password (leave blank to keep)"
+                      : "Portal Password"}
                     <input
                       type="password"
-                      placeholder={editPortalUserId ? "Enter new password" : "Password"}
+                      placeholder={
+                        editPortalUserId ? "Enter new password" : "Password"
+                      }
                       value={editPortalPassword}
                       onChange={(e) => setEditPortalPassword(e.target.value)}
                     />
@@ -494,7 +655,9 @@ export default function CompaniesPage() {
               </div>
             </div>
             <div className="modal-footer">
-              <button className="ghost" onClick={closeEditModal}>Cancel</button>
+              <button className="ghost" onClick={closeEditModal}>
+                Cancel
+              </button>
               <button className="primary" onClick={saveEdit} disabled={saving}>
                 {saving ? "Saving..." : "Save Changes"}
               </button>
@@ -514,7 +677,9 @@ export default function CompaniesPage() {
               <th>Phone</th>
               <th>Email</th>
               {me?.is_admin && <th>Portal User</th>}
-              {me?.is_admin && <th style={{ width: "100px", textAlign: "center" }}>Actions</th>}
+              {me?.is_admin && (
+                <th style={{ width: "100px", textAlign: "center" }}>Actions</th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -532,11 +697,34 @@ export default function CompaniesPage() {
                     <td>
                       <span className="company-name">{c.name}</span>
                     </td>
-                    <td><code style={{ color: "#3b82f6" }}>{c.tin}</code></td>
-                    <td>{c.vat ? <span className="badge badge-info">{c.vat}</span> : <span className="text-muted">—</span>}</td>
+                    <td>
+                      <code style={{ color: "var(--blue-500)" }}>{c.tin}</code>
+                    </td>
+                    <td>
+                      {c.vat ? (
+                        <span className="badge badge-info">{c.vat}</span>
+                      ) : (
+                        <span className="text-muted">—</span>
+                      )}
+                    </td>
                     <td>{c.phone || <span className="text-muted">—</span>}</td>
-                    <td>{c.email ? <a href={`mailto:${c.email}`} style={{ color: "#3b82f6" }}>{c.email}</a> : <span className="text-muted">—</span>}</td>
-                    {me?.is_admin && <td><span className="text-muted">••••••••</span></td>}
+                    <td>
+                      {c.email ? (
+                        <a
+                          href={`mailto:${c.email}`}
+                          style={{ color: "var(--blue-500)" }}
+                        >
+                          {c.email}
+                        </a>
+                      ) : (
+                        <span className="text-muted">—</span>
+                      )}
+                    </td>
+                    {me?.is_admin && (
+                      <td>
+                        <span className="text-muted">••••••••</span>
+                      </td>
+                    )}
                     {me?.is_admin && (
                       <td>
                         <div className="action-icons">
@@ -563,7 +751,14 @@ export default function CompaniesPage() {
             ))}
             {!companies.length && (
               <tr>
-                <td colSpan={me?.is_admin ? 7 : 5} style={{ textAlign: "center", padding: "40px", color: "var(--muted)" }}>
+                <td
+                  colSpan={me?.is_admin ? 7 : 5}
+                  style={{
+                    textAlign: "center",
+                    padding: "40px",
+                    color: "var(--muted)",
+                  }}
+                >
                   <BuildingIcon />
                   <p style={{ marginTop: "8px" }}>No companies found</p>
                 </td>

@@ -110,28 +110,28 @@ interface AppItem {
 }
 
 const adminApps: AppItem[] = [
-  { to: "/dashboard", label: "Dashboard", icon: DashboardIcon, color: "#ffffff", bgColor: "#f97316" },
-  { to: "/companies", label: "Companies", icon: CompanyIcon, color: "#ffffff", bgColor: "#8b5cf6" },
-  { to: "/invoices", label: "Invoices", icon: InvoiceIcon, color: "#ffffff", bgColor: "#ef4444" },
-  { to: "/purchases", label: "Purchases", icon: PurchaseIcon, color: "#ffffff", bgColor: "#0ea5e9" },
-  { to: "/products", label: "Products", icon: ProductIcon, color: "#ffffff", bgColor: "#06b6d4" },
-  { to: "/contacts", label: "Contacts", icon: ContactIcon, color: "#ffffff", bgColor: "#10b981" },
-  { to: "/quotations", label: "Quotations", icon: QuoteIcon, color: "#ffffff", bgColor: "#6366f1" },
-  { to: "/inventory", label: "Inventory", icon: InventoryIcon, color: "#ffffff", bgColor: "#7c3aed" },
-  { to: "/devices", label: "Devices", icon: DeviceIcon, color: "#ffffff", bgColor: "#ec4899" },
-  { to: "/reports", label: "Reports", icon: ReportsIcon, color: "#ffffff", bgColor: "#14b8a6" },
-  { to: "/settings", label: "Settings", icon: SettingsIcon, color: "#ffffff", bgColor: "#64748b" },
+  { to: "/dashboard", label: "Dashboard", icon: DashboardIcon, color: "var(--white-500)", bgColor: "var(--orange-500)" },
+  { to: "/companies", label: "Companies", icon: CompanyIcon, color: "var(--white-500)", bgColor: "var(--violet-500)" },
+  { to: "/invoices", label: "Invoices", icon: InvoiceIcon, color: "var(--white-500)", bgColor: "var(--red-500)" },
+  { to: "/purchases", label: "Purchases", icon: PurchaseIcon, color: "var(--white-500)", bgColor: "var(--sky-500)" },
+  { to: "/products", label: "Products", icon: ProductIcon, color: "var(--white-500)", bgColor: "var(--cyan-500)" },
+  { to: "/contacts", label: "Contacts", icon: ContactIcon, color: "var(--white-500)", bgColor: "var(--emerald-500)" },
+  { to: "/quotations", label: "Quotations", icon: QuoteIcon, color: "var(--white-500)", bgColor: "var(--indigo-500)" },
+  { to: "/inventory", label: "Inventory", icon: InventoryIcon, color: "var(--white-500)", bgColor: "var(--violet-600)" },
+  { to: "/devices", label: "Devices", icon: DeviceIcon, color: "var(--white-500)", bgColor: "var(--pink-500)" },
+  { to: "/reports", label: "Reports", icon: ReportsIcon, color: "var(--white-500)", bgColor: "var(--teal-500)" },
+  { to: "/settings", label: "Settings", icon: SettingsIcon, color: "var(--white-500)", bgColor: "var(--slate-500)" },
 ];
 
 const portalApps: AppItem[] = [
-  { to: "/dashboard", label: "Dashboard", icon: DashboardIcon, color: "#ffffff", bgColor: "#f97316" },
-  { to: "/invoices", label: "Invoices", icon: InvoiceIcon, color: "#ffffff", bgColor: "#ef4444" },
-  { to: "/purchases", label: "Purchases", icon: PurchaseIcon, color: "#ffffff", bgColor: "#0ea5e9" },
-  { to: "/contacts", label: "Contacts", icon: ContactIcon, color: "#ffffff", bgColor: "#10b981" },
-  { to: "/quotations", label: "Quotations", icon: QuoteIcon, color: "#ffffff", bgColor: "#6366f1" },
-  { to: "/inventory", label: "Inventory", icon: InventoryIcon, color: "#ffffff", bgColor: "#7c3aed" },
-  { to: "/reports", label: "Reports", icon: ReportsIcon, color: "#ffffff", bgColor: "#14b8a6" },
-  { to: "/settings", label: "Settings", icon: SettingsIcon, color: "#ffffff", bgColor: "#64748b" },
+  { to: "/dashboard", label: "Dashboard", icon: DashboardIcon, color: "var(--white-500)", bgColor: "var(--orange-500)" },
+  { to: "/invoices", label: "Invoices", icon: InvoiceIcon, color: "var(--white-500)", bgColor: "var(--red-500)" },
+  { to: "/purchases", label: "Purchases", icon: PurchaseIcon, color: "var(--white-500)", bgColor: "var(--sky-500)" },
+  { to: "/contacts", label: "Contacts", icon: ContactIcon, color: "var(--white-500)", bgColor: "var(--emerald-500)" },
+  { to: "/quotations", label: "Quotations", icon: QuoteIcon, color: "var(--white-500)", bgColor: "var(--indigo-500)" },
+  { to: "/inventory", label: "Inventory", icon: InventoryIcon, color: "var(--white-500)", bgColor: "var(--violet-600)" },
+  { to: "/reports", label: "Reports", icon: ReportsIcon, color: "var(--white-500)", bgColor: "var(--teal-500)" },
+  { to: "/settings", label: "Settings", icon: SettingsIcon, color: "var(--white-500)", bgColor: "var(--slate-500)" },
 ];
 
 export default function AppLauncherPage() {
@@ -150,7 +150,7 @@ export default function AppLauncherPage() {
     return (
       <div className="app-launcher-page">
         <div className="app-launcher-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ textAlign: 'center', color: '#64748b' }}>
+          <div style={{ textAlign: 'center', color: 'var(--slate-500)' }}>
             <div style={{ fontSize: '18px', fontWeight: 600 }}>Loading...</div>
           </div>
         </div>

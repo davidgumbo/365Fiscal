@@ -842,25 +842,25 @@ export default function InventoryPage() {
                 key: "overview",
                 label: "OVERVIEW",
                 icon: OverviewIcon,
-                color: "#2563eb",
+                color: "var(--blue-600)",
               },
               {
                 key: "products",
                 label: "PRODUCTS",
                 icon: ProductsIcon,
-                color: "#f59e0b",
+                color: "var(--amber-500)",
               },
               {
                 key: "warehouses",
                 label: "WAREHOUSES",
                 icon: WarehousesIcon,
-                color: "#10b981",
+                color: "var(--emerald-500)",
               },
               {
                 key: "operations",
                 label: "OPERATIONS",
                 icon: OperationsIcon,
-                color: "#8b5cf6",
+                color: "var(--violet-500)",
               },
             ].map((tab) => (
               <div
@@ -896,7 +896,7 @@ export default function InventoryPage() {
           {subView === "form" && (
             <div
               className="o-control-panel"
-              style={{ background: "#f8f9fa", marginTop: -8 }}
+              style={{ background: "var(--gray-50)", marginTop: -8 }}
             >
               <div className="o-control-panel-left">
                 <button className="o-btn o-btn-link" onClick={goBack}>
@@ -959,7 +959,7 @@ export default function InventoryPage() {
                 id="filters-search"
                 className="o-control-panel"
                 style={{
-                  background: "#ffffff",
+                  background: "var(--white-500)",
                   height: "5rem",
                   width: "100%",
                   flex: "1 1 100%",
@@ -1064,7 +1064,7 @@ export default function InventoryPage() {
                     display: "grid",
                     gridTemplateColumns: "repeat(5, 1fr)",
                     gap: 1,
-                    background: "#dee2e6",
+                    background: "var(--zinc-200)",
                     borderRadius: 8,
                     overflow: "hidden",
                     marginBottom: 20,
@@ -1072,7 +1072,7 @@ export default function InventoryPage() {
                 >
                   <div
                     style={{
-                      background: "#fff",
+                      background: "var(--white-500)",
                       padding: "16px 20px",
                       cursor: "pointer",
                       textAlign: "center",
@@ -1083,7 +1083,7 @@ export default function InventoryPage() {
                       style={{
                         fontSize: 24,
                         fontWeight: 700,
-                        color: "#2563eb",
+                        color: "var(--blue-600)",
                       }}
                     >
                       {stats.totalProducts}
@@ -1092,7 +1092,7 @@ export default function InventoryPage() {
                       style={{
                         fontSize: 11,
                         fontWeight: 600,
-                        color: "#6c757d",
+                        color: "var(--gray-500)",
                         textTransform: "uppercase",
                         letterSpacing: "0.5px",
                         marginTop: 4,
@@ -1103,7 +1103,7 @@ export default function InventoryPage() {
                   </div>
                   <div
                     style={{
-                      background: stats.lowStock > 0 ? "#fff3cd" : "#fff",
+                      background: stats.lowStock > 0 ? "var(--amber-100)" : "var(--white-500)",
                       padding: "16px 20px",
                       textAlign: "center",
                     }}
@@ -1112,7 +1112,7 @@ export default function InventoryPage() {
                       style={{
                         fontSize: 24,
                         fontWeight: 700,
-                        color: stats.lowStock > 0 ? "#856404" : "#2563eb",
+                        color: stats.lowStock > 0 ? "var(--yellow-800)" : "var(--blue-600)",
                       }}
                     >
                       {stats.lowStock}
@@ -1121,7 +1121,7 @@ export default function InventoryPage() {
                       style={{
                         fontSize: 11,
                         fontWeight: 600,
-                        color: "#6c757d",
+                        color: "var(--gray-500)",
                         textTransform: "uppercase",
                         letterSpacing: "0.5px",
                         marginTop: 4,
@@ -1132,7 +1132,7 @@ export default function InventoryPage() {
                   </div>
                   <div
                     style={{
-                      background: "#fff",
+                      background: "var(--white-500)",
                       padding: "16px 20px",
                       cursor: "pointer",
                       textAlign: "center",
@@ -1143,7 +1143,7 @@ export default function InventoryPage() {
                       style={{
                         fontSize: 24,
                         fontWeight: 700,
-                        color: "#2563eb",
+                        color: "var(--blue-600)",
                       }}
                     >
                       {stats.totalWarehouses}
@@ -1152,7 +1152,7 @@ export default function InventoryPage() {
                       style={{
                         fontSize: 11,
                         fontWeight: 600,
-                        color: "#6c757d",
+                        color: "var(--gray-500)",
                         textTransform: "uppercase",
                         letterSpacing: "0.5px",
                         marginTop: 4,
@@ -1163,7 +1163,7 @@ export default function InventoryPage() {
                   </div>
                   <div
                     style={{
-                      background: "#fff",
+                      background: "var(--white-500)",
                       padding: "16px 20px",
                       cursor: "pointer",
                       textAlign: "center",
@@ -1174,7 +1174,7 @@ export default function InventoryPage() {
                       style={{
                         fontSize: 24,
                         fontWeight: 700,
-                        color: "#2563eb",
+                        color: "var(--blue-600)",
                       }}
                     >
                       {stats.pendingMoves}
@@ -1183,7 +1183,7 @@ export default function InventoryPage() {
                       style={{
                         fontSize: 11,
                         fontWeight: 600,
-                        color: "#6c757d",
+                        color: "var(--gray-500)",
                         textTransform: "uppercase",
                         letterSpacing: "0.5px",
                         marginTop: 4,
@@ -1194,7 +1194,7 @@ export default function InventoryPage() {
                   </div>
                   <div
                     style={{
-                      background: "#fff",
+                      background: "var(--white-500)",
                       padding: "16px 20px",
                       textAlign: "center",
                     }}
@@ -1203,7 +1203,7 @@ export default function InventoryPage() {
                       style={{
                         fontSize: 24,
                         fontWeight: 700,
-                        color: "#2563eb",
+                        color: "var(--blue-600)",
                       }}
                     >
                       ${stats.totalStockValue.toFixed(2)}
@@ -1212,7 +1212,7 @@ export default function InventoryPage() {
                       style={{
                         fontSize: 11,
                         fontWeight: 600,
-                        color: "#6c757d",
+                        color: "var(--gray-500)",
                         textTransform: "uppercase",
                         letterSpacing: "0.5px",
                         marginTop: 4,
@@ -1235,8 +1235,8 @@ export default function InventoryPage() {
                   {/* Quick Actions */}
                   <div
                     style={{
-                      background: "#fff",
-                      border: "1px solid #dee2e6",
+                      background: "var(--white-500)",
+                      border: "1px solid var(--zinc-200)",
                       borderRadius: 8,
                       padding: 20,
                     }}
@@ -1280,8 +1280,8 @@ export default function InventoryPage() {
                   {/* Recent Activity */}
                   <div
                     style={{
-                      background: "#fff",
-                      border: "1px solid #dee2e6",
+                      background: "var(--white-500)",
+                      border: "1px solid var(--zinc-200)",
                       borderRadius: 8,
                       padding: 20,
                     }}
@@ -1314,7 +1314,7 @@ export default function InventoryPage() {
                               alignItems: "center",
                               justifyContent: "space-between",
                               padding: "8px 12px",
-                              background: "#f8f9fa",
+                              background: "var(--gray-50)",
                               borderRadius: 4,
                               fontSize: 13,
                             }}
@@ -1324,7 +1324,7 @@ export default function InventoryPage() {
                                 {m.reference ||
                                   `MOV/${String(m.id).padStart(5, "0")}`}
                               </span>
-                              <span style={{ color: "#6c757d", marginLeft: 8 }}>
+                              <span style={{ color: "var(--gray-500)", marginLeft: 8 }}>
                                 {product?.name}
                               </span>
                             </div>
@@ -1337,7 +1337,7 @@ export default function InventoryPage() {
                       {stockMoves.length === 0 && (
                         <div
                           style={{
-                            color: "#6c757d",
+                            color: "var(--gray-500)",
                             textAlign: "center",
                             padding: 20,
                             fontSize: 13,
@@ -1352,8 +1352,8 @@ export default function InventoryPage() {
                   {/* Low Stock Alert */}
                   <div
                     style={{
-                      background: "#fff",
-                      border: "1px solid #dee2e6",
+                      background: "var(--white-500)",
+                      border: "1px solid var(--zinc-200)",
                       borderRadius: 8,
                       padding: 20,
                     }}
@@ -1363,7 +1363,7 @@ export default function InventoryPage() {
                         margin: "0 0 16px 0",
                         fontSize: 14,
                         fontWeight: 600,
-                        color: "#856404",
+                        color: "var(--yellow-800)",
                       }}
                     >
                       Low Stock Products
@@ -1390,13 +1390,13 @@ export default function InventoryPage() {
                               alignItems: "center",
                               justifyContent: "space-between",
                               padding: "8px 12px",
-                              background: "#fff3cd",
+                              background: "var(--amber-100)",
                               borderRadius: 4,
                               fontSize: 13,
                             }}
                           >
                             <span style={{ fontWeight: 500 }}>{p.name}</span>
-                            <span style={{ color: "#856404" }}>
+                            <span style={{ color: "var(--yellow-800)" }}>
                               {p.quantity_on_hand} / {p.reorder_point} {p.uom}
                             </span>
                           </div>
@@ -1404,7 +1404,7 @@ export default function InventoryPage() {
                       {stats.lowStock === 0 && (
                         <div
                           style={{
-                            color: "#6c757d",
+                            color: "var(--gray-500)",
                             textAlign: "center",
                             padding: 20,
                             fontSize: 13,
@@ -1420,8 +1420,8 @@ export default function InventoryPage() {
                 {/* Warehouses Summary - Full Width */}
                 <div
                   style={{
-                    background: "#fff",
-                    border: "1px solid #dee2e6",
+                    background: "var(--white-500)",
+                    border: "1px solid var(--zinc-200)",
                     borderRadius: 8,
                     padding: 20,
                   }}
@@ -1446,7 +1446,7 @@ export default function InventoryPage() {
                           alignItems: "center",
                           justifyContent: "space-between",
                           padding: "10px 14px",
-                          background: "#f8f9fa",
+                          background: "var(--gray-50)",
                           borderRadius: 4,
                           cursor: "pointer",
                           fontSize: 13,
@@ -1458,11 +1458,11 @@ export default function InventoryPage() {
                       >
                         <div>
                           <span style={{ fontWeight: 500 }}>{w.name}</span>
-                          <span style={{ color: "#6c757d", marginLeft: 8 }}>
+                          <span style={{ color: "var(--gray-500)", marginLeft: 8 }}>
                             ({w.code})
                           </span>
                         </div>
-                        <span style={{ color: "#6c757d" }}>
+                        <span style={{ color: "var(--gray-500)" }}>
                           {warehouseLocations(w.id).length} locations
                         </span>
                       </div>
@@ -1562,7 +1562,7 @@ export default function InventoryPage() {
                               <td>
                                 <span
                                   style={{
-                                    color: "#2563eb",
+                                    color: "var(--blue-600)",
                                     fontWeight: 500,
                                     cursor: "pointer",
                                   }}
@@ -1597,7 +1597,7 @@ export default function InventoryPage() {
                               <td style={{ fontWeight: 600 }}>
                                 {p.quantity_on_hand} {p.uom}
                               </td>
-                              <td style={{ color: "#28a745" }}>
+                              <td style={{ color: "var(--green-600)" }}>
                                 {p.quantity_available} {p.uom}
                               </td>
                               <td className="o-monetary">
@@ -1753,7 +1753,7 @@ export default function InventoryPage() {
                             fontSize: 24,
                             fontWeight: 600,
                             border: "none",
-                            borderBottom: "2px solid #dee2e6",
+                            borderBottom: "2px solid var(--zinc-200)",
                             borderRadius: 0,
                             padding: "8px 0",
                           }}
@@ -2355,7 +2355,7 @@ export default function InventoryPage() {
                           >
                             <div
                               style={{
-                                background: "#f8f9fa",
+                                background: "var(--gray-50)",
                                 padding: 12,
                                 borderRadius: 4,
                                 textAlign: "center",
@@ -2372,7 +2372,7 @@ export default function InventoryPage() {
                             </div>
                             <div
                               style={{
-                                background: "#f8f9fa",
+                                background: "var(--gray-50)",
                                 padding: 12,
                                 borderRadius: 4,
                                 textAlign: "center",
@@ -2389,7 +2389,7 @@ export default function InventoryPage() {
                             </div>
                             <div
                               style={{
-                                background: "#f8f9fa",
+                                background: "var(--gray-50)",
                                 padding: 12,
                                 borderRadius: 4,
                                 textAlign: "center",
@@ -2408,7 +2408,7 @@ export default function InventoryPage() {
 
                           <div
                             style={{
-                              borderTop: "1px solid #dee2e6",
+                              borderTop: "1px solid var(--zinc-200)",
                               paddingTop: 12,
                             }}
                           >
@@ -2470,7 +2470,7 @@ export default function InventoryPage() {
                           style={{
                             fontSize: 24,
                             fontWeight: 700,
-                            color: "#2563eb",
+                            color: "var(--blue-600)",
                             marginBottom: 16,
                           }}
                         >
@@ -2506,14 +2506,14 @@ export default function InventoryPage() {
                         style={{
                           width: 64,
                           height: 64,
-                          background: "#f8f9fa",
+                          background: "var(--gray-50)",
                           borderRadius: 8,
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
                           fontSize: 24,
                           fontWeight: 700,
-                          color: "#2563eb",
+                          color: "var(--blue-600)",
                         }}
                       >
                         WH
@@ -2534,7 +2534,7 @@ export default function InventoryPage() {
                             fontSize: 24,
                             fontWeight: 600,
                             border: "none",
-                            borderBottom: "2px solid #dee2e6",
+                            borderBottom: "2px solid var(--zinc-200)",
                             borderRadius: 0,
                             padding: "8px 0",
                           }}
@@ -2654,7 +2654,7 @@ export default function InventoryPage() {
                                         style={{
                                           padding: "4px 8px",
                                           fontSize: 12,
-                                          color: "#dc3545",
+                                          color: "var(--red-500)",
                                         }}
                                         onClick={() => deleteLocation(l.id)}
                                       >
@@ -2770,7 +2770,7 @@ export default function InventoryPage() {
                                 <td>
                                   <span
                                     style={{
-                                      color: "#2563eb",
+                                      color: "var(--blue-600)",
                                       fontWeight: 500,
                                       cursor: "pointer",
                                     }}
@@ -2912,14 +2912,14 @@ export default function InventoryPage() {
                                   style={{
                                     color:
                                       q.reserved_quantity > 0
-                                        ? "#dc3545"
+                                        ? "var(--red-500)"
                                         : "inherit",
                                   }}
                                 >
                                   {q.reserved_quantity}
                                 </td>
                                 <td
-                                  style={{ color: "#28a745", fontWeight: 600 }}
+                                  style={{ color: "var(--green-600)", fontWeight: 600 }}
                                 >
                                   {q.available_quantity}
                                 </td>
@@ -3262,7 +3262,7 @@ export default function InventoryPage() {
             >
               <div
                 style={{
-                  background: "#fff",
+                  background: "var(--white-500)",
                   borderRadius: 8,
                   padding: 24,
                   width: 400,
@@ -3336,7 +3336,7 @@ export default function InventoryPage() {
             >
               <div
                 style={{
-                  background: "#fff",
+                  background: "var(--white-500)",
                   borderRadius: 8,
                   padding: 24,
                   width: 400,
