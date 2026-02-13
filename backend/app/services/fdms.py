@@ -510,14 +510,19 @@ def _build_receipt(invoice: Invoice, lines: list[Any], device_id_str: str, db=No
 
 def _ensure_device_online(device: Device, db) -> None:
     """Ping the device if it hasn't been pinged recently to keep it online with ZIMRA."""
-    from datetime import timedelta
+    from datetime import timedelta, timezone
     freq = device.reporting_frequency or 5
-    now = datetime.utcnow()
-    if device.last_ping_at and (now - device.last_ping_at) < timedelta(minutes=max(1, freq - 1)):
-        return  # pinged recently enough
+    now = datetime.now(timezone.utc)
+    if device.last_ping_at:
+        last_ping = device.last_ping_at
+        # Make comparison tz-aware regardless of DB driver behaviour
+        if last_ping.tzinfo is None:
+            last_ping = last_ping.replace(tzinfo=timezone.utc)
+        if (now - last_ping) < timedelta(minutes=max(1, freq - 1)):
+            return  # pinged recently enough
     try:
         result = ping_device(device, db)
-        device.last_ping_at = now
+        device.last_ping_at = now.replace(tzinfo=None)  # store as naive UTC for consistency
         if result.get("reportingFrequency"):
             device.reporting_frequency = int(result["reportingFrequency"])
         db.commit()
