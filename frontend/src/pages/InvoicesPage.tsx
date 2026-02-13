@@ -49,6 +49,7 @@ type Invoice = {
   zimra_receipt_global_no?: number;
   zimra_verification_code?: string;
   zimra_verification_url?: string;
+  zimra_payload?: string;
   zimra_errors?: string;
   lines: InvoiceLine[];
 };
@@ -1872,6 +1873,17 @@ export default function InvoicesPage({
                                   {selectedInvoice.zimra_verification_url.replace(/\/Receipt\/?/i, "/")}
                                 </a>
                               </div>
+                            )}
+
+                            {selectedInvoice.zimra_payload && (
+                              <details style={{ marginTop: 10 }}>
+                                <summary style={{ cursor: "pointer", fontSize: 11, color: "#166534", fontWeight: 600 }}>
+                                  View ZIMRA payload
+                                </summary>
+                                <pre style={{ marginTop: 8, padding: 10, background: "#ffffff", border: "1px solid #bbf7d0", borderRadius: 6, fontSize: 11, maxHeight: 240, overflow: "auto", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                                  {selectedInvoice.zimra_payload}
+                                </pre>
+                              </details>
                             )}
                           </div>
                           {selectedInvoice.zimra_verification_url && (

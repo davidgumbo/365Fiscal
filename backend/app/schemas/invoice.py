@@ -74,4 +74,5 @@ class InvoiceRead(ORMBase):
     zimra_receipt_global_no: int
     zimra_verification_code: str
     zimra_verification_url: str
+    zimra_payload: str
     lines: list[InvoiceLineRead] = []

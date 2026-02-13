@@ -393,8 +393,10 @@ def _sign_receipt(receipt: dict, private_key_pem: bytes) -> dict:
 
 def _generate_qr(signature_b64: str, receipt_global_no: int, device_id: str, qr_base: str) -> dict:
     sig_bytes = base64.b64decode(signature_b64)
-    md5_hash = hashlib.md5(sig_bytes.hex().encode("utf-8")).hexdigest().upper()
-    date_str = datetime.utcnow().strftime("%d%m%Y")
+    # ZIMRA verifier token uses MD5(signature_bytes) (working script logic)
+    md5_hash = hashlib.md5(sig_bytes).hexdigest().upper()
+    # Use local date (ddMMyyyy) like the working implementations
+    date_str = datetime.now().strftime("%d%m%Y")
     device_padded = str(int(device_id)).zfill(10)
     global_padded = str(int(receipt_global_no)).zfill(10)
     hash_part = md5_hash[:16]
