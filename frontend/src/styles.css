@@ -6003,8 +6003,8 @@ tr:hover .o-quick-actions {
 
 .app-launcher-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #e8eaef 0%, #d4d8e0 50%, #c8cdd6 100%);
-  display: flex;
+background: #fcfcfc;
+background: linear-gradient(155deg, rgba(252, 252, 252, 1) 0%, rgba(2, 20, 51, 1) 100%);
   flex-direction: column;
 }
 
