@@ -836,6 +836,12 @@ export default function InvoicesPage({
       /\n/g,
       "<br />",
     );
+
+    const normalizeZimraVerifyUrl = (url?: string) =>
+      (url || "").replace(/\/Receipt\/?/i, "/");
+    const zimraVerifyUrl = selectedInvoice.zimra_verification_url
+      ? normalizeZimraVerifyUrl(selectedInvoice.zimra_verification_url)
+      : "";
     const rows = lines
       .map((line) => {
         const subtotal =
@@ -974,8 +980,8 @@ export default function InvoicesPage({
               return `
             <div style="margin-top:24px; border-top:1px solid #e2e8f0; padding-top:18px;">
               <div style="text-align:center;">
-                ${selectedInvoice.zimra_verification_url ? `
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(selectedInvoice.zimra_verification_url)}" width="180" height="180" style="margin-bottom:10px;" />
+                ${zimraVerifyUrl ? `
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(zimraVerifyUrl)}" width="180" height="180" style="margin-bottom:10px;" />
                 ` : ""}
                 <div style="font-size:12px; color:#374151; line-height:1.7;">
                   <div><strong>Verification code:</strong> ${selectedInvoice.zimra_verification_code || "-"}</div>
@@ -983,12 +989,12 @@ export default function InvoicesPage({
                   <div><strong>Device ID:</strong> ${dev?.device_id || "-"}</div>
                   <div><strong>Invoice Number:</strong> ${selectedInvoice.zimra_receipt_global_no || "-"}</div>
                 </div>
-                ${selectedInvoice.zimra_verification_url ? `
+                ${zimraVerifyUrl ? `
                 <div style="margin-top:8px; font-size:11px; color:#6b7280;">
                   Verify this receipt manually at
                 </div>
                 <div style="font-size:11px; color:#2563eb; text-decoration:underline; word-break:break-all;">
-                  ${selectedInvoice.zimra_verification_url}
+                  ${zimraVerifyUrl}
                 </div>
                 ` : ""}
               </div>
@@ -1822,7 +1828,7 @@ export default function InvoicesPage({
                         )}
                         {selectedInvoice.zimra_status === "submitted" && selectedInvoice.zimra_verification_url && (
                           <div style={{ marginTop: 4 }}>
-                            <a href={selectedInvoice.zimra_verification_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "var(--accent)" }}>
+                            <a href={selectedInvoice.zimra_verification_url.replace(/\/Receipt\/?/i, "/")} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "var(--accent)" }}>
                               Verify on ZIMRA ↗
                             </a>
                           </div>
@@ -1862,15 +1868,15 @@ export default function InvoicesPage({
                             </div>
                             {selectedInvoice.zimra_verification_url && (
                               <div style={{ marginTop: 8 }}>
-                                <a href={selectedInvoice.zimra_verification_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#166534", wordBreak: "break-all" }}>
-                                  {selectedInvoice.zimra_verification_url}
+                                <a href={selectedInvoice.zimra_verification_url.replace(/\/Receipt\/?/i, "/")} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#166534", wordBreak: "break-all" }}>
+                                  {selectedInvoice.zimra_verification_url.replace(/\/Receipt\/?/i, "/")}
                                 </a>
                               </div>
                             )}
                           </div>
                           {selectedInvoice.zimra_verification_url && (
                             <div style={{ textAlign: "center", flexShrink: 0 }}>
-                              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(selectedInvoice.zimra_verification_url)}`} width={120} height={120} style={{ border: "1px solid #bbf7d0", borderRadius: 6 }} alt="QR" />
+                              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(selectedInvoice.zimra_verification_url.replace(/\/Receipt\/?/i, "/"))}`} width={120} height={120} style={{ border: "1px solid #bbf7d0", borderRadius: 6 }} alt="QR" />
                               <div style={{ fontSize: 10, color: "#6b7280", marginTop: 4 }}>Scan to verify</div>
                             </div>
                           )}
