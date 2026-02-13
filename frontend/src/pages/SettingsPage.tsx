@@ -871,20 +871,6 @@ export default function SettingsPage() {
       <div className="settings-topbar">
         <div className="settings-top-left">
           <div className="settings-title">Settings</div>
-          <div className="settings-top-tabs">
-            <button
-              className={`settings-tab ${activeTopTab === "general" ? "active" : ""}`}
-              onClick={() => setActiveTopTab("general")}
-            >
-              General Settings
-            </button>
-            <button
-              className={`settings-tab ${activeTopTab === "users" ? "active" : ""}`}
-              onClick={() => setActiveTopTab("users")}
-            >
-              Users &amp; Companies
-            </button>
-          </div>
         </div>
         <div className="settings-top-actions">
           <button
