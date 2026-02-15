@@ -36,7 +36,7 @@ type Customer = { id: number; name: string; email: string; phone: string; tin: s
 type POSSession = { id: number; name: string; status: string; company_id: number; device_id: number | null; opening_balance: number; total_sales: number; total_cash: number; total_card: number; total_mobile: number; transaction_count: number };
 type OrderLine = { id: number; description: string; quantity: number; uom: string; unit_price: number; discount: number; vat_rate: number; subtotal: number; tax_amount: number; total_price: number };
 type POSOrder = { id: number; reference: string; status: string; subtotal: number; discount_amount: number; tax_amount: number; total_amount: number; is_fiscalized: boolean; zimra_verification_code: string; zimra_verification_url: string; fiscal_errors: string; change_amount: number; cash_amount: number; card_amount: number; mobile_amount: number; payment_method: string; order_date: string; currency: string; lines: OrderLine[] };
-type CompanyInfo = { id: number; name: string; address: string; phone: string; email: string; tin: string; vat: string };
+type CompanyInfo = { id: number; name: string; address: string; phone: string; email: string; tin: string; vat: string; logo_data: string };
 
 /* ────────────────────────── helpers ────────────────────────── */
 const fmt = (n: number) => n.toFixed(2);
@@ -53,7 +53,7 @@ function lineTotal(l: CartLine) {
 }
 
 /* ── Thermal Receipt Printer ── */
-function printReceipt(order: POSOrder, company: CompanyInfo | null, customer: Customer | null, session: POSSession | null) {
+function printReceipt(order: POSOrder, company: CompanyInfo | null, customer: Customer | null, session: POSSession | null, device: Device | null) {
   const w = window.open("", "_blank", "width=320,height=600");
   if (!w) return;
   const lines = order.lines || [];
@@ -66,11 +66,13 @@ function printReceipt(order: POSOrder, company: CompanyInfo | null, customer: Cu
   body { font-family: 'Courier New', monospace; font-size: 12px; width: 80mm; padding: 4mm; color: #000; }
   .center { text-align: center; }
   .bold { font-weight: bold; }
+  .logo { max-width: 60mm; max-height: 25mm; margin: 0 auto 4px; display: block; }
   .company-name { font-size: 16px; font-weight: bold; margin-bottom: 2px; }
   .company-info { font-size: 10px; color: #333; line-height: 1.4; }
   .divider { border-top: 1px dashed #000; margin: 6px 0; }
   .ref { font-size: 11px; margin: 4px 0; }
   .date { font-size: 10px; color: #555; }
+  .device-info { font-size: 9px; color: #666; margin: 2px 0; }
   table { width: 100%; border-collapse: collapse; margin: 4px 0; }
   th { text-align: left; font-size: 10px; border-bottom: 1px solid #000; padding: 2px 0; }
   th:last-child, td:last-child { text-align: right; }
@@ -87,6 +89,7 @@ function printReceipt(order: POSOrder, company: CompanyInfo | null, customer: Cu
   @media print { body { width: 80mm; } }
 </style></head><body>
   <div class="center">
+    ${company?.logo_data ? `<img class="logo" src="${company.logo_data}" alt="Logo" />` : ""}
     <div class="company-name">${company?.name || "365 Fiscal"}</div>
     <div class="company-info">
       ${company?.address ? company.address + "<br>" : ""}
@@ -100,6 +103,7 @@ function printReceipt(order: POSOrder, company: CompanyInfo | null, customer: Cu
     <div class="ref bold">${order.reference}</div>
     <div class="date">${new Date(order.order_date).toLocaleString()}</div>
     ${session ? `<div class="date">Session: ${session.name}</div>` : ""}
+    ${device ? `<div class="device-info">Device: ${device.model} | S/N: ${device.serial_number}</div><div class="device-info">Device ID: ${device.device_id} | Fiscal Day: ${device.fiscal_day_status}</div>` : ""}
     ${customer ? `<div class="customer-info">Customer: ${customer.name}${customer.tin ? " | TIN: " + customer.tin : ""}</div>` : ""}
   </div>
   <div class="divider"></div>
@@ -130,16 +134,19 @@ function printReceipt(order: POSOrder, company: CompanyInfo | null, customer: Cu
     ${order.mobile_amount > 0 ? `<div class="totals-row"><span>Mobile</span><span>${fmt(order.mobile_amount)}</span></div>` : ""}
     ${order.change_amount > 0 ? `<div class="totals-row bold"><span>Change</span><span>${fmt(order.change_amount)}</span></div>` : ""}
   </div>
-  ${order.is_fiscalized && order.zimra_verification_code ? `
+  ${order.zimra_verification_code ? `
     <div class="fiscal-box">
-      <div class="fiscal-label">ZIMRA Fiscal Receipt</div>
+      <div class="fiscal-label">ZIMRA Verification</div>
       <div class="fiscal-code">${order.zimra_verification_code}</div>
       ${order.zimra_verification_url ? `<div class="fiscal-url">${order.zimra_verification_url}</div>` : ""}
     </div>
-  ` : order.fiscal_errors ? `
-    <div class="fiscal-box" style="border-color:red;color:red;">
-      <div class="fiscal-label">Fiscalization Error</div>
-      <div style="font-size:10px">${order.fiscal_errors.substring(0, 100)}</div>
+  ` : ""}
+  ${device ? `
+    <div class="divider"></div>
+    <div style="font-size:9px;color:#666;text-align:center;">
+      Fiscal Device: ${device.model}<br>
+      Serial: ${device.serial_number}<br>
+      Device ID: ${device.device_id}
     </div>
   ` : ""}
   <div class="divider"></div>
@@ -429,12 +436,15 @@ export default function POSPage() {
     }
   };
 
+  // Get the active device for this session
+  const activeDevice = devices.find(d => d.id === session?.device_id) || null;
+
   const handlePrint = () => {
-    if (lastOrder) printReceipt(lastOrder, companyInfo, selectedCustomer, session);
+    if (lastOrder) printReceipt(lastOrder, companyInfo, selectedCustomer, session, activeDevice);
   };
 
   const handlePrintOrder = (o: POSOrder) => {
-    printReceipt(o, companyInfo, null, session);
+    printReceipt(o, companyInfo, null, session, activeDevice);
   };
 
   const handleNewOrder = () => {
@@ -883,12 +893,16 @@ export default function POSPage() {
         <div className="pos-overlay" onClick={() => setShowReceipt(false)}>
           <div className="pos-dialog pos-dialog-receipt" onClick={(e) => e.stopPropagation()}>
             <div className="pos-receipt">
-              {/* Company header */}
+              {/* Company header with logo */}
               <div className="pos-receipt-company">
+                {companyInfo?.logo_data && (
+                  <img className="pos-receipt-logo" src={companyInfo.logo_data} alt="Logo" />
+                )}
                 <div className="pos-receipt-company-name">{companyInfo?.name || "365 Fiscal"}</div>
                 {companyInfo?.address && <div className="pos-receipt-company-detail">{companyInfo.address}</div>}
                 {companyInfo?.phone && <div className="pos-receipt-company-detail">Tel: {companyInfo.phone}</div>}
-                {companyInfo?.tin && <div className="pos-receipt-company-detail">TIN: {companyInfo.tin}</div>}
+                {companyInfo?.email && <div className="pos-receipt-company-detail">{companyInfo.email}</div>}
+                {companyInfo?.tin && <div className="pos-receipt-company-detail">TIN: {companyInfo.tin}{companyInfo?.vat ? ` | VAT: ${companyInfo.vat}` : ""}</div>}
               </div>
 
               <div className="pos-receipt-divider" />
@@ -896,7 +910,8 @@ export default function POSPage() {
               <div className="pos-receipt-header">
                 <div className="pos-receipt-ref">{lastOrder.reference}</div>
                 <div className="pos-receipt-date">{new Date(lastOrder.order_date).toLocaleString()}</div>
-                {selectedCustomer && <div className="pos-receipt-customer">Customer: {selectedCustomer.name}</div>}
+                {session && <div className="pos-receipt-session">Session: {session.name}</div>}
+                {selectedCustomer && <div className="pos-receipt-customer">Customer: {selectedCustomer.name}{selectedCustomer.tin ? ` | TIN: ${selectedCustomer.tin}` : ""}</div>}
               </div>
 
               <div className="pos-receipt-divider" />
@@ -937,24 +952,8 @@ export default function POSPage() {
                 {lastOrder.change_amount > 0 && <div className="pos-receipt-totals-row pos-receipt-change-row"><span>Change</span><span>${fmt(lastOrder.change_amount)}</span></div>}
               </div>
 
-              {/* Fiscal status */}
-              <div className="pos-receipt-status">
-                {lastOrder.is_fiscalized ? (
-                  <div className="pos-badge pos-badge-success">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M9 11l3 3L22 4"/></svg>
-                    Fiscalized
-                  </div>
-                ) : lastOrder.fiscal_errors ? (
-                  <div className="pos-badge pos-badge-error">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-                    Fiscal Error
-                  </div>
-                ) : (
-                  <div className="pos-badge pos-badge-warn">Not Fiscalized</div>
-                )}
-              </div>
-
-              {lastOrder.is_fiscalized && lastOrder.zimra_verification_code && (
+              {/* ZIMRA Verification (only show code, not "Fiscalized" badge) */}
+              {lastOrder.zimra_verification_code && (
                 <div className="pos-receipt-fiscal">
                   <div className="pos-receipt-fiscal-label">ZIMRA Verification</div>
                   <div className="pos-receipt-fiscal-code">{lastOrder.zimra_verification_code}</div>
@@ -970,6 +969,21 @@ export default function POSPage() {
                   <button className="pos-btn pos-btn-sm pos-btn-outline" style={{ marginTop: 8 }} onClick={() => fiscalizeOrder(lastOrder.id)}>Retry Fiscalization</button>
                 </div>
               )}
+
+              {/* Fiscal Device Details */}
+              {activeDevice && (
+                <div className="pos-receipt-device">
+                  <div className="pos-receipt-device-label">Fiscal Device</div>
+                  <div className="pos-receipt-device-row"><span>Model:</span> <span>{activeDevice.model}</span></div>
+                  <div className="pos-receipt-device-row"><span>Serial:</span> <span>{activeDevice.serial_number}</span></div>
+                  <div className="pos-receipt-device-row"><span>Device ID:</span> <span>{activeDevice.device_id}</span></div>
+                </div>
+              )}
+
+              <div className="pos-receipt-footer">
+                Thank you for your business!<br />
+                Powered by 365 Fiscal
+              </div>
             </div>
 
             <div className="pos-dialog-footer pos-receipt-footer">

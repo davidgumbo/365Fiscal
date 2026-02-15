@@ -25,6 +25,7 @@ from app.models.contact import Contact
 from app.models.tax_setting import TaxSetting
 from app.models.category import Category
 from app.models.company import Company
+from app.models.company_settings import CompanySettings
 from app.models.stock_quant import StockQuant
 from app.models.stock_move import StockMove
 from app.models.audit_log import AuditAction, ResourceType
@@ -804,6 +805,9 @@ def pos_company_info(
     co = db.query(Company).filter(Company.id == company_id).first()
     if not co:
         raise HTTPException(404, "Company not found")
+    # Get logo from company settings
+    settings = db.query(CompanySettings).filter(CompanySettings.company_id == company_id).first()
+    logo_data = settings.logo_data if settings and settings.logo_data else ""
     return {
         "id": co.id,
         "name": co.name,
@@ -812,4 +816,5 @@ def pos_company_info(
         "email": co.email,
         "tin": co.tin,
         "vat": co.vat,
+        "logo_data": logo_data,
     }
