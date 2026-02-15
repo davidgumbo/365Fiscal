@@ -35,7 +35,7 @@ type Device = { id: number; device_id: string; serial_number: string; model: str
 type Customer = { id: number; name: string; email: string; phone: string; tin: string };
 type POSSession = { id: number; name: string; status: string; company_id: number; device_id: number | null; opening_balance: number; total_sales: number; total_cash: number; total_card: number; total_mobile: number; transaction_count: number };
 type OrderLine = { id: number; description: string; quantity: number; uom: string; unit_price: number; discount: number; vat_rate: number; subtotal: number; tax_amount: number; total_price: number };
-type POSOrder = { id: number; reference: string; status: string; subtotal: number; discount_amount: number; tax_amount: number; total_amount: number; is_fiscalized: boolean; zimra_verification_code: string; zimra_verification_url: string; fiscal_errors: string; change_amount: number; cash_amount: number; card_amount: number; mobile_amount: number; payment_method: string; order_date: string; currency: string; lines: OrderLine[] };
+type POSOrder = { id: number; reference: string; status: string; subtotal: number; discount_amount: number; tax_amount: number; total_amount: number; is_fiscalized: boolean; zimra_verification_code: string; zimra_verification_url: string; fiscal_errors: string; change_amount: number; cash_amount: number; card_amount: number; mobile_amount: number; payment_method: string; order_date: string; currency: string; notes: string; lines: OrderLine[] };
 type CompanyInfo = { id: number; name: string; address: string; phone: string; email: string; tin: string; vat: string; logo_data: string };
 
 /* ────────────────────────── helpers ────────────────────────── */
@@ -259,6 +259,11 @@ export default function POSPage() {
   // Orders history
   const [orders, setOrders] = useState<POSOrder[]>([]);
   const [ordersFilter, setOrdersFilter] = useState<"all" | "session">("all");
+  const [showOrders, setShowOrders] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<POSOrder | null>(null);
+  const [showRefundDialog, setShowRefundDialog] = useState(false);
+  const [refundReason, setRefundReason] = useState("");
+  const [refundingOrderId, setRefundingOrderId] = useState<number | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -519,6 +524,55 @@ export default function POSPage() {
     printReceipt(o, companyInfo, null, session, activeDevice);
   };
 
+  const openRefundDialog = (orderId: number) => {
+    setRefundingOrderId(orderId);
+    setRefundReason("");
+    setShowRefundDialog(true);
+  };
+
+  const submitRefund = async () => {
+    if (!refundingOrderId) return;
+    try {
+      const refundOrder = await apiFetch<POSOrder>(`/pos/orders/${refundingOrderId}/refund`, {
+        method: "POST",
+        body: JSON.stringify({ reason: refundReason }),
+      });
+      // Update original order status in list
+      setOrders((prev) => prev.map((o) => (o.id === refundingOrderId ? { ...o, status: "refunded" } : o)));
+      // Add the refund order to the list
+      setOrders((prev) => [refundOrder, ...prev]);
+      setShowRefundDialog(false);
+      setRefundingOrderId(null);
+      setSelectedOrder(null);
+    } catch (e: any) {
+      setError(e.message);
+    }
+  };
+
+  const sendReceipt = async (o: POSOrder) => {
+    const html = buildReceiptHtml(o, companyInfo, null, session, activeDevice);
+    // Use Web Share API if available, otherwise copy text to clipboard
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Receipt ${o.reference}`,
+          text: `Receipt ${o.reference} - Total: $${fmt(o.total_amount)}\n${o.zimra_verification_url || ""}`,
+        });
+      } catch { /* user cancelled */ }
+    } else {
+      // Fallback: open receipt in new tab for saving/sharing
+      const w = window.open("", "_blank");
+      if (w) {
+        w.document.write(html);
+        w.document.close();
+      }
+    }
+  };
+
+  const viewOrderDetail = (o: POSOrder) => {
+    setSelectedOrder(o);
+  };
+
   const handleNewOrder = () => {
     setShowReceipt(false);
     setCart([]);
@@ -637,9 +691,9 @@ export default function POSPage() {
           </div>
         </div>
         <div className="pos-topbar-right">
-          <button className="pos-btn pos-btn-sm pos-btn-topbar" onClick={refreshOrders} title="Refresh orders">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
-            Refresh
+          <button className={`pos-btn pos-btn-sm pos-btn-topbar ${showOrders ? "active" : ""}`} onClick={() => { setShowOrders(!showOrders); if (!showOrders) refreshOrders(); }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            Orders
           </button>
           <button className="pos-btn pos-btn-sm pos-btn-topbar" onClick={() => setShowCustomerSearch(!showCustomerSearch)}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -825,63 +879,192 @@ export default function POSPage() {
           </div>
         </div>
 
-        {/* ── ORDERS PANEL (always visible) ── */}
-        <div className="pos-orders-panel">
-          <div className="pos-orders-panel-header">
-            <h3>Orders</h3>
-            <span className="pos-orders-count">{orders.length}</span>
-            <div className="pos-orders-filter">
-              <button className={`pos-orders-filter-btn ${ordersFilter === "all" ? "active" : ""}`} onClick={() => setOrdersFilter("all")}>All</button>
-              <button className={`pos-orders-filter-btn ${ordersFilter === "session" ? "active" : ""}`} onClick={() => setOrdersFilter("session")}>Session</button>
-            </div>
-            <button className="pos-btn pos-btn-icon pos-btn-xs" onClick={refreshOrders} title="Refresh">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
-            </button>
-          </div>
-          <div className="pos-orders-panel-list">
-            {orders.length === 0 && (
-              <div className="pos-orders-empty">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--slate-300)" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                <p>No orders yet</p>
+      </div>
+
+      {/* ── ORDERS SLIDE-OUT PANEL ── */}
+      {showOrders && (
+        <div className="pos-orders-overlay" onClick={() => { setShowOrders(false); setSelectedOrder(null); }}>
+          <div className="pos-orders-slideout" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="pos-orders-panel-header">
+              <h3>Orders</h3>
+              <span className="pos-orders-count">{orders.length}</span>
+              <div className="pos-orders-filter">
+                <button className={`pos-orders-filter-btn ${ordersFilter === "all" ? "active" : ""}`} onClick={() => setOrdersFilter("all")}>All</button>
+                <button className={`pos-orders-filter-btn ${ordersFilter === "session" ? "active" : ""}`} onClick={() => setOrdersFilter("session")}>Session</button>
               </div>
-            )}
-            {orders.map((o) => (
-              <div key={o.id} className="pos-orders-panel-row">
-                <div className="pos-orders-panel-row-main">
-                  <div className="pos-orders-panel-row-ref">{o.reference}</div>
-                  <div className="pos-orders-panel-row-meta">
-                    <span>{ordersFilter === "all"
-                      ? new Date(o.order_date).toLocaleDateString(undefined, { month: "short", day: "numeric" }) + " " + new Date(o.order_date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-                      : new Date(o.order_date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
-                    <span className="pos-orders-panel-row-method">{o.payment_method}</span>
+              <button className="pos-btn pos-btn-icon pos-btn-xs" onClick={refreshOrders} title="Refresh">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+              </button>
+              <button className="pos-btn pos-btn-icon pos-btn-xs" onClick={() => { setShowOrders(false); setSelectedOrder(null); }} title="Close">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
+            {/* Order Detail View */}
+            {selectedOrder ? (
+              <div className="pos-order-detail">
+                <button className="pos-btn pos-btn-ghost pos-btn-xs" onClick={() => setSelectedOrder(null)} style={{ marginBottom: 8 }}>
+                  ← Back to Orders
+                </button>
+                <div className="pos-order-detail-header">
+                  <div className="pos-order-detail-ref">{selectedOrder.reference}</div>
+                  <div className="pos-order-detail-date">{new Date(selectedOrder.order_date).toLocaleString()}</div>
+                  <div className="pos-order-detail-status">
+                    <span className={`pos-badge pos-badge-sm ${selectedOrder.status === "refunded" ? "pos-badge-danger" : selectedOrder.is_fiscalized ? "pos-badge-success" : "pos-badge-warning"}`}>
+                      {selectedOrder.status === "refunded" ? "Refunded" : selectedOrder.is_fiscalized ? "Fiscalized" : "Pending"}
+                    </span>
+                    {selectedOrder.total_amount < 0 && <span className="pos-badge pos-badge-sm pos-badge-info">Credit Note</span>}
                   </div>
                 </div>
-                <div className="pos-orders-panel-row-amount">${fmt(o.total_amount)}</div>
-                <div className="pos-orders-panel-row-actions">
-                  {o.zimra_verification_code ? (
-                    <span className="pos-badge pos-badge-success pos-badge-sm" title={o.zimra_verification_code}>✓</span>
-                  ) : o.fiscal_errors ? (
-                    <button className="pos-btn pos-btn-xs pos-btn-outline" onClick={() => fiscalizeOrder(o.id)} title={o.fiscal_errors}>Retry</button>
-                  ) : (
-                    <button className="pos-btn pos-btn-xs pos-btn-outline" onClick={() => fiscalizeOrder(o.id)}>Fiscal</button>
-                  )}
-                  <button className="pos-btn pos-btn-icon pos-btn-xs" onClick={() => handlePrintOrder(o)} title="Print">
+
+                <div className="pos-order-detail-lines">
+                  <div className="pos-order-detail-lines-header">
+                    <span>Item</span><span>Qty</span><span>Price</span><span>Total</span>
+                  </div>
+                  {(selectedOrder.lines || []).map((l, i) => (
+                    <div key={i} className="pos-order-detail-line">
+                      <span>{l.description}</span>
+                      <span>{l.quantity}</span>
+                      <span>${fmt(l.unit_price)}</span>
+                      <span>${fmt(l.total_price)}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="pos-order-detail-totals">
+                  <div className="pos-order-detail-totals-row"><span>Subtotal</span><span>${fmt(selectedOrder.subtotal)}</span></div>
+                  {selectedOrder.discount_amount > 0 && <div className="pos-order-detail-totals-row"><span>Discount</span><span>-${fmt(selectedOrder.discount_amount)}</span></div>}
+                  <div className="pos-order-detail-totals-row"><span>Tax</span><span>${fmt(selectedOrder.tax_amount)}</span></div>
+                  <div className="pos-order-detail-totals-row pos-order-detail-grand"><span>Total</span><span>${fmt(selectedOrder.total_amount)}</span></div>
+                  <div className="pos-order-detail-totals-row"><span>Payment</span><span style={{ textTransform: "capitalize" }}>{selectedOrder.payment_method}</span></div>
+                </div>
+
+                {selectedOrder.zimra_verification_code && (
+                  <div className="pos-order-detail-fiscal">
+                    <div className="pos-order-detail-fiscal-label">ZIMRA Verification</div>
+                    <div className="pos-order-detail-fiscal-code">{selectedOrder.zimra_verification_code}</div>
+                    {selectedOrder.zimra_verification_url && (
+                      <a href={selectedOrder.zimra_verification_url} target="_blank" rel="noopener noreferrer" className="pos-order-detail-fiscal-link">Verify ↗</a>
+                    )}
+                  </div>
+                )}
+
+                {selectedOrder.notes && (
+                  <div className="pos-order-detail-notes">{selectedOrder.notes}</div>
+                )}
+
+                {/* Action buttons */}
+                <div className="pos-order-detail-actions">
+                  <button className="pos-btn pos-btn-sm pos-btn-outline" onClick={() => handlePrintOrder(selectedOrder)}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                    Reprint
                   </button>
+                  <button className="pos-btn pos-btn-sm pos-btn-outline" onClick={() => sendReceipt(selectedOrder)}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                    Send
+                  </button>
+                  {!selectedOrder.is_fiscalized && selectedOrder.status !== "refunded" && selectedOrder.total_amount > 0 && (
+                    <button className="pos-btn pos-btn-sm pos-btn-outline" onClick={() => fiscalizeOrder(selectedOrder.id)}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                      Fiscalize
+                    </button>
+                  )}
+                  {selectedOrder.status !== "refunded" && selectedOrder.total_amount > 0 && (
+                    <button className="pos-btn pos-btn-sm pos-btn-danger" onClick={() => openRefundDialog(selectedOrder.id)}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+                      Refund
+                    </button>
+                  )}
                 </div>
               </div>
-            ))}
+            ) : (
+              /* Orders List */
+              <>
+                <div className="pos-orders-panel-list">
+                  {orders.length === 0 && (
+                    <div className="pos-orders-empty">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--slate-300)" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                      <p>No orders yet</p>
+                    </div>
+                  )}
+                  {orders.map((o) => (
+                    <div key={o.id} className={`pos-orders-panel-row ${o.status === "refunded" ? "refunded" : ""} ${o.total_amount < 0 ? "credit-note" : ""}`} onClick={() => viewOrderDetail(o)}>
+                      <div className="pos-orders-panel-row-main">
+                        <div className="pos-orders-panel-row-ref">
+                          {o.total_amount < 0 && <span className="pos-orders-cn-tag">CN</span>}
+                          {o.reference}
+                        </div>
+                        <div className="pos-orders-panel-row-meta">
+                          <span>{ordersFilter === "all"
+                            ? new Date(o.order_date).toLocaleDateString(undefined, { month: "short", day: "numeric" }) + " " + new Date(o.order_date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                            : new Date(o.order_date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                          <span className="pos-orders-panel-row-method">{o.payment_method}</span>
+                          {o.status === "refunded" && <span className="pos-orders-refund-tag">Refunded</span>}
+                        </div>
+                      </div>
+                      <div className="pos-orders-panel-row-amount">${fmt(o.total_amount)}</div>
+                      <div className="pos-orders-panel-row-actions" onClick={(e) => e.stopPropagation()}>
+                        {o.zimra_verification_code ? (
+                          <span className="pos-badge pos-badge-success pos-badge-sm" title={o.zimra_verification_code}>✓</span>
+                        ) : o.fiscal_errors ? (
+                          <button className="pos-btn pos-btn-xs pos-btn-outline" onClick={() => fiscalizeOrder(o.id)} title={o.fiscal_errors}>Retry</button>
+                        ) : o.status !== "refunded" && o.total_amount > 0 ? (
+                          <button className="pos-btn pos-btn-xs pos-btn-outline" onClick={() => fiscalizeOrder(o.id)}>Fiscal</button>
+                        ) : null}
+                        <button className="pos-btn pos-btn-icon pos-btn-xs" onClick={() => handlePrintOrder(o)} title="Print">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {orders.length > 0 && (
+                  <div className="pos-orders-panel-footer">
+                    <div className="pos-orders-panel-summary">
+                      <span>Total: {orders.length} orders</span>
+                      <span className="pos-orders-panel-total">${fmt(orders.reduce((s, o) => s + o.total_amount, 0))}</span>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
-          {orders.length > 0 && (
-            <div className="pos-orders-panel-footer">
-              <div className="pos-orders-panel-summary">
-                <span>Total: {orders.length} orders</span>
-                <span className="pos-orders-panel-total">${fmt(orders.reduce((s, o) => s + o.total_amount, 0))}</span>
-              </div>
-            </div>
-          )}
         </div>
-      </div>
+      )}
+
+      {/* ── REFUND DIALOG ── */}
+      {showRefundDialog && (
+        <div className="pos-overlay" style={{ zIndex: 1100 }} onClick={() => setShowRefundDialog(false)}>
+          <div className="pos-dialog pos-dialog-sm" onClick={(e) => e.stopPropagation()}>
+            <div className="pos-dialog-header">
+              <h2>Refund Order</h2>
+              <button className="pos-btn pos-btn-icon pos-btn-xs" onClick={() => setShowRefundDialog(false)}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <div className="pos-dialog-body">
+              <p style={{ fontSize: "0.85rem", color: "var(--slate-500)", marginBottom: 12 }}>This will create a credit note and reverse the original order. This action cannot be undone.</p>
+              <label className="pos-label">
+                Reason for Refund
+                <textarea
+                  className="pos-input"
+                  value={refundReason}
+                  onChange={(e) => setRefundReason(e.target.value)}
+                  placeholder="Customer return, damaged goods, wrong item…"
+                  rows={3}
+                  autoFocus
+                />
+              </label>
+              {error && <div className="pos-error">{error}</div>}
+            </div>
+            <div className="pos-dialog-footer">
+              <button className="pos-btn pos-btn-ghost" onClick={() => setShowRefundDialog(false)}>Cancel</button>
+              <button className="pos-btn pos-btn-danger" onClick={submitRefund}>Confirm Refund</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ─── PAYMENT DIALOG ─── */}
       {showPayment && (
