@@ -258,6 +258,7 @@ export default function POSPage() {
 
   // Orders history
   const [orders, setOrders] = useState<POSOrder[]>([]);
+  const [ordersFilter, setOrdersFilter] = useState<"all" | "session">("all");
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -298,10 +299,13 @@ export default function POSPage() {
   // ── auto-load orders when session is active ──
   useEffect(() => {
     if (!session) return;
-    apiFetch<POSOrder[]>(`/pos/orders?company_id=${session.company_id}&session_id=${session.id}`)
+    const url = ordersFilter === "session"
+      ? `/pos/orders?company_id=${session.company_id}&session_id=${session.id}&limit=200`
+      : `/pos/orders?company_id=${session.company_id}&limit=200`;
+    apiFetch<POSOrder[]>(url)
       .then(setOrders)
       .catch(() => {});
-  }, [session?.id]);
+  }, [session?.id, ordersFilter]);
 
   // ── customer search debounce ──
   useEffect(() => {
@@ -446,10 +450,13 @@ export default function POSPage() {
       setMobileAmount("");
 
       // Refresh session, products & orders
+      const ordUrl = ordersFilter === "session"
+        ? `/pos/orders?company_id=${session.company_id}&session_id=${session.id}&limit=200`
+        : `/pos/orders?company_id=${session.company_id}&limit=200`;
       const [updated, prods, ords] = await Promise.all([
         apiFetch<any>(`/pos/sessions/${session.id}`),
         apiFetch<POSProduct[]>(`/pos/products?company_id=${session.company_id}`),
-        apiFetch<POSOrder[]>(`/pos/orders?company_id=${session.company_id}&session_id=${session.id}`),
+        apiFetch<POSOrder[]>(ordUrl),
       ]);
       setSession(updated.session);
       setProducts(prods);
@@ -481,7 +488,10 @@ export default function POSPage() {
   const refreshOrders = async () => {
     if (!session) return;
     try {
-      const data = await apiFetch<POSOrder[]>(`/pos/orders?company_id=${session.company_id}&session_id=${session.id}`);
+      const url = ordersFilter === "session"
+        ? `/pos/orders?company_id=${session.company_id}&session_id=${session.id}&limit=200`
+        : `/pos/orders?company_id=${session.company_id}&limit=200`;
+      const data = await apiFetch<POSOrder[]>(url);
       setOrders(data);
     } catch (e: any) {
       setError(e.message);
@@ -818,8 +828,12 @@ export default function POSPage() {
         {/* ── ORDERS PANEL (always visible) ── */}
         <div className="pos-orders-panel">
           <div className="pos-orders-panel-header">
-            <h3>Session Orders</h3>
+            <h3>Orders</h3>
             <span className="pos-orders-count">{orders.length}</span>
+            <div className="pos-orders-filter">
+              <button className={`pos-orders-filter-btn ${ordersFilter === "all" ? "active" : ""}`} onClick={() => setOrdersFilter("all")}>All</button>
+              <button className={`pos-orders-filter-btn ${ordersFilter === "session" ? "active" : ""}`} onClick={() => setOrdersFilter("session")}>Session</button>
+            </div>
             <button className="pos-btn pos-btn-icon pos-btn-xs" onClick={refreshOrders} title="Refresh">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
             </button>
@@ -836,7 +850,9 @@ export default function POSPage() {
                 <div className="pos-orders-panel-row-main">
                   <div className="pos-orders-panel-row-ref">{o.reference}</div>
                   <div className="pos-orders-panel-row-meta">
-                    <span>{new Date(o.order_date).toLocaleTimeString()}</span>
+                    <span>{ordersFilter === "all"
+                      ? new Date(o.order_date).toLocaleDateString(undefined, { month: "short", day: "numeric" }) + " " + new Date(o.order_date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                      : new Date(o.order_date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
                     <span className="pos-orders-panel-row-method">{o.payment_method}</span>
                   </div>
                 </div>

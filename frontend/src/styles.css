@@ -9579,6 +9579,34 @@ button.danger:disabled {
   font-size: 0.72rem;
   font-weight: 700;
 }
+.pos-orders-filter {
+  display: flex;
+  gap: 2px;
+  background: var(--slate-100, #f1f5f9);
+  border-radius: 6px;
+  padding: 2px;
+  margin-left: auto;
+}
+.pos-orders-filter-btn {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--slate-500, #64748b);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.pos-orders-filter-btn:hover {
+  color: var(--slate-700, #334155);
+}
+.pos-orders-filter-btn.active {
+  background: var(--white-500, #fff);
+  color: var(--indigo-600, #4f46e5);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
 .pos-orders-panel-list {
   flex: 1;
   overflow-y: auto;
