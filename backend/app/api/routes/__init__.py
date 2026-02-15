@@ -4,6 +4,7 @@ from app.api.routes import auth, users, companies, products, contacts, quotation
 from app.api.routes import devices, categories, warehouses, locations, company_users, invoices
 from app.api.routes import tax_settings, company_certificates, dashboard, stock, company_settings
 from app.api.routes import roles, audit_logs, payments, purchases, subscriptions
+from app.api.routes import pos
 
 api_router = APIRouter()
 api_router.include_router(auth.router)
@@ -28,3 +29,4 @@ api_router.include_router(audit_logs.router)
 api_router.include_router(payments.router)
 api_router.include_router(purchases.router)
 api_router.include_router(subscriptions.router)
+api_router.include_router(pos.router)

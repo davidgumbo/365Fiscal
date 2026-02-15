@@ -20,6 +20,7 @@ import UsersRolesPage from "./pages/UsersRolesPage";
 import AuditLogsPage from "./pages/AuditLogsPage";
 import PaymentsPage from "./pages/PaymentsPage";
 import SubscriptionsPage from "./pages/SubscriptionsPage";
+import POSPage from "./pages/POSPage";
 import { apiFetch } from "./api";
 import { useMe } from "./hooks/useMe";
 import BackIcon from "./assets/back.svg?react";
@@ -41,6 +42,7 @@ const adminNav = [
   { to: "/quotations", label: "Quotations", icon: QuoteIcon },
   { to: "/inventory", label: "Inventory", icon: InventoryIcon },
   { to: "/devices", label: "Devices", icon: DeviceIcon },
+  { to: "/pos", label: "Point of Sale", icon: POSIcon },
   { to: "/payments", label: "Payments", icon: PaymentIcon },
   { to: "/reports", label: "Reports", icon: ReportsIcon },
   { to: "/users-roles", label: "Users & Roles", icon: UsersIcon },
@@ -56,6 +58,7 @@ const portalNav = [
   { to: "/purchases", label: "Purchases", icon: PurchaseIcon },
   { to: "/contacts", label: "Contacts", icon: ContactIcon },
   { to: "/quotations", label: "Quotations", icon: QuoteIcon },
+  { to: "/pos", label: "Point of Sale", icon: POSIcon },
   { to: "/inventory", label: "Inventory", icon: InventoryIcon },
   { to: "/my-devices", label: "Devices", icon: DeviceIcon },
   { to: "/reports", label: "Reports", icon: ReportsIcon },
@@ -293,6 +296,7 @@ function AppContent() {
               <Route path="/users-roles" element={<UsersRolesPage />} />
               <Route path="/audit-logs" element={<AuditLogsPage />} />
               <Route path="/payments" element={<PaymentsPage />} />
+              <Route path="/pos" element={<POSPage />} />
               <Route path="/subscriptions" element={<SubscriptionsPage />} />
             </Routes>
           </div>
@@ -749,6 +753,31 @@ function PaymentIcon() {
     >
       <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
       <line x1="1" y1="10" x2="23" y2="10" />
+    </svg>
+  );
+}
+
+function POSIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="2" y="2" width="20" height="20" rx="2" />
+      <rect x="6" y="4" width="12" height="7" rx="1" />
+      <circle cx="8" cy="15" r="1" />
+      <circle cx="12" cy="15" r="1" />
+      <circle cx="16" cy="15" r="1" />
+      <circle cx="8" cy="19" r="1" />
+      <circle cx="12" cy="19" r="1" />
+      <rect x="14" y="17" width="4" height="3" rx="0.5" />
     </svg>
   );
 }

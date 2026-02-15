@@ -120,6 +120,19 @@ const SubscriptionIcon = () => (
   </svg>
 );
 
+const POSLauncherIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="2" width="20" height="20" rx="2" />
+    <rect x="6" y="4" width="12" height="7" rx="1" />
+    <circle cx="8" cy="15" r="1" />
+    <circle cx="12" cy="15" r="1" />
+    <circle cx="16" cy="15" r="1" />
+    <circle cx="8" cy="19" r="1" />
+    <circle cx="12" cy="19" r="1" />
+    <rect x="14" y="17" width="4" height="3" rx="0.5" />
+  </svg>
+);
+
 interface AppItem {
   to: string;
   label: string;
@@ -137,6 +150,7 @@ const adminApps: AppItem[] = [
   { to: "/contacts", label: "Contacts", icon: ContactIcon, color: "var(--white-500)", bgColor: "var(--emerald-500)" },
   { to: "/quotations", label: "Quotations", icon: QuoteIcon, color: "var(--white-500)", bgColor: "var(--indigo-500)" },
   { to: "/inventory", label: "Inventory", icon: InventoryIcon, color: "var(--white-500)", bgColor: "var(--violet-600)" },
+  { to: "/pos", label: "Point of Sale", icon: POSLauncherIcon, color: "var(--white-500)", bgColor: "var(--green-500)" },
   { to: "/devices", label: "Devices", icon: DeviceIcon, color: "var(--white-500)", bgColor: "var(--pink-500)" },
   { to: "/reports", label: "Reports", icon: ReportsIcon, color: "var(--white-500)", bgColor: "var(--teal-500)" },
   { to: "/subscriptions", label: "Subscriptions", icon: SubscriptionIcon, color: "var(--white-500)", bgColor: "var(--amber-500)" },
@@ -150,6 +164,7 @@ const portalApps: AppItem[] = [
   { to: "/contacts", label: "Contacts", icon: ContactIcon, color: "var(--white-500)", bgColor: "var(--emerald-500)" },
   { to: "/quotations", label: "Quotations", icon: QuoteIcon, color: "var(--white-500)", bgColor: "var(--indigo-500)" },
   { to: "/inventory", label: "Inventory", icon: InventoryIcon, color: "var(--white-500)", bgColor: "var(--violet-600)" },
+  { to: "/pos", label: "Point of Sale", icon: POSLauncherIcon, color: "var(--white-500)", bgColor: "var(--green-500)" },
   { to: "/my-devices", label: "Devices", icon: DeviceIcon, color: "var(--white-500)", bgColor: "var(--pink-500)" },
   { to: "/reports", label: "Reports", icon: ReportsIcon, color: "var(--white-500)", bgColor: "var(--teal-500)" },
   { to: "/settings", label: "Settings", icon: SettingsIcon, color: "var(--white-500)", bgColor: "var(--slate-500)" },
