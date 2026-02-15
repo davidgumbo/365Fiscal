@@ -52,18 +52,16 @@ function lineTotal(l: CartLine) {
   return lineSubtotal(l) + lineTax(l);
 }
 
-/* ── Thermal Receipt Printer ── */
-function printReceipt(order: POSOrder, company: CompanyInfo | null, customer: Customer | null, session: POSSession | null, device: Device | null) {
-  const w = window.open("", "_blank", "width=320,height=600");
-  if (!w) return;
+/* ── Build receipt HTML ── */
+function buildReceiptHtml(order: POSOrder, company: CompanyInfo | null, customer: Customer | null, session: POSSession | null, device: Device | null): string {
   const lines = order.lines || [];
   const payLabel = order.payment_method === "split" ? "Split" : order.payment_method.charAt(0).toUpperCase() + order.payment_method.slice(1);
 
-  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Receipt</title>
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Receipt - ${order.reference}</title>
 <style>
   @page { size: 80mm auto; margin: 0; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Courier New', monospace; font-size: 12px; width: 80mm; padding: 4mm; color: #000; }
+  body { font-family: 'Courier New', monospace; font-size: 12px; width: 80mm; padding: 4mm; color: #000; background: #fff; }
   .center { text-align: center; }
   .bold { font-weight: bold; }
   .logo { max-width: 60mm; max-height: 25mm; margin: 0 auto 4px; display: block; }
@@ -83,10 +81,14 @@ function printReceipt(order: POSOrder, company: CompanyInfo | null, customer: Cu
   .fiscal-box { border: 1px solid #000; padding: 6px; margin: 6px 0; text-align: center; }
   .fiscal-label { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; }
   .fiscal-code { font-size: 14px; font-weight: bold; margin: 2px 0; }
-  .fiscal-url { font-size: 9px; word-break: break-all; }
+  .fiscal-url { font-size: 9px; word-break: break-all; color: #333; }
   .footer { font-size: 10px; color: #555; margin-top: 8px; text-align: center; line-height: 1.4; }
   .customer-info { font-size: 10px; margin: 2px 0; }
-  @media print { body { width: 80mm; } }
+  .device-footer { font-size: 9px; color: #666; text-align: center; }
+  @media print {
+    html, body { width: 80mm; margin: 0; padding: 4mm; }
+    @page { size: 80mm auto; margin: 0; }
+  }
 </style></head><body>
   <div class="center">
     ${company?.logo_data ? `<img class="logo" src="${company.logo_data}" alt="Logo" />` : ""}
@@ -143,7 +145,7 @@ function printReceipt(order: POSOrder, company: CompanyInfo | null, customer: Cu
   ` : ""}
   ${device ? `
     <div class="divider"></div>
-    <div style="font-size:9px;color:#666;text-align:center;">
+    <div class="device-footer">
       Fiscal Device: ${device.model}<br>
       Serial: ${device.serial_number}<br>
       Device ID: ${device.device_id}
@@ -154,9 +156,61 @@ function printReceipt(order: POSOrder, company: CompanyInfo | null, customer: Cu
     Thank you for your business!<br>
     Powered by 365 Fiscal
   </div>
-</body></html>`);
-  w.document.close();
-  setTimeout(() => { w.print(); }, 300);
+</body></html>`;
+}
+
+/* ── Reliable iframe-based print (avoids popup blockers) ── */
+function printReceipt(order: POSOrder, company: CompanyInfo | null, customer: Customer | null, session: POSSession | null, device: Device | null) {
+  const html = buildReceiptHtml(order, company, customer, session, device);
+
+  // Remove any previous print iframe
+  const oldFrame = document.getElementById("pos-print-frame");
+  if (oldFrame) oldFrame.remove();
+
+  const iframe = document.createElement("iframe");
+  iframe.id = "pos-print-frame";
+  iframe.style.cssText = "position:fixed;top:-10000px;left:-10000px;width:80mm;height:0;border:none;";
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentDocument || iframe.contentWindow?.document;
+  if (!doc) return;
+
+  doc.open();
+  doc.write(html);
+  doc.close();
+
+  // Wait for content (including images) to load, then print
+  const triggerPrint = () => {
+    try {
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+    } catch {
+      // Fallback: open in new window if iframe print fails
+      const w = window.open("", "_blank", "width=320,height=700,scrollbars=yes");
+      if (w) {
+        w.document.write(html);
+        w.document.close();
+        w.onload = () => { w.focus(); w.print(); };
+      }
+    }
+    // Clean up after a delay
+    setTimeout(() => iframe.remove(), 5000);
+  };
+
+  // If there's a logo image, wait for it to load
+  const imgs = doc.querySelectorAll("img");
+  if (imgs.length > 0) {
+    let loaded = 0;
+    const checkDone = () => { loaded++; if (loaded >= imgs.length) setTimeout(triggerPrint, 100); };
+    imgs.forEach((img) => {
+      if (img.complete) checkDone();
+      else { img.onload = checkDone; img.onerror = checkDone; }
+    });
+    // Safety timeout in case image events don't fire
+    setTimeout(triggerPrint, 2000);
+  } else {
+    setTimeout(triggerPrint, 200);
+  }
 }
 
 /* ────────────────────────── Component ────────────────────────── */
@@ -203,7 +257,6 @@ export default function POSPage() {
   const [closingBalance, setClosingBalance] = useState("");
 
   // Orders history
-  const [showOrders, setShowOrders] = useState(false);
   const [orders, setOrders] = useState<POSOrder[]>([]);
 
   const [loading, setLoading] = useState(true);
@@ -241,6 +294,14 @@ export default function POSPage() {
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [companyId]);
+
+  // ── auto-load orders when session is active ──
+  useEffect(() => {
+    if (!session) return;
+    apiFetch<POSOrder[]>(`/pos/orders?company_id=${session.company_id}&session_id=${session.id}`)
+      .then(setOrders)
+      .catch(() => {});
+  }, [session?.id]);
 
   // ── customer search debounce ──
   useEffect(() => {
@@ -384,13 +445,15 @@ export default function POSPage() {
       setCardAmount("");
       setMobileAmount("");
 
-      // Refresh session & products (stock changed)
-      const [updated, prods] = await Promise.all([
+      // Refresh session, products & orders
+      const [updated, prods, ords] = await Promise.all([
         apiFetch<any>(`/pos/sessions/${session.id}`),
         apiFetch<POSProduct[]>(`/pos/products?company_id=${session.company_id}`),
+        apiFetch<POSOrder[]>(`/pos/orders?company_id=${session.company_id}&session_id=${session.id}`),
       ]);
       setSession(updated.session);
       setProducts(prods);
+      setOrders(ords);
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -415,12 +478,11 @@ export default function POSPage() {
     }
   };
 
-  const loadOrders = async () => {
+  const refreshOrders = async () => {
     if (!session) return;
     try {
       const data = await apiFetch<POSOrder[]>(`/pos/orders?company_id=${session.company_id}&session_id=${session.id}`);
       setOrders(data);
-      setShowOrders(true);
     } catch (e: any) {
       setError(e.message);
     }
@@ -452,6 +514,14 @@ export default function POSPage() {
     setCart([]);
     setSelectedCustomer(null);
     setTimeout(() => barcodeRef.current?.focus(), 100);
+  };
+
+  const handlePrintAndNewOrder = () => {
+    handlePrint();
+    // Small delay so print dialog opens, then reset for new order
+    setTimeout(() => {
+      handleNewOrder();
+    }, 500);
   };
 
   // ── filter products ──
@@ -557,9 +627,9 @@ export default function POSPage() {
           </div>
         </div>
         <div className="pos-topbar-right">
-          <button className="pos-btn pos-btn-sm pos-btn-topbar" onClick={loadOrders}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            Orders
+          <button className="pos-btn pos-btn-sm pos-btn-topbar" onClick={refreshOrders} title="Refresh orders">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+            Refresh
           </button>
           <button className="pos-btn pos-btn-sm pos-btn-topbar" onClick={() => setShowCustomerSearch(!showCustomerSearch)}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -743,6 +813,57 @@ export default function POSPage() {
               Pay ${fmt(cartTotal)}
             </button>
           </div>
+        </div>
+
+        {/* ── ORDERS PANEL (always visible) ── */}
+        <div className="pos-orders-panel">
+          <div className="pos-orders-panel-header">
+            <h3>Session Orders</h3>
+            <span className="pos-orders-count">{orders.length}</span>
+            <button className="pos-btn pos-btn-icon pos-btn-xs" onClick={refreshOrders} title="Refresh">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+            </button>
+          </div>
+          <div className="pos-orders-panel-list">
+            {orders.length === 0 && (
+              <div className="pos-orders-empty">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--slate-300)" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <p>No orders yet</p>
+              </div>
+            )}
+            {orders.map((o) => (
+              <div key={o.id} className="pos-orders-panel-row">
+                <div className="pos-orders-panel-row-main">
+                  <div className="pos-orders-panel-row-ref">{o.reference}</div>
+                  <div className="pos-orders-panel-row-meta">
+                    <span>{new Date(o.order_date).toLocaleTimeString()}</span>
+                    <span className="pos-orders-panel-row-method">{o.payment_method}</span>
+                  </div>
+                </div>
+                <div className="pos-orders-panel-row-amount">${fmt(o.total_amount)}</div>
+                <div className="pos-orders-panel-row-actions">
+                  {o.zimra_verification_code ? (
+                    <span className="pos-badge pos-badge-success pos-badge-sm" title={o.zimra_verification_code}>✓</span>
+                  ) : o.fiscal_errors ? (
+                    <button className="pos-btn pos-btn-xs pos-btn-outline" onClick={() => fiscalizeOrder(o.id)} title={o.fiscal_errors}>Retry</button>
+                  ) : (
+                    <button className="pos-btn pos-btn-xs pos-btn-outline" onClick={() => fiscalizeOrder(o.id)}>Fiscal</button>
+                  )}
+                  <button className="pos-btn pos-btn-icon pos-btn-xs" onClick={() => handlePrintOrder(o)} title="Print">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+          {orders.length > 0 && (
+            <div className="pos-orders-panel-footer">
+              <div className="pos-orders-panel-summary">
+                <span>Total: {orders.length} orders</span>
+                <span className="pos-orders-panel-total">${fmt(orders.reduce((s, o) => s + o.total_amount, 0))}</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -986,10 +1107,14 @@ export default function POSPage() {
               </div>
             </div>
 
-            <div className="pos-dialog-footer pos-receipt-footer">
+            <div className="pos-dialog-footer pos-receipt-actions">
               <button className="pos-btn pos-btn-outline" onClick={handlePrint}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                Print Receipt
+                Print
+              </button>
+              <button className="pos-btn pos-btn-success" onClick={handlePrintAndNewOrder}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                Print & Next
               </button>
               <button className="pos-btn pos-btn-primary" onClick={handleNewOrder}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -1041,50 +1166,6 @@ export default function POSPage() {
             <div className="pos-dialog-footer">
               <button className="pos-btn pos-btn-ghost" onClick={() => setShowCloseDialog(false)}>Cancel</button>
               <button className="pos-btn pos-btn-danger" onClick={closeSession}>Close & End Session</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ─── ORDERS LIST DIALOG ─── */}
-      {showOrders && (
-        <div className="pos-overlay" onClick={() => setShowOrders(false)}>
-          <div className="pos-dialog pos-dialog-orders" onClick={(e) => e.stopPropagation()}>
-            <div className="pos-dialog-header">
-              <h2>Session Orders</h2>
-              <button className="pos-btn pos-btn-icon" onClick={() => setShowOrders(false)}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-              </button>
-            </div>
-            <div className="pos-dialog-body pos-orders-list">
-              {orders.length === 0 && <div className="pos-center-msg">No orders yet</div>}
-              {orders.map((o) => (
-                <div key={o.id} className="pos-order-row">
-                  <div className="pos-order-row-info">
-                    <div className="pos-order-row-ref">{o.reference}</div>
-                    <div className="pos-order-row-date">{new Date(o.order_date).toLocaleTimeString()}</div>
-                  </div>
-                  <div className="pos-order-row-amount">${fmt(o.total_amount)}</div>
-                  <div className="pos-order-row-status">
-                    {o.is_fiscalized ? (
-                      <span className="pos-badge pos-badge-success pos-badge-sm">Fiscalized</span>
-                    ) : o.fiscal_errors ? (
-                      <>
-                        <span className="pos-badge pos-badge-error pos-badge-sm">Error</span>
-                        <button className="pos-btn pos-btn-xs pos-btn-outline" onClick={() => fiscalizeOrder(o.id)}>Retry</button>
-                      </>
-                    ) : (
-                      <>
-                        <span className="pos-badge pos-badge-warn pos-badge-sm">Not Fiscal</span>
-                        <button className="pos-btn pos-btn-xs pos-btn-outline" onClick={() => fiscalizeOrder(o.id)}>Fiscalize</button>
-                      </>
-                    )}
-                  </div>
-                  <button className="pos-btn pos-btn-icon" onClick={() => handlePrintOrder(o)} title="Print receipt">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                  </button>
-                </div>
-              ))}
             </div>
           </div>
         </div>
