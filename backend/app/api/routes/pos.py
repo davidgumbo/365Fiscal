@@ -15,6 +15,7 @@ from app.api.deps import (
     get_db, get_current_user, ensure_company_access, require_portal_user,
     log_audit, check_permission,
 )
+from sqlalchemy import func
 from app.models.pos_session import POSSession, POSOrder, POSOrderLine
 from app.models.invoice import Invoice
 from app.models.invoice_line import InvoiceLine
@@ -23,6 +24,9 @@ from app.models.device import Device
 from app.models.contact import Contact
 from app.models.tax_setting import TaxSetting
 from app.models.category import Category
+from app.models.company import Company
+from app.models.stock_quant import StockQuant
+from app.models.stock_move import StockMove
 from app.models.audit_log import AuditAction, ResourceType
 from app.schemas.pos import (
     POSSessionOpen, POSSessionClose, POSSessionRead, POSSessionSummary,
@@ -314,6 +318,40 @@ def create_order(
     order.discount_amount = round(discount_sum, 2)
     order.tax_amount = round(tax_sum, 2)
     order.total_amount = round(total_sum, 2)
+
+    # Deduct inventory for storable products
+    for ld in payload.lines:
+        if not ld.product_id:
+            continue
+        product = db.query(Product).filter(Product.id == ld.product_id).first()
+        if not product or product.product_type != "storable" or not product.track_inventory:
+            continue
+        qty = ld.quantity
+        # Update stock quant (reduce available)
+        quant = (
+            db.query(StockQuant)
+            .filter(StockQuant.product_id == product.id, StockQuant.company_id == payload.company_id)
+            .first()
+        )
+        if quant:
+            quant.quantity = round(quant.quantity - qty, 4)
+            quant.available_quantity = round(quant.available_quantity - qty, 4)
+            quant.total_value = round(quant.quantity * quant.unit_cost, 2)
+        # Record stock move
+        db.add(StockMove(
+            company_id=payload.company_id,
+            product_id=product.id,
+            reference=ref,
+            move_type="out",
+            quantity=qty,
+            unit_cost=product.sales_cost or product.purchase_cost,
+            total_cost=round(qty * (product.sales_cost or product.purchase_cost), 2),
+            source_document=ref,
+            state="done",
+            done_date=datetime.utcnow(),
+            notes=f"POS sale: {ref}",
+        ))
+        db.flush()
 
     # Calculate change
     paid = payload.cash_amount + payload.card_amount + payload.mobile_amount
@@ -663,6 +701,19 @@ def pos_products(
         q = q.filter(Product.category_id == category_id)
 
     products = q.order_by(Product.name).limit(limit).all()
+
+    # Batch load stock quantities
+    product_ids = [p.id for p in products]
+    stock_map: dict[int, float] = {}
+    if product_ids:
+        quants = (
+            db.query(StockQuant.product_id, func.sum(StockQuant.available_quantity))
+            .filter(StockQuant.product_id.in_(product_ids), StockQuant.company_id == company_id)
+            .group_by(StockQuant.product_id)
+            .all()
+        )
+        stock_map = {pid: qty for pid, qty in quants}
+
     result = []
     for p in products:
         vat_rate = p.tax_rate or 0
@@ -681,6 +732,9 @@ def pos_products(
             "category_id": p.category_id,
             "category_name": p.category.name if p.category else "",
             "description": p.description,
+            "stock_on_hand": round(stock_map.get(p.id, 0), 2),
+            "track_inventory": p.track_inventory,
+            "product_type": p.product_type,
         })
     return result
 
@@ -737,3 +791,25 @@ def pos_customers(
         {"id": c.id, "name": c.name, "email": c.email, "phone": c.phone, "tin": getattr(c, "tin", "")}
         for c in contacts
     ]
+
+
+@router.get("/company-info")
+def pos_company_info(
+    company_id: int,
+    db: Session = Depends(get_db),
+    user=Depends(require_portal_user),
+):
+    """Company info for POS receipt header."""
+    ensure_company_access(db, user, company_id)
+    co = db.query(Company).filter(Company.id == company_id).first()
+    if not co:
+        raise HTTPException(404, "Company not found")
+    return {
+        "id": co.id,
+        "name": co.name,
+        "address": co.address,
+        "phone": co.phone,
+        "email": co.email,
+        "tin": co.tin,
+        "vat": co.vat,
+    }

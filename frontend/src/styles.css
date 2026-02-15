@@ -9298,6 +9298,201 @@ button.danger:disabled {
   color: #fff;
 }
 
+/* ── POS Company Name in Top Bar ── */
+.pos-company-name {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--slate-500, #64748b);
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── POS Top Bar Buttons ── */
+.pos-btn-topbar {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--slate-100, #f1f5f9);
+  color: var(--slate-700, #334155);
+  border: 1px solid var(--slate-200, #e2e8f0);
+  font-weight: 500;
+}
+.pos-btn-topbar:hover {
+  background: var(--slate-200, #e2e8f0);
+  color: var(--slate-900, #0f172a);
+}
+.pos-btn-close-session {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--red-50, #fef2f2);
+  color: var(--red-600, #dc2626);
+  border: 1px solid var(--red-200, #fecaca);
+  font-weight: 500;
+}
+.pos-btn-close-session:hover {
+  background: var(--red-100, #fee2e2);
+  color: var(--red-700, #b91c1c);
+}
+
+/* ── POS Product Card Stock Badge ── */
+.pos-product-card-stock {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--emerald-700, #047857);
+  background: var(--emerald-50, #ecfdf5);
+  border: 1px solid var(--emerald-200, #a7f3d0);
+  border-radius: 10px;
+  padding: 1px 8px;
+  margin-top: 4px;
+  display: inline-block;
+}
+.pos-product-card-stock.low {
+  color: var(--amber-700, #b45309);
+  background: var(--amber-50, #fffbeb);
+  border-color: var(--amber-200, #fde68a);
+}
+.pos-product-card-stock.out {
+  color: var(--red-600, #dc2626);
+  background: var(--red-50, #fef2f2);
+  border-color: var(--red-200, #fecaca);
+}
+
+/* ── POS Cart Header ── */
+.pos-cart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--slate-200, #e2e8f0);
+  background: var(--slate-50, #f8fafc);
+}
+.pos-cart-header-title {
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--slate-800, #1e293b);
+}
+.pos-cart-header-count {
+  font-size: 0.78rem;
+  color: var(--slate-500, #64748b);
+  background: var(--slate-200, #e2e8f0);
+  border-radius: 12px;
+  padding: 2px 10px;
+  font-weight: 600;
+}
+
+/* ── POS Receipt Professional Layout ── */
+.pos-receipt-company {
+  text-align: center;
+  padding: 12px 0;
+}
+.pos-receipt-company-name {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--slate-900, #0f172a);
+  margin-bottom: 4px;
+}
+.pos-receipt-company-detail {
+  font-size: 0.78rem;
+  color: var(--slate-500, #64748b);
+  line-height: 1.5;
+}
+.pos-receipt-divider {
+  border-top: 1px dashed var(--slate-300, #cbd5e1);
+  margin: 8px 0;
+}
+.pos-receipt-customer {
+  font-size: 0.8rem;
+  color: var(--slate-600, #475569);
+  margin-top: 4px;
+}
+
+/* Receipt line items table */
+.pos-receipt-items {
+  margin: 8px 0;
+}
+.pos-receipt-items-header {
+  display: grid;
+  grid-template-columns: 2fr 0.6fr 1fr 1fr;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--slate-500, #64748b);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--slate-200, #e2e8f0);
+}
+.pos-receipt-items-header span:nth-child(2),
+.pos-receipt-items-header span:nth-child(3),
+.pos-receipt-items-header span:nth-child(4) {
+  text-align: right;
+}
+.pos-receipt-item {
+  display: grid;
+  grid-template-columns: 2fr 0.6fr 1fr 1fr;
+  gap: 4px;
+  font-size: 0.82rem;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--slate-100, #f1f5f9);
+}
+.pos-receipt-item span:nth-child(2),
+.pos-receipt-item span:nth-child(3),
+.pos-receipt-item span:nth-child(4) {
+  text-align: right;
+}
+.pos-receipt-item-name {
+  font-weight: 500;
+  color: var(--slate-800, #1e293b);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Receipt totals */
+.pos-receipt-totals {
+  margin: 8px 0;
+}
+.pos-receipt-totals-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 0;
+  font-size: 0.85rem;
+  color: var(--slate-600, #475569);
+}
+.pos-receipt-grand-total {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--slate-900, #0f172a);
+  border-top: 2px solid var(--slate-800, #1e293b);
+  border-bottom: 2px solid var(--slate-800, #1e293b);
+  padding: 6px 0;
+  margin: 6px 0;
+}
+
+/* Receipt payment info */
+.pos-receipt-payment {
+  padding: 4px 0 8px;
+}
+.pos-receipt-change-row {
+  font-weight: 700;
+  color: var(--emerald-700, #047857);
+}
+
+/* Receipt footer */
+.pos-receipt-footer {
+  border-top: none;
+  padding: 12px 16px;
+  gap: 10px;
+}
+.pos-receipt-footer .pos-btn {
+  flex: 1;
+}
+
 /* ── POS Responsive ── */
 @media (max-width: 900px) {
   .pos-body {

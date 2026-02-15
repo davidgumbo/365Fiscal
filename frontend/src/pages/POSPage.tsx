@@ -16,6 +16,9 @@ type POSProduct = {
   category_id: number | null;
   category_name: string;
   description: string;
+  stock_on_hand: number;
+  track_inventory: boolean;
+  product_type: string;
 };
 
 type CartLine = {
@@ -31,7 +34,9 @@ type Category = { id: number; name: string };
 type Device = { id: number; device_id: string; serial_number: string; model: string; fiscal_day_status: string };
 type Customer = { id: number; name: string; email: string; phone: string; tin: string };
 type POSSession = { id: number; name: string; status: string; company_id: number; device_id: number | null; opening_balance: number; total_sales: number; total_cash: number; total_card: number; total_mobile: number; transaction_count: number };
-type POSOrder = { id: number; reference: string; status: string; total_amount: number; is_fiscalized: boolean; zimra_verification_code: string; zimra_verification_url: string; fiscal_errors: string; change_amount: number; payment_method: string; order_date: string; lines: any[] };
+type OrderLine = { id: number; description: string; quantity: number; uom: string; unit_price: number; discount: number; vat_rate: number; subtotal: number; tax_amount: number; total_price: number };
+type POSOrder = { id: number; reference: string; status: string; subtotal: number; discount_amount: number; tax_amount: number; total_amount: number; is_fiscalized: boolean; zimra_verification_code: string; zimra_verification_url: string; fiscal_errors: string; change_amount: number; cash_amount: number; card_amount: number; mobile_amount: number; payment_method: string; order_date: string; currency: string; lines: OrderLine[] };
+type CompanyInfo = { id: number; name: string; address: string; phone: string; email: string; tin: string; vat: string };
 
 /* ────────────────────────── helpers ────────────────────────── */
 const fmt = (n: number) => n.toFixed(2);
@@ -47,6 +52,106 @@ function lineTotal(l: CartLine) {
   return lineSubtotal(l) + lineTax(l);
 }
 
+/* ── Thermal Receipt Printer ── */
+function printReceipt(order: POSOrder, company: CompanyInfo | null, customer: Customer | null, session: POSSession | null) {
+  const w = window.open("", "_blank", "width=320,height=600");
+  if (!w) return;
+  const lines = order.lines || [];
+  const payLabel = order.payment_method === "split" ? "Split" : order.payment_method.charAt(0).toUpperCase() + order.payment_method.slice(1);
+
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Receipt</title>
+<style>
+  @page { size: 80mm auto; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Courier New', monospace; font-size: 12px; width: 80mm; padding: 4mm; color: #000; }
+  .center { text-align: center; }
+  .bold { font-weight: bold; }
+  .company-name { font-size: 16px; font-weight: bold; margin-bottom: 2px; }
+  .company-info { font-size: 10px; color: #333; line-height: 1.4; }
+  .divider { border-top: 1px dashed #000; margin: 6px 0; }
+  .ref { font-size: 11px; margin: 4px 0; }
+  .date { font-size: 10px; color: #555; }
+  table { width: 100%; border-collapse: collapse; margin: 4px 0; }
+  th { text-align: left; font-size: 10px; border-bottom: 1px solid #000; padding: 2px 0; }
+  th:last-child, td:last-child { text-align: right; }
+  td { font-size: 11px; padding: 2px 0; vertical-align: top; }
+  .item-detail { font-size: 10px; color: #555; }
+  .totals-row { display: flex; justify-content: space-between; padding: 1px 0; font-size: 12px; }
+  .grand-total { font-size: 16px; font-weight: bold; border-top: 2px solid #000; border-bottom: 2px solid #000; padding: 4px 0; margin: 4px 0; }
+  .fiscal-box { border: 1px solid #000; padding: 6px; margin: 6px 0; text-align: center; }
+  .fiscal-label { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; }
+  .fiscal-code { font-size: 14px; font-weight: bold; margin: 2px 0; }
+  .fiscal-url { font-size: 9px; word-break: break-all; }
+  .footer { font-size: 10px; color: #555; margin-top: 8px; text-align: center; line-height: 1.4; }
+  .customer-info { font-size: 10px; margin: 2px 0; }
+  @media print { body { width: 80mm; } }
+</style></head><body>
+  <div class="center">
+    <div class="company-name">${company?.name || "365 Fiscal"}</div>
+    <div class="company-info">
+      ${company?.address ? company.address + "<br>" : ""}
+      ${company?.phone ? "Tel: " + company.phone + "<br>" : ""}
+      ${company?.email ? company.email + "<br>" : ""}
+      ${company?.tin ? "TIN: " + company.tin : ""}${company?.vat ? " | VAT: " + company.vat : ""}
+    </div>
+  </div>
+  <div class="divider"></div>
+  <div class="center">
+    <div class="ref bold">${order.reference}</div>
+    <div class="date">${new Date(order.order_date).toLocaleString()}</div>
+    ${session ? `<div class="date">Session: ${session.name}</div>` : ""}
+    ${customer ? `<div class="customer-info">Customer: ${customer.name}${customer.tin ? " | TIN: " + customer.tin : ""}</div>` : ""}
+  </div>
+  <div class="divider"></div>
+  <table>
+    <thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead>
+    <tbody>
+      ${lines.map(l => `
+        <tr>
+          <td>${l.description}</td>
+          <td>${l.quantity}</td>
+          <td>${fmt(l.unit_price)}</td>
+          <td>${fmt(l.total_price)}</td>
+        </tr>
+        ${l.discount > 0 ? `<tr><td colspan="4" class="item-detail">&nbsp;&nbsp;Disc: -${l.discount}%</td></tr>` : ""}
+        ${l.vat_rate > 0 ? `<tr><td colspan="4" class="item-detail">&nbsp;&nbsp;VAT ${l.vat_rate}%: ${fmt(l.tax_amount)}</td></tr>` : ""}
+      `).join("")}
+    </tbody>
+  </table>
+  <div class="divider"></div>
+  <div class="totals-row"><span>Subtotal</span><span>${fmt(order.subtotal)}</span></div>
+  ${order.discount_amount > 0 ? `<div class="totals-row"><span>Discount</span><span>-${fmt(order.discount_amount)}</span></div>` : ""}
+  <div class="totals-row"><span>Tax</span><span>${fmt(order.tax_amount)}</span></div>
+  <div class="grand-total center">${order.currency || "USD"} ${fmt(order.total_amount)}</div>
+  <div style="margin:4px 0">
+    <div class="totals-row"><span>Payment</span><span>${payLabel}</span></div>
+    ${order.cash_amount > 0 ? `<div class="totals-row"><span>Cash</span><span>${fmt(order.cash_amount)}</span></div>` : ""}
+    ${order.card_amount > 0 ? `<div class="totals-row"><span>Card</span><span>${fmt(order.card_amount)}</span></div>` : ""}
+    ${order.mobile_amount > 0 ? `<div class="totals-row"><span>Mobile</span><span>${fmt(order.mobile_amount)}</span></div>` : ""}
+    ${order.change_amount > 0 ? `<div class="totals-row bold"><span>Change</span><span>${fmt(order.change_amount)}</span></div>` : ""}
+  </div>
+  ${order.is_fiscalized && order.zimra_verification_code ? `
+    <div class="fiscal-box">
+      <div class="fiscal-label">ZIMRA Fiscal Receipt</div>
+      <div class="fiscal-code">${order.zimra_verification_code}</div>
+      ${order.zimra_verification_url ? `<div class="fiscal-url">${order.zimra_verification_url}</div>` : ""}
+    </div>
+  ` : order.fiscal_errors ? `
+    <div class="fiscal-box" style="border-color:red;color:red;">
+      <div class="fiscal-label">Fiscalization Error</div>
+      <div style="font-size:10px">${order.fiscal_errors.substring(0, 100)}</div>
+    </div>
+  ` : ""}
+  <div class="divider"></div>
+  <div class="footer">
+    Thank you for your business!<br>
+    Powered by 365 Fiscal
+  </div>
+</body></html>`);
+  w.document.close();
+  setTimeout(() => { w.print(); }, 300);
+}
+
 /* ────────────────────────── Component ────────────────────────── */
 export default function POSPage() {
   const navigate = useNavigate();
@@ -58,6 +163,7 @@ export default function POSPage() {
   const [products, setProducts] = useState<POSProduct[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [devices, setDevices] = useState<Device[]>([]);
+  const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
   const [session, setSession] = useState<POSSession | null>(null);
   const [cart, setCart] = useState<CartLine[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
@@ -112,11 +218,13 @@ export default function POSPage() {
       apiFetch<Category[]>(`/pos/categories?company_id=${companyId}`),
       apiFetch<Device[]>(`/pos/devices?company_id=${companyId}`),
       apiFetch<POSSession[]>(`/pos/sessions?company_id=${companyId}&status=open`),
+      apiFetch<CompanyInfo>(`/pos/company-info?company_id=${companyId}`),
     ])
-      .then(([prods, cats, devs, sessions]) => {
+      .then(([prods, cats, devs, sessions, ci]) => {
         setProducts(prods);
         setCategories(cats);
         setDevices(devs);
+        setCompanyInfo(ci);
         if (sessions.length > 0) {
           setSession(sessions[0]);
         } else {
@@ -138,6 +246,13 @@ export default function POSPage() {
     return () => clearTimeout(t);
   }, [customerSearch, companyId]);
 
+  // auto-clear errors
+  useEffect(() => {
+    if (!error) return;
+    const t = setTimeout(() => setError(""), 8000);
+    return () => clearTimeout(t);
+  }, [error]);
+
   // ── actions ──
   const openSession = async () => {
     if (!companyId) return;
@@ -152,6 +267,7 @@ export default function POSPage() {
       });
       setSession(s);
       setShowSessionDialog(false);
+      setTimeout(() => barcodeRef.current?.focus(), 200);
     } catch (e: any) {
       setError(e.message);
     }
@@ -187,14 +303,6 @@ export default function POSPage() {
     }
   };
 
-  const updateDiscount = (lineUid: string, discount: number) => {
-    setCart((prev) => prev.map((l) => (l.uid === lineUid ? { ...l, discount: Math.min(100, Math.max(0, discount)) } : l)));
-  };
-
-  const updatePrice = (lineUid: string, price: number) => {
-    setCart((prev) => prev.map((l) => (l.uid === lineUid ? { ...l, price: Math.max(0, price) } : l)));
-  };
-
   const removeLine = (lineUid: string) => {
     setCart((prev) => prev.filter((l) => l.uid !== lineUid));
   };
@@ -207,14 +315,14 @@ export default function POSPage() {
   // barcode scanner
   const handleBarcode = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key !== "Enter") return;
-    const val = (e.target as HTMLInputElement).value.trim();
+    const val = searchTerm.trim();
     if (!val) return;
     const found = products.find(
       (p) => p.barcode === val || p.reference === val
     );
     if (found) {
       addToCart(found);
-      (e.target as HTMLInputElement).value = "";
+      setSearchTerm("");
     }
   };
 
@@ -265,15 +373,17 @@ export default function POSPage() {
       setLastOrder(order);
       setShowPayment(false);
       setShowReceipt(true);
-      setCart([]);
-      setSelectedCustomer(null);
       setCashTendered("");
       setCardAmount("");
       setMobileAmount("");
 
-      // Refresh session
-      const updated = await apiFetch<any>(`/pos/sessions/${session.id}`);
+      // Refresh session & products (stock changed)
+      const [updated, prods] = await Promise.all([
+        apiFetch<any>(`/pos/sessions/${session.id}`),
+        apiFetch<POSProduct[]>(`/pos/products?company_id=${session.company_id}`),
+      ]);
       setSession(updated.session);
+      setProducts(prods);
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -317,6 +427,21 @@ export default function POSPage() {
     } catch (e: any) {
       setError(e.message);
     }
+  };
+
+  const handlePrint = () => {
+    if (lastOrder) printReceipt(lastOrder, companyInfo, selectedCustomer, session);
+  };
+
+  const handlePrintOrder = (o: POSOrder) => {
+    printReceipt(o, companyInfo, null, session);
+  };
+
+  const handleNewOrder = () => {
+    setShowReceipt(false);
+    setCart([]);
+    setSelectedCustomer(null);
+    setTimeout(() => barcodeRef.current?.focus(), 100);
   };
 
   // ── filter products ──
@@ -402,6 +527,7 @@ export default function POSPage() {
             <span className="pos-session-dot" />
             {session?.name}
           </div>
+          {companyInfo && <span className="pos-company-name">{companyInfo.name}</span>}
         </div>
         <div className="pos-topbar-center">
           <div className="pos-barcode-wrapper">
@@ -413,6 +539,7 @@ export default function POSPage() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyDown={handleBarcode}
+              autoFocus
             />
             {searchTerm && (
               <button className="pos-barcode-clear" onClick={() => { setSearchTerm(""); barcodeRef.current?.focus(); }}>✕</button>
@@ -420,11 +547,18 @@ export default function POSPage() {
           </div>
         </div>
         <div className="pos-topbar-right">
-          <button className="pos-btn pos-btn-sm pos-btn-outline" onClick={loadOrders}>Orders</button>
-          <button className="pos-btn pos-btn-sm pos-btn-outline" onClick={() => setShowCustomerSearch(!showCustomerSearch)}>
+          <button className="pos-btn pos-btn-sm pos-btn-topbar" onClick={loadOrders}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Orders
+          </button>
+          <button className="pos-btn pos-btn-sm pos-btn-topbar" onClick={() => setShowCustomerSearch(!showCustomerSearch)}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             {selectedCustomer ? selectedCustomer.name : "Customer"}
           </button>
-          <button className="pos-btn pos-btn-sm pos-btn-danger" onClick={() => setShowCloseDialog(true)}>Close</button>
+          <button className="pos-btn pos-btn-sm pos-btn-close-session" onClick={() => setShowCloseDialog(true)}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            Close
+          </button>
         </div>
       </header>
 
@@ -454,12 +588,21 @@ export default function POSPage() {
           {/* Product grid */}
           <div className="pos-product-grid">
             {filteredProducts.length === 0 && (
-              <div className="pos-no-products">No products found</div>
+              <div className="pos-no-products">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--slate-300)" strokeWidth="1.5"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                <p>No products found</p>
+                <p style={{ fontSize: "0.78rem" }}>Add products in Inventory or adjust your search</p>
+              </div>
             )}
             {filteredProducts.map((p) => (
               <button key={p.id} className="pos-product-card" onClick={() => addToCart(p)}>
                 <div className="pos-product-card-name">{p.name}</div>
                 <div className="pos-product-card-price">${fmt(p.sale_price)}</div>
+                {p.track_inventory && p.product_type === "storable" && (
+                  <div className={`pos-product-card-stock ${p.stock_on_hand <= 0 ? "out" : p.stock_on_hand <= 5 ? "low" : ""}`}>
+                    {p.stock_on_hand <= 0 ? "Out of stock" : `${p.stock_on_hand} ${p.uom}`}
+                  </div>
+                )}
                 {p.barcode && <div className="pos-product-card-barcode">{p.barcode}</div>}
               </button>
             ))}
@@ -510,11 +653,17 @@ export default function POSPage() {
 
           {selectedCustomer && !showCustomerSearch && (
             <div className="pos-customer-banner">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               <span>{selectedCustomer.name}</span>
               <button className="pos-btn-inline" onClick={() => setSelectedCustomer(null)}>✕</button>
             </div>
           )}
+
+          {/* Cart header */}
+          <div className="pos-cart-header">
+            <span className="pos-cart-header-title">Current Order</span>
+            <span className="pos-cart-header-count">{itemCount} item{itemCount !== 1 ? "s" : ""}</span>
+          </div>
 
           {/* Cart lines */}
           <div className="pos-cart-lines">
@@ -556,7 +705,6 @@ export default function POSPage() {
 
           {/* Cart totals */}
           <div className="pos-cart-totals">
-            <div className="pos-totals-row"><span>Items</span><span>{itemCount}</span></div>
             <div className="pos-totals-row"><span>Subtotal</span><span>${fmt(cartSubtotal)}</span></div>
             {cartDiscount > 0 && <div className="pos-totals-row pos-discount-row"><span>Discount</span><span>-${fmt(cartDiscount)}</span></div>}
             <div className="pos-totals-row"><span>Tax</span><span>${fmt(cartTax)}</span></div>
@@ -570,6 +718,7 @@ export default function POSPage() {
               onClick={clearCart}
               disabled={cart.length === 0}
             >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
               Clear
             </button>
             <button
@@ -718,7 +867,11 @@ export default function POSPage() {
                 onClick={submitPayment}
                 disabled={processing || cart.length === 0}
               >
-                {processing ? "Processing…" : `Validate $${fmt(cartTotal)}`}
+                {processing ? (
+                  <><div className="pos-spinner" style={{ width: 18, height: 18, borderWidth: 2 }} /> Processing…</>
+                ) : (
+                  `Validate $${fmt(cartTotal)}`
+                )}
               </button>
             </div>
           </div>
@@ -730,21 +883,70 @@ export default function POSPage() {
         <div className="pos-overlay" onClick={() => setShowReceipt(false)}>
           <div className="pos-dialog pos-dialog-receipt" onClick={(e) => e.stopPropagation()}>
             <div className="pos-receipt">
-              <div className="pos-receipt-header">
-                <h3>Order Confirmed</h3>
-                <div className="pos-receipt-ref">{lastOrder.reference}</div>
-                <div className="pos-receipt-date">{new Date(lastOrder.order_date).toLocaleString()}</div>
+              {/* Company header */}
+              <div className="pos-receipt-company">
+                <div className="pos-receipt-company-name">{companyInfo?.name || "365 Fiscal"}</div>
+                {companyInfo?.address && <div className="pos-receipt-company-detail">{companyInfo.address}</div>}
+                {companyInfo?.phone && <div className="pos-receipt-company-detail">Tel: {companyInfo.phone}</div>}
+                {companyInfo?.tin && <div className="pos-receipt-company-detail">TIN: {companyInfo.tin}</div>}
               </div>
 
+              <div className="pos-receipt-divider" />
+
+              <div className="pos-receipt-header">
+                <div className="pos-receipt-ref">{lastOrder.reference}</div>
+                <div className="pos-receipt-date">{new Date(lastOrder.order_date).toLocaleString()}</div>
+                {selectedCustomer && <div className="pos-receipt-customer">Customer: {selectedCustomer.name}</div>}
+              </div>
+
+              <div className="pos-receipt-divider" />
+
+              {/* Line items */}
+              <div className="pos-receipt-items">
+                <div className="pos-receipt-items-header">
+                  <span>Item</span><span>Qty</span><span>Price</span><span>Total</span>
+                </div>
+                {(lastOrder.lines || []).map((l, i) => (
+                  <div key={i} className="pos-receipt-item">
+                    <span className="pos-receipt-item-name">{l.description}</span>
+                    <span>{l.quantity}</span>
+                    <span>{fmt(l.unit_price)}</span>
+                    <span>{fmt(l.total_price)}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="pos-receipt-divider" />
+
+              {/* Totals */}
+              <div className="pos-receipt-totals">
+                <div className="pos-receipt-totals-row"><span>Subtotal</span><span>${fmt(lastOrder.subtotal)}</span></div>
+                {lastOrder.discount_amount > 0 && <div className="pos-receipt-totals-row"><span>Discount</span><span>-${fmt(lastOrder.discount_amount)}</span></div>}
+                <div className="pos-receipt-totals-row"><span>Tax</span><span>${fmt(lastOrder.tax_amount)}</span></div>
+                <div className="pos-receipt-grand-total">
+                  <span>TOTAL</span><span>${fmt(lastOrder.total_amount)}</span>
+                </div>
+              </div>
+
+              {/* Payment info */}
+              <div className="pos-receipt-payment">
+                <div className="pos-receipt-totals-row"><span>Payment</span><span>{lastOrder.payment_method.charAt(0).toUpperCase() + lastOrder.payment_method.slice(1)}</span></div>
+                {lastOrder.cash_amount > 0 && <div className="pos-receipt-totals-row"><span>Cash</span><span>${fmt(lastOrder.cash_amount)}</span></div>}
+                {lastOrder.card_amount > 0 && <div className="pos-receipt-totals-row"><span>Card</span><span>${fmt(lastOrder.card_amount)}</span></div>}
+                {lastOrder.mobile_amount > 0 && <div className="pos-receipt-totals-row"><span>Mobile</span><span>${fmt(lastOrder.mobile_amount)}</span></div>}
+                {lastOrder.change_amount > 0 && <div className="pos-receipt-totals-row pos-receipt-change-row"><span>Change</span><span>${fmt(lastOrder.change_amount)}</span></div>}
+              </div>
+
+              {/* Fiscal status */}
               <div className="pos-receipt-status">
                 {lastOrder.is_fiscalized ? (
                   <div className="pos-badge pos-badge-success">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M9 11l3 3L22 4"/></svg>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M9 11l3 3L22 4"/></svg>
                     Fiscalized
                   </div>
                 ) : lastOrder.fiscal_errors ? (
                   <div className="pos-badge pos-badge-error">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
                     Fiscal Error
                   </div>
                 ) : (
@@ -754,12 +956,10 @@ export default function POSPage() {
 
               {lastOrder.is_fiscalized && lastOrder.zimra_verification_code && (
                 <div className="pos-receipt-fiscal">
-                  <div className="pos-receipt-fiscal-label">Verification Code</div>
+                  <div className="pos-receipt-fiscal-label">ZIMRA Verification</div>
                   <div className="pos-receipt-fiscal-code">{lastOrder.zimra_verification_code}</div>
                   {lastOrder.zimra_verification_url && (
-                    <a className="pos-receipt-fiscal-link" href={lastOrder.zimra_verification_url} target="_blank" rel="noopener noreferrer">
-                      Verify Receipt ↗
-                    </a>
+                    <a className="pos-receipt-fiscal-link" href={lastOrder.zimra_verification_url} target="_blank" rel="noopener noreferrer">Verify Receipt ↗</a>
                   )}
                 </div>
               )}
@@ -767,32 +967,18 @@ export default function POSPage() {
               {lastOrder.fiscal_errors && (
                 <div className="pos-receipt-errors">
                   <strong>Error:</strong> {lastOrder.fiscal_errors}
-                  <button className="pos-btn pos-btn-sm pos-btn-outline" style={{ marginTop: 8 }} onClick={() => fiscalizeOrder(lastOrder.id)}>
-                    Retry Fiscalization
-                  </button>
+                  <button className="pos-btn pos-btn-sm pos-btn-outline" style={{ marginTop: 8 }} onClick={() => fiscalizeOrder(lastOrder.id)}>Retry Fiscalization</button>
                 </div>
               )}
-
-              <div className="pos-receipt-total">
-                <span>Total</span>
-                <span>${fmt(lastOrder.total_amount)}</span>
-              </div>
-              {lastOrder.change_amount > 0 && (
-                <div className="pos-receipt-change">
-                  <span>Change</span>
-                  <span>${fmt(lastOrder.change_amount)}</span>
-                </div>
-              )}
-              <div className="pos-receipt-method">
-                Paid by: {lastOrder.payment_method}
-              </div>
             </div>
-            <div className="pos-dialog-footer">
-              <button className="pos-btn pos-btn-outline" onClick={() => { window.print(); }}>
+
+            <div className="pos-dialog-footer pos-receipt-footer">
+              <button className="pos-btn pos-btn-outline" onClick={handlePrint}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                Print
+                Print Receipt
               </button>
-              <button className="pos-btn pos-btn-primary" onClick={() => { setShowReceipt(false); barcodeRef.current?.focus(); }}>
+              <button className="pos-btn pos-btn-primary" onClick={handleNewOrder}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 New Order
               </button>
             </div>
@@ -880,6 +1066,9 @@ export default function POSPage() {
                       </>
                     )}
                   </div>
+                  <button className="pos-btn pos-btn-icon" onClick={() => handlePrintOrder(o)} title="Print receipt">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                  </button>
                 </div>
               ))}
             </div>
@@ -890,6 +1079,7 @@ export default function POSPage() {
       {/* Global error toast */}
       {error && !showPayment && !showSessionDialog && !showCloseDialog && (
         <div className="pos-toast pos-toast-error" onClick={() => setError("")}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
           {error}
           <button className="pos-toast-close">✕</button>
         </div>
