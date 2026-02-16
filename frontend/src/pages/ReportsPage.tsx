@@ -96,6 +96,7 @@ interface PurchaseOrder {
   reference: string;
   status: string;
   order_date: string | null;
+  vendor_id: number | null;
   total_amount: number;
   tax_amount: number;
   lines: PurchaseOrderLine[];
@@ -175,6 +176,14 @@ interface PaymentReport {
   }[];
 }
 
+interface VatRateBucket {
+  rate: number;
+  taxable_amount: number;
+  tax_amount: number;
+  total: number;
+  count: number;
+}
+
 interface VatReport {
   sales_total: number;
   purchases_total: number;
@@ -184,9 +193,26 @@ interface VatReport {
   net_tax: number;
   invoices_count: number;
   purchases_count: number;
+  credit_notes_count: number;
+  credit_notes_tax: number;
+  sales_by_rate: VatRateBucket[];
+  purchases_by_rate: VatRateBucket[];
+  period_from: string;
+  period_to: string;
 }
 
-type ReportType = "sales" | "stock" | "payments" | "vat";
+interface PurchaseReportData {
+  total_orders: number;
+  total_amount: number;
+  total_tax: number;
+  average_order: number;
+  by_status: { status: string; count: number; amount: number }[];
+  by_vendor: { name: string; count: number; amount: number }[];
+  by_month: { month: string; amount: number; count: number }[];
+  recent_orders: { reference: string; vendor: string; amount: number; date: string; status: string }[];
+}
+
+type ReportType = "sales" | "stock" | "payments" | "vat" | "purchases";
 
 const MONTH_NAMES = [
   "Jan",
@@ -249,6 +275,7 @@ export default function ReportsPage() {
     null,
   );
   const [vatReport, setVatReport] = useState<VatReport | null>(null);
+  const [purchaseReport, setPurchaseReport] = useState<PurchaseReportData | null>(null);
   const [companySettings, setCompanySettings] =
     useState<CompanySettings | null>(null);
 
@@ -559,6 +586,16 @@ export default function ReportsPage() {
     const fromDate = dateRange.from ? new Date(dateRange.from) : null;
     const toDate = dateRange.to ? new Date(dateRange.to + "T23:59:59") : null;
 
+    // Separate credit notes
+    const creditNotes = invoices.filter((inv) => {
+      if (inv.invoice_type !== "credit_note") return false;
+      if (inv.status === "cancelled") return false;
+      const d = inv.invoice_date ? new Date(inv.invoice_date) : new Date(inv.created_at);
+      if (fromDate && d < fromDate) return false;
+      if (toDate && d > toDate) return false;
+      return true;
+    });
+
     const filteredInvoices = invoices.filter((inv) => {
       if (inv.invoice_type === "credit_note") return false;
       if (inv.status === "cancelled") return false;
@@ -578,22 +615,64 @@ export default function ReportsPage() {
       return true;
     });
 
-    const salesTotal = filteredInvoices.reduce(
-      (s, i) => s + (i.total_amount || 0),
-      0,
-    );
-    const outputTax = filteredInvoices.reduce(
-      (s, i) => s + (i.tax_amount || 0),
-      0,
-    );
-    const purchasesTotal = filteredPurchases.reduce(
-      (s, p) => s + (p.total_amount || 0),
-      0,
-    );
-    const inputTax = filteredPurchases.reduce(
-      (s, p) => s + (p.tax_amount || 0),
-      0,
-    );
+    // Break down by VAT rate — sales
+    const salesRateMap = new Map<number, VatRateBucket>();
+    for (const inv of filteredInvoices) {
+      if (!inv.lines || inv.lines.length === 0) {
+        // Invoice with no lines — use header totals, assume single rate
+        const rate = inv.tax_amount && inv.subtotal ? Math.round((inv.tax_amount / inv.subtotal) * 100) : 0;
+        const existing = salesRateMap.get(rate) || { rate, taxable_amount: 0, tax_amount: 0, total: 0, count: 0 };
+        existing.taxable_amount += inv.subtotal || 0;
+        existing.tax_amount += inv.tax_amount || 0;
+        existing.total += inv.total_amount || 0;
+        existing.count++;
+        salesRateMap.set(rate, existing);
+      } else {
+        for (const line of inv.lines) {
+          const rate = line.vat_rate || 0;
+          const existing = salesRateMap.get(rate) || { rate, taxable_amount: 0, tax_amount: 0, total: 0, count: 0 };
+          existing.taxable_amount += line.subtotal || 0;
+          existing.tax_amount += line.tax_amount || 0;
+          existing.total += line.total_price || 0;
+          existing.count++;
+          salesRateMap.set(rate, existing);
+        }
+      }
+    }
+
+    // Break down by VAT rate — purchases
+    const purchaseRateMap = new Map<number, VatRateBucket>();
+    for (const po of filteredPurchases) {
+      if (!po.lines || po.lines.length === 0) {
+        const rate = po.tax_amount && (po.total_amount - po.tax_amount) > 0
+          ? Math.round((po.tax_amount / (po.total_amount - po.tax_amount)) * 100) : 0;
+        const existing = purchaseRateMap.get(rate) || { rate, taxable_amount: 0, tax_amount: 0, total: 0, count: 0 };
+        existing.taxable_amount += (po.total_amount - po.tax_amount) || 0;
+        existing.tax_amount += po.tax_amount || 0;
+        existing.total += po.total_amount || 0;
+        existing.count++;
+        purchaseRateMap.set(rate, existing);
+      } else {
+        for (const line of po.lines) {
+          const rate = line.vat_rate || 0;
+          const sub = line.subtotal || (line.quantity * line.unit_price * (1 - (line.discount || 0) / 100));
+          const tax = line.tax_amount || (sub * rate / 100);
+          const total = line.total_price || (sub + tax);
+          const existing = purchaseRateMap.get(rate) || { rate, taxable_amount: 0, tax_amount: 0, total: 0, count: 0 };
+          existing.taxable_amount += sub;
+          existing.tax_amount += tax;
+          existing.total += total;
+          existing.count++;
+          purchaseRateMap.set(rate, existing);
+        }
+      }
+    }
+
+    const salesTotal = filteredInvoices.reduce((s, i) => s + (i.total_amount || 0), 0);
+    const outputTax = filteredInvoices.reduce((s, i) => s + (i.tax_amount || 0), 0);
+    const purchasesTotal = filteredPurchases.reduce((s, p) => s + (p.total_amount || 0), 0);
+    const inputTax = filteredPurchases.reduce((s, p) => s + (p.tax_amount || 0), 0);
+    const cnTax = creditNotes.reduce((s, cn) => s + Math.abs(cn.tax_amount || 0), 0);
 
     setVatReport({
       sales_total: salesTotal,
@@ -601,9 +680,98 @@ export default function ReportsPage() {
       profit: salesTotal - purchasesTotal,
       output_tax: outputTax,
       input_tax: inputTax,
-      net_tax: outputTax - inputTax,
+      net_tax: outputTax - inputTax - cnTax,
       invoices_count: filteredInvoices.length,
       purchases_count: filteredPurchases.length,
+      credit_notes_count: creditNotes.length,
+      credit_notes_tax: cnTax,
+      sales_by_rate: Array.from(salesRateMap.values()).sort((a, b) => a.rate - b.rate),
+      purchases_by_rate: Array.from(purchaseRateMap.values()).sort((a, b) => a.rate - b.rate),
+      period_from: dateRange.from,
+      period_to: dateRange.to,
+    });
+  }, [companyId, dateRange]);
+
+  const loadPurchaseReport = useCallback(async () => {
+    if (!companyId) return;
+    const [purchases, contacts] = await Promise.all([
+      apiFetch<PurchaseOrder[]>(`/purchases?company_id=${companyId}`).catch(() => [] as PurchaseOrder[]),
+      apiFetch<{ id: number; name: string }[]>(`/contacts?company_id=${companyId}`).catch(() => [] as { id: number; name: string }[]),
+    ]);
+
+    const fromDate = dateRange.from ? new Date(dateRange.from) : null;
+    const toDate = dateRange.to ? new Date(dateRange.to + "T23:59:59") : null;
+
+    const filtered = purchases.filter((po) => {
+      if (po.status === "cancelled") return false;
+      const d = po.order_date ? new Date(po.order_date) : null;
+      if (fromDate && d && d < fromDate) return false;
+      if (toDate && d && d > toDate) return false;
+      return true;
+    });
+
+    const contactLookup = new Map(contacts.map((c) => [c.id, c.name]));
+
+    const totalAmount = filtered.reduce((s, p) => s + (p.total_amount || 0), 0);
+    const totalTax = filtered.reduce((s, p) => s + (p.tax_amount || 0), 0);
+
+    // By status
+    const statusMap = new Map<string, { count: number; amount: number }>();
+    for (const po of filtered) {
+      const st = po.status || "draft";
+      const ex = statusMap.get(st) || { count: 0, amount: 0 };
+      ex.count++;
+      ex.amount += po.total_amount || 0;
+      statusMap.set(st, ex);
+    }
+
+    // By vendor
+    const vendorMap = new Map<number, { name: string; count: number; amount: number }>();
+    for (const po of filtered) {
+      const vid = po.vendor_id || 0;
+      const vname = po.vendor_id ? (contactLookup.get(po.vendor_id) || `Vendor #${po.vendor_id}`) : "No Vendor";
+      const ex = vendorMap.get(vid) || { name: vname, count: 0, amount: 0 };
+      ex.count++;
+      ex.amount += po.total_amount || 0;
+      vendorMap.set(vid, ex);
+    }
+
+    // By month
+    const monthMap = new Map<string, { amount: number; count: number }>();
+    for (const po of filtered) {
+      const d = po.order_date ? new Date(po.order_date) : null;
+      if (!d) continue;
+      const key = `${d.getFullYear()}-${String(d.getMonth()).padStart(2, "0")}`;
+      const ex = monthMap.get(key) || { amount: 0, count: 0 };
+      ex.amount += po.total_amount || 0;
+      ex.count++;
+      monthMap.set(key, ex);
+    }
+
+    setPurchaseReport({
+      total_orders: filtered.length,
+      total_amount: totalAmount,
+      total_tax: totalTax,
+      average_order: filtered.length > 0 ? totalAmount / filtered.length : 0,
+      by_status: Array.from(statusMap.entries())
+        .sort(([, a], [, b]) => b.amount - a.amount)
+        .map(([status, data]) => ({ status, count: data.count, amount: data.amount })),
+      by_vendor: Array.from(vendorMap.values())
+        .sort((a, b) => b.amount - a.amount)
+        .slice(0, 10),
+      by_month: Array.from(monthMap.entries())
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([key, val]) => {
+          const [, m] = key.split("-");
+          return { month: MONTH_NAMES[parseInt(m)], amount: val.amount, count: val.count };
+        }),
+      recent_orders: filtered.slice(0, 15).map((po) => ({
+        reference: po.reference,
+        vendor: po.vendor_id ? (contactLookup.get(po.vendor_id) || "-") : "-",
+        amount: po.total_amount || 0,
+        date: po.order_date ? new Date(po.order_date).toLocaleDateString() : "-",
+        status: po.status,
+      })),
     });
   }, [companyId, dateRange]);
 
@@ -615,6 +783,7 @@ export default function ReportsPage() {
       else if (activeReport === "stock") await loadStockReport();
       else if (activeReport === "payments") await loadPaymentReport();
       else if (activeReport === "vat") await loadVatReport();
+      else if (activeReport === "purchases") await loadPurchaseReport();
     } catch (err: any) {
       console.error("Report load error:", err);
       setError(err?.message || "Failed to load report data");
@@ -627,6 +796,7 @@ export default function ReportsPage() {
     loadStockReport,
     loadPaymentReport,
     loadVatReport,
+    loadPurchaseReport,
   ]);
 
   useEffect(() => {
@@ -721,18 +891,56 @@ export default function ReportsPage() {
         ]),
       );
     } else if (activeReport === "vat" && vatReport) {
-      filename = `vat-report-${dateRange.from}-to-${dateRange.to}.csv`;
-      rows.push(["VAT Report", `${dateRange.from} to ${dateRange.to}`]);
+      filename = `vat-return-${dateRange.from}-to-${dateRange.to}.csv`;
+      rows.push(["VAT RETURN", `Period: ${vatReport.period_from || dateRange.from} to ${vatReport.period_to || dateRange.to}`]);
       rows.push([]);
-      rows.push(["Sales Total", vatReport.sales_total.toFixed(2)]);
-      rows.push(["Purchases Total", vatReport.purchases_total.toFixed(2)]);
-      rows.push(["Profit", vatReport.profit.toFixed(2)]);
+      rows.push(["OUTPUT VAT (Sales)"]);
+      rows.push(["Rate", "Taxable Amount", "VAT Amount", "Total", "Transactions"]);
+      vatReport.sales_by_rate.forEach((b) =>
+        rows.push([`${b.rate}%`, b.taxable_amount.toFixed(2), b.tax_amount.toFixed(2), b.total.toFixed(2), String(b.count)]),
+      );
+      rows.push(["TOTAL OUTPUT VAT", "", vatReport.output_tax.toFixed(2), vatReport.sales_total.toFixed(2), String(vatReport.invoices_count)]);
+      rows.push([]);
+      rows.push(["INPUT VAT (Purchases)"]);
+      rows.push(["Rate", "Taxable Amount", "VAT Amount", "Total", "Transactions"]);
+      vatReport.purchases_by_rate.forEach((b) =>
+        rows.push([`${b.rate}%`, b.taxable_amount.toFixed(2), b.tax_amount.toFixed(2), b.total.toFixed(2), String(b.count)]),
+      );
+      rows.push(["TOTAL INPUT VAT", "", vatReport.input_tax.toFixed(2), vatReport.purchases_total.toFixed(2), String(vatReport.purchases_count)]);
+      rows.push([]);
+      rows.push(["Credit Notes", String(vatReport.credit_notes_count), vatReport.credit_notes_tax.toFixed(2)]);
+      rows.push([]);
+      rows.push(["NET VAT SUMMARY"]);
       rows.push(["Output VAT", vatReport.output_tax.toFixed(2)]);
-      rows.push(["Input VAT", vatReport.input_tax.toFixed(2)]);
-      rows.push(["Net VAT", vatReport.net_tax.toFixed(2)]);
+      rows.push(["Less: Input VAT", `(${vatReport.input_tax.toFixed(2)})`]);
+      rows.push(["Less: Credit Note VAT", `(${vatReport.credit_notes_tax.toFixed(2)})`]);
+      rows.push(["Net VAT " + (vatReport.net_tax >= 0 ? "Payable" : "Refundable"), vatReport.net_tax.toFixed(2)]);
+    } else if (activeReport === "purchases" && purchaseReport) {
+      filename = `purchase-report-${dateRange.from}-to-${dateRange.to}.csv`;
+      rows.push(["Purchase Report", `${dateRange.from} to ${dateRange.to}`]);
       rows.push([]);
-      rows.push(["Invoices Count", String(vatReport.invoices_count)]);
-      rows.push(["Purchases Count", String(vatReport.purchases_count)]);
+      rows.push(["Total Orders", String(purchaseReport.total_orders)]);
+      rows.push(["Total Amount", purchaseReport.total_amount.toFixed(2)]);
+      rows.push(["Total Tax", purchaseReport.total_tax.toFixed(2)]);
+      rows.push(["Average Order", purchaseReport.average_order.toFixed(2)]);
+      rows.push([]);
+      rows.push(["By Vendor"]);
+      rows.push(["Vendor", "Orders", "Amount"]);
+      purchaseReport.by_vendor.forEach((v) =>
+        rows.push([v.name, String(v.count), v.amount.toFixed(2)]),
+      );
+      rows.push([]);
+      rows.push(["By Status"]);
+      rows.push(["Status", "Count", "Amount"]);
+      purchaseReport.by_status.forEach((s) =>
+        rows.push([s.status, String(s.count), s.amount.toFixed(2)]),
+      );
+      rows.push([]);
+      rows.push(["Monthly Trend"]);
+      rows.push(["Month", "Amount", "Orders"]);
+      purchaseReport.by_month.forEach((m) =>
+        rows.push([m.month, m.amount.toFixed(2), String(m.count)]),
+      );
     }
 
     const csv = rows
@@ -749,7 +957,9 @@ export default function ReportsPage() {
           ? "Stock Report"
           : activeReport === "payments"
             ? "Payments Report"
-            : "VAT Report";
+            : activeReport === "purchases"
+              ? "Purchase Report"
+              : "VAT RETURN";
     const period =
       activeReport === "stock"
         ? new Date().toLocaleDateString()
@@ -812,19 +1022,64 @@ export default function ReportsPage() {
           ${paymentReport.recent_payments.map((p) => `<tr><td>${p.reference}</td><td>${p.invoice}</td><td style="text-align:right">${formatCurrency(p.amount)}</td><td>${p.date}</td><td style="text-transform:capitalize">${p.method}</td><td>${p.status}</td></tr>`).join("")}
         </tbody></table>`;
     } else if (activeReport === "vat" && vatReport) {
+      const vatPeriod = `${vatReport.period_from || dateRange.from} to ${vatReport.period_to || dateRange.to}`;
+      bodyHTML = `
+        <div style="text-align:center;margin-bottom:24px;padding-bottom:16px;border-bottom:3px double #333">
+          <h1 style="margin:0;font-size:24px;letter-spacing:2px">VAT RETURN</h1>
+          <div style="color:#666;margin-top:4px">Tax Period: ${vatPeriod}</div>
+        </div>
+        <h3>1. OUTPUT VAT (Tax on Sales)</h3>
+        <table><thead><tr><th>VAT Rate</th><th style="text-align:right">Taxable Amount</th><th style="text-align:right">VAT Amount</th><th style="text-align:right">Total Incl. VAT</th><th style="text-align:right">Transactions</th></tr></thead><tbody>
+          ${vatReport.sales_by_rate.map((b) => `<tr><td>${b.rate}%</td><td style="text-align:right">${formatCurrency(b.taxable_amount)}</td><td style="text-align:right">${formatCurrency(b.tax_amount)}</td><td style="text-align:right">${formatCurrency(b.total)}</td><td style="text-align:right">${b.count}</td></tr>`).join("")}
+          <tr style="font-weight:700;border-top:2px solid #333"><td>Total Output VAT</td><td style="text-align:right">${formatCurrency(vatReport.sales_total - vatReport.output_tax)}</td><td style="text-align:right">${formatCurrency(vatReport.output_tax)}</td><td style="text-align:right">${formatCurrency(vatReport.sales_total)}</td><td style="text-align:right">${vatReport.invoices_count}</td></tr>
+        </tbody></table>
+        <h3>2. INPUT VAT (Tax on Purchases)</h3>
+        <table><thead><tr><th>VAT Rate</th><th style="text-align:right">Taxable Amount</th><th style="text-align:right">VAT Amount</th><th style="text-align:right">Total Incl. VAT</th><th style="text-align:right">Transactions</th></tr></thead><tbody>
+          ${vatReport.purchases_by_rate.map((b) => `<tr><td>${b.rate}%</td><td style="text-align:right">${formatCurrency(b.taxable_amount)}</td><td style="text-align:right">${formatCurrency(b.tax_amount)}</td><td style="text-align:right">${formatCurrency(b.total)}</td><td style="text-align:right">${b.count}</td></tr>`).join("")}
+          <tr style="font-weight:700;border-top:2px solid #333"><td>Total Input VAT</td><td style="text-align:right">${formatCurrency(vatReport.purchases_total - vatReport.input_tax)}</td><td style="text-align:right">${formatCurrency(vatReport.input_tax)}</td><td style="text-align:right">${formatCurrency(vatReport.purchases_total)}</td><td style="text-align:right">${vatReport.purchases_count}</td></tr>
+        </tbody></table>
+        ${vatReport.credit_notes_count > 0 ? `
+        <h3>3. Credit Notes</h3>
+        <table><tbody>
+          <tr><td>Credit Notes Issued</td><td style="text-align:right">${vatReport.credit_notes_count}</td></tr>
+          <tr><td>VAT on Credit Notes</td><td style="text-align:right">${formatCurrency(vatReport.credit_notes_tax)}</td></tr>
+        </tbody></table>` : ""}
+        <h3 style="margin-top:32px">${vatReport.credit_notes_count > 0 ? "4" : "3"}. NET VAT CALCULATION</h3>
+        <table style="max-width:500px">
+          <tbody>
+            <tr><td>Output VAT (Sales)</td><td style="text-align:right;font-weight:600">${formatCurrency(vatReport.output_tax)}</td></tr>
+            <tr><td>Less: Input VAT (Purchases)</td><td style="text-align:right;font-weight:600;color:#dc2626">(${formatCurrency(vatReport.input_tax)})</td></tr>
+            ${vatReport.credit_notes_tax > 0 ? `<tr><td>Less: Credit Note VAT</td><td style="text-align:right;font-weight:600;color:#dc2626">(${formatCurrency(vatReport.credit_notes_tax)})</td></tr>` : ""}
+            <tr style="border-top:3px double #333;font-size:16px;font-weight:700"><td>Net VAT ${vatReport.net_tax >= 0 ? "Payable" : "Refundable"}</td><td style="text-align:right;color:${vatReport.net_tax >= 0 ? "#dc2626" : "#16a34a"}">${formatCurrency(Math.abs(vatReport.net_tax))}</td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:40px;padding:16px;border:1px solid #e5e7eb;border-radius:8px;background:#f9fafb">
+          <p style="margin:0 0 8px;font-weight:600">Declaration</p>
+          <p style="margin:0;font-size:11px;color:#666">I declare that the information given in this return is correct and complete to the best of my knowledge and belief.</p>
+          <div style="display:flex;justify-content:space-between;margin-top:24px;font-size:11px">
+            <div>Signature: ____________________</div>
+            <div>Date: ____________________</div>
+          </div>
+        </div>`;
+    } else if (activeReport === "purchases" && purchaseReport) {
       bodyHTML = `
         <div class="summary-grid">
-          <div class="summary-box"><div class="label">Sales Total</div><div class="val">${formatCurrency(vatReport.sales_total)}</div></div>
-          <div class="summary-box"><div class="label">Purchases Total</div><div class="val">${formatCurrency(vatReport.purchases_total)}</div></div>
-          <div class="summary-box"><div class="label">Profit</div><div class="val">${formatCurrency(vatReport.profit)}</div></div>
-          <div class="summary-box"><div class="label">Output VAT</div><div class="val">${formatCurrency(vatReport.output_tax)}</div></div>
-          <div class="summary-box"><div class="label">Input VAT</div><div class="val">${formatCurrency(vatReport.input_tax)}</div></div>
-          <div class="summary-box"><div class="label">Net VAT</div><div class="val">${formatCurrency(vatReport.net_tax)}</div></div>
+          <div class="summary-box"><div class="label">Total Orders</div><div class="val">${purchaseReport.total_orders}</div></div>
+          <div class="summary-box"><div class="label">Total Amount</div><div class="val">${formatCurrency(purchaseReport.total_amount)}</div></div>
+          <div class="summary-box"><div class="label">Total Tax</div><div class="val">${formatCurrency(purchaseReport.total_tax)}</div></div>
+          <div class="summary-box"><div class="label">Avg Order</div><div class="val">${formatCurrency(purchaseReport.average_order)}</div></div>
         </div>
-        <h3>Document Counts</h3>
-        <table><thead><tr><th>Type</th><th style="text-align:right">Count</th></tr></thead><tbody>
-          <tr><td>Invoices</td><td style="text-align:right">${vatReport.invoices_count}</td></tr>
-          <tr><td>Purchases</td><td style="text-align:right">${vatReport.purchases_count}</td></tr>
+        <h3>By Vendor</h3>
+        <table><thead><tr><th>Vendor</th><th style="text-align:right">Orders</th><th style="text-align:right">Amount</th></tr></thead><tbody>
+          ${purchaseReport.by_vendor.map((v) => `<tr><td>${v.name}</td><td style="text-align:right">${v.count}</td><td style="text-align:right">${formatCurrency(v.amount)}</td></tr>`).join("")}
+        </tbody></table>
+        <h3>By Status</h3>
+        <table><thead><tr><th>Status</th><th style="text-align:right">Count</th><th style="text-align:right">Amount</th></tr></thead><tbody>
+          ${purchaseReport.by_status.map((s) => `<tr><td style="text-transform:capitalize">${s.status}</td><td style="text-align:right">${s.count}</td><td style="text-align:right">${formatCurrency(s.amount)}</td></tr>`).join("")}
+        </tbody></table>
+        <h3>Monthly Trend</h3>
+        <table><thead><tr><th>Month</th><th style="text-align:right">Amount</th><th style="text-align:right">Orders</th></tr></thead><tbody>
+          ${purchaseReport.by_month.map((m) => `<tr><td>${m.month}</td><td style="text-align:right">${formatCurrency(m.amount)}</td><td style="text-align:right">${m.count}</td></tr>`).join("")}
         </tbody></table>`;
     }
 
@@ -876,11 +1131,6 @@ export default function ReportsPage() {
   const maxBarValue = salesReport
     ? Math.max(...salesReport.sales_by_month.map((m) => m.amount), 1)
     : 1;
-  const netVatStatus = vatReport
-    ? vatReport.net_tax >= 0
-      ? "Payable"
-      : "Refund"
-    : "";
 
   const goBackToCompanies = () => {
     setSelectedCompanyId(null);
@@ -888,6 +1138,7 @@ export default function ReportsPage() {
     setStockReport(null);
     setPaymentReport(null);
     setVatReport(null);
+    setPurchaseReport(null);
     navigate("/reports");
   };
 
@@ -1100,7 +1351,7 @@ export default function ReportsPage() {
               },
               {
                 key: "vat",
-                label: "VAT REPORT",
+                label: "VAT RETURN",
                 icon: (
                   <svg
                     width="18"
@@ -1116,6 +1367,26 @@ export default function ReportsPage() {
                     <path d="M13 5v2" />
                     <path d="M13 17v2" />
                     <path d="M13 11v2" />
+                  </svg>
+                ),
+              },
+              {
+                key: "purchases",
+                label: "PURCHASE REPORT",
+                icon: (
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="var(--rose-500)"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="9" cy="21" r="1" />
+                    <circle cx="20" cy="21" r="1" />
+                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
                   </svg>
                 ),
               },
@@ -1663,112 +1934,329 @@ export default function ReportsPage() {
             </div>
           )}
 
-          {/* ─── VAT Report ─── */}
+          {/* ─── VAT Return ─── */}
           {!loading && activeReport === "vat" && vatReport && (
             <div className="report-content">
+              {/* Header */}
+              <div style={{ textAlign: "center", marginBottom: 24, paddingBottom: 16, borderBottom: "3px double var(--gray-300)" }}>
+                <h2 style={{ margin: 0, fontSize: 22, letterSpacing: 2, textTransform: "uppercase" }}>VAT Return</h2>
+                <div style={{ color: "var(--gray-500)", marginTop: 4, fontSize: 13 }}>
+                  Tax Period: {vatReport.period_from || dateRange.from} to {vatReport.period_to || dateRange.to}
+                </div>
+              </div>
+
+              {/* Summary metrics */}
               <div className="metrics-row">
+                <MetricCard label="Sales Total" value={formatCurrency(vatReport.sales_total)} />
+                <MetricCard label="Output VAT" value={formatCurrency(vatReport.output_tax)} variant="success" />
+                <MetricCard label="Purchases Total" value={formatCurrency(vatReport.purchases_total)} />
+                <MetricCard label="Input VAT" value={formatCurrency(vatReport.input_tax)} />
                 <MetricCard
-                  label="Sales Total"
-                  value={formatCurrency(vatReport.sales_total)}
-                />
-                <MetricCard
-                  label="Purchases Total"
-                  value={formatCurrency(vatReport.purchases_total)}
-                />
-                <MetricCard
-                  label="Profit"
-                  value={formatCurrency(vatReport.profit)}
-                  variant={vatReport.profit >= 0 ? "success" : "danger"}
-                />
-                <MetricCard
-                  label="Output VAT"
-                  value={formatCurrency(vatReport.output_tax)}
-                  variant="success"
-                />
-                <MetricCard
-                  label="Input VAT"
-                  value={formatCurrency(vatReport.input_tax)}
-                />
-                <MetricCard
-                  label="Net VAT"
-                  value={formatCurrency(vatReport.net_tax)}
-                  variant={vatReport.net_tax >= 0 ? "warning" : "success"}
+                  label={`Net VAT ${vatReport.net_tax >= 0 ? "Payable" : "Refundable"}`}
+                  value={formatCurrency(Math.abs(vatReport.net_tax))}
+                  variant={vatReport.net_tax >= 0 ? "danger" : "success"}
                 />
               </div>
 
-              <div className="report-grid">
-                <div className="report-card">
-                  <h3>Summary</h3>
-                  <table className="report-table">
-                    <tbody>
-                      <tr>
-                        <td>Invoices</td>
-                        <td className="text-right">
-                          {vatReport.invoices_count}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>Purchases</td>
-                        <td className="text-right">
-                          {vatReport.purchases_count}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>Sales Total</td>
-                        <td className="text-right">
-                          {formatCurrency(vatReport.sales_total)}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>Purchases Total</td>
-                        <td className="text-right">
-                          {formatCurrency(vatReport.purchases_total)}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>Profit</td>
-                        <td className="text-right">
-                          {formatCurrency(vatReport.profit)}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-                <div className="report-card">
-                  <h3>VAT Position</h3>
+              {/* Section 1: Output VAT */}
+              <div className="report-card" style={{ marginBottom: 20 }}>
+                <h3 style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ background: "var(--emerald-100)", color: "var(--emerald-700)", borderRadius: 6, padding: "2px 10px", fontSize: 12, fontWeight: 700 }}>1</span>
+                  OUTPUT VAT — Tax Collected on Sales
+                </h3>
+                {vatReport.sales_by_rate.length === 0 ? (
+                  <p className="empty-state">No sales in this period.</p>
+                ) : (
                   <table className="report-table">
                     <thead>
                       <tr>
-                        <th>Metric</th>
-                        <th className="text-right">Amount</th>
+                        <th>VAT Rate</th>
+                        <th className="text-right">Taxable Amount</th>
+                        <th className="text-right">VAT Amount</th>
+                        <th className="text-right">Total Incl. VAT</th>
+                        <th className="text-right">Transactions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      <tr>
-                        <td>Output VAT (Sales)</td>
-                        <td className="text-right">
-                          {formatCurrency(vatReport.output_tax)}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>Input VAT (Purchases)</td>
-                        <td className="text-right">
-                          {formatCurrency(vatReport.input_tax)}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>Net VAT</td>
-                        <td className="text-right">
-                          {formatCurrency(vatReport.net_tax)}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>VAT Status</td>
-                        <td className="text-right">{netVatStatus}</td>
+                      {vatReport.sales_by_rate.map((b, i) => (
+                        <tr key={i}>
+                          <td><span className="badge badge-success">{b.rate}%</span></td>
+                          <td className="text-right">{formatCurrency(b.taxable_amount)}</td>
+                          <td className="text-right">{formatCurrency(b.tax_amount)}</td>
+                          <td className="text-right">{formatCurrency(b.total)}</td>
+                          <td className="text-right">{b.count}</td>
+                        </tr>
+                      ))}
+                      <tr style={{ fontWeight: 700, borderTop: "2px solid var(--gray-300)" }}>
+                        <td>Total Output VAT</td>
+                        <td className="text-right">{formatCurrency(vatReport.sales_total - vatReport.output_tax)}</td>
+                        <td className="text-right" style={{ color: "var(--emerald-600)" }}>{formatCurrency(vatReport.output_tax)}</td>
+                        <td className="text-right">{formatCurrency(vatReport.sales_total)}</td>
+                        <td className="text-right">{vatReport.invoices_count}</td>
                       </tr>
                     </tbody>
                   </table>
+                )}
+              </div>
+
+              {/* Section 2: Input VAT */}
+              <div className="report-card" style={{ marginBottom: 20 }}>
+                <h3 style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ background: "var(--blue-100)", color: "var(--blue-700)", borderRadius: 6, padding: "2px 10px", fontSize: 12, fontWeight: 700 }}>2</span>
+                  INPUT VAT — Tax Paid on Purchases
+                </h3>
+                {vatReport.purchases_by_rate.length === 0 ? (
+                  <p className="empty-state">No purchases in this period.</p>
+                ) : (
+                  <table className="report-table">
+                    <thead>
+                      <tr>
+                        <th>VAT Rate</th>
+                        <th className="text-right">Taxable Amount</th>
+                        <th className="text-right">VAT Amount</th>
+                        <th className="text-right">Total Incl. VAT</th>
+                        <th className="text-right">Transactions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {vatReport.purchases_by_rate.map((b, i) => (
+                        <tr key={i}>
+                          <td><span className="badge badge-info">{b.rate}%</span></td>
+                          <td className="text-right">{formatCurrency(b.taxable_amount)}</td>
+                          <td className="text-right">{formatCurrency(b.tax_amount)}</td>
+                          <td className="text-right">{formatCurrency(b.total)}</td>
+                          <td className="text-right">{b.count}</td>
+                        </tr>
+                      ))}
+                      <tr style={{ fontWeight: 700, borderTop: "2px solid var(--gray-300)" }}>
+                        <td>Total Input VAT</td>
+                        <td className="text-right">{formatCurrency(vatReport.purchases_total - vatReport.input_tax)}</td>
+                        <td className="text-right" style={{ color: "var(--blue-600)" }}>{formatCurrency(vatReport.input_tax)}</td>
+                        <td className="text-right">{formatCurrency(vatReport.purchases_total)}</td>
+                        <td className="text-right">{vatReport.purchases_count}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                )}
+              </div>
+
+              {/* Section 3: Credit Notes (if any) */}
+              {vatReport.credit_notes_count > 0 && (
+                <div className="report-card" style={{ marginBottom: 20 }}>
+                  <h3 style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ background: "var(--amber-100)", color: "var(--amber-700)", borderRadius: 6, padding: "2px 10px", fontSize: 12, fontWeight: 700 }}>3</span>
+                    Credit Notes
+                  </h3>
+                  <table className="report-table" style={{ maxWidth: 400 }}>
+                    <tbody>
+                      <tr><td>Credit Notes Issued</td><td className="text-right">{vatReport.credit_notes_count}</td></tr>
+                      <tr><td>VAT on Credit Notes</td><td className="text-right">{formatCurrency(vatReport.credit_notes_tax)}</td></tr>
+                    </tbody>
+                  </table>
                 </div>
+              )}
+
+              {/* Section N: Net VAT Calculation */}
+              <div className="report-card" style={{ marginBottom: 20, border: "2px solid var(--gray-300)" }}>
+                <h3 style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ background: "var(--violet-100)", color: "var(--violet-700)", borderRadius: 6, padding: "2px 10px", fontSize: 12, fontWeight: 700 }}>
+                    {vatReport.credit_notes_count > 0 ? "4" : "3"}
+                  </span>
+                  NET VAT CALCULATION
+                </h3>
+                <table className="report-table" style={{ maxWidth: 500 }}>
+                  <tbody>
+                    <tr>
+                      <td>Output VAT (Sales)</td>
+                      <td className="text-right" style={{ fontWeight: 600 }}>{formatCurrency(vatReport.output_tax)}</td>
+                    </tr>
+                    <tr>
+                      <td>Less: Input VAT (Purchases)</td>
+                      <td className="text-right" style={{ fontWeight: 600, color: "var(--red-600)" }}>({formatCurrency(vatReport.input_tax)})</td>
+                    </tr>
+                    {vatReport.credit_notes_tax > 0 && (
+                      <tr>
+                        <td>Less: Credit Note VAT</td>
+                        <td className="text-right" style={{ fontWeight: 600, color: "var(--red-600)" }}>({formatCurrency(vatReport.credit_notes_tax)})</td>
+                      </tr>
+                    )}
+                    <tr style={{ borderTop: "3px double var(--gray-400)", fontSize: 16, fontWeight: 700 }}>
+                      <td>Net VAT {vatReport.net_tax >= 0 ? "Payable" : "Refundable"}</td>
+                      <td className="text-right" style={{ color: vatReport.net_tax >= 0 ? "var(--red-600)" : "var(--emerald-600)" }}>
+                        {formatCurrency(Math.abs(vatReport.net_tax))}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div style={{ marginTop: 16, padding: "10px 14px", borderRadius: 8, fontSize: 12, background: vatReport.net_tax >= 0 ? "var(--red-50, #fef2f2)" : "var(--emerald-50, #ecfdf5)", color: vatReport.net_tax >= 0 ? "var(--red-700, #b91c1c)" : "var(--emerald-700, #047857)" }}>
+                  {vatReport.net_tax >= 0
+                    ? `You owe ${formatCurrency(vatReport.net_tax)} in VAT to the tax authority for this period.`
+                    : `You are entitled to a VAT refund of ${formatCurrency(Math.abs(vatReport.net_tax))} for this period.`}
+                </div>
+              </div>
+
+              {/* Profit Summary */}
+              <div className="report-card">
+                <h3>Profit Summary</h3>
+                <table className="report-table" style={{ maxWidth: 400 }}>
+                  <tbody>
+                    <tr><td>Sales (excl. VAT)</td><td className="text-right">{formatCurrency(vatReport.sales_total - vatReport.output_tax)}</td></tr>
+                    <tr><td>Purchases (excl. VAT)</td><td className="text-right">{formatCurrency(vatReport.purchases_total - vatReport.input_tax)}</td></tr>
+                    <tr style={{ fontWeight: 700, borderTop: "2px solid var(--gray-300)" }}>
+                      <td>Gross Profit</td>
+                      <td className="text-right" style={{ color: vatReport.profit >= 0 ? "var(--emerald-600)" : "var(--red-600)" }}>
+                        {formatCurrency(vatReport.profit)}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* ─── Purchase Report ─── */}
+          {!loading && activeReport === "purchases" && purchaseReport && (
+            <div className="report-content">
+              <div className="metrics-row">
+                <MetricCard label="Total Orders" value={String(purchaseReport.total_orders)} />
+                <MetricCard label="Total Amount" value={formatCurrency(purchaseReport.total_amount)} />
+                <MetricCard label="Total Tax" value={formatCurrency(purchaseReport.total_tax)} />
+                <MetricCard label="Avg Order" value={formatCurrency(purchaseReport.average_order)} />
+              </div>
+
+              <div className="report-grid">
+                {/* By Vendor */}
+                <div className="report-card">
+                  <h3>Purchases by Vendor</h3>
+                  {purchaseReport.by_vendor.length === 0 ? (
+                    <p className="empty-state">No purchases in this period.</p>
+                  ) : (
+                    <>
+                      <table className="report-table">
+                        <thead>
+                          <tr>
+                            <th>Vendor</th>
+                            <th className="text-right">Orders</th>
+                            <th className="text-right">Amount</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {purchaseReport.by_vendor.map((v, i) => (
+                            <tr key={i}>
+                              <td>{v.name}</td>
+                              <td className="text-right">{v.count}</td>
+                              <td className="text-right">{formatCurrency(v.amount)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      {/* Bar chart for vendors */}
+                      <div style={{ marginTop: 16 }}>
+                        {purchaseReport.by_vendor.slice(0, 8).map((v, i) => {
+                          const maxAmt = Math.max(...purchaseReport.by_vendor.map((x) => x.amount), 1);
+                          const pct = (v.amount / maxAmt) * 100;
+                          return (
+                            <div key={i} style={{ marginBottom: 8 }}>
+                              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 3 }}>
+                                <span>{v.name}</span>
+                                <span style={{ fontWeight: 600 }}>{formatCurrency(v.amount)}</span>
+                              </div>
+                              <div style={{ height: 8, background: "var(--gray-100)", borderRadius: 4, overflow: "hidden" }}>
+                                <div style={{ width: `${pct}%`, height: "100%", background: "var(--rose-500)", borderRadius: 4, transition: "width 0.5s" }} />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* By Status */}
+                <div className="report-card">
+                  <h3>By Status</h3>
+                  {purchaseReport.by_status.length === 0 ? (
+                    <p className="empty-state">No data.</p>
+                  ) : (
+                    <table className="report-table">
+                      <thead>
+                        <tr>
+                          <th>Status</th>
+                          <th className="text-right">Count</th>
+                          <th className="text-right">Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {purchaseReport.by_status.map((s, i) => (
+                          <tr key={i}>
+                            <td>
+                              <span className={`badge ${s.status === "received" ? "badge-success" : s.status === "draft" ? "badge-secondary" : s.status === "cancelled" ? "badge-danger" : "badge-info"}`} style={{ textTransform: "capitalize" }}>
+                                {s.status}
+                              </span>
+                            </td>
+                            <td className="text-right">{s.count}</td>
+                            <td className="text-right">{formatCurrency(s.amount)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+
+                  <h3 style={{ marginTop: 24 }}>Monthly Trend</h3>
+                  {purchaseReport.by_month.length === 0 ? (
+                    <p className="empty-state">No data.</p>
+                  ) : (
+                    <div className="bar-chart">
+                      {(() => {
+                        const maxAmt = Math.max(...purchaseReport.by_month.map((m) => m.amount), 1);
+                        return purchaseReport.by_month.map((m, i) => (
+                          <div key={i} className="bar-item">
+                            <div className="bar-fill-wrap">
+                              <div className="bar-fill" style={{ height: `${(m.amount / maxAmt) * 100}%`, background: "var(--rose-500)" }} />
+                            </div>
+                            <div className="bar-label">{m.month}</div>
+                            <div className="bar-value">{formatCurrency(m.amount)}</div>
+                          </div>
+                        ));
+                      })()}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Recent Orders */}
+              <div className="report-card" style={{ marginTop: 20 }}>
+                <h3>Recent Purchase Orders</h3>
+                {purchaseReport.recent_orders.length === 0 ? (
+                  <p className="empty-state">No purchase orders in this period.</p>
+                ) : (
+                  <table className="report-table">
+                    <thead>
+                      <tr>
+                        <th>Reference</th>
+                        <th>Vendor</th>
+                        <th className="text-right">Amount</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {purchaseReport.recent_orders.map((o, i) => (
+                        <tr key={i}>
+                          <td style={{ fontFamily: "monospace", fontSize: 12 }}>{o.reference}</td>
+                          <td>{o.vendor}</td>
+                          <td className="text-right">{formatCurrency(o.amount)}</td>
+                          <td>{o.date}</td>
+                          <td>
+                            <span className={`badge ${o.status === "received" ? "badge-success" : o.status === "draft" ? "badge-secondary" : o.status === "cancelled" ? "badge-danger" : "badge-info"}`} style={{ textTransform: "capitalize" }}>
+                              {o.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
               </div>
             </div>
           )}
@@ -1779,7 +2267,8 @@ export default function ReportsPage() {
             ((activeReport === "sales" && !salesReport) ||
               (activeReport === "stock" && !stockReport) ||
               (activeReport === "payments" && !paymentReport) ||
-              (activeReport === "vat" && !vatReport)) && (
+              (activeReport === "vat" && !vatReport) ||
+              (activeReport === "purchases" && !purchaseReport)) && (
               <div
                 style={{
                   textAlign: "center",
