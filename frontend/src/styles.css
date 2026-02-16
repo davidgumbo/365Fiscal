@@ -1943,6 +1943,10 @@ thead.table-light th {
   display: flex;
   align-items: center;
   justify-content: center;
+  background-image: url('/bg.jpg');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
   padding: 24px;
   position: fixed;
   top: 0;
@@ -1953,32 +1957,19 @@ thead.table-light th {
   box-sizing: border-box;
 }
 
-.login-shell::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: url('/bg.jpg');
-  background-size: cover;
-  background-position: center center;
-  background-repeat: no-repeat;
-  filter: blur(2px);
-  transform: scale(1.02);
-  z-index: 0;
-}
-
 .login-shell::before {
   content: "";
   position: absolute;
   inset: 0;
   background: rgba(15, 23, 42, 0.55);
-  z-index: 1;
+  z-index: 0;
 }
 
 .login-centered {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2;
+  z-index: 1;
 }
 
 .login-split {
@@ -1989,7 +1980,7 @@ thead.table-light th {
   align-items: center;
   animation: login-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
   position: relative;
-  z-index: 2;
+  z-index: 1;
 }
 
 @media (max-width: 900px) {
@@ -2609,6 +2600,106 @@ thead.table-light th {
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(-8px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Activation Card (reuses login-card-glass) ─── */
+.activation-card {
+  max-width: 440px;
+}
+
+.activation-card-body {
+  padding: 48px 36px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.activation-lock-icon {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(237, 233, 254, 0.85), rgba(221, 214, 254, 0.85));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+  box-shadow: 0 8px 28px rgba(99, 102, 241, 0.2);
+  animation: slide-up-fade 0.6s ease both;
+  animation-delay: 0.15s;
+}
+
+.activation-title {
+  font-family: "Fraunces", serif;
+  font-size: 26px;
+  font-weight: 800;
+  margin: 0 0 10px;
+  color: var(--slate-900);
+  letter-spacing: -0.5px;
+  animation: slide-up-fade 0.6s ease both;
+  animation-delay: 0.2s;
+}
+
+.activation-subtitle {
+  color: var(--slate-500);
+  font-size: 14.5px;
+  line-height: 1.7;
+  margin: 0 auto 28px;
+  max-width: 340px;
+  animation: slide-up-fade 0.6s ease both;
+  animation-delay: 0.25s;
+}
+
+.activation-card .login-form {
+  animation: slide-up-fade 0.6s ease both;
+  animation-delay: 0.35s;
+}
+
+.activation-code-input {
+  width: 100%;
+  padding: 16px 20px !important;
+  font-size: 18px !important;
+  font-family: 'Courier New', monospace !important;
+  letter-spacing: 3px !important;
+  text-align: center !important;
+  font-weight: 700 !important;
+  color: var(--slate-900) !important;
+}
+
+.activation-hint {
+  color: var(--slate-400);
+  font-size: 13px;
+  margin-top: 20px;
+  font-weight: 500;
+  animation: slide-up-fade 0.6s ease both;
+  animation-delay: 0.45s;
+}
+
+.activation-logout-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--slate-400);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.activation-logout-link:hover {
+  color: var(--red-500);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.activation-card .login-error,
+.activation-card .login-status {
+  margin-top: 0;
+  margin-bottom: 16px;
+  width: 100%;
 }
 
 .login-hero {
@@ -6318,27 +6409,10 @@ tr:hover .o-quick-actions {
   min-height: 100vh;
   background: var(--zinc-50);
   background: linear-gradient(155deg, rgba(252, 252, 252, 1) 0%, rgba(2, 20, 51, 1) 100%);
-  position: relative;
-  overflow: hidden;
-  flex-direction: column;
-}
-
-.app-launcher-page::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: url(./assets/bg.jpg);
+  background-image: url(./assets/app-launcher-bg.webp) ;
   background-repeat: no-repeat;
   background-size: cover;
-  background-position: center center;
-  filter: blur(2px);
-  transform: scale(1.02);
-  z-index: 0;
-}
-
-.app-launcher-page > * {
-  position: relative;
-  z-index: 1;
+  flex-direction: column;
 }
 
 .app-launcher-header {
@@ -6350,7 +6424,6 @@ tr:hover .o-quick-actions {
   backdrop-filter: none;
   border-bottom: none;
   box-shadow: none;
-  justify-content: end;
  /* allow centered logo */
 }
 
@@ -6418,63 +6491,23 @@ tr:hover .o-quick-actions {
   font-size: 1rem;
 }
 
-.user-menu {
-  position: relative;
-}
-
-.user-menu-trigger {
+.app-launcher-logout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
   border: none;
   background: transparent;
-  padding: 0;
+  color: var(--ink-light);
+  border-radius: 8px;
   cursor: pointer;
-  border-radius: 10px;
-  transition: box-shadow 0.2s ease;
+  transition: all 0.2s ease;
 }
 
-.user-menu-trigger:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.25);
-}
-
-.user-menu-panel {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 10px);
-  min-width: 200px;
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  border-radius: 14px;
-  box-shadow: 0 14px 40px rgba(15, 23, 42, 0.18);
-  padding: 10px;
-  z-index: 5;
-  backdrop-filter: blur(8px);
-}
-
-.user-menu-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--slate-700);
-  padding: 8px 10px 6px;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
-  margin-bottom: 6px;
-}
-
-.user-menu-action {
-  width: 100%;
-  border: none;
-  background: transparent;
-  text-align: left;
-  padding: 8px 10px;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 600;
+.app-launcher-logout:hover {
+  background: var(--surface);
   color: var(--red-600);
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.user-menu-action:hover {
-  background: rgba(239, 68, 68, 0.12);
 }
 
 .app-launcher-container {
