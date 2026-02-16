@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
 import SplashScreen from "../components/SplashScreen";
+import eyeIcon from "../assets/eye.svg";
+import eyeSlashIcon from "../assets/eye-slash.svg";
+import Eye from "../assets/eye.svg?react";
+import EyeSlash from "../assets/eye-slash.svg?react";
 
 type VerifyResponse = {
   access_token: string;
@@ -132,7 +136,11 @@ export default function LoginPage() {
                   aria-pressed={showPassword}
                   disabled={isLoading}
                 >
-                  {showPassword ? "Hide" : "Show"}
+                  <img
+                    src={showPassword ? eyeSlashIcon : eyeIcon}
+                    alt=""
+                    aria-hidden="true"
+                  />
                 </button>
               </div>
             </div>
