@@ -6331,7 +6331,7 @@ tr:hover .o-quick-actions {
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center center;
-  filter: blur(6px);
+  filter: blur(2px);
   transform: scale(1.02);
   z-index: 0;
 }
@@ -6350,6 +6350,7 @@ tr:hover .o-quick-actions {
   backdrop-filter: none;
   border-bottom: none;
   box-shadow: none;
+  justify-content: end;
  /* allow centered logo */
 }
 
@@ -6417,23 +6418,63 @@ tr:hover .o-quick-actions {
   font-size: 1rem;
 }
 
-.app-launcher-logout {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: none;
-  background: transparent;
-  color: var(--ink-light);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
+.user-menu {
+  position: relative;
 }
 
-.app-launcher-logout:hover {
-  background: var(--surface);
+.user-menu-trigger {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: box-shadow 0.2s ease;
+}
+
+.user-menu-trigger:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.25);
+}
+
+.user-menu-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 10px);
+  min-width: 200px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 14px;
+  box-shadow: 0 14px 40px rgba(15, 23, 42, 0.18);
+  padding: 10px;
+  z-index: 5;
+  backdrop-filter: blur(8px);
+}
+
+.user-menu-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--slate-700);
+  padding: 8px 10px 6px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+  margin-bottom: 6px;
+}
+
+.user-menu-action {
+  width: 100%;
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
   color: var(--red-600);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.user-menu-action:hover {
+  background: rgba(239, 68, 68, 0.12);
 }
 
 .app-launcher-container {

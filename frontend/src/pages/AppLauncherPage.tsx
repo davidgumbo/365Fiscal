@@ -437,6 +437,7 @@ export default function AppLauncherPage() {
   const [activateError, setActivateError] = useState("");
   const [activateSuccess, setActivateSuccess] = useState("");
   const [activating, setActivating] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!isAdmin && me) {
@@ -507,30 +508,32 @@ export default function AppLauncherPage() {
       <div className="app-launcher-page">
         <header className="app-launcher-header">
           <div className="app-launcher-user">
-            <div className="user-avatar-small">
-              {displayName.charAt(0).toUpperCase()}
-            </div>
-            <button
-              className="app-launcher-logout"
-              onClick={handleLogout}
-              title="Log out"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+            <div className="user-menu">
+              <button
+                type="button"
+                className="user-menu-trigger"
+                onClick={() => setIsUserMenuOpen((prev) => !prev)}
+                aria-haspopup="menu"
+                aria-expanded={isUserMenuOpen}
+                title="User menu"
               >
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                <polyline points="16 17 21 12 16 7" />
-                <line x1="21" y1="12" x2="9" y2="12" />
-              </svg>
-            </button>
+                <div className="user-avatar-small">
+                  {displayName.charAt(0).toUpperCase()}
+                </div>
+              </button>
+              {isUserMenuOpen && (
+                <div className="user-menu-panel" role="menu">
+                  <div className="user-menu-title">{displayName}</div>
+                  <button
+                    className="user-menu-action"
+                    onClick={handleLogout}
+                    role="menuitem"
+                  >
+                    Log out
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </header>
         <div
@@ -771,31 +774,32 @@ export default function AppLauncherPage() {
       {/* Header */}
       <header className="app-launcher-header">
         <div className="app-launcher-user">
-          {/* <span className="user-name">{displayName}</span> */}
-          <div className="user-avatar-small">
-            {displayName.charAt(0).toUpperCase()}
-          </div>
-          <button
-            className="app-launcher-logout"
-            onClick={handleLogout}
-            title="Log out"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+          <div className="user-menu">
+            <button
+              type="button"
+              className="user-menu-trigger"
+              onClick={() => setIsUserMenuOpen((prev) => !prev)}
+              aria-haspopup="menu"
+              aria-expanded={isUserMenuOpen}
+              title="User menu"
             >
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-              <polyline points="16 17 21 12 16 7" />
-              <line x1="21" y1="12" x2="9" y2="12" />
-            </svg>
-          </button>
+              <div className="user-avatar-small">
+                {displayName.charAt(0).toUpperCase()}
+              </div>
+            </button>
+            {isUserMenuOpen && (
+              <div className="user-menu-panel" role="menu">
+                <div className="user-menu-title">{displayName}</div>
+                <button
+                  className="user-menu-action"
+                  onClick={handleLogout}
+                  role="menuitem"
+                >
+                  Log out
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
