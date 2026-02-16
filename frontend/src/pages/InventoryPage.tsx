@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../api";
 import { useMe } from "../hooks/useMe";
@@ -17,6 +17,7 @@ type Product = {
   category_id: number | null;
   name: string;
   description: string;
+  image_url: string;
   sale_price: number;
   tax_rate: number;
   tax_id: number | null;
@@ -323,6 +324,9 @@ export default function InventoryPage() {
     can_be_sold: true,
     can_be_purchased: true,
   });
+  const [productImageUrl, setProductImageUrl] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   // Warehouse form
   const [warehouseForm, setWarehouseForm] = useState({
@@ -434,6 +438,7 @@ export default function InventoryPage() {
   const startNewProduct = () => {
     setSelectedProductId(null);
     setIsNew(true);
+    setProductImageUrl("");
     setProductForm({
       name: "",
       description: "",
@@ -464,6 +469,7 @@ export default function InventoryPage() {
   const openProduct = (product: Product) => {
     setSelectedProductId(product.id);
     setIsNew(false);
+    setProductImageUrl(product.image_url || "");
     setProductForm({
       name: product.name,
       description: product.description,
@@ -512,6 +518,46 @@ export default function InventoryPage() {
       setIsNew(false);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleProductImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!selectedProductId || !e.target.files?.length) return;
+    const file = e.target.files[0];
+    setUploadingImage(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const token = localStorage.getItem("token");
+      const resp = await fetch(`/api/products/${selectedProductId}/image`, {
+        method: "POST",
+        headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: fd,
+      });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => null);
+        throw new Error(err?.detail || "Upload failed");
+      }
+      const updated = await resp.json();
+      setProductImageUrl(updated.image_url || "");
+    } catch (err: any) {
+      alert(err.message || "Failed to upload image");
+    } finally {
+      setUploadingImage(false);
+      if (imageInputRef.current) imageInputRef.current.value = "";
+    }
+  };
+
+  const handleProductImageDelete = async () => {
+    if (!selectedProductId) return;
+    setUploadingImage(true);
+    try {
+      const updated = await apiFetch<Product>(`/products/${selectedProductId}/image`, { method: "DELETE" });
+      setProductImageUrl(updated.image_url || "");
+    } catch {
+      alert("Failed to remove image");
+    } finally {
+      setUploadingImage(false);
     }
   };
 
@@ -1940,9 +1986,84 @@ export default function InventoryPage() {
                           display: "flex",
                           gap: 24,
                           marginBottom: 24,
-                          alignItems: "center",
+                          alignItems: "flex-start",
                         }}
                       >
+                        {/* Product Image */}
+                        <div
+                          style={{
+                            width: 110,
+                            height: 110,
+                            borderRadius: 10,
+                            border: "2px dashed var(--zinc-300, #d4d4d8)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            overflow: "hidden",
+                            flexShrink: 0,
+                            background: productImageUrl ? "transparent" : "var(--gray-50, #f9fafb)",
+                            cursor: selectedProductId ? "pointer" : "default",
+                            position: "relative",
+                          }}
+                          onClick={() => selectedProductId && imageInputRef.current?.click()}
+                          title={selectedProductId ? "Click to upload image" : "Save product first to upload image"}
+                        >
+                          {productImageUrl ? (
+                            <>
+                              <img src={productImageUrl} alt="Product" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                              {selectedProductId && (
+                                <div
+                                  style={{
+                                    position: "absolute",
+                                    inset: 0,
+                                    background: "rgba(0,0,0,0.4)",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    gap: 6,
+                                    opacity: 0,
+                                    transition: "opacity 0.2s",
+                                  }}
+                                  onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
+                                  onMouseLeave={(e) => (e.currentTarget.style.opacity = "0")}
+                                >
+                                  <button
+                                    className="o-btn"
+                                    style={{ background: "#fff", color: "#333", fontSize: 11, padding: "4px 8px", borderRadius: 4 }}
+                                    onClick={(e) => { e.stopPropagation(); imageInputRef.current?.click(); }}
+                                    disabled={uploadingImage}
+                                  >
+                                    Change
+                                  </button>
+                                  <button
+                                    className="o-btn"
+                                    style={{ background: "#ef4444", color: "#fff", fontSize: 11, padding: "4px 8px", borderRadius: 4 }}
+                                    onClick={(e) => { e.stopPropagation(); handleProductImageDelete(); }}
+                                    disabled={uploadingImage}
+                                  >
+                                    Remove
+                                  </button>
+                                </div>
+                              )}
+                            </>
+                          ) : uploadingImage ? (
+                            <span style={{ fontSize: 12, color: "var(--gray-400)" }}>Uploading…</span>
+                          ) : (
+                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--zinc-300)" strokeWidth="1.5">
+                              <rect x="3" y="3" width="18" height="18" rx="2" />
+                              <circle cx="8.5" cy="8.5" r="1.5" />
+                              <path d="M21 15l-5-5L5 21" />
+                            </svg>
+                          )}
+                          <input
+                            ref={imageInputRef}
+                            type="file"
+                            accept="image/*"
+                            style={{ display: "none" }}
+                            onChange={handleProductImageUpload}
+                          />
+                        </div>
+
                         <div style={{ flex: 1 }}>
                           <input
                             type="text"
