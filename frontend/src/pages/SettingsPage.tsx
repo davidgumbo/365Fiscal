@@ -275,6 +275,9 @@ export default function SettingsPage() {
   const [posPmForm, setPosPmForm] = useState<{ name: string; code: string }>({ name: "", code: "cash" });
   const [posPmEditing, setPosPmEditing] = useState<number | null>(null);
   const [posError, setPosError] = useState<string | null>(null);
+  const [showPinField, setShowPinField] = useState<number | null>(null);
+  const [posEmpSaving, setPosEmpSaving] = useState(false);
+  const [posPmSaving, setPosPmSaving] = useState(false);
 
   // Default to General tab for all users; admins will also see Users tab
   useEffect(() => {
@@ -386,6 +389,7 @@ export default function SettingsPage() {
   const savePosEmployee = async () => {
     if (!companyId || !posEmpForm.name) return;
     setPosError(null);
+    setPosEmpSaving(true);
     try {
       if (posEmpEditing) {
         await apiFetch(`/pos/employees/${posEmpEditing}`, {
@@ -405,19 +409,27 @@ export default function SettingsPage() {
       loadPosEmployees(companyId);
     } catch (err: any) {
       setPosError(err.message || "Failed to save employee");
+    } finally {
+      setPosEmpSaving(false);
     }
   };
 
   const deletePosEmployee = async (id: number) => {
     if (!companyId) return;
-    await apiFetch(`/pos/employees/${id}`, { method: "DELETE" });
-    setStatus("Employee deleted");
-    loadPosEmployees(companyId);
+    if (!confirm("Are you sure you want to remove this employee?")) return;
+    try {
+      await apiFetch(`/pos/employees/${id}`, { method: "DELETE" });
+      setStatus("Employee deleted");
+      loadPosEmployees(companyId);
+    } catch (err: any) {
+      setPosError(err.message || "Failed to delete employee");
+    }
   };
 
   const savePosPaymentMethod = async () => {
     if (!companyId || !posPmForm.name) return;
     setPosError(null);
+    setPosPmSaving(true);
     try {
       if (posPmEditing) {
         await apiFetch(`/payments/methods/${posPmEditing}`, {
@@ -437,6 +449,8 @@ export default function SettingsPage() {
       loadPosPaymentMethods(companyId);
     } catch (err: any) {
       setPosError(err.message || "Failed to save payment method");
+    } finally {
+      setPosPmSaving(false);
     }
   };
 
@@ -1545,302 +1559,467 @@ export default function SettingsPage() {
 
               {/* POS Configuration */}
               {activeSection === "pos-settings" && (
-                <section id="pos-settings" className="settings-section">
-                  <div className="settings-section-header">
-                    <h4>Point of Sale Configuration</h4>
+                <section id="pos-settings" className="settings-section" style={{ gap: 0 }}>
+                  {/* Header */}
+                  <div style={{ marginBottom: 24 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--violet-600)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8" /><path d="M12 17v4" /><path d="M7 8h2" /><path d="M7 12h2" /><path d="M15 8h2" /><path d="M15 12h2" /></svg>
+                      <h4 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "var(--slate-800)" }}>Point of Sale Configuration</h4>
+                    </div>
+                    <p style={{ margin: 0, fontSize: 13, color: "var(--slate-500)", paddingLeft: 32 }}>
+                      Manage POS employees, login PINs, and payment methods for your point of sale.
+                    </p>
                   </div>
-                  <p className="settings-section-desc">
-                    Manage POS employees, login PINs, and payment methods for your point of sale.
-                  </p>
 
                   {posError && (
-                    <div className="alert alert-danger" style={{ marginBottom: 12 }}>
-                      {posError}
-                      <button onClick={() => setPosError(null)} style={{ float: "right", border: "none", background: "transparent", cursor: "pointer" }}>×</button>
+                    <div style={{
+                      display: "flex", alignItems: "center", justifyContent: "space-between",
+                      padding: "10px 16px", marginBottom: 20, borderRadius: 8,
+                      background: "var(--red-50, #fef2f2)", border: "1px solid var(--red-200, #fecaca)",
+                      color: "var(--red-700, #b91c1c)", fontSize: 13
+                    }}>
+                      <span>{posError}</span>
+                      <button onClick={() => setPosError(null)} style={{ border: "none", background: "transparent", cursor: "pointer", color: "var(--red-400)", fontSize: 18, lineHeight: 1, padding: "0 4px" }}>×</button>
                     </div>
                   )}
 
-                  {/* ── POS Employees ── */}
-                  <div style={{ marginBottom: 32 }}>
-                    <h5 style={{ marginBottom: 8, fontSize: 15, fontWeight: 700, color: "var(--slate-700)" }}>
-                      Employees &amp; Login PINs
-                    </h5>
-                    <p style={{ fontSize: 13, color: "var(--slate-500)", marginBottom: 12 }}>
-                      Add cashiers and managers who can operate the POS. Each employee needs a unique 4-6 digit PIN to log in.
-                    </p>
-
-                    <div style={{ display: "flex", gap: 8, alignItems: "flex-end", marginBottom: 12, flexWrap: "wrap" }}>
-                      <label className="input" style={{ flex: 2, minWidth: 160 }}>
-                        Name
-                        <input
-                          value={posEmpForm.name}
-                          onChange={(e) => setPosEmpForm({ ...posEmpForm, name: e.target.value })}
-                          placeholder="Employee name"
-                        />
-                      </label>
-                      <label className="input" style={{ flex: 2, minWidth: 160 }}>
-                        Email
-                        <input
-                          type="email"
-                          value={posEmpForm.email || ""}
-                          onChange={(e) => setPosEmpForm({ ...posEmpForm, email: e.target.value })}
-                          placeholder="email@example.com"
-                        />
-                      </label>
-                      <label className="input" style={{ flex: 1, minWidth: 100 }}>
-                        PIN
-                        <input
-                          type="password"
-                          value={posEmpForm.pin}
-                          onChange={(e) => {
-                            const val = e.target.value.replace(/\D/g, "").slice(0, 6);
-                            setPosEmpForm({ ...posEmpForm, pin: val });
-                          }}
-                          placeholder="4-6 digits"
-                          maxLength={6}
-                        />
-                      </label>
-                      <label className="input" style={{ flex: 1, minWidth: 120 }}>
-                        Role
-                        <select
-                          value={posEmpForm.role}
-                          onChange={(e) => setPosEmpForm({ ...posEmpForm, role: e.target.value })}
-                        >
-                          <option value="cashier">Cashier</option>
-                          <option value="manager">Manager</option>
-                          <option value="admin">Admin</option>
-                        </select>
-                      </label>
-                      <button
-                        className="primary"
-                        onClick={savePosEmployee}
-                        disabled={!posEmpForm.name || !posEmpForm.pin || posEmpForm.pin.length < 4}
-                        style={{ height: 38 }}
-                      >
-                        {posEmpEditing ? "Update" : <><PlusIcon /> Add</>}
-                      </button>
-                      {posEmpEditing && (
-                        <button
-                          className="outline"
-                          onClick={() => { setPosEmpEditing(null); setPosEmpForm({ name: "", pin: "", role: "cashier", email: "" }); }}
-                          style={{ height: 38 }}
-                        >
-                          Cancel
-                        </button>
-                      )}
+                  {/* ── Employees & Login PINs Card ── */}
+                  <div style={{
+                    border: "1px solid var(--gray-200, #e5e7eb)", borderRadius: 10,
+                    background: "var(--white-500, #fff)", marginBottom: 24, overflow: "hidden"
+                  }}>
+                    {/* Card header */}
+                    <div style={{
+                      display: "flex", alignItems: "center", justifyContent: "space-between",
+                      padding: "16px 20px", borderBottom: "1px solid var(--gray-100, #f3f4f6)",
+                      background: "var(--gray-50, #f9fafb)"
+                    }}>
+                      <div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--slate-600)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+                          <h5 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "var(--slate-700)" }}>Employees &amp; Login PINs</h5>
+                        </div>
+                        <p style={{ margin: "4px 0 0 26px", fontSize: 12, color: "var(--slate-400)" }}>
+                          Each employee needs a unique 4–6 digit PIN to log into POS.
+                        </p>
+                      </div>
+                      <span style={{
+                        padding: "3px 12px", borderRadius: 20, fontSize: 11, fontWeight: 700,
+                        color: "var(--violet-700, #6d28d9)", background: "var(--violet-50, #f5f3ff)"
+                      }}>
+                        {posEmployees.length} {posEmployees.length === 1 ? "employee" : "employees"}
+                      </span>
                     </div>
 
+                    {/* Add / Edit form */}
+                    <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--gray-100, #f3f4f6)", background: posEmpEditing ? "var(--violet-50, #f5f3ff)" : "transparent" }}>
+                      {posEmpEditing && (
+                        <div style={{ fontSize: 12, fontWeight: 600, color: "var(--violet-600)", marginBottom: 8 }}>
+                          ✏️ Editing: {posEmployees.find(e => e.id === posEmpEditing)?.name}
+                        </div>
+                      )}
+                      <div style={{ display: "grid", gridTemplateColumns: "2fr 2fr 1fr 1fr auto", gap: 10, alignItems: "end" }}>
+                        <label className="input" style={{ margin: 0 }}>
+                          <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-500)" }}>Name</span>
+                          <input
+                            value={posEmpForm.name}
+                            onChange={(e) => setPosEmpForm({ ...posEmpForm, name: e.target.value })}
+                            placeholder="Employee name"
+                            style={{ fontSize: 13 }}
+                          />
+                        </label>
+                        <label className="input" style={{ margin: 0 }}>
+                          <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-500)" }}>Email</span>
+                          <input
+                            type="email"
+                            value={posEmpForm.email || ""}
+                            onChange={(e) => setPosEmpForm({ ...posEmpForm, email: e.target.value })}
+                            placeholder="email@example.com"
+                            style={{ fontSize: 13 }}
+                          />
+                        </label>
+                        <label className="input" style={{ margin: 0 }}>
+                          <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-500)" }}>PIN</span>
+                          <input
+                            type="password"
+                            value={posEmpForm.pin}
+                            onChange={(e) => {
+                              const val = e.target.value.replace(/\D/g, "").slice(0, 6);
+                              setPosEmpForm({ ...posEmpForm, pin: val });
+                            }}
+                            placeholder="4-6 digits"
+                            maxLength={6}
+                            style={{ fontSize: 13, letterSpacing: "2px" }}
+                          />
+                        </label>
+                        <label className="input" style={{ margin: 0 }}>
+                          <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-500)" }}>Role</span>
+                          <select
+                            value={posEmpForm.role}
+                            onChange={(e) => setPosEmpForm({ ...posEmpForm, role: e.target.value })}
+                            style={{ fontSize: 13 }}
+                          >
+                            <option value="cashier">Cashier</option>
+                            <option value="manager">Manager</option>
+                            <option value="admin">Admin</option>
+                          </select>
+                        </label>
+                        <div style={{ display: "flex", gap: 6 }}>
+                          <button
+                            className="primary"
+                            onClick={savePosEmployee}
+                            disabled={!posEmpForm.name || !posEmpForm.pin || posEmpForm.pin.length < 4 || posEmpSaving}
+                            style={{ height: 36, minWidth: 80, fontSize: 13, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+                          >
+                            {posEmpSaving ? (
+                              <span style={{ display: "inline-block", width: 14, height: 14, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+                            ) : posEmpEditing ? (
+                              <>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+                                Save
+                              </>
+                            ) : (
+                              <><PlusIcon /> Add</>
+                            )}
+                          </button>
+                          {posEmpEditing && (
+                            <button
+                              className="outline"
+                              onClick={() => { setPosEmpEditing(null); setPosEmpForm({ name: "", pin: "", role: "cashier", email: "" }); }}
+                              style={{ height: 36, fontSize: 13, borderRadius: 8 }}
+                            >
+                              Cancel
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Employee list */}
                     {posEmployees.length > 0 ? (
-                      <table className="table" style={{ marginTop: 0 }}>
-                        <thead>
-                          <tr>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>PIN</th>
-                            <th>Role</th>
-                            <th>Active</th>
-                            <th>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {posEmployees.map((emp) => (
-                            <tr key={emp.id}>
-                              <td style={{ fontWeight: 600 }}>{emp.name}</td>
-                              <td>{emp.email || "—"}</td>
-                              <td>
-                                <code style={{ background: "var(--slate-100)", padding: "2px 8px", borderRadius: 4, fontSize: 13 }}>
-                                  {"•".repeat(emp.pin.length || 4)}
-                                </code>
-                              </td>
-                              <td>
-                                <span style={{
-                                  display: "inline-block", padding: "2px 10px", borderRadius: 20, fontSize: 11,
-                                  fontWeight: 700, textTransform: "capitalize",
-                                  color: emp.role === "admin" ? "var(--red-500)" : emp.role === "manager" ? "var(--amber-600)" : "var(--blue-600)",
-                                  background: emp.role === "admin" ? "var(--red-50)" : emp.role === "manager" ? "var(--amber-50)" : "var(--blue-50)",
-                                }}>
-                                  {emp.role}
-                                </span>
-                              </td>
-                              <td>
-                                <label className="switch">
-                                  <input
-                                    type="checkbox"
-                                    checked={emp.is_active}
-                                    onChange={async (e) => {
-                                      await apiFetch(`/pos/employees/${emp.id}`, {
-                                        method: "PUT",
-                                        body: JSON.stringify({ is_active: e.target.checked }),
-                                      });
-                                      if (companyId) loadPosEmployees(companyId);
-                                    }}
-                                  />
-                                  <span className="slider" />
-                                </label>
-                              </td>
-                              <td>
-                                <div style={{ display: "flex", gap: 4 }}>
-                                  <button
-                                    className="icon-btn"
-                                    title="Edit"
-                                    onClick={() => {
-                                      setPosEmpEditing(emp.id);
-                                      setPosEmpForm({ name: emp.name, email: emp.email, pin: emp.pin, role: emp.role });
-                                    }}
-                                  >
-                                    <EditIcon />
-                                  </button>
-                                  <button
-                                    className="icon-btn"
-                                    title="Delete"
-                                    onClick={() => deletePosEmployee(emp.id)}
-                                  >
-                                    <TrashIcon />
-                                  </button>
-                                </div>
-                              </td>
+                      <div style={{ overflowX: "auto" }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                          <thead>
+                            <tr style={{ background: "var(--gray-50, #f9fafb)" }}>
+                              <th style={{ padding: "10px 20px", textAlign: "left", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-400)", borderBottom: "1px solid var(--gray-200)" }}>Employee</th>
+                              <th style={{ padding: "10px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-400)", borderBottom: "1px solid var(--gray-200)" }}>PIN</th>
+                              <th style={{ padding: "10px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-400)", borderBottom: "1px solid var(--gray-200)" }}>Role</th>
+                              <th style={{ padding: "10px 16px", textAlign: "center", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-400)", borderBottom: "1px solid var(--gray-200)" }}>Status</th>
+                              <th style={{ padding: "10px 20px", textAlign: "right", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-400)", borderBottom: "1px solid var(--gray-200)" }}>Actions</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody>
+                            {posEmployees.map((emp, idx) => (
+                              <tr key={emp.id} style={{
+                                background: posEmpEditing === emp.id ? "var(--violet-50, #f5f3ff)" : idx % 2 === 0 ? "transparent" : "var(--gray-50, #f9fafb)",
+                                transition: "background 150ms"
+                              }}>
+                                <td style={{ padding: "12px 20px", borderBottom: "1px solid var(--gray-100)" }}>
+                                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                    <div style={{
+                                      width: 34, height: 34, borderRadius: "50%", flexShrink: 0,
+                                      display: "flex", alignItems: "center", justifyContent: "center",
+                                      fontSize: 13, fontWeight: 700, color: "#fff",
+                                      background: emp.role === "admin" ? "var(--red-500, #ef4444)" : emp.role === "manager" ? "var(--amber-500, #f59e0b)" : "var(--blue-500, #3b82f6)"
+                                    }}>
+                                      {emp.name.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div>
+                                      <div style={{ fontWeight: 600, color: "var(--slate-800)" }}>{emp.name}</div>
+                                      <div style={{ fontSize: 11, color: "var(--slate-400)" }}>{emp.email || "No email"}</div>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td style={{ padding: "12px 16px", borderBottom: "1px solid var(--gray-100)" }}>
+                                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                    <code style={{
+                                      background: "var(--slate-100, #f1f5f9)", padding: "3px 10px", borderRadius: 6,
+                                      fontSize: 13, fontFamily: "monospace", letterSpacing: "2px", color: "var(--slate-600)"
+                                    }}>
+                                      {showPinField === emp.id ? emp.pin : "•".repeat(emp.pin.length || 4)}
+                                    </code>
+                                    <button
+                                      onClick={() => setShowPinField(showPinField === emp.id ? null : emp.id)}
+                                      style={{ border: "none", background: "transparent", cursor: "pointer", padding: 2, color: "var(--slate-400)", display: "flex" }}
+                                      title={showPinField === emp.id ? "Hide PIN" : "Show PIN"}
+                                    >
+                                      {showPinField === emp.id ? (
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" /><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
+                                      ) : (
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                                      )}
+                                    </button>
+                                  </div>
+                                </td>
+                                <td style={{ padding: "12px 16px", borderBottom: "1px solid var(--gray-100)" }}>
+                                  <span style={{
+                                    display: "inline-flex", alignItems: "center", gap: 4,
+                                    padding: "3px 12px", borderRadius: 20, fontSize: 11, fontWeight: 700, textTransform: "capitalize",
+                                    color: emp.role === "admin" ? "var(--red-600, #dc2626)" : emp.role === "manager" ? "var(--amber-700, #b45309)" : "var(--blue-600, #2563eb)",
+                                    background: emp.role === "admin" ? "var(--red-50, #fef2f2)" : emp.role === "manager" ? "var(--amber-50, #fffbeb)" : "var(--blue-50, #eff6ff)",
+                                  }}>
+                                    {emp.role === "admin" && <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>}
+                                    {emp.role === "manager" && <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1l3.22 6.636 7.28 1.06-5.25 5.146 1.24 7.248L12 17.77l-6.49 3.42 1.24-7.248L1.5 8.696l7.28-1.06L12 1z"/></svg>}
+                                    {emp.role}
+                                  </span>
+                                </td>
+                                <td style={{ padding: "12px 16px", textAlign: "center", borderBottom: "1px solid var(--gray-100)" }}>
+                                  <label className="switch" style={{ margin: "0 auto" }}>
+                                    <input
+                                      type="checkbox"
+                                      checked={emp.is_active}
+                                      onChange={async (e) => {
+                                        await apiFetch(`/pos/employees/${emp.id}`, {
+                                          method: "PUT",
+                                          body: JSON.stringify({ is_active: e.target.checked }),
+                                        });
+                                        if (companyId) loadPosEmployees(companyId);
+                                      }}
+                                    />
+                                    <span className="slider" />
+                                  </label>
+                                </td>
+                                <td style={{ padding: "12px 20px", textAlign: "right", borderBottom: "1px solid var(--gray-100)" }}>
+                                  <div style={{ display: "flex", gap: 4, justifyContent: "flex-end" }}>
+                                    <button
+                                      className="icon-btn"
+                                      title="Edit employee"
+                                      onClick={() => {
+                                        setPosEmpEditing(emp.id);
+                                        setPosEmpForm({ name: emp.name, email: emp.email, pin: emp.pin, role: emp.role });
+                                      }}
+                                      style={{ width: 30, height: 30, borderRadius: 6 }}
+                                    >
+                                      <EditIcon />
+                                    </button>
+                                    <button
+                                      className="icon-btn"
+                                      title="Delete employee"
+                                      onClick={() => deletePosEmployee(emp.id)}
+                                      style={{ width: 30, height: 30, borderRadius: 6, color: "var(--red-400)" }}
+                                    >
+                                      <TrashIcon />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     ) : (
-                      <div style={{ color: "var(--slate-400)", fontSize: 13, padding: "12px 0" }}>
-                        No POS employees configured yet. Add your first cashier above.
+                      <div style={{ padding: "32px 20px", textAlign: "center" }}>
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--slate-300)" strokeWidth="1.5" strokeLinecap="round" style={{ marginBottom: 8 }}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+                        <div style={{ color: "var(--slate-400)", fontSize: 13, marginBottom: 4 }}>No POS employees configured yet</div>
+                        <div style={{ color: "var(--slate-300)", fontSize: 12 }}>Add your first cashier using the form above</div>
                       </div>
                     )}
                   </div>
 
-                  {/* ── Payment Methods ── */}
-                  <div>
-                    <h5 style={{ marginBottom: 8, fontSize: 15, fontWeight: 700, color: "var(--slate-700)" }}>
-                      Payment Methods
-                    </h5>
-                    <p style={{ fontSize: 13, color: "var(--slate-500)", marginBottom: 12 }}>
-                      Configure the payment methods available in your POS terminal.
-                    </p>
-
-                    <div style={{ display: "flex", gap: 8, alignItems: "flex-end", marginBottom: 12, flexWrap: "wrap" }}>
-                      <label className="input" style={{ flex: 2, minWidth: 160 }}>
-                        Name
-                        <input
-                          value={posPmForm.name}
-                          onChange={(e) => setPosPmForm({ ...posPmForm, name: e.target.value })}
-                          placeholder="e.g., Cash, Visa, EcoCash"
-                        />
-                      </label>
-                      <label className="input" style={{ flex: 1, minWidth: 140 }}>
-                        Type
-                        <select
-                          value={posPmForm.code}
-                          onChange={(e) => setPosPmForm({ ...posPmForm, code: e.target.value })}
-                        >
-                          <option value="cash">Cash</option>
-                          <option value="card">Card</option>
-                          <option value="mobile_money">Mobile Money</option>
-                          <option value="bank_transfer">Bank Transfer</option>
-                          <option value="cheque">Cheque</option>
-                          <option value="other">Other</option>
-                        </select>
-                      </label>
-                      <button
-                        className="primary"
-                        onClick={savePosPaymentMethod}
-                        disabled={!posPmForm.name}
-                        style={{ height: 38 }}
-                      >
-                        {posPmEditing ? "Update" : <><PlusIcon /> Add</>}
-                      </button>
-                      {posPmEditing && (
-                        <button
-                          className="outline"
-                          onClick={() => { setPosPmEditing(null); setPosPmForm({ name: "", code: "cash" }); }}
-                          style={{ height: 38 }}
-                        >
-                          Cancel
-                        </button>
-                      )}
+                  {/* ── Payment Methods Card ── */}
+                  <div style={{
+                    border: "1px solid var(--gray-200, #e5e7eb)", borderRadius: 10,
+                    background: "var(--white-500, #fff)", overflow: "hidden"
+                  }}>
+                    {/* Card header */}
+                    <div style={{
+                      display: "flex", alignItems: "center", justifyContent: "space-between",
+                      padding: "16px 20px", borderBottom: "1px solid var(--gray-100, #f3f4f6)",
+                      background: "var(--gray-50, #f9fafb)"
+                    }}>
+                      <div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--slate-600)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" /><path d="M1 10h22" /></svg>
+                          <h5 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "var(--slate-700)" }}>Payment Methods</h5>
+                        </div>
+                        <p style={{ margin: "4px 0 0 26px", fontSize: 12, color: "var(--slate-400)" }}>
+                          Configure the payment methods accepted at your POS terminal.
+                        </p>
+                      </div>
+                      <span style={{
+                        padding: "3px 12px", borderRadius: 20, fontSize: 11, fontWeight: 700,
+                        color: "var(--green-700, #15803d)", background: "var(--green-50, #f0fdf4)"
+                      }}>
+                        {posPaymentMethods.length} {posPaymentMethods.length === 1 ? "method" : "methods"}
+                      </span>
                     </div>
 
+                    {/* Add / Edit form */}
+                    <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--gray-100, #f3f4f6)", background: posPmEditing ? "var(--violet-50, #f5f3ff)" : "transparent" }}>
+                      {posPmEditing && (
+                        <div style={{ fontSize: 12, fontWeight: 600, color: "var(--violet-600)", marginBottom: 8 }}>
+                          ✏️ Editing: {posPaymentMethods.find(p => p.id === posPmEditing)?.name}
+                        </div>
+                      )}
+                      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr auto", gap: 10, alignItems: "end" }}>
+                        <label className="input" style={{ margin: 0 }}>
+                          <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-500)" }}>Name</span>
+                          <input
+                            value={posPmForm.name}
+                            onChange={(e) => setPosPmForm({ ...posPmForm, name: e.target.value })}
+                            placeholder="e.g., Cash, Visa, EcoCash"
+                            style={{ fontSize: 13 }}
+                          />
+                        </label>
+                        <label className="input" style={{ margin: 0 }}>
+                          <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-500)" }}>Type</span>
+                          <select
+                            value={posPmForm.code}
+                            onChange={(e) => setPosPmForm({ ...posPmForm, code: e.target.value })}
+                            style={{ fontSize: 13 }}
+                          >
+                            <option value="cash">💵 Cash</option>
+                            <option value="card">💳 Card</option>
+                            <option value="mobile_money">📱 Mobile Money</option>
+                            <option value="bank_transfer">🏦 Bank Transfer</option>
+                            <option value="cheque">📄 Cheque</option>
+                            <option value="other">📋 Other</option>
+                          </select>
+                        </label>
+                        <div style={{ display: "flex", gap: 6 }}>
+                          <button
+                            className="primary"
+                            onClick={savePosPaymentMethod}
+                            disabled={!posPmForm.name || posPmSaving}
+                            style={{ height: 36, minWidth: 80, fontSize: 13, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+                          >
+                            {posPmSaving ? (
+                              <span style={{ display: "inline-block", width: 14, height: 14, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+                            ) : posPmEditing ? (
+                              <>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+                                Save
+                              </>
+                            ) : (
+                              <><PlusIcon /> Add</>
+                            )}
+                          </button>
+                          {posPmEditing && (
+                            <button
+                              className="outline"
+                              onClick={() => { setPosPmEditing(null); setPosPmForm({ name: "", code: "cash" }); }}
+                              style={{ height: 36, fontSize: 13, borderRadius: 8 }}
+                            >
+                              Cancel
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Payment method list */}
                     {posPaymentMethods.length > 0 ? (
-                      <table className="table" style={{ marginTop: 0 }}>
-                        <thead>
-                          <tr>
-                            <th>Name</th>
-                            <th>Type</th>
-                            <th>Default</th>
-                            <th>Active</th>
-                            <th>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {posPaymentMethods.map((pm) => (
-                            <tr key={pm.id}>
-                              <td style={{ fontWeight: 600 }}>{pm.name}</td>
-                              <td>
-                                <span style={{
-                                  display: "inline-block", padding: "2px 10px", borderRadius: 20, fontSize: 11,
-                                  fontWeight: 600, textTransform: "capitalize",
-                                  color: "var(--slate-600)", background: "var(--slate-100)",
-                                }}>
-                                  {pm.code.replace(/_/g, " ")}
-                                </span>
-                              </td>
-                              <td>
-                                {pm.is_default ? (
-                                  <span style={{ color: "var(--green-600)", fontWeight: 600 }}>✓ Default</span>
-                                ) : (
-                                  <button
-                                    className="settings-link"
-                                    style={{ fontSize: 12 }}
-                                    onClick={async () => {
-                                      await apiFetch(`/payments/methods/${pm.id}`, {
-                                        method: "PUT",
-                                        body: JSON.stringify({ is_default: true }),
-                                      });
-                                      if (companyId) loadPosPaymentMethods(companyId);
-                                    }}
-                                  >
-                                    Set default
-                                  </button>
-                                )}
-                              </td>
-                              <td>
-                                <label className="switch">
-                                  <input
-                                    type="checkbox"
-                                    checked={pm.is_active}
-                                    onChange={async (e) => {
-                                      await apiFetch(`/payments/methods/${pm.id}`, {
-                                        method: "PUT",
-                                        body: JSON.stringify({ is_active: e.target.checked }),
-                                      });
-                                      if (companyId) loadPosPaymentMethods(companyId);
-                                    }}
-                                  />
-                                  <span className="slider" />
-                                </label>
-                              </td>
-                              <td>
-                                <div style={{ display: "flex", gap: 4 }}>
-                                  <button
-                                    className="icon-btn"
-                                    title="Edit"
-                                    onClick={() => {
-                                      setPosPmEditing(pm.id);
-                                      setPosPmForm({ name: pm.name, code: pm.code });
-                                    }}
-                                  >
-                                    <EditIcon />
-                                  </button>
-                                </div>
-                              </td>
+                      <div style={{ overflowX: "auto" }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                          <thead>
+                            <tr style={{ background: "var(--gray-50, #f9fafb)" }}>
+                              <th style={{ padding: "10px 20px", textAlign: "left", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-400)", borderBottom: "1px solid var(--gray-200)" }}>Method</th>
+                              <th style={{ padding: "10px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-400)", borderBottom: "1px solid var(--gray-200)" }}>Type</th>
+                              <th style={{ padding: "10px 16px", textAlign: "center", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-400)", borderBottom: "1px solid var(--gray-200)" }}>Default</th>
+                              <th style={{ padding: "10px 16px", textAlign: "center", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-400)", borderBottom: "1px solid var(--gray-200)" }}>Status</th>
+                              <th style={{ padding: "10px 20px", textAlign: "right", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-400)", borderBottom: "1px solid var(--gray-200)" }}>Actions</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody>
+                            {posPaymentMethods.map((pm, idx) => {
+                              const typeIcons: Record<string, string> = { cash: "💵", card: "💳", mobile_money: "📱", bank_transfer: "🏦", cheque: "📄", other: "📋" };
+                              return (
+                                <tr key={pm.id} style={{
+                                  background: posPmEditing === pm.id ? "var(--violet-50, #f5f3ff)" : idx % 2 === 0 ? "transparent" : "var(--gray-50, #f9fafb)",
+                                  transition: "background 150ms"
+                                }}>
+                                  <td style={{ padding: "12px 20px", borderBottom: "1px solid var(--gray-100)" }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                      <div style={{
+                                        width: 34, height: 34, borderRadius: 8, flexShrink: 0,
+                                        display: "flex", alignItems: "center", justifyContent: "center",
+                                        fontSize: 16, background: "var(--slate-100, #f1f5f9)"
+                                      }}>
+                                        {typeIcons[pm.code] || "📋"}
+                                      </div>
+                                      <span style={{ fontWeight: 600, color: "var(--slate-800)" }}>{pm.name}</span>
+                                    </div>
+                                  </td>
+                                  <td style={{ padding: "12px 16px", borderBottom: "1px solid var(--gray-100)" }}>
+                                    <span style={{
+                                      display: "inline-block", padding: "3px 12px", borderRadius: 20, fontSize: 11,
+                                      fontWeight: 600, textTransform: "capitalize",
+                                      color: "var(--slate-600)", background: "var(--slate-100, #f1f5f9)",
+                                    }}>
+                                      {pm.code.replace(/_/g, " ")}
+                                    </span>
+                                  </td>
+                                  <td style={{ padding: "12px 16px", textAlign: "center", borderBottom: "1px solid var(--gray-100)" }}>
+                                    {pm.is_default ? (
+                                      <span style={{
+                                        display: "inline-flex", alignItems: "center", gap: 4,
+                                        padding: "3px 10px", borderRadius: 20, fontSize: 11, fontWeight: 700,
+                                        color: "var(--green-700, #15803d)", background: "var(--green-50, #f0fdf4)"
+                                      }}>
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6L9 17l-5-5"/></svg>
+                                        Default
+                                      </span>
+                                    ) : (
+                                      <button
+                                        onClick={async () => {
+                                          await apiFetch(`/payments/methods/${pm.id}`, {
+                                            method: "PUT",
+                                            body: JSON.stringify({ is_default: true }),
+                                          });
+                                          if (companyId) loadPosPaymentMethods(companyId);
+                                        }}
+                                        style={{
+                                          border: "1px dashed var(--slate-300)", background: "transparent",
+                                          padding: "3px 10px", borderRadius: 20, fontSize: 11, fontWeight: 500,
+                                          color: "var(--slate-400)", cursor: "pointer", transition: "all 150ms"
+                                        }}
+                                        onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--violet-400)"; e.currentTarget.style.color = "var(--violet-500)"; }}
+                                        onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--slate-300)"; e.currentTarget.style.color = "var(--slate-400)"; }}
+                                      >
+                                        Set default
+                                      </button>
+                                    )}
+                                  </td>
+                                  <td style={{ padding: "12px 16px", textAlign: "center", borderBottom: "1px solid var(--gray-100)" }}>
+                                    <label className="switch" style={{ margin: "0 auto" }}>
+                                      <input
+                                        type="checkbox"
+                                        checked={pm.is_active}
+                                        onChange={async (e) => {
+                                          await apiFetch(`/payments/methods/${pm.id}`, {
+                                            method: "PUT",
+                                            body: JSON.stringify({ is_active: e.target.checked }),
+                                          });
+                                          if (companyId) loadPosPaymentMethods(companyId);
+                                        }}
+                                      />
+                                      <span className="slider" />
+                                    </label>
+                                  </td>
+                                  <td style={{ padding: "12px 20px", textAlign: "right", borderBottom: "1px solid var(--gray-100)" }}>
+                                    <button
+                                      className="icon-btn"
+                                      title="Edit payment method"
+                                      onClick={() => {
+                                        setPosPmEditing(pm.id);
+                                        setPosPmForm({ name: pm.name, code: pm.code });
+                                      }}
+                                      style={{ width: 30, height: 30, borderRadius: 6 }}
+                                    >
+                                      <EditIcon />
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
                     ) : (
-                      <div style={{ color: "var(--slate-400)", fontSize: 13, padding: "12px 0" }}>
-                        No payment methods configured yet. Add your first one above.
+                      <div style={{ padding: "32px 20px", textAlign: "center" }}>
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--slate-300)" strokeWidth="1.5" strokeLinecap="round" style={{ marginBottom: 8 }}><rect x="1" y="4" width="22" height="16" rx="2" /><path d="M1 10h22" /></svg>
+                        <div style={{ color: "var(--slate-400)", fontSize: 13, marginBottom: 4 }}>No payment methods configured yet</div>
+                        <div style={{ color: "var(--slate-300)", fontSize: 12 }}>Add Cash, Card, or Mobile Money above to get started</div>
                       </div>
                     )}
                   </div>
