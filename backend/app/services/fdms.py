@@ -379,6 +379,10 @@ def _sign_receipt(receipt: dict, private_key_pem: bytes) -> dict:
 
     data = concat.encode("utf-8")
 
+    # ZIMRA: hash = SHA256(concat), signature = sign(concat)
+    receipt_hash = hashlib.sha256(data).digest()
+    receipt_hash_b64 = base64.b64encode(receipt_hash).decode("ascii")
+
     if isinstance(key, rsa.RSAPrivateKey):
         signature = key.sign(data, padding.PKCS1v15(), hashes.SHA256())
     elif isinstance(key, ec.EllipticCurvePrivateKey):
@@ -387,8 +391,7 @@ def _sign_receipt(receipt: dict, private_key_pem: bytes) -> dict:
         raise ValueError("Unsupported private key type")
 
     signature_b64 = base64.b64encode(signature).decode("ascii")
-    signature_hash = base64.b64encode(hashlib.sha256(signature).digest()).decode("ascii")
-    return {"signature": signature_b64, "hash": signature_hash, "concat": concat}
+    return {"signature": signature_b64, "hash": receipt_hash_b64, "concat": concat}
 
 
 def _generate_qr(signature_b64: str, receipt_global_no: int, device_id: str, qr_base: str) -> dict:
@@ -403,6 +406,22 @@ def _generate_qr(signature_b64: str, receipt_global_no: int, device_id: str, qr_
     url = f"{qr_base.rstrip('/')}/{device_padded}{date_str}{global_padded}{hash_part}"
     code = "-".join(hash_part[i : i + 4] for i in range(0, len(hash_part), 4))
     return {"code": code, "url": url}
+
+
+def _normalize_hs_code(raw: str) -> str:
+    """Normalize an HS code to exactly 8 digits as required by ZIMRA.
+
+    - Strips non-digit characters (dots, spaces, dashes)
+    - Right-pads with zeros if shorter than 8 digits
+    - Truncates to 8 digits if longer
+    - Returns '00000000' as fallback for empty/invalid codes
+    """
+    digits = "".join(c for c in (raw or "") if c.isdigit())
+    if not digits:
+        return "00000000"
+    if len(digits) < 8:
+        return digits.ljust(8, "0")
+    return digits[:8]
 
 
 def _build_receipt(invoice: Invoice, lines: list[Any], device_id_str: str, db=None) -> dict:
@@ -421,20 +440,27 @@ def _build_receipt(invoice: Invoice, lines: list[Any], device_id_str: str, db=No
         desc = getattr(line, "description", "") or "Item"
         uom_val = getattr(line, "uom", "") or "Units"
 
-        # Resolve ZIMRA tax ID from the product's linked tax setting
+        # Resolve ZIMRA tax ID and HS code from the product's linked tax setting
         zimra_tax_id = 1  # default fallback
+        hs_code = "00000000"  # default HS code
         product_id = getattr(line, "product_id", None)
         if product_id and db:
             product = db.query(Product).filter(Product.id == product_id).first()
-            if product and product.tax_id:
-                tax_setting = db.query(TaxSetting).filter(TaxSetting.id == product.tax_id).first()
-                if tax_setting and tax_setting.zimra_tax_id is not None:
-                    zimra_tax_id = tax_setting.zimra_tax_id
-                    vat_rate = Decimal(str(tax_setting.rate))
+            if product:
+                # HS code from product
+                hs_code = _normalize_hs_code(getattr(product, "hs_code", "") or "")
+                if product.tax_id:
+                    tax_setting = db.query(TaxSetting).filter(TaxSetting.id == product.tax_id).first()
+                    if tax_setting and tax_setting.zimra_tax_id is not None:
+                        zimra_tax_id = tax_setting.zimra_tax_id
+                        vat_rate = Decimal(str(tax_setting.rate))
 
-        line_total = (qty * price * (Decimal("1") + vat_rate / Decimal("100"))).quantize(
+        # receiptLinesTaxInclusive = True means price must be tax-inclusive
+        # so that receiptLineTotal = receiptLinePrice * receiptLineQuantity
+        price_incl = (price * (Decimal("1") + vat_rate / Decimal("100"))).quantize(
             Decimal("0.01"), rounding=ROUND_HALF_UP
         )
+        line_total = (qty * price_incl).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
         total_with_tax += line_total
 
         receipt_lines.append(
@@ -443,11 +469,12 @@ def _build_receipt(invoice: Invoice, lines: list[Any], device_id_str: str, db=No
                 "receiptLineNo": idx,
                 "receiptLineName": desc,
                 "receiptLineQuantity": float(qty),
-                "receiptLinePrice": float(price),
+                "receiptLinePrice": float(price_incl),
                 "receiptLineTotal": float(line_total),
                 "receiptLineUnit": uom_val,
                 "taxID": str(zimra_tax_id),
                 "taxPercent": float(vat_rate),
+                "receiptLineHSCode": hs_code,
             }
         )
 
