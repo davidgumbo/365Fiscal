@@ -219,7 +219,14 @@ export default function LoginPage() {
           <span>
             Powered by{" "}
             <strong>
-              <a href="geenet.co.zw">Geenet</a>
+              <a
+                style={{ textDecoration: "underline" }}
+                target="_blank"
+                rel="noreferrer"
+                href="http://www.geenet.co.zw"
+              >
+                Geenet
+              </a>
             </strong>
           </span>
         </div>
