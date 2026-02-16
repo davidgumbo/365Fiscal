@@ -437,6 +437,7 @@ export default function AppLauncherPage() {
   const [activateError, setActivateError] = useState("");
   const [activateSuccess, setActivateSuccess] = useState("");
   const [activating, setActivating] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!isAdmin && me) {
@@ -505,13 +506,40 @@ export default function AppLauncherPage() {
   if (!isAdmin && !hasActiveSubscription) {
     return (
       <div className="login-shell login-centered">
-        <div className="login-card login-card-glass activation-card">
-          <div className="login-card-body activation-card-body">
+        {/* Logout button floating top-right */}
+        <div className="activate-logout-wrap">
+          <button
+            className="activate-logout-btn"
+            onClick={handleLogout}
+            title="Log out"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            <span>Log out</span>
+          </button>
+        </div>
+
+        {/* Glassmorphism card matching login */}
+        <div className="login-card login-card-glass activate-card">
+          <div className="login-card-body" style={{ textAlign: "center", padding: "40px 32px 32px" }}>
             {/* Lock icon */}
-            <div className="activation-lock-icon">
+            <div className="activate-icon-wrap">
               <svg
-                width="44"
-                height="44"
+                width="40"
+                height="40"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="#7c3aed"
@@ -524,14 +552,16 @@ export default function AppLauncherPage() {
               </svg>
             </div>
 
-            <h2 className="activation-title">Activate Your Subscription</h2>
-            <p className="activation-subtitle">
-              Enter the activation code provided by your administrator to unlock
-              access to all applications.
+            <h1 className="login-card-title" style={{ marginBottom: 8 }}>
+              Activate Your Subscription
+            </h1>
+            <p className="login-card-sub" style={{ textAlign: "center", maxWidth: 340, margin: "0 auto 28px" }}>
+              Enter the activation code provided by your administrator
+              to unlock access to all applications.
             </p>
 
             {activateError && (
-              <div className="login-error">
+              <div className="login-error" style={{ marginBottom: 16, marginTop: 0 }}>
                 <svg
                   width="16"
                   height="16"
@@ -539,8 +569,6 @@ export default function AppLauncherPage() {
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
                 >
                   <circle cx="12" cy="12" r="10" />
                   <line x1="15" y1="9" x2="9" y2="15" />
@@ -550,7 +578,7 @@ export default function AppLauncherPage() {
               </div>
             )}
             {activateSuccess && (
-              <div className="login-status">
+              <div className="login-status" style={{ marginBottom: 16, marginTop: 0 }}>
                 <svg
                   width="16"
                   height="16"
@@ -558,8 +586,6 @@ export default function AppLauncherPage() {
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
                 >
                   <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
                   <path d="m9 11 3 3L22 4" />
@@ -568,7 +594,7 @@ export default function AppLauncherPage() {
               </div>
             )}
 
-            <div className="login-form">
+            <div className="activate-form">
               <div className="input-group">
                 <input
                   type="text"
@@ -578,7 +604,7 @@ export default function AppLauncherPage() {
                   }
                   placeholder="XXXX – XXXX – XXXX – XXXX"
                   maxLength={19}
-                  className="activation-code-input"
+                  className="activate-code-input"
                   onKeyDown={(e) => e.key === "Enter" && handleActivate()}
                 />
               </div>
@@ -594,35 +620,41 @@ export default function AppLauncherPage() {
                     <span>Activating...</span>
                   </>
                 ) : (
-                  <span>Activate</span>
+                  <>
+                    <span>Activate</span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                      <polyline points="12 5 19 12 12 19" />
+                    </svg>
+                  </>
                 )}
               </button>
             </div>
 
-            <p className="activation-hint">
+            <p style={{
+              color: "rgba(255,255,255,0.45)",
+              fontSize: 13,
+              marginTop: 24,
+              fontWeight: 500,
+            }}>
               Don't have a code? Contact your company administrator.
             </p>
           </div>
 
           <div className="login-card-footer">
-            <button className="activation-logout-link" onClick={handleLogout}>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                <polyline points="16 17 21 12 16 7" />
-                <line x1="21" y1="12" x2="9" y2="12" />
-              </svg>
-              Sign out
-            </button>
+            <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 12 }}>
+              Logged in as <strong>{displayName}</strong>
+            </span>
           </div>
         </div>
       </div>
@@ -643,31 +675,32 @@ export default function AppLauncherPage() {
           />
         </div>
         <div className="app-launcher-user">
-          <span className="user-name">{displayName}</span>
-          <div className="user-avatar-small">
-            {displayName.charAt(0).toUpperCase()}
-          </div>
-          <button
-            className="app-launcher-logout"
-            onClick={handleLogout}
-            title="Log out"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+          <div className="user-menu">
+            <button
+              type="button"
+              className="user-menu-trigger"
+              onClick={() => setUserMenuOpen((prev) => !prev)}
+              aria-haspopup="menu"
+              aria-expanded={userMenuOpen}
+              title="User menu"
             >
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-              <polyline points="16 17 21 12 16 7" />
-              <line x1="21" y1="12" x2="9" y2="12" />
-            </svg>
-          </button>
+              <div className="user-avatar-small">
+                {displayName.charAt(0).toUpperCase()}
+              </div>
+            </button>
+            {userMenuOpen && (
+              <div className="user-menu-panel" role="menu">
+                <div className="user-menu-title">{displayName}</div>
+                <button
+                  className="user-menu-action"
+                  onClick={handleLogout}
+                  role="menuitem"
+                >
+                  Log out
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
