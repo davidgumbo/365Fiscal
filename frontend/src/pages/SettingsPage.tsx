@@ -1615,7 +1615,8 @@ export default function SettingsPage() {
                     <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--gray-100, #f3f4f6)", background: posEmpEditing ? "var(--violet-50, #f5f3ff)" : "transparent" }}>
                       {posEmpEditing && (
                         <div style={{ fontSize: 12, fontWeight: 600, color: "var(--violet-600)", marginBottom: 8 }}>
-                          ✏️ Editing: {posEmployees.find(e => e.id === posEmpEditing)?.name}
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ marginRight: 4 }}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                          Editing: {posEmployees.find(e => e.id === posEmpEditing)?.name}
                         </div>
                       )}
                       <div style={{ display: "grid", gridTemplateColumns: "2fr 2fr 1fr 1fr auto", gap: 10, alignItems: "end" }}>
@@ -1848,7 +1849,8 @@ export default function SettingsPage() {
                     <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--gray-100, #f3f4f6)", background: posPmEditing ? "var(--violet-50, #f5f3ff)" : "transparent" }}>
                       {posPmEditing && (
                         <div style={{ fontSize: 12, fontWeight: 600, color: "var(--violet-600)", marginBottom: 8 }}>
-                          ✏️ Editing: {posPaymentMethods.find(p => p.id === posPmEditing)?.name}
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ marginRight: 4 }}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                          Editing: {posPaymentMethods.find(p => p.id === posPmEditing)?.name}
                         </div>
                       )}
                       <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr auto", gap: 10, alignItems: "end" }}>
@@ -1868,12 +1870,12 @@ export default function SettingsPage() {
                             onChange={(e) => setPosPmForm({ ...posPmForm, code: e.target.value })}
                             style={{ fontSize: 13 }}
                           >
-                            <option value="cash">💵 Cash</option>
-                            <option value="card">💳 Card</option>
-                            <option value="mobile_money">📱 Mobile Money</option>
-                            <option value="bank_transfer">🏦 Bank Transfer</option>
-                            <option value="cheque">📄 Cheque</option>
-                            <option value="other">📋 Other</option>
+                            <option value="cash">Cash</option>
+                            <option value="card">Card</option>
+                            <option value="mobile_money">Mobile Money</option>
+                            <option value="bank_transfer">Bank Transfer</option>
+                            <option value="cheque">Cheque</option>
+                            <option value="other">Other</option>
                           </select>
                         </label>
                         <div style={{ display: "flex", gap: 6 }}>
@@ -1922,7 +1924,15 @@ export default function SettingsPage() {
                           </thead>
                           <tbody>
                             {posPaymentMethods.map((pm, idx) => {
-                              const typeIcons: Record<string, string> = { cash: "💵", card: "💳", mobile_money: "📱", bank_transfer: "🏦", cheque: "📄", other: "📋" };
+                              const pmIconColors: Record<string, string> = { cash: "var(--green-600, #16a34a)", card: "var(--blue-600, #2563eb)", mobile_money: "var(--violet-600, #7c3aed)", bank_transfer: "var(--slate-600, #475569)", cheque: "var(--amber-600, #d97706)", other: "var(--slate-500, #64748b)" };
+                              const pmIcons: Record<string, React.ReactNode> = {
+                                cash: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="1" y="4" width="22" height="16" rx="2" /><circle cx="12" cy="12" r="3" /><path d="M2 8h2" /><path d="M20 8h2" /></svg>,
+                                card: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="1" y="4" width="22" height="16" rx="2" /><path d="M1 10h22" /></svg>,
+                                mobile_money: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="5" y="2" width="14" height="20" rx="2" /><path d="M12 18h.01" /></svg>,
+                                bank_transfer: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 21h18" /><path d="M3 10h18" /><path d="M12 3l9 7H3l9-7z" /><path d="M6 10v8" /><path d="M10 10v8" /><path d="M14 10v8" /><path d="M18 10v8" /></svg>,
+                                cheque: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /><path d="M16 13H8" /><path d="M16 17H8" /><path d="M10 9H8" /></svg>,
+                                other: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="5" cy="12" r="1" /></svg>,
+                              };
                               return (
                                 <tr key={pm.id} style={{
                                   background: posPmEditing === pm.id ? "var(--violet-50, #f5f3ff)" : idx % 2 === 0 ? "transparent" : "var(--gray-50, #f9fafb)",
@@ -1933,9 +1943,10 @@ export default function SettingsPage() {
                                       <div style={{
                                         width: 34, height: 34, borderRadius: 8, flexShrink: 0,
                                         display: "flex", alignItems: "center", justifyContent: "center",
-                                        fontSize: 16, background: "var(--slate-100, #f1f5f9)"
+                                        color: pmIconColors[pm.code] || "var(--slate-500)",
+                                        background: "var(--slate-100, #f1f5f9)"
                                       }}>
-                                        {typeIcons[pm.code] || "📋"}
+                                        {pmIcons[pm.code] || pmIcons.other}
                                       </div>
                                       <span style={{ fontWeight: 600, color: "var(--slate-800)" }}>{pm.name}</span>
                                     </div>
