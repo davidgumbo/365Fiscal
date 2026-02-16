@@ -301,10 +301,15 @@ export default function POSPage() {
         setCategories(cats);
         setDevices(devs);
         setCompanyInfo(ci);
+        // Auto-select first device
+        if (devs.length > 0 && !selectedDeviceId) {
+          setSelectedDeviceId(devs[0].id);
+        }
         if (sessions.length > 0) {
           setSession(sessions[0]);
         } else {
-          setShowSessionDialog(true);
+          // Show PIN login first — session dialog comes after PIN is verified
+          setShowPinDialog(true);
         }
       })
       .catch((e) => setError(e.message))
@@ -352,6 +357,10 @@ export default function POSPage() {
       setCurrentCashier(resp);
       setShowPinDialog(false);
       setPinValue("");
+      // If no active session, open session dialog after PIN verified
+      if (!session) {
+        setShowSessionDialog(true);
+      }
     } catch (e: any) {
       setPinError(e.message || "Invalid PIN");
     }
@@ -677,8 +686,61 @@ export default function POSPage() {
     return <div className="pos-page"><div className="pos-center-msg"><div className="pos-spinner" />Loading POS…</div></div>;
   }
 
-  /* ──────────── session open dialog ──────────── */
+  /* ──────────── PIN login gate (must come before session dialog) ──────────── */
+  if (showPinDialog && !currentCashier) {
+    return (
+      <div className="pos-page">
+        <div className="pos-overlay">
+          <div className="pos-dialog pos-dialog-sm">
+            <div className="pos-dialog-header">
+              <h2>Cashier Login</h2>
+            </div>
+            <div className="pos-dialog-body" style={{ textAlign: "center" }}>
+              <p style={{ fontSize: "0.85rem", color: "var(--slate-500)", marginBottom: 16 }}>Enter your PIN to start</p>
+              <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
+                <input
+                  type="password"
+                  className="pos-input"
+                  style={{ width: 180, textAlign: "center", fontSize: "1.5rem", letterSpacing: 8 }}
+                  maxLength={6}
+                  value={pinValue}
+                  onChange={(e) => { setPinValue(e.target.value.replace(/\D/g, "")); setPinError(""); }}
+                  onKeyDown={(e) => { if (e.key === "Enter") verifyPin(); }}
+                  placeholder="• • • •"
+                  autoFocus
+                />
+              </div>
+              {/* Number pad */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, maxWidth: 240, margin: "0 auto 16px" }}>
+                {[1,2,3,4,5,6,7,8,9].map(n => (
+                  <button
+                    key={n}
+                    className="pos-btn pos-btn-outline"
+                    style={{ height: 48, fontSize: "1.2rem" }}
+                    onClick={() => pinValue.length < 6 && setPinValue(pinValue + String(n))}
+                  >
+                    {n}
+                  </button>
+                ))}
+                <button className="pos-btn pos-btn-ghost" style={{ height: 48, fontSize: "0.85rem" }} onClick={() => setPinValue("")}>Clear</button>
+                <button className="pos-btn pos-btn-outline" style={{ height: 48, fontSize: "1.2rem" }} onClick={() => pinValue.length < 6 && setPinValue(pinValue + "0")}>0</button>
+                <button className="pos-btn pos-btn-ghost" style={{ height: 48, fontSize: "1.2rem" }} onClick={() => setPinValue(pinValue.slice(0, -1))}>⌫</button>
+              </div>
+              {pinError && <div className="pos-error">{pinError}</div>}
+            </div>
+            <div className="pos-dialog-footer">
+              <button className="pos-btn pos-btn-ghost" onClick={() => navigate("/")}>Back to Home</button>
+              <button className="pos-btn pos-btn-primary" onClick={verifyPin} disabled={pinValue.length < 4}>Login</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ──────────── session open dialog (after PIN verified) ──────────── */
   if (showSessionDialog && !session) {
+    const activeDevice = devices.length > 0 ? devices.find(d => d.id === selectedDeviceId) || devices[0] : null;
     return (
       <div className="pos-page">
         <div className="pos-overlay">
@@ -687,32 +749,19 @@ export default function POSPage() {
               <h2>Open POS Session</h2>
             </div>
             <div className="pos-dialog-body">
-              <label className="pos-label">
-                Fiscal Device
-                <select
-                  className="pos-select"
-                  value={selectedDeviceId ?? ""}
-                  onChange={(e) => setSelectedDeviceId(e.target.value ? Number(e.target.value) : null)}
-                >
-                  <option value="">— No device (offline) —</option>
-                  {devices.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.model} — {d.serial_number} ({d.fiscal_day_status})
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="pos-label">
-                Opening Cash Balance
-                <input
-                  type="number"
-                  className="pos-input"
-                  value={openingBalance}
-                  onChange={(e) => setOpeningBalance(e.target.value)}
-                  min={0}
-                  step={0.01}
-                />
-              </label>
+              {currentCashier && (
+                <div style={{ marginBottom: 16, padding: "10px 16px", borderRadius: 8, background: "var(--emerald-50, #ecfdf5)", color: "var(--emerald-700, #047857)", display: "flex", alignItems: "center", gap: 8 }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  <span>Cashier: <strong>{currentCashier.name}</strong> ({currentCashier.role})</span>
+                </div>
+              )}
+              {activeDevice && (
+                <div style={{ padding: "10px 16px", borderRadius: 8, background: "var(--slate-50, #f8fafc)", border: "1px solid var(--slate-200, #e2e8f0)", marginBottom: 12 }}>
+                  <div style={{ fontSize: "0.78rem", color: "var(--slate-500)", marginBottom: 4, textTransform: "uppercase", letterSpacing: 1 }}>Fiscal Device</div>
+                  <div style={{ fontWeight: 600 }}>{activeDevice.model} — {activeDevice.serial_number}</div>
+                  <div style={{ fontSize: "0.82rem", color: "var(--slate-500)" }}>Status: {activeDevice.fiscal_day_status}</div>
+                </div>
+              )}
               {error && <div className="pos-error">{error}</div>}
             </div>
             <div className="pos-dialog-footer">
@@ -1460,23 +1509,21 @@ export default function POSPage() {
         </div>
       )}
 
-      {/* ── PIN LOGIN DIALOG ── */}
-      {showPinDialog && (
+      {/* ── PIN SWITCH DIALOG (change cashier while POS is open) ── */}
+      {showPinDialog && currentCashier && (
         <div className="pos-overlay" style={{ zIndex: 1200 }} onClick={() => setShowPinDialog(false)}>
           <div className="pos-dialog pos-dialog-sm" onClick={(e) => e.stopPropagation()}>
             <div className="pos-dialog-header">
-              <h2>Cashier Login</h2>
+              <h2>Switch Cashier</h2>
               <button className="pos-btn pos-btn-icon pos-btn-xs" onClick={() => setShowPinDialog(false)}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
             <div className="pos-dialog-body" style={{ textAlign: "center" }}>
-              {currentCashier && (
-                <div style={{ marginBottom: 12, padding: "8px 16px", borderRadius: 8, background: "var(--emerald-50, #ecfdf5)", color: "var(--emerald-700, #047857)", fontSize: "0.85rem" }}>
-                  Current: <strong>{currentCashier.name}</strong> ({currentCashier.role})
-                </div>
-              )}
-              <p style={{ fontSize: "0.85rem", color: "var(--slate-500)", marginBottom: 16 }}>Enter your PIN to identify as cashier</p>
+              <div style={{ marginBottom: 12, padding: "8px 16px", borderRadius: 8, background: "var(--emerald-50, #ecfdf5)", color: "var(--emerald-700, #047857)", fontSize: "0.85rem" }}>
+                Current: <strong>{currentCashier.name}</strong> ({currentCashier.role})
+              </div>
+              <p style={{ fontSize: "0.85rem", color: "var(--slate-500)", marginBottom: 16 }}>Enter new cashier PIN</p>
               <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
                 <input
                   type="password"
@@ -1490,17 +1537,9 @@ export default function POSPage() {
                   autoFocus
                 />
               </div>
-              {/* Number pad */}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, maxWidth: 240, margin: "0 auto 16px" }}>
                 {[1,2,3,4,5,6,7,8,9].map(n => (
-                  <button
-                    key={n}
-                    className="pos-btn pos-btn-outline"
-                    style={{ height: 48, fontSize: "1.2rem" }}
-                    onClick={() => pinValue.length < 6 && setPinValue(pinValue + n)}
-                  >
-                    {n}
-                  </button>
+                  <button key={n} className="pos-btn pos-btn-outline" style={{ height: 48, fontSize: "1.2rem" }} onClick={() => pinValue.length < 6 && setPinValue(pinValue + String(n))}>{n}</button>
                 ))}
                 <button className="pos-btn pos-btn-ghost" style={{ height: 48, fontSize: "0.85rem" }} onClick={() => setPinValue("")}>Clear</button>
                 <button className="pos-btn pos-btn-outline" style={{ height: 48, fontSize: "1.2rem" }} onClick={() => pinValue.length < 6 && setPinValue(pinValue + "0")}>0</button>
@@ -1510,7 +1549,7 @@ export default function POSPage() {
             </div>
             <div className="pos-dialog-footer">
               <button className="pos-btn pos-btn-ghost" onClick={() => { setShowPinDialog(false); setPinValue(""); setPinError(""); }}>Cancel</button>
-              <button className="pos-btn pos-btn-primary" onClick={verifyPin} disabled={pinValue.length < 4}>Confirm</button>
+              <button className="pos-btn pos-btn-primary" onClick={verifyPin} disabled={pinValue.length < 4}>Switch</button>
             </div>
           </div>
         </div>
