@@ -1566,9 +1566,7 @@ export default function SettingsPage() {
                       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--violet-600)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8" /><path d="M12 17v4" /><path d="M7 8h2" /><path d="M7 12h2" /><path d="M15 8h2" /><path d="M15 12h2" /></svg>
                       <h4 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "var(--slate-800)" }}>Point of Sale Configuration</h4>
                     </div>
-                    <p style={{ margin: 0, fontSize: 13, color: "var(--slate-500)", paddingLeft: 32 }}>
-                      Manage POS employees, login PINs, and payment methods for your point of sale.
-                    </p>
+                    
                   </div>
 
                   {posError && (
@@ -1599,9 +1597,7 @@ export default function SettingsPage() {
                           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--slate-600)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
                           <h5 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "var(--slate-700)" }}>Employees &amp; Login PINs</h5>
                         </div>
-                        <p style={{ margin: "4px 0 0 26px", fontSize: 12, color: "var(--slate-400)" }}>
-                          Each employee needs a unique 4–6 digit PIN to log into POS.
-                        </p>
+                        
                       </div>
                       <span style={{
                         padding: "3px 12px", borderRadius: 20, fontSize: 11, fontWeight: 700,
@@ -1635,7 +1631,7 @@ export default function SettingsPage() {
                             type="email"
                             value={posEmpForm.email || ""}
                             onChange={(e) => setPosEmpForm({ ...posEmpForm, email: e.target.value })}
-                            placeholder="email@example.com"
+                            placeholder="support@geenet.co.zw"
                             style={{ fontSize: 13 }}
                           />
                         </label>
@@ -1661,8 +1657,8 @@ export default function SettingsPage() {
                             style={{ fontSize: 13 }}
                           >
                             <option value="cashier">Cashier</option>
-                            <option value="manager">Manager</option>
-                            <option value="admin">Admin</option>
+                            <option value="manager">Supervisor</option>
+                            
                           </select>
                         </label>
                         <div style={{ display: "flex", gap: 6 }}>
@@ -1833,9 +1829,7 @@ export default function SettingsPage() {
                           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--slate-600)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" /><path d="M1 10h22" /></svg>
                           <h5 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "var(--slate-700)" }}>Payment Methods</h5>
                         </div>
-                        <p style={{ margin: "4px 0 0 26px", fontSize: 12, color: "var(--slate-400)" }}>
-                          Configure the payment methods accepted at your POS terminal.
-                        </p>
+                        
                       </div>
                       <span style={{
                         padding: "3px 12px", borderRadius: 20, fontSize: 11, fontWeight: 700,
@@ -1872,10 +1866,9 @@ export default function SettingsPage() {
                           >
                             <option value="cash">Cash</option>
                             <option value="card">Card</option>
-                            <option value="mobile_money">Mobile Money</option>
+                            <option value="mobile_money">Mobile Wallet</option>
                             <option value="bank_transfer">Bank Transfer</option>
-                            <option value="cheque">Cheque</option>
-                            <option value="other">Other</option>
+                        
                           </select>
                         </label>
                         <div style={{ display: "flex", gap: 6 }}>
