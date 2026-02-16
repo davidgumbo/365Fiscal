@@ -528,17 +528,10 @@ export default function InventoryPage() {
     try {
       const fd = new FormData();
       fd.append("file", file);
-      const token = localStorage.getItem("token");
-      const resp = await fetch(`/api/products/${selectedProductId}/image`, {
+      const updated = await apiFetch<Product>(`/products/${selectedProductId}/image`, {
         method: "POST",
-        headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: fd,
       });
-      if (!resp.ok) {
-        const err = await resp.json().catch(() => null);
-        throw new Error(err?.detail || "Upload failed");
-      }
-      const updated = await resp.json();
       setProductImageUrl(updated.image_url || "");
     } catch (err: any) {
       alert(err.message || "Failed to upload image");

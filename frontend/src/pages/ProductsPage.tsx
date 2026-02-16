@@ -218,14 +218,10 @@ export default function ProductsPage() {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const token = localStorage.getItem("token");
-      const resp = await fetch(`/api/products/${selectedProductId}/image`, {
+      const updated = await apiFetch<Product>(`/products/${selectedProductId}/image`, {
         method: "POST",
-        headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: formData,
       });
-      if (!resp.ok) throw new Error("Upload failed");
-      const updated = await resp.json();
       setProductImageUrl(updated.image_url || "");
       loadProducts(companyId!);
     } catch {
