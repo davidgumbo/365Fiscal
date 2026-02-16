@@ -231,7 +231,17 @@ const SubscriptionIcon = () => (
 );
 
 const POSLauncherIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="48"
+    height="48"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <rect x="2" y="2" width="20" height="20" rx="2" />
     <rect x="6" y="4" width="12" height="7" rx="1" />
     <circle cx="8" cy="15" r="1" />
@@ -496,17 +506,7 @@ export default function AppLauncherPage() {
     return (
       <div className="app-launcher-page">
         <header className="app-launcher-header">
-          <div className="app-launcher-logo">
-            <img
-              src="/365.png"
-              alt="365 Fiscal"
-              onError={(e) => {
-                e.currentTarget.style.display = "none";
-              }}
-            />
-          </div>
           <div className="app-launcher-user">
-            <span className="user-name">{displayName}</span>
             <div className="user-avatar-small">
               {displayName.charAt(0).toUpperCase()}
             </div>
@@ -762,17 +762,6 @@ export default function AppLauncherPage() {
             </p>
           </div>
         </div>
-        <footer className="app-launcher-footer" style={{ marginTop: "25rem" }}>
-          Powered by{" "}
-          <a
-            href="https://www.geenet.co.zw"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {" "}
-            GeeNet
-          </a>
-        </footer>
       </div>
     );
   }
