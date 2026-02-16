@@ -441,6 +441,12 @@ export default function AppLauncherPage() {
   const [activating, setActivating] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
+  const formatActivationCode = (raw: string) => {
+    const cleaned = raw.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    const groups = cleaned.match(/.{1,4}/g) || [];
+    return groups.join("-");
+  };
+
   useEffect(() => {
     if (!isAdmin && me) {
       setActivationLoading(true);
@@ -542,233 +548,124 @@ export default function AppLauncherPage() {
             )}
           </div>
         </header>
-        <div
-          className="app-launcher-container"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            minHeight: "70vh",
-          }}
-        >
-          <div
-            style={{
-              maxWidth: 520,
-              width: "100%",
-              textAlign: "center",
-              background: "white",
-              borderRadius: 20,
-              padding: "48px 40px",
-              boxShadow:
-                "0 20px 60px rgba(0,0,0,0.15), 0 4px 20px rgba(0,0,0,0.08)",
-              border: "1px solid rgba(99,102,241,0.15)",
-              position: "relative",
-              overflow: "hidden",
-            }}
-          >
-            {/* Decorative top gradient bar */}
-            <div
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                height: 5,
-                background: "linear-gradient(90deg, #6366f1, #8b5cf6, #a855f7)",
-              }}
-            />
-
-            {/* Lock icon */}
-            <div
-              style={{
-                width: 96,
-                height: 96,
-                borderRadius: "50%",
-                background: "linear-gradient(135deg, #ede9fe, #ddd6fe)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                margin: "0 auto 28px",
-                boxShadow: "0 8px 24px rgba(99,102,241,0.2)",
-              }}
-            >
-              <svg
-                width="44"
-                height="44"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#7c3aed"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-              </svg>
-            </div>
-
-            <h2
-              style={{
-                fontSize: 26,
-                fontWeight: 800,
-                marginBottom: 10,
-                color: "#1e1b4b",
-                letterSpacing: "-0.5px",
-              }}
-            >
-              Activate Your Subscription
-            </h2>
-            <p
-              style={{
-                color: "#64748b",
-                fontSize: 15,
-                marginBottom: 32,
-                lineHeight: 1.7,
-                maxWidth: 380,
-                margin: "0 auto 32px",
-              }}
-            >
-              Enter the activation code provided by your administrator to unlock
-              access to all applications.
-            </p>
-
-            {activateError && (
-              <div
-                style={{
-                  marginBottom: 20,
-                  padding: "14px 20px",
-                  borderRadius: 12,
-                  background: "#fef2f2",
-                  color: "#dc2626",
-                  border: "1px solid #fecaca",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  justifyContent: "center",
-                }}
-              >
+        <div className="app-launcher-container app-launcher-activation">
+          <div className="login-card login-card-glass activation-card">
+            <div className="login-card-body activation-card-body">
+              <div className="activation-icon">
                 <svg
-                  width="18"
-                  height="18"
+                  width="44"
+                  height="44"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 >
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="15" y1="9" x2="9" y2="15" />
-                  <line x1="9" y1="9" x2="15" y2="15" />
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                 </svg>
-                {activateError}
               </div>
-            )}
-            {activateSuccess && (
-              <div
-                style={{
-                  marginBottom: 20,
-                  padding: "14px 20px",
-                  borderRadius: 12,
-                  background: "#f0fdf4",
-                  color: "#16a34a",
-                  border: "1px solid #bbf7d0",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  justifyContent: "center",
-                }}
-              >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                  <path d="m9 11 3 3L22 4" />
-                </svg>
-                {activateSuccess}
-              </div>
-            )}
 
-            <div style={{ marginBottom: 20 }}>
-              <input
-                type="text"
-                value={activationCode}
-                onChange={(e) =>
-                  setActivationCode(e.target.value.toUpperCase())
-                }
-                placeholder="XXXX – XXXX – XXXX – XXXX"
-                maxLength={19}
-                style={{
-                  width: "100%",
-                  padding: "16px 20px",
-                  fontSize: 20,
-                  fontFamily: "'Courier New', monospace",
-                  letterSpacing: 4,
-                  textAlign: "center",
-                  borderRadius: 14,
-                  border: "2px solid #e2e8f0",
-                  outline: "none",
-                  fontWeight: 800,
-                  background: "#f8fafc",
-                  color: "#1e1b4b",
-                  transition: "all 0.2s ease",
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = "#6366f1";
-                  e.target.style.boxShadow = "0 0 0 4px rgba(99,102,241,0.15)";
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = "#e2e8f0";
-                  e.target.style.boxShadow = "none";
-                }}
-                onKeyDown={(e) => e.key === "Enter" && handleActivate()}
-              />
+              <h2 className="login-card-title activation-title">
+                Activate Your Subscription
+              </h2>
+              <p className="login-card-sub activation-sub">
+                Enter the activation code provided by your administrator to
+                unlock access to all applications.
+              </p>
+
+              {activateError && (
+                <div className="login-error activation-message">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                  {activateError}
+                </div>
+              )}
+              {activateSuccess && (
+                <div className="login-status activation-message">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                    <polyline points="22 4 12 14.01 9 11.01" />
+                  </svg>
+                  {activateSuccess}
+                </div>
+              )}
+
+              <div className="login-form activation-form">
+                <div className="input-group">
+                  <input
+                    type="text"
+                    value={activationCode}
+                    onChange={(e) =>
+                      setActivationCode(formatActivationCode(e.target.value))
+                    }
+                    placeholder="XXXX – XXXX – XXXX – XXXX"
+                    maxLength={19}
+                    className="activation-code-input"
+                    onKeyDown={(e) => e.key === "Enter" && handleActivate()}
+                  />
+                </div>
+
+                <button
+                  className="login-btn"
+                  onClick={handleActivate}
+                  disabled={activating || activationCode.trim().length < 10}
+                >
+                  {activating ? (
+                    <>
+                      <span className="spinner"></span>
+                      <span>Activating...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Activate</span>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                        <polyline points="12 5 19 12 12 19" />
+                      </svg>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              <p className="activation-note">
+                Don't have a code? Contact your company administrator.
+              </p>
             </div>
-
-            <button
-              onClick={handleActivate}
-              disabled={activating || activationCode.trim().length < 10}
-              style={{
-                width: "100%",
-                padding: "16px 0",
-                fontSize: 17,
-                fontWeight: 800,
-                borderRadius: 14,
-                border: "none",
-                cursor: "pointer",
-                color: "white",
-                background:
-                  activating || activationCode.trim().length < 10
-                    ? "linear-gradient(135deg, #94a3b8, #94a3b8)"
-                    : "linear-gradient(135deg, #4f46e5, #7c3aed)",
-                boxShadow:
-                  activating || activationCode.trim().length < 10
-                    ? "none"
-                    : "0 8px 24px rgba(79,70,229,0.35)",
-                transition: "all 0.2s ease",
-                letterSpacing: "0.5px",
-              }}
-            >
-              {activating ? "Activating..." : "Activate"}
-            </button>
-
-            <p
-              style={{
-                color: "#94a3b8",
-                fontSize: 13,
-                marginTop: 28,
-                fontWeight: 500,
-              }}
-            >
-              Don't have a code? Contact your company administrator.
-            </p>
           </div>
         </div>
       </div>
