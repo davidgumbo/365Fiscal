@@ -9,6 +9,7 @@ Provides endpoints for:
 from datetime import datetime
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
 from sqlalchemy.orm import Session, joinedload
 
 from app.api.deps import (
@@ -924,18 +925,22 @@ def delete_pos_employee(
     return {"detail": "Employee deleted"}
 
 
+class _VerifyPinPayload(BaseModel):
+    company_id: int
+    pin: str
+
+
 @router.post("/employees/verify-pin")
 def verify_pos_pin(
-    company_id: int,
-    pin: str,
+    payload: _VerifyPinPayload,
     db: Session = Depends(get_db),
     user=Depends(require_portal_user),
 ):
     """Verify a POS employee PIN and return employee info."""
-    ensure_company_access(db, user, company_id)
+    ensure_company_access(db, user, payload.company_id)
     emp = db.query(POSEmployee).filter(
-        POSEmployee.company_id == company_id,
-        POSEmployee.pin == pin,
+        POSEmployee.company_id == payload.company_id,
+        POSEmployee.pin == payload.pin,
         POSEmployee.is_active == True,
     ).first()
     if not emp:
