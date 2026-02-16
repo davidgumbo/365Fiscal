@@ -825,9 +825,18 @@ export default function POSPage() {
         </div>
         <div className="pos-topbar-right">
           {/* Cashier / PIN login */}
-          <button className="pos-btn pos-btn-sm pos-btn-topbar" onClick={() => setShowPinDialog(true)}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            {currentCashier ? currentCashier.name : "Cashier"}
+          <button className="pos-btn pos-btn-sm pos-btn-topbar" onClick={() => setShowPinDialog(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 4 }}>
+            <div style={{
+              width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 12, fontWeight: 700, color: '#fff',
+              background: currentCashier
+                ? currentCashier.role === 'admin' ? '#ef4444' : currentCashier.role === 'manager' ? '#f59e0b' : '#6366f1'
+                : 'rgba(255,255,255,0.2)',
+            }}>
+              {currentCashier ? currentCashier.name.charAt(0).toUpperCase() : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
+            </div>
+            <span>{currentCashier ? currentCashier.name : "Cashier"}</span>
           </button>
           {/* Customer display */}
           <button className="pos-btn pos-btn-sm pos-btn-topbar" onClick={openCustomerDisplay} title="Open customer-facing display">
@@ -889,21 +898,22 @@ export default function POSPage() {
                   </div>
                 ) : (
                   <div className="pos-product-card-img pos-product-card-img-placeholder">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" opacity="0.3">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.2">
                       <rect x="3" y="3" width="18" height="18" rx="2"/>
                       <circle cx="8.5" cy="8.5" r="1.5"/>
                       <path d="M21 15l-5-5L5 21"/>
                     </svg>
                   </div>
                 )}
-                <div className="pos-product-card-name">{p.name}</div>
-                <div className="pos-product-card-price">${fmt(p.sale_price)}</div>
-                {p.track_inventory && p.product_type === "storable" && (
-                  <div className={`pos-product-card-stock ${p.stock_on_hand <= 0 ? "out" : p.stock_on_hand <= 5 ? "low" : ""}`}>
-                    {p.stock_on_hand <= 0 ? "Out of stock" : `${p.stock_on_hand} ${p.uom}`}
-                  </div>
-                )}
-                {p.barcode && <div className="pos-product-card-barcode">{p.barcode}</div>}
+                <div className="pos-product-card-body">
+                  <div className="pos-product-card-name">{p.name}</div>
+                  <div className="pos-product-card-price">${fmt(p.sale_price)}</div>
+                  {p.track_inventory && p.product_type === "storable" && (
+                    <div className={`pos-product-card-stock ${p.stock_on_hand <= 0 ? "out" : p.stock_on_hand <= 5 ? "low" : ""}`}>
+                      {p.stock_on_hand <= 0 ? "Out of stock" : `${p.stock_on_hand} ${p.uom}`}
+                    </div>
+                  )}
+                </div>
               </button>
             ))}
           </div>

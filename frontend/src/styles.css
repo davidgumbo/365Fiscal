@@ -8804,45 +8804,48 @@ button.danger:disabled {
 .pos-categories {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 10px 16px;
+  gap: 8px;
+  padding: 12px 20px;
   overflow-x: auto;
   border-bottom: 1px solid var(--slate-200, #e2e8f0);
   flex-shrink: 0;
   scrollbar-width: none;
+  background: var(--slate-50, #f8fafc);
 }
 .pos-categories::-webkit-scrollbar {
   display: none;
 }
 .pos-cat-chip {
-  padding: 5px 14px;
-  border-radius: 20px;
+  padding: 8px 20px;
+  border-radius: 10px;
   border: 1px solid var(--slate-200, #e2e8f0);
   background: var(--white-500, #fff);
   color: var(--slate-600, #475569);
-  font-size: 0.82rem;
-  font-weight: 500;
+  font-size: 0.88rem;
+  font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.15s;
 }
 .pos-cat-chip:hover {
-  background: var(--slate-50, #f8fafc);
-  border-color: var(--slate-300, #cbd5e1);
+  background: var(--indigo-50, #eef2ff);
+  border-color: var(--indigo-300, #a5b4fc);
+  color: var(--indigo-600, #4f46e5);
 }
 .pos-cat-chip.active {
   background: var(--indigo-500, #6366f1);
   color: #fff;
   border-color: var(--indigo-500, #6366f1);
+  box-shadow: 0 2px 8px rgba(99,102,241,0.25);
 }
 
 /* ── Product Grid ── */
 .pos-product-grid {
   flex: 1;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 10px;
-  padding: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 14px;
+  padding: 16px 20px;
   overflow-y: auto;
   align-content: start;
 }
@@ -8857,63 +8860,81 @@ button.danger:disabled {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 16px 10px;
-  border-radius: 12px;
-  background: var(--slate-50, #f8fafc);
+  padding: 0;
+  border-radius: 14px;
+  background: var(--white-500, #fff);
   border: 1px solid var(--slate-200, #e2e8f0);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.18s;
   text-align: center;
-  min-height: 100px;
+  overflow: hidden;
+  min-height: 200px;
 }
 .pos-product-card:hover {
   border-color: var(--indigo-300, #a5b4fc);
-  background: var(--indigo-50, #eef2ff);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(99,102,241,0.12);
+  background: var(--white-500, #fff);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(99,102,241,0.13);
 }
 .pos-product-card:active {
   transform: translateY(0);
-  box-shadow: none;
+  box-shadow: 0 2px 8px rgba(99,102,241,0.1);
 }
 .pos-product-card-name {
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   color: var(--slate-700, #334155);
   line-height: 1.3;
   margin-bottom: 4px;
+  padding: 0 10px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .pos-product-card-price {
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 1.05rem;
   color: var(--indigo-600, #4f46e5);
+  padding: 0 10px;
 }
 .pos-product-card-barcode {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   color: var(--slate-400, #94a3b8);
   margin-top: 2px;
+  padding: 0 10px;
 }
 
 /* Product card image */
 .pos-product-card-img {
-  width: 64px;
-  height: 64px;
-  border-radius: 10px;
+  width: 100%;
+  height: 120px;
   overflow: hidden;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   flex-shrink: 0;
+  background: var(--slate-50, #f8fafc);
 }
 .pos-product-card-img img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.3s;
+}
+.pos-product-card:hover .pos-product-card-img img {
+  transform: scale(1.05);
 }
 .pos-product-card-img-placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--slate-100, #f1f5f9);
+}
+.pos-product-card-body {
+  padding: 8px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
 }
 
 /* ── Cart Panel ── */
@@ -10315,14 +10336,20 @@ button.danger:disabled {
     gap: 6px;
   }
   .pos-product-card {
-    padding: 10px 6px;
-    min-height: 80px;
+    padding: 0;
+    min-height: 120px;
+  }
+  .pos-product-card-img {
+    height: 70px;
+  }
+  .pos-product-card-body {
+    padding: 4px 6px 6px;
   }
   .pos-product-card-name {
-    font-size: 0.78rem;
+    font-size: 0.72rem;
   }
   .pos-product-card-price {
-    font-size: 0.88rem;
+    font-size: 0.82rem;
   }
   .pos-dialog {
     border-radius: 12px;
