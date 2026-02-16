@@ -6318,10 +6318,27 @@ tr:hover .o-quick-actions {
   min-height: 100vh;
   background: var(--zinc-50);
   background: linear-gradient(155deg, rgba(252, 252, 252, 1) 0%, rgba(2, 20, 51, 1) 100%);
-  background-image: url(./assets/bg.jpg) ;
+  position: relative;
+  overflow: hidden;
+  flex-direction: column;
+}
+
+.app-launcher-page::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url(./assets/bg.jpg);
   background-repeat: no-repeat;
   background-size: cover;
-  flex-direction: column;
+  background-position: center center;
+  filter: blur(6px);
+  transform: scale(1.02);
+  z-index: 0;
+}
+
+.app-launcher-page > * {
+  position: relative;
+  z-index: 1;
 }
 
 .app-launcher-header {
