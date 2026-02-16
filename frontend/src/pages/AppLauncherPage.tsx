@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import { useMe } from "../hooks/useMe";
+import { getInitials } from "../hooks/getInitials";
 import { apiFetch } from "../api";
 
 type ActivationStatus = {
@@ -427,6 +428,7 @@ export default function AppLauncherPage() {
   const isAdmin = Boolean(me?.is_admin);
   const apps = isAdmin ? adminApps : portalApps;
   const displayName = me?.email ?? "User";
+  const initials = getInitials(displayName);
 
   // Portal activation gate
   const [activationStatus, setActivationStatus] = useState<
@@ -505,41 +507,88 @@ export default function AppLauncherPage() {
   // Portal activation gate — no active subscription
   if (!isAdmin && !hasActiveSubscription) {
     return (
-      <div className="login-shell login-centered">
-        {/* Logout button floating top-right */}
-        <div className="activate-logout-wrap">
-          <button
-            className="activate-logout-btn"
-            onClick={handleLogout}
-            title="Log out"
+      <div className="app-launcher-page">
+        <header className="app-launcher-header">
+          <div className="app-launcher-user">
+            <div className="user-menu">
+              <button
+                type="button"
+                className="user-menu-trigger"
+                onClick={() => setUserMenuOpen((prev) => !prev)}
+                aria-haspopup="menu"
+                aria-expanded={userMenuOpen}
+                title="User menu"
+              >
+                <div className="user-avatar-small">{initials}</div>
+              </button>
+              {userMenuOpen && (
+                <div className="user-menu-panel" role="menu">
+                  <div className="user-menu-title">{displayName}</div>
+                  <button
+                    className="user-menu-action"
+                    onClick={handleLogout}
+                    role="menuitem"
+                  >
+                    Log out
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </header>
+        <div
+          className="app-launcher-container"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            minHeight: "70vh",
+          }}
+        >
+          <div
+            style={{
+              maxWidth: 520,
+              width: "100%",
+              textAlign: "center",
+              background: "white",
+              borderRadius: 20,
+              padding: "48px 40px",
+              boxShadow:
+                "0 20px 60px rgba(0,0,0,0.15), 0 4px 20px rgba(0,0,0,0.08)",
+              border: "1px solid rgba(99,102,241,0.15)",
+              position: "relative",
+              overflow: "hidden",
+            }}
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-              <polyline points="16 17 21 12 16 7" />
-              <line x1="21" y1="12" x2="9" y2="12" />
-            </svg>
-            <span>Log out</span>
-          </button>
-        </div>
+            {/* Decorative top gradient bar */}
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                height: 5,
+                background: "linear-gradient(90deg, #6366f1, #8b5cf6, #a855f7)",
+              }}
+            />
 
-        {/* Glassmorphism card matching login */}
-        <div className="login-card login-card-glass activate-card">
-          <div className="login-card-body" style={{ textAlign: "center", padding: "40px 32px 32px" }}>
             {/* Lock icon */}
-            <div className="activate-icon-wrap">
+            <div
+              style={{
+                width: 96,
+                height: 96,
+                borderRadius: "50%",
+                background: "linear-gradient(135deg, #ede9fe, #ddd6fe)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                margin: "0 auto 28px",
+                boxShadow: "0 8px 24px rgba(99,102,241,0.2)",
+              }}
+            >
               <svg
-                width="40"
-                height="40"
+                width="44"
+                height="44"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="#7c3aed"
@@ -552,19 +601,51 @@ export default function AppLauncherPage() {
               </svg>
             </div>
 
-            <h1 className="login-card-title" style={{ marginBottom: 8 }}>
+            <h2
+              style={{
+                fontSize: 26,
+                fontWeight: 800,
+                marginBottom: 10,
+                color: "#1e1b4b",
+                letterSpacing: "-0.5px",
+              }}
+            >
               Activate Your Subscription
-            </h1>
-            <p className="login-card-sub" style={{ textAlign: "center", maxWidth: 340, margin: "0 auto 28px" }}>
-              Enter the activation code provided by your administrator
-              to unlock access to all applications.
+            </h2>
+            <p
+              style={{
+                color: "#64748b",
+                fontSize: 15,
+                marginBottom: 32,
+                lineHeight: 1.7,
+                maxWidth: 380,
+                margin: "0 auto 32px",
+              }}
+            >
+              Enter the activation code provided by your administrator to unlock
+              access to all applications.
             </p>
 
             {activateError && (
-              <div className="login-error" style={{ marginBottom: 16, marginTop: 0 }}>
+              <div
+                style={{
+                  marginBottom: 20,
+                  padding: "14px 20px",
+                  borderRadius: 12,
+                  background: "#fef2f2",
+                  color: "#dc2626",
+                  border: "1px solid #fecaca",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  justifyContent: "center",
+                }}
+              >
                 <svg
-                  width="16"
-                  height="16"
+                  width="18"
+                  height="18"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -578,10 +659,25 @@ export default function AppLauncherPage() {
               </div>
             )}
             {activateSuccess && (
-              <div className="login-status" style={{ marginBottom: 16, marginTop: 0 }}>
+              <div
+                style={{
+                  marginBottom: 20,
+                  padding: "14px 20px",
+                  borderRadius: 12,
+                  background: "#f0fdf4",
+                  color: "#16a34a",
+                  border: "1px solid #bbf7d0",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  justifyContent: "center",
+                }}
+              >
                 <svg
-                  width="16"
-                  height="16"
+                  width="18"
+                  height="18"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -594,67 +690,79 @@ export default function AppLauncherPage() {
               </div>
             )}
 
-            <div className="activate-form">
-              <div className="input-group">
-                <input
-                  type="text"
-                  value={activationCode}
-                  onChange={(e) =>
-                    setActivationCode(e.target.value.toUpperCase())
-                  }
-                  placeholder="XXXX – XXXX – XXXX – XXXX"
-                  maxLength={19}
-                  className="activate-code-input"
-                  onKeyDown={(e) => e.key === "Enter" && handleActivate()}
-                />
-              </div>
-
-              <button
-                className="login-btn"
-                onClick={handleActivate}
-                disabled={activating || activationCode.trim().length < 10}
-              >
-                {activating ? (
-                  <>
-                    <span className="spinner"></span>
-                    <span>Activating...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Activate</span>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <line x1="5" y1="12" x2="19" y2="12" />
-                      <polyline points="12 5 19 12 12 19" />
-                    </svg>
-                  </>
-                )}
-              </button>
+            <div style={{ marginBottom: 20 }}>
+              <input
+                type="text"
+                value={activationCode}
+                onChange={(e) =>
+                  setActivationCode(e.target.value.toUpperCase())
+                }
+                placeholder="XXXX – XXXX – XXXX – XXXX"
+                maxLength={19}
+                style={{
+                  width: "100%",
+                  padding: "16px 20px",
+                  fontSize: 20,
+                  fontFamily: "'Courier New', monospace",
+                  letterSpacing: 4,
+                  textAlign: "center",
+                  borderRadius: 14,
+                  border: "2px solid #e2e8f0",
+                  outline: "none",
+                  fontWeight: 800,
+                  background: "#f8fafc",
+                  color: "#1e1b4b",
+                  transition: "all 0.2s ease",
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = "#6366f1";
+                  e.target.style.boxShadow = "0 0 0 4px rgba(99,102,241,0.15)";
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = "#e2e8f0";
+                  e.target.style.boxShadow = "none";
+                }}
+                onKeyDown={(e) => e.key === "Enter" && handleActivate()}
+              />
             </div>
 
-            <p style={{
-              color: "rgba(255,255,255,0.45)",
-              fontSize: 13,
-              marginTop: 24,
-              fontWeight: 500,
-            }}>
+            <button
+              onClick={handleActivate}
+              disabled={activating || activationCode.trim().length < 10}
+              style={{
+                width: "100%",
+                padding: "16px 0",
+                fontSize: 17,
+                fontWeight: 800,
+                borderRadius: 14,
+                border: "none",
+                cursor: "pointer",
+                color: "white",
+                background:
+                  activating || activationCode.trim().length < 10
+                    ? "linear-gradient(135deg, #94a3b8, #94a3b8)"
+                    : "linear-gradient(135deg, #4f46e5, #7c3aed)",
+                boxShadow:
+                  activating || activationCode.trim().length < 10
+                    ? "none"
+                    : "0 8px 24px rgba(79,70,229,0.35)",
+                transition: "all 0.2s ease",
+                letterSpacing: "0.5px",
+              }}
+            >
+              {activating ? "Activating..." : "Activate"}
+            </button>
+
+            <p
+              style={{
+                color: "#94a3b8",
+                fontSize: 13,
+                marginTop: 28,
+                fontWeight: 500,
+              }}
+            >
               Don't have a code? Contact your company administrator.
             </p>
-          </div>
-
-          <div className="login-card-footer">
-            <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 12 }}>
-              Logged in as <strong>{displayName}</strong>
-            </span>
           </div>
         </div>
       </div>
@@ -665,15 +773,6 @@ export default function AppLauncherPage() {
     <div className="app-launcher-page">
       {/* Header */}
       <header className="app-launcher-header">
-        <div className="app-launcher-logo">
-          <img
-            src="/365.png"
-            alt="365 Fiscal"
-            onError={(e) => {
-              e.currentTarget.style.display = "none";
-            }}
-          />
-        </div>
         <div className="app-launcher-user">
           <div className="user-menu">
             <button
@@ -684,9 +783,7 @@ export default function AppLauncherPage() {
               aria-expanded={userMenuOpen}
               title="User menu"
             >
-              <div className="user-avatar-small">
-                {displayName.charAt(0).toUpperCase()}
-              </div>
+              <div className="user-avatar-small">{initials}</div>
             </button>
             {userMenuOpen && (
               <div className="user-menu-panel" role="menu">
@@ -727,24 +824,6 @@ export default function AppLauncherPage() {
           ))}
         </div>
       </div>
-
-      {/* Footer */}
-      <footer className="app-launcher-footer">
-        {/* <img 
-          className="footer-logo" 
-          src="/geenet.trim.png" 
-          alt="GeeNet" 
-          onError={(e) => { e.currentTarget.style.display = 'none'; }}
-        /> */}
-        Powered by{" "}
-        <a
-          href="https://www.geenet.com"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          GeeNet
-        </a>
-      </footer>
     </div>
   );
 }
