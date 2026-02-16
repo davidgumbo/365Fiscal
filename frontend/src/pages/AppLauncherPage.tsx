@@ -663,6 +663,7 @@ export default function AppLauncherPage() {
                 <a
                   style={{
                     textDecoration: "underline",
+                    color: "var(--blue-50)",
                   }}
                   target="_blank"
                   rel="noreferrer"

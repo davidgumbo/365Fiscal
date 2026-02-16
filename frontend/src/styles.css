@@ -2367,13 +2367,11 @@ thead.table-light th {
 }
 
 .login-card h1 {
-  font-family: "Fraunces", serif;
   margin: 0 0 8px 0;
   color: var(--slate-800);
 }
 
 .login-card-title {
-  font-family: "Fraunces", serif;
   font-size: 26px;
   font-weight: 600;
   margin: 0;
@@ -6325,7 +6323,7 @@ tr:hover .o-quick-actions {
   content: "";
   position: absolute;
   inset: 0;
-  background-image: url(./assets/bg.jpg);
+  /* background-image: url(./assets/bg.jpg); */
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center center;
