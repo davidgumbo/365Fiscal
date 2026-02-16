@@ -217,7 +217,10 @@ export default function LoginPage() {
 
         <div className="login-card-footer">
           <span>
-            Powered by <strong>Geenet</strong>
+            Powered by{" "}
+            <strong>
+              <a href="geenet.co.zw">Geenet</a>
+            </strong>
           </span>
         </div>
       </div>
