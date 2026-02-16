@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import { useMe } from "../hooks/useMe";
+import { getInitials } from "../hooks/getInitials";
 import { apiFetch } from "../api";
+
+import { getInitials } from "../hooks/getInitials";
 
 type ActivationStatus = {
   activated: boolean;
@@ -427,6 +430,7 @@ export default function AppLauncherPage() {
   const isAdmin = Boolean(me?.is_admin);
   const apps = isAdmin ? adminApps : portalApps;
   const displayName = me?.email ?? "User";
+  const initials = getInitials(displayName);
 
   // Portal activation gate
   const [activationStatus, setActivationStatus] = useState<
@@ -437,7 +441,7 @@ export default function AppLauncherPage() {
   const [activateError, setActivateError] = useState("");
   const [activateSuccess, setActivateSuccess] = useState("");
   const [activating, setActivating] = useState(false);
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!isAdmin && me) {
@@ -512,16 +516,14 @@ export default function AppLauncherPage() {
               <button
                 type="button"
                 className="user-menu-trigger"
-                onClick={() => setIsUserMenuOpen((prev) => !prev)}
+                onClick={() => setUserMenuOpen((prev) => !prev)}
                 aria-haspopup="menu"
-                aria-expanded={isUserMenuOpen}
+                aria-expanded={userMenuOpen}
                 title="User menu"
               >
-                <div className="user-avatar-small">
-                  {displayName.charAt(0).toUpperCase()}
-                </div>
+                <div className="user-avatar-small">{initials}</div>
               </button>
-              {isUserMenuOpen && (
+              {userMenuOpen && (
                 <div className="user-menu-panel" role="menu">
                   <div className="user-menu-title">{displayName}</div>
                   <button
@@ -778,16 +780,14 @@ export default function AppLauncherPage() {
             <button
               type="button"
               className="user-menu-trigger"
-              onClick={() => setIsUserMenuOpen((prev) => !prev)}
+              onClick={() => setUserMenuOpen((prev) => !prev)}
               aria-haspopup="menu"
-              aria-expanded={isUserMenuOpen}
+              aria-expanded={userMenuOpen}
               title="User menu"
             >
-              <div className="user-avatar-small">
-                {displayName.charAt(0).toUpperCase()}
-              </div>
+              <div className="user-avatar-small">{initials}</div>
             </button>
-            {isUserMenuOpen && (
+            {userMenuOpen && (
               <div className="user-menu-panel" role="menu">
                 <div className="user-menu-title">{displayName}</div>
                 <button
