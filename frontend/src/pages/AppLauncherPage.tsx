@@ -770,17 +770,8 @@ export default function AppLauncherPage() {
     <div className="app-launcher-page">
       {/* Header */}
       <header className="app-launcher-header">
-        <div className="app-launcher-logo">
-          <img
-            src="/365.png"
-            alt="365 Fiscal"
-            onError={(e) => {
-              e.currentTarget.style.display = "none";
-            }}
-          />
-        </div>
         <div className="app-launcher-user">
-          <span className="user-name">{displayName}</span>
+          {/* <span className="user-name">{displayName}</span> */}
           <div className="user-avatar-small">
             {displayName.charAt(0).toUpperCase()}
           </div>
@@ -831,24 +822,6 @@ export default function AppLauncherPage() {
           ))}
         </div>
       </div>
-
-      {/* Footer */}
-      <footer className="app-launcher-footer">
-        {/* <img 
-          className="footer-logo" 
-          src="/geenet.trim.png" 
-          alt="GeeNet" 
-          onError={(e) => { e.currentTarget.style.display = 'none'; }}
-        /> */}
-        Powered by{" "}
-        <a
-          href="https://www.geenet.com"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          GeeNet
-        </a>
-      </footer>
     </div>
   );
 }

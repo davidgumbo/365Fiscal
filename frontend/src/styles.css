@@ -1943,10 +1943,6 @@ thead.table-light th {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-image: url('/bg.jpg');
-  background-size: cover;
-  background-position: center center;
-  background-repeat: no-repeat;
   padding: 24px;
   position: fixed;
   top: 0;
@@ -1957,19 +1953,32 @@ thead.table-light th {
   box-sizing: border-box;
 }
 
+.login-shell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url('/bg.jpg');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  filter: blur(6px);
+  transform: scale(1.02);
+  z-index: 0;
+}
+
 .login-shell::before {
   content: "";
   position: absolute;
   inset: 0;
   background: rgba(15, 23, 42, 0.55);
-  z-index: 0;
+  z-index: 1;
 }
 
 .login-centered {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1;
+  z-index: 2;
 }
 
 .login-split {
@@ -1980,7 +1989,7 @@ thead.table-light th {
   align-items: center;
   animation: login-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
   position: relative;
-  z-index: 1;
+  z-index: 2;
 }
 
 @media (max-width: 900px) {
@@ -6309,7 +6318,7 @@ tr:hover .o-quick-actions {
   min-height: 100vh;
   background: var(--zinc-50);
   background: linear-gradient(155deg, rgba(252, 252, 252, 1) 0%, rgba(2, 20, 51, 1) 100%);
-  background-image: url(./assets/app-launcher-bg.webp) ;
+  background-image: url(./assets/bg.jpg) ;
   background-repeat: no-repeat;
   background-size: cover;
   flex-direction: column;
