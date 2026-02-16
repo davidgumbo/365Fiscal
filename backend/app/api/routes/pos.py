@@ -29,9 +29,11 @@ from app.models.company_settings import CompanySettings
 from app.models.stock_quant import StockQuant
 from app.models.stock_move import StockMove
 from app.models.audit_log import AuditAction, ResourceType
+from app.models.pos_employee import POSEmployee
 from app.schemas.pos import (
     POSSessionOpen, POSSessionClose, POSSessionRead, POSSessionSummary,
     POSOrderCreate, POSOrderRead, POSOrderRefund,
+    POSEmployeeCreate, POSEmployeeUpdate, POSEmployeeRead,
 )
 from app.services.fdms import submit_invoice
 
@@ -818,3 +820,123 @@ def pos_company_info(
         "vat": co.vat,
         "logo_data": logo_data,
     }
+
+
+# ── POS Employee Management ────────────────────────────────────────────────
+
+@router.get("/employees", response_model=List[POSEmployeeRead])
+def list_pos_employees(
+    company_id: int,
+    include_inactive: bool = False,
+    db: Session = Depends(get_db),
+    user=Depends(require_portal_user),
+):
+    """List POS employees for a company."""
+    ensure_company_access(db, user, company_id)
+    q = db.query(POSEmployee).filter(POSEmployee.company_id == company_id)
+    if not include_inactive:
+        q = q.filter(POSEmployee.is_active == True)
+    return q.order_by(POSEmployee.sort_order, POSEmployee.name).all()
+
+
+@router.post("/employees", response_model=POSEmployeeRead)
+def create_pos_employee(
+    payload: POSEmployeeCreate,
+    db: Session = Depends(get_db),
+    user=Depends(require_portal_user),
+):
+    """Create a new POS employee."""
+    ensure_company_access(db, user, payload.company_id)
+    # Check PIN uniqueness within company
+    if payload.pin:
+        existing = db.query(POSEmployee).filter(
+            POSEmployee.company_id == payload.company_id,
+            POSEmployee.pin == payload.pin,
+            POSEmployee.is_active == True,
+        ).first()
+        if existing:
+            raise HTTPException(400, f"PIN already used by employee: {existing.name}")
+    emp = POSEmployee(**payload.dict())
+    db.add(emp)
+    db.commit()
+    db.refresh(emp)
+    return emp
+
+
+@router.get("/employees/{employee_id}", response_model=POSEmployeeRead)
+def get_pos_employee(
+    employee_id: int,
+    db: Session = Depends(get_db),
+    user=Depends(require_portal_user),
+):
+    """Get a POS employee."""
+    emp = db.query(POSEmployee).filter(POSEmployee.id == employee_id).first()
+    if not emp:
+        raise HTTPException(404, "POS employee not found")
+    ensure_company_access(db, user, emp.company_id)
+    return emp
+
+
+@router.put("/employees/{employee_id}", response_model=POSEmployeeRead)
+def update_pos_employee(
+    employee_id: int,
+    payload: POSEmployeeUpdate,
+    db: Session = Depends(get_db),
+    user=Depends(require_portal_user),
+):
+    """Update a POS employee."""
+    emp = db.query(POSEmployee).filter(POSEmployee.id == employee_id).first()
+    if not emp:
+        raise HTTPException(404, "POS employee not found")
+    ensure_company_access(db, user, emp.company_id)
+    # Check PIN uniqueness if changed
+    update_data = payload.dict(exclude_unset=True)
+    if "pin" in update_data and update_data["pin"]:
+        existing = db.query(POSEmployee).filter(
+            POSEmployee.company_id == emp.company_id,
+            POSEmployee.pin == update_data["pin"],
+            POSEmployee.is_active == True,
+            POSEmployee.id != employee_id,
+        ).first()
+        if existing:
+            raise HTTPException(400, f"PIN already used by employee: {existing.name}")
+    for field, value in update_data.items():
+        setattr(emp, field, value)
+    db.commit()
+    db.refresh(emp)
+    return emp
+
+
+@router.delete("/employees/{employee_id}")
+def delete_pos_employee(
+    employee_id: int,
+    db: Session = Depends(get_db),
+    user=Depends(require_portal_user),
+):
+    """Delete a POS employee."""
+    emp = db.query(POSEmployee).filter(POSEmployee.id == employee_id).first()
+    if not emp:
+        raise HTTPException(404, "POS employee not found")
+    ensure_company_access(db, user, emp.company_id)
+    db.delete(emp)
+    db.commit()
+    return {"detail": "Employee deleted"}
+
+
+@router.post("/employees/verify-pin")
+def verify_pos_pin(
+    company_id: int,
+    pin: str,
+    db: Session = Depends(get_db),
+    user=Depends(require_portal_user),
+):
+    """Verify a POS employee PIN and return employee info."""
+    ensure_company_access(db, user, company_id)
+    emp = db.query(POSEmployee).filter(
+        POSEmployee.company_id == company_id,
+        POSEmployee.pin == pin,
+        POSEmployee.is_active == True,
+    ).first()
+    if not emp:
+        raise HTTPException(401, "Invalid PIN")
+    return {"id": emp.id, "name": emp.name, "role": emp.role}

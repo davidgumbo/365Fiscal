@@ -227,16 +227,17 @@ def delete_payment(
 @router.get("/methods/list", response_model=List[PaymentMethodRead])
 def list_payment_methods(
     company_id: int,
+    include_inactive: bool = False,
     db: Session = Depends(get_db),
     user=Depends(require_portal_user),
 ):
     """List payment methods for a company."""
     ensure_company_access(db, user, company_id)
     
-    return db.query(PaymentMethod).filter(
-        PaymentMethod.company_id == company_id,
-        PaymentMethod.is_active == True
-    ).order_by(PaymentMethod.sort_order).all()
+    q = db.query(PaymentMethod).filter(PaymentMethod.company_id == company_id)
+    if not include_inactive:
+        q = q.filter(PaymentMethod.is_active == True)
+    return q.order_by(PaymentMethod.sort_order).all()
 
 
 @router.post("/methods", response_model=PaymentMethodRead)

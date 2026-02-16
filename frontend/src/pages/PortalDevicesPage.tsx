@@ -71,6 +71,39 @@ function formatDate(iso: string) {
   }
 }
 
+/** Parse FDMS / API errors into a clean human-readable string. */
+function parseFdmsError(raw: string): { message: string; code: string } {
+  // Try to parse as JSON first (FastAPI wraps errors in {"detail": "..."})
+  let text = raw;
+  try {
+    const outer = JSON.parse(raw);
+    if (typeof outer === "object" && outer.detail) {
+      text = String(outer.detail);
+    }
+  } catch { /* not JSON */ }
+
+  // Check if the detail itself contains an FDMS-style bracketed code: [FISC01] message
+  const bracketMatch = text.match(/^\[([A-Z0-9]+)\]\s*(.+)$/i);
+  if (bracketMatch) {
+    return { code: bracketMatch[1], message: bracketMatch[2] };
+  }
+
+  // Check for embedded JSON in the string (legacy: "FDMS error 400: {...}")
+  const jsonIdx = text.indexOf("{");
+  if (jsonIdx >= 0) {
+    try {
+      const inner = JSON.parse(text.slice(jsonIdx));
+      const msg = inner.message || inner.detail || "";
+      const code = inner.errorCode || "";
+      if (msg) return { code, message: msg };
+    } catch { /* not parseable */ }
+  }
+
+  // Strip the "FDMS error NNN: " prefix if present
+  const stripped = text.replace(/^FDMS error \d+:\s*/i, "");
+  return { code: "", message: stripped || text || "Unknown error" };
+}
+
 /* ------------------------------------------------------------------ */
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
@@ -81,7 +114,7 @@ export default function PortalDevicesPage() {
   const [tab, setTab] = useState<"days" | "logs">("days");
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string; code?: string } | null>(null);
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [logsLoading, setLogsLoading] = useState(false);
   const [statusResult, setStatusResult] = useState<DeviceStatusResult | null>(null);
@@ -205,7 +238,8 @@ export default function PortalDevicesPage() {
       await fetchDeviceStatus(selectedDevice.id);
       await fetchDeviceLogs(selectedDevice.id);
     } catch (err) {
-      setMessage({ type: "error", text: "Failed to open day: " + (err instanceof Error ? err.message : String(err)) });
+      const parsed = parseFdmsError(err instanceof Error ? err.message : String(err));
+      setMessage({ type: "error", text: parsed.message, code: parsed.code });
     } finally {
       setActionLoading(null);
     }
@@ -222,7 +256,8 @@ export default function PortalDevicesPage() {
       await fetchDeviceStatus(selectedDevice.id);
       await fetchDeviceLogs(selectedDevice.id);
     } catch (err) {
-      setMessage({ type: "error", text: "Failed to close day: " + (err instanceof Error ? err.message : String(err)) });
+      const parsed = parseFdmsError(err instanceof Error ? err.message : String(err));
+      setMessage({ type: "error", text: parsed.message, code: parsed.code });
     } finally {
       setActionLoading(null);
     }
@@ -234,8 +269,9 @@ export default function PortalDevicesPage() {
     try {
       await fetchDeviceStatus(selectedDevice.id);
       setMessage({ type: "success", text: "Status refreshed" });
-    } catch {
-      setMessage({ type: "error", text: "Failed to refresh status" });
+    } catch (err) {
+      const parsed = parseFdmsError(err instanceof Error ? err.message : String(err));
+      setMessage({ type: "error", text: parsed.message, code: parsed.code });
     } finally {
       setActionLoading(null);
     }
@@ -374,8 +410,35 @@ export default function PortalDevicesPage() {
             className={`portal-device-msg ${message.type}`}
             style={{ marginBottom: 12 }}
           >
-            {message.text}
-            <button onClick={() => setMessage(null)} style={{ background: "none", border: "none", cursor: "pointer", marginLeft: 8, fontWeight: 700 }}>✕</button>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}>
+              {message.type === "error" && (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" />
+                </svg>
+              )}
+              {message.type === "success" && (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
+                </svg>
+              )}
+              {message.code && (
+                <span style={{
+                  display: "inline-block",
+                  padding: "2px 8px",
+                  borderRadius: 6,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: 0.5,
+                  background: message.type === "error" ? "#fecaca" : "#bbf7d0",
+                  color: message.type === "error" ? "var(--red-700, #b91c1c)" : "var(--green-700, #15803d)",
+                  flexShrink: 0,
+                }}>
+                  {message.code}
+                </span>
+              )}
+              <span style={{ wordBreak: "break-word" }}>{message.text}</span>
+            </div>
+            <button onClick={() => setMessage(null)} style={{ background: "none", border: "none", cursor: "pointer", marginLeft: 8, fontWeight: 700, flexShrink: 0 }}>✕</button>
           </div>
         )}
 
@@ -474,34 +537,62 @@ export default function PortalDevicesPage() {
                     <th>Time</th>
                     <th>Action</th>
                     <th>User</th>
-                    <th>Summary</th>
+                    <th>Details</th>
                     <th>Status</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {logs.map((log) => (
-                    <tr key={log.id}>
-                      <td style={{ whiteSpace: "nowrap", fontSize: 13 }}>{formatDate(log.action_at)}</td>
-                      <td>
-                        <span className="portal-log-action">{log.action.replace(/_/g, " ")}</span>
-                      </td>
-                      <td style={{ fontSize: 13 }}>{log.user_email || "—"}</td>
-                      <td style={{ fontSize: 13, maxWidth: 300, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {log.changes_summary || log.resource_reference || "—"}
-                      </td>
-                      <td>
-                        <span
-                          className="portal-device-status-badge"
-                          style={{
-                            background: log.status === "success" ? "#dcfce7" : log.status === "error" ? "#fef2f2" : "#fefce8",
-                            color: log.status === "success" ? "var(--green-600)" : log.status === "error" ? "var(--red-600)" : "var(--amber-500)",
-                          }}
-                        >
-                          {log.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                  {logs.map((log) => {
+                    // Parse error_message for clean display
+                    const errParsed = log.error_message ? parseFdmsError(log.error_message) : null;
+                    const summary = log.changes_summary || log.resource_reference || "";
+                    return (
+                      <tr key={log.id}>
+                        <td style={{ whiteSpace: "nowrap", fontSize: 13 }}>{formatDate(log.action_at)}</td>
+                        <td>
+                          <span className="portal-log-action">{log.action.replace(/_/g, " ")}</span>
+                        </td>
+                        <td style={{ fontSize: 13 }}>{log.user_email || "—"}</td>
+                        <td style={{ fontSize: 13, maxWidth: 400 }}>
+                          {log.status === "error" && errParsed ? (
+                            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                              {errParsed.code && (
+                                <span style={{
+                                  display: "inline-block",
+                                  width: "fit-content",
+                                  padding: "1px 6px",
+                                  borderRadius: 4,
+                                  fontSize: 10,
+                                  fontWeight: 700,
+                                  background: "#fecaca",
+                                  color: "#b91c1c",
+                                  letterSpacing: 0.5,
+                                }}>
+                                  {errParsed.code}
+                                </span>
+                              )}
+                              <span style={{ wordBreak: "break-word", color: "var(--red-600)" }}>
+                                {errParsed.message}
+                              </span>
+                            </div>
+                          ) : (
+                            <span style={{ wordBreak: "break-word" }}>{summary || "—"}</span>
+                          )}
+                        </td>
+                        <td>
+                          <span
+                            className="portal-device-status-badge"
+                            style={{
+                              background: log.status === "success" ? "#dcfce7" : log.status === "error" ? "#fef2f2" : "#fefce8",
+                              color: log.status === "success" ? "var(--green-600)" : log.status === "error" ? "var(--red-600)" : "var(--amber-500)",
+                            }}
+                          >
+                            {log.status}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             )}

@@ -1,6 +1,6 @@
 """POS schemas for API serialization."""
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from typing import Optional, List
 
 from app.schemas.common import ORMBase
@@ -121,3 +121,53 @@ class POSSessionSummary(BaseModel):
     orders: List[POSOrderRead] = []
     expected_cash: float = 0
     difference: float = 0
+
+
+# --- POS Employee ---
+class POSEmployeeCreate(BaseModel):
+    company_id: int
+    user_id: int | None = None
+    name: str
+    email: str = ""
+    pin: str = ""
+    role: str = "cashier"
+    is_active: bool = True
+    sort_order: int = 0
+
+    @field_validator("pin")
+    @classmethod
+    def validate_pin(cls, v: str) -> str:
+        if v and (not v.isdigit() or len(v) < 4 or len(v) > 6):
+            raise ValueError("PIN must be 4-6 digits")
+        return v
+
+
+class POSEmployeeUpdate(BaseModel):
+    name: str | None = None
+    email: str | None = None
+    pin: str | None = None
+    role: str | None = None
+    is_active: bool | None = None
+    user_id: int | None = None
+    sort_order: int | None = None
+
+    @field_validator("pin")
+    @classmethod
+    def validate_pin(cls, v: str | None) -> str | None:
+        if v is not None and v != "" and (not v.isdigit() or len(v) < 4 or len(v) > 6):
+            raise ValueError("PIN must be 4-6 digits")
+        return v
+
+
+class POSEmployeeRead(ORMBase):
+    id: int
+    company_id: int
+    user_id: int | None = None
+    name: str
+    email: str
+    pin: str
+    role: str
+    is_active: bool
+    sort_order: int
+    created_at: datetime
+    updated_at: datetime

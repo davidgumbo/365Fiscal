@@ -91,7 +91,23 @@ def _call_fdms(
             timeout=settings.fdms_timeout_seconds,
         )
         if not resp.ok:
-            raise ValueError(f"FDMS error {resp.status_code}: {resp.text}")
+            # Try to extract a clean error message from FDMS JSON response
+            err_msg = ""
+            err_code = ""
+            try:
+                err_data = resp.json() if resp.text else {}
+                err_msg = err_data.get("message", "") or ""
+                err_code = err_data.get("errorCode", "") or ""
+            except Exception:
+                pass
+            if err_msg and err_code:
+                raise ValueError(f"[{err_code}] {err_msg}")
+            elif err_msg:
+                raise ValueError(err_msg)
+            elif err_code:
+                raise ValueError(f"FDMS error code: {err_code}")
+            else:
+                raise ValueError(f"FDMS error {resp.status_code}: {resp.text}")
         if resp.text:
             return resp.json()
         return {}

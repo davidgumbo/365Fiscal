@@ -87,6 +87,29 @@ type CompanySettings = {
   document_watermark_opacity: string;
 };
 
+type POSEmployeeItem = {
+  id: number;
+  company_id: number;
+  user_id: number | null;
+  name: string;
+  email: string;
+  pin: string;
+  role: string;
+  is_active: boolean;
+  sort_order: number;
+};
+
+type POSPaymentMethodItem = {
+  id: number;
+  company_id: number;
+  name: string;
+  code: string;
+  is_active: boolean;
+  account_info: string;
+  is_default: boolean;
+  sort_order: number;
+};
+
 // Icon components for professional actions
 const PlusIcon = () => (
   <svg
@@ -244,6 +267,15 @@ export default function SettingsPage() {
   const [subStatuses, setSubStatuses] = useState<SubStatus[]>([]);
   const [subLoading, setSubLoading] = useState(false);
 
+  // POS Settings state
+  const [posEmployees, setPosEmployees] = useState<POSEmployeeItem[]>([]);
+  const [posPaymentMethods, setPosPaymentMethods] = useState<POSPaymentMethodItem[]>([]);
+  const [posEmpForm, setPosEmpForm] = useState<Partial<POSEmployeeItem> & { name: string; pin: string; role: string }>({ name: "", pin: "", role: "cashier", email: "" });
+  const [posEmpEditing, setPosEmpEditing] = useState<number | null>(null);
+  const [posPmForm, setPosPmForm] = useState<{ name: string; code: string }>({ name: "", code: "cash" });
+  const [posPmEditing, setPosPmEditing] = useState<number | null>(null);
+  const [posError, setPosError] = useState<string | null>(null);
+
   // Default to General tab for all users; admins will also see Users tab
   useEffect(() => {
     setActiveTopTab("general");
@@ -333,6 +365,78 @@ export default function SettingsPage() {
       setPullError(err.message || "Failed to pull taxes from FDMS");
     } finally {
       setPulling(false);
+    }
+  };
+
+  // POS data loaders
+  const loadPosEmployees = async (cid: number) => {
+    try {
+      const data = await apiFetch<POSEmployeeItem[]>(`/pos/employees?company_id=${cid}&include_inactive=true`);
+      setPosEmployees(data);
+    } catch { setPosEmployees([]); }
+  };
+
+  const loadPosPaymentMethods = async (cid: number) => {
+    try {
+      const data = await apiFetch<POSPaymentMethodItem[]>(`/payments/methods/list?company_id=${cid}&include_inactive=true`);
+      setPosPaymentMethods(data);
+    } catch { setPosPaymentMethods([]); }
+  };
+
+  const savePosEmployee = async () => {
+    if (!companyId || !posEmpForm.name) return;
+    setPosError(null);
+    try {
+      if (posEmpEditing) {
+        await apiFetch(`/pos/employees/${posEmpEditing}`, {
+          method: "PUT",
+          body: JSON.stringify(posEmpForm),
+        });
+        setStatus("Employee updated");
+      } else {
+        await apiFetch("/pos/employees", {
+          method: "POST",
+          body: JSON.stringify({ ...posEmpForm, company_id: companyId }),
+        });
+        setStatus("Employee added");
+      }
+      setPosEmpForm({ name: "", pin: "", role: "cashier", email: "" });
+      setPosEmpEditing(null);
+      loadPosEmployees(companyId);
+    } catch (err: any) {
+      setPosError(err.message || "Failed to save employee");
+    }
+  };
+
+  const deletePosEmployee = async (id: number) => {
+    if (!companyId) return;
+    await apiFetch(`/pos/employees/${id}`, { method: "DELETE" });
+    setStatus("Employee deleted");
+    loadPosEmployees(companyId);
+  };
+
+  const savePosPaymentMethod = async () => {
+    if (!companyId || !posPmForm.name) return;
+    setPosError(null);
+    try {
+      if (posPmEditing) {
+        await apiFetch(`/payments/methods/${posPmEditing}`, {
+          method: "PUT",
+          body: JSON.stringify(posPmForm),
+        });
+        setStatus("Payment method updated");
+      } else {
+        await apiFetch("/payments/methods", {
+          method: "POST",
+          body: JSON.stringify({ ...posPmForm, company_id: companyId }),
+        });
+        setStatus("Payment method added");
+      }
+      setPosPmForm({ name: "", code: "cash" });
+      setPosPmEditing(null);
+      loadPosPaymentMethods(companyId);
+    } catch (err: any) {
+      setPosError(err.message || "Failed to save payment method");
     }
   };
 
@@ -768,6 +872,8 @@ export default function SettingsPage() {
       loadTaxes(companyId);
       loadCompanySettings(companyId);
       loadDevices(companyId);
+      loadPosEmployees(companyId);
+      loadPosPaymentMethods(companyId);
     }
   }, [companyId]);
 
@@ -959,6 +1065,16 @@ export default function SettingsPage() {
             }}
           >
             ZIMRA Taxes
+          </button>
+          <div className="settings-sidebar-title">Point of Sale</div>
+          <button
+            className={`settings-sidebar-item ${activeSection === "pos-settings" ? "active" : ""}`}
+            onClick={() => {
+              setActiveTopTab("general");
+              setActiveSection("pos-settings");
+            }}
+          >
+            POS Configuration
           </button>
           <div className="settings-sidebar-title">Users &amp; Companies</div>
           <button
@@ -1424,6 +1540,310 @@ export default function SettingsPage() {
                   >
                     <PlusIcon /> Add Tax Manually
                   </button>
+                </section>
+              )}
+
+              {/* POS Configuration */}
+              {activeSection === "pos-settings" && (
+                <section id="pos-settings" className="settings-section">
+                  <div className="settings-section-header">
+                    <h4>Point of Sale Configuration</h4>
+                  </div>
+                  <p className="settings-section-desc">
+                    Manage POS employees, login PINs, and payment methods for your point of sale.
+                  </p>
+
+                  {posError && (
+                    <div className="alert alert-danger" style={{ marginBottom: 12 }}>
+                      {posError}
+                      <button onClick={() => setPosError(null)} style={{ float: "right", border: "none", background: "transparent", cursor: "pointer" }}>×</button>
+                    </div>
+                  )}
+
+                  {/* ── POS Employees ── */}
+                  <div style={{ marginBottom: 32 }}>
+                    <h5 style={{ marginBottom: 8, fontSize: 15, fontWeight: 700, color: "var(--slate-700)" }}>
+                      Employees &amp; Login PINs
+                    </h5>
+                    <p style={{ fontSize: 13, color: "var(--slate-500)", marginBottom: 12 }}>
+                      Add cashiers and managers who can operate the POS. Each employee needs a unique 4-6 digit PIN to log in.
+                    </p>
+
+                    <div style={{ display: "flex", gap: 8, alignItems: "flex-end", marginBottom: 12, flexWrap: "wrap" }}>
+                      <label className="input" style={{ flex: 2, minWidth: 160 }}>
+                        Name
+                        <input
+                          value={posEmpForm.name}
+                          onChange={(e) => setPosEmpForm({ ...posEmpForm, name: e.target.value })}
+                          placeholder="Employee name"
+                        />
+                      </label>
+                      <label className="input" style={{ flex: 2, minWidth: 160 }}>
+                        Email
+                        <input
+                          type="email"
+                          value={posEmpForm.email || ""}
+                          onChange={(e) => setPosEmpForm({ ...posEmpForm, email: e.target.value })}
+                          placeholder="email@example.com"
+                        />
+                      </label>
+                      <label className="input" style={{ flex: 1, minWidth: 100 }}>
+                        PIN
+                        <input
+                          type="password"
+                          value={posEmpForm.pin}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/\D/g, "").slice(0, 6);
+                            setPosEmpForm({ ...posEmpForm, pin: val });
+                          }}
+                          placeholder="4-6 digits"
+                          maxLength={6}
+                        />
+                      </label>
+                      <label className="input" style={{ flex: 1, minWidth: 120 }}>
+                        Role
+                        <select
+                          value={posEmpForm.role}
+                          onChange={(e) => setPosEmpForm({ ...posEmpForm, role: e.target.value })}
+                        >
+                          <option value="cashier">Cashier</option>
+                          <option value="manager">Manager</option>
+                          <option value="admin">Admin</option>
+                        </select>
+                      </label>
+                      <button
+                        className="primary"
+                        onClick={savePosEmployee}
+                        disabled={!posEmpForm.name || !posEmpForm.pin || posEmpForm.pin.length < 4}
+                        style={{ height: 38 }}
+                      >
+                        {posEmpEditing ? "Update" : <><PlusIcon /> Add</>}
+                      </button>
+                      {posEmpEditing && (
+                        <button
+                          className="outline"
+                          onClick={() => { setPosEmpEditing(null); setPosEmpForm({ name: "", pin: "", role: "cashier", email: "" }); }}
+                          style={{ height: 38 }}
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+
+                    {posEmployees.length > 0 ? (
+                      <table className="table" style={{ marginTop: 0 }}>
+                        <thead>
+                          <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>PIN</th>
+                            <th>Role</th>
+                            <th>Active</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {posEmployees.map((emp) => (
+                            <tr key={emp.id}>
+                              <td style={{ fontWeight: 600 }}>{emp.name}</td>
+                              <td>{emp.email || "—"}</td>
+                              <td>
+                                <code style={{ background: "var(--slate-100)", padding: "2px 8px", borderRadius: 4, fontSize: 13 }}>
+                                  {"•".repeat(emp.pin.length || 4)}
+                                </code>
+                              </td>
+                              <td>
+                                <span style={{
+                                  display: "inline-block", padding: "2px 10px", borderRadius: 20, fontSize: 11,
+                                  fontWeight: 700, textTransform: "capitalize",
+                                  color: emp.role === "admin" ? "var(--red-500)" : emp.role === "manager" ? "var(--amber-600)" : "var(--blue-600)",
+                                  background: emp.role === "admin" ? "var(--red-50)" : emp.role === "manager" ? "var(--amber-50)" : "var(--blue-50)",
+                                }}>
+                                  {emp.role}
+                                </span>
+                              </td>
+                              <td>
+                                <label className="switch">
+                                  <input
+                                    type="checkbox"
+                                    checked={emp.is_active}
+                                    onChange={async (e) => {
+                                      await apiFetch(`/pos/employees/${emp.id}`, {
+                                        method: "PUT",
+                                        body: JSON.stringify({ is_active: e.target.checked }),
+                                      });
+                                      if (companyId) loadPosEmployees(companyId);
+                                    }}
+                                  />
+                                  <span className="slider" />
+                                </label>
+                              </td>
+                              <td>
+                                <div style={{ display: "flex", gap: 4 }}>
+                                  <button
+                                    className="icon-btn"
+                                    title="Edit"
+                                    onClick={() => {
+                                      setPosEmpEditing(emp.id);
+                                      setPosEmpForm({ name: emp.name, email: emp.email, pin: emp.pin, role: emp.role });
+                                    }}
+                                  >
+                                    <EditIcon />
+                                  </button>
+                                  <button
+                                    className="icon-btn"
+                                    title="Delete"
+                                    onClick={() => deletePosEmployee(emp.id)}
+                                  >
+                                    <TrashIcon />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <div style={{ color: "var(--slate-400)", fontSize: 13, padding: "12px 0" }}>
+                        No POS employees configured yet. Add your first cashier above.
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ── Payment Methods ── */}
+                  <div>
+                    <h5 style={{ marginBottom: 8, fontSize: 15, fontWeight: 700, color: "var(--slate-700)" }}>
+                      Payment Methods
+                    </h5>
+                    <p style={{ fontSize: 13, color: "var(--slate-500)", marginBottom: 12 }}>
+                      Configure the payment methods available in your POS terminal.
+                    </p>
+
+                    <div style={{ display: "flex", gap: 8, alignItems: "flex-end", marginBottom: 12, flexWrap: "wrap" }}>
+                      <label className="input" style={{ flex: 2, minWidth: 160 }}>
+                        Name
+                        <input
+                          value={posPmForm.name}
+                          onChange={(e) => setPosPmForm({ ...posPmForm, name: e.target.value })}
+                          placeholder="e.g., Cash, Visa, EcoCash"
+                        />
+                      </label>
+                      <label className="input" style={{ flex: 1, minWidth: 140 }}>
+                        Type
+                        <select
+                          value={posPmForm.code}
+                          onChange={(e) => setPosPmForm({ ...posPmForm, code: e.target.value })}
+                        >
+                          <option value="cash">Cash</option>
+                          <option value="card">Card</option>
+                          <option value="mobile_money">Mobile Money</option>
+                          <option value="bank_transfer">Bank Transfer</option>
+                          <option value="cheque">Cheque</option>
+                          <option value="other">Other</option>
+                        </select>
+                      </label>
+                      <button
+                        className="primary"
+                        onClick={savePosPaymentMethod}
+                        disabled={!posPmForm.name}
+                        style={{ height: 38 }}
+                      >
+                        {posPmEditing ? "Update" : <><PlusIcon /> Add</>}
+                      </button>
+                      {posPmEditing && (
+                        <button
+                          className="outline"
+                          onClick={() => { setPosPmEditing(null); setPosPmForm({ name: "", code: "cash" }); }}
+                          style={{ height: 38 }}
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+
+                    {posPaymentMethods.length > 0 ? (
+                      <table className="table" style={{ marginTop: 0 }}>
+                        <thead>
+                          <tr>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Default</th>
+                            <th>Active</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {posPaymentMethods.map((pm) => (
+                            <tr key={pm.id}>
+                              <td style={{ fontWeight: 600 }}>{pm.name}</td>
+                              <td>
+                                <span style={{
+                                  display: "inline-block", padding: "2px 10px", borderRadius: 20, fontSize: 11,
+                                  fontWeight: 600, textTransform: "capitalize",
+                                  color: "var(--slate-600)", background: "var(--slate-100)",
+                                }}>
+                                  {pm.code.replace(/_/g, " ")}
+                                </span>
+                              </td>
+                              <td>
+                                {pm.is_default ? (
+                                  <span style={{ color: "var(--green-600)", fontWeight: 600 }}>✓ Default</span>
+                                ) : (
+                                  <button
+                                    className="settings-link"
+                                    style={{ fontSize: 12 }}
+                                    onClick={async () => {
+                                      await apiFetch(`/payments/methods/${pm.id}`, {
+                                        method: "PUT",
+                                        body: JSON.stringify({ is_default: true }),
+                                      });
+                                      if (companyId) loadPosPaymentMethods(companyId);
+                                    }}
+                                  >
+                                    Set default
+                                  </button>
+                                )}
+                              </td>
+                              <td>
+                                <label className="switch">
+                                  <input
+                                    type="checkbox"
+                                    checked={pm.is_active}
+                                    onChange={async (e) => {
+                                      await apiFetch(`/payments/methods/${pm.id}`, {
+                                        method: "PUT",
+                                        body: JSON.stringify({ is_active: e.target.checked }),
+                                      });
+                                      if (companyId) loadPosPaymentMethods(companyId);
+                                    }}
+                                  />
+                                  <span className="slider" />
+                                </label>
+                              </td>
+                              <td>
+                                <div style={{ display: "flex", gap: 4 }}>
+                                  <button
+                                    className="icon-btn"
+                                    title="Edit"
+                                    onClick={() => {
+                                      setPosPmEditing(pm.id);
+                                      setPosPmForm({ name: pm.name, code: pm.code });
+                                    }}
+                                  >
+                                    <EditIcon />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <div style={{ color: "var(--slate-400)", fontSize: 13, padding: "12px 0" }}>
+                        No payment methods configured yet. Add your first one above.
+                      </div>
+                    )}
+                  </div>
                 </section>
               )}
             </>

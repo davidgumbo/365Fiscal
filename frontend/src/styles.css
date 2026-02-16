@@ -8183,12 +8183,15 @@ button.danger:disabled {
 
 /* Detail view */
 .portal-device-msg {
-  padding: 10px 16px;
+  padding: 12px 16px;
   border-radius: var(--radius-md);
   font-size: 14px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
+  gap: 8px;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .portal-device-msg.success {

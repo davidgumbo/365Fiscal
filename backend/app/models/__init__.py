@@ -24,3 +24,4 @@ from app.models.audit_log import AuditLog, AuditAction, ResourceType
 from app.models.payment import Payment, PaymentMethod
 from app.models.subscription import Subscription, ActivationCode
 from app.models.pos_session import POSSession, POSOrder, POSOrderLine
+from app.models.pos_employee import POSEmployee

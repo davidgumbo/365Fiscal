@@ -163,13 +163,36 @@ const ACTION_LABELS: Record<string, string> = {
 function parseErrorDetail(raw: string): string {
   try {
     const parsed = JSON.parse(raw);
-    if (parsed.detail) return String(parsed.detail);
+    // FastAPI wraps errors in { detail: "..." }
+    if (parsed.detail) {
+      const detail = String(parsed.detail);
+      // Check for FDMS bracketed error code: [FISC01] message
+      const bracketMatch = detail.match(/^\[([A-Z0-9]+)\]\s*(.+)$/i);
+      if (bracketMatch) return `${bracketMatch[1]}: ${bracketMatch[2]}`;
+      // Check for embedded JSON in the detail
+      const jsonIdx = detail.indexOf("{");
+      if (jsonIdx >= 0) {
+        try {
+          const inner = JSON.parse(detail.slice(jsonIdx));
+          const msg = inner.message || "";
+          const code = inner.errorCode || "";
+          if (msg && code) return `${code}: ${msg}`;
+          if (msg) return msg;
+        } catch { /* not parseable */ }
+      }
+      return detail.replace(/^FDMS error \d+:\s*/i, "");
+    }
     if (parsed.title && parsed.errors) {
       const msgs = Object.entries(parsed.errors)
         .map(([k, v]) => `${k}: ${(v as string[]).join(", ")}`)
         .join("; ");
       return `${parsed.title} – ${msgs}`;
     }
+    // Direct FDMS error object
+    if (parsed.message && parsed.errorCode) {
+      return `${parsed.errorCode}: ${parsed.message}`;
+    }
+    if (parsed.message) return parsed.message;
     return raw;
   } catch {
     return raw;
