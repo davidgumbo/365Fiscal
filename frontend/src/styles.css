@@ -2241,7 +2241,7 @@ thead.table-light th {
 
 .login-floating-logo {
   position: absolute;
-  top: -65px;
+  top: -40px;
   left: 50%;
   transform: translateX(-50%);
   background: var(--white-500);
