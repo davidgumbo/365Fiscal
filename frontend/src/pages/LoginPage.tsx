@@ -219,7 +219,7 @@ export default function LoginPage() {
           <span>
             <strong>
               <a
-                style={{ textDecoration: "underline", color: "var(--blue-50)" }}
+                style={{ color: "var(--blue-50)" }}
                 target="_blank"
                 rel="noreferrer"
                 href="http://www.geenet.co.zw"
