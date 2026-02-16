@@ -2407,6 +2407,43 @@ thead.table-light th {
   gap: 8px;
 }
 
+.input-with-action {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-group .input-has-action {
+  padding-right: 64px;
+}
+
+.input-action-btn {
+  position: absolute;
+  right: 10px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--slate-600);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.input-action-btn:hover:not(:disabled) {
+  color: var(--slate-800);
+  border-color: rgba(99, 102, 241, 0.45);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.12);
+}
+
+.input-action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .input-label {
   display: flex;
   align-items: center;
