@@ -2205,8 +2205,6 @@ thead.table-light th {
   -webkit-backdrop-filter: blur(28px);
   border-radius: 35px;
   padding: 0;
-  padding-top: 110px;
-  margin-top: 50px;
   border: 1px solid rgba(255, 255, 255, 0.55);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255,255,255,0.1);
   animation: card-fade-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -2260,6 +2258,7 @@ thead.table-light th {
 .logo-365 {
   margin:auto 0;
   width: 400px;
+  padding: 2rem;
 }
 
 .login-floating-365 {
