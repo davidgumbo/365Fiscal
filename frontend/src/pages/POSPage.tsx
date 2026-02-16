@@ -755,13 +755,30 @@ export default function POSPage() {
                   <span>Cashier: <strong>{currentCashier.name}</strong> ({currentCashier.role})</span>
                 </div>
               )}
-              {activeDevice && (
-                <div style={{ padding: "10px 16px", borderRadius: 8, background: "var(--slate-50, #f8fafc)", border: "1px solid var(--slate-200, #e2e8f0)", marginBottom: 12 }}>
-                  <div style={{ fontSize: "0.78rem", color: "var(--slate-500)", marginBottom: 4, textTransform: "uppercase", letterSpacing: 1 }}>Fiscal Device</div>
-                  <div style={{ fontWeight: 600 }}>{activeDevice.model} — {activeDevice.serial_number}</div>
-                  <div style={{ fontSize: "0.82rem", color: "var(--slate-500)" }}>Status: {activeDevice.fiscal_day_status}</div>
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ display: "block", fontSize: "0.78rem", color: "var(--slate-500)", marginBottom: 6, textTransform: "uppercase", letterSpacing: 1, fontWeight: 600 }}>Opening Balance</label>
+                <div style={{ position: "relative" }}>
+                  <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "var(--slate-400)", fontSize: 15, fontWeight: 600 }}>$</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={openingBalance}
+                    onChange={(e) => setOpeningBalance(e.target.value)}
+                    placeholder="0.00"
+                    style={{
+                      width: "100%", padding: "12px 14px 12px 36px", fontSize: 16, fontWeight: 600,
+                      border: "1px solid var(--slate-200, #e2e8f0)", borderRadius: 8,
+                      background: "var(--white-500, #fff)", outline: "none",
+                      transition: "border-color 150ms",
+                    }}
+                    onFocus={(e) => e.currentTarget.style.borderColor = "var(--violet-400, #a78bfa)"}
+                    onBlur={(e) => e.currentTarget.style.borderColor = "var(--slate-200, #e2e8f0)"}
+                    autoFocus
+                  />
                 </div>
-              )}
+                <p style={{ margin: "6px 0 0", fontSize: "0.78rem", color: "var(--slate-400)" }}>Enter the cash amount in the drawer at the start of the session.</p>
+              </div>
               {error && <div className="pos-error">{error}</div>}
             </div>
             <div className="pos-dialog-footer">
