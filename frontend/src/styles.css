@@ -6676,6 +6676,194 @@ tr:hover .o-quick-actions {
   }
 }
 
+/* ========================================
+   GLOBAL MOBILE RESPONSIVE PASS
+   ======================================== */
+
+@media (max-width: 720px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+    margin: 0;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .main {
+    padding: 16px 14px 20px;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .main-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .page-content {
+    padding: 0 12px 16px;
+  }
+
+  .topbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .topbar-left,
+  .topbar-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .top-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .breadcrumb {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+
+  .app-launcher-user {
+    padding: 1.5rem 1.25rem;
+  }
+
+  .app-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .app-tile-icon-wrapper {
+    width: 64px;
+    height: 64px;
+    border-radius: 18px;
+  }
+
+  .app-tile-icon svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .app-tile-label {
+    font-size: 12px;
+  }
+
+  .login-card {
+    max-width: 100%;
+    border-radius: 26px;
+  }
+
+  .login-card-body {
+    padding: 0 20px 24px;
+  }
+
+  .login-card-footer {
+    padding: 12px 20px;
+  }
+
+  .logo-365 {
+    width: 260px;
+    padding: 2.5rem 2rem;
+  }
+
+  .login-btn {
+    padding: 14px 18px;
+  }
+
+  .input-group input {
+    font-size: 14px;
+    padding: 12px 14px;
+  }
+
+  .activation-code-input {
+    font-size: 14px;
+    letter-spacing: 3px;
+  }
+
+  .form-view {
+    grid-template-columns: 1fr;
+  }
+
+  .form-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .form-shell {
+    padding: 12px;
+  }
+
+  .dashboard-tables {
+    grid-template-columns: 1fr;
+  }
+
+  .table-container,
+  .table-responsive,
+  .data-table,
+  .table-pro,
+  .report-table,
+  .o-list-table,
+  .dashboard-table,
+  .table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .data-table,
+  .table-pro,
+  .report-table,
+  .o-list-table,
+  .dashboard-table,
+  .table {
+    min-width: 640px;
+  }
+
+  .pos-topbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .pos-topbar-left,
+  .pos-topbar-center,
+  .pos-topbar-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .app-tile-icon-wrapper {
+    width: 56px;
+    height: 56px;
+  }
+
+  .app-tile-label {
+    font-size: 11px;
+  }
+
+  .login-card {
+    border-radius: 22px;
+  }
+
+  .login-card-body {
+    padding: 0 16px 20px;
+  }
+
+  .login-btn {
+    font-size: 14px;
+  }
+}
+
 /* App launcher responsive */
 @media (max-width: 600px) {
   .app-grid {
