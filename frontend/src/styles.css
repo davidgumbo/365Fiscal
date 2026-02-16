@@ -2248,10 +2248,10 @@ thead.table-light th {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 240px;
-  height: 130px;
+  width: 120px;
+  height: 120px;
   padding: 4px;
-  border-radius: 999px;
+  border-radius: 15px;
   z-index: 10;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
   border: 1px solid rgba(0, 0, 0, 0.06);

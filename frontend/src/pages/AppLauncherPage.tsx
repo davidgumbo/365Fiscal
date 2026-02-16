@@ -762,7 +762,7 @@ export default function AppLauncherPage() {
             </p>
           </div>
         </div>
-        <footer className="app-launcher-footer">
+        <footer className="app-launcher-footer" style={{ marginTop: "25rem" }}>
           Powered by{" "}
           <a
             href="https://www.geenet.co.zw"
