@@ -510,30 +510,36 @@ export default function AppLauncherPage() {
       <div className="app-launcher-page">
         <header className="app-launcher-header">
           <div className="app-launcher-user">
-            <div className="user-menu">
-              <button
-                type="button"
-                className="user-menu-trigger"
-                onClick={() => setUserMenuOpen((prev) => !prev)}
-                aria-haspopup="menu"
-                aria-expanded={userMenuOpen}
-                title="User menu"
-              >
-                <div className="user-avatar-small">{initials}</div>
-              </button>
-              {userMenuOpen && (
-                <div className="user-menu-panel" role="menu">
-                  <div className="user-menu-title">{displayName}</div>
-                  <button
-                    className="user-menu-action"
-                    onClick={handleLogout}
-                    role="menuitem"
-                  >
-                    Log out
-                  </button>
+            <button
+              type="button"
+              className="user-menu"
+              onClick={() => setUserMenuOpen((prev) => !prev)}
+            >
+              <span className="user-avatar-sm">{initials}</span>
+            </button>
+            {userMenuOpen && (
+              <div className="menu-popover right" role="menu">
+                <div className="menu-title">
+                  <span className="user-name-sm">{displayName}</span>
                 </div>
-              )}
-            </div>
+                <button
+                  className="menu-item"
+                  onClick={() => {
+                    window.location.href = "/settings";
+                  }}
+                  role="menuitem"
+                >
+                  Settings
+                </button>
+                <button
+                  className="menu-item danger"
+                  onClick={handleLogout}
+                  role="menuitem"
+                >
+                  Log Out
+                </button>
+              </div>
+            )}
           </div>
         </header>
         <div
@@ -774,30 +780,36 @@ export default function AppLauncherPage() {
       {/* Header */}
       <header className="app-launcher-header">
         <div className="app-launcher-user">
-          <div className="user-menu">
-            <button
-              type="button"
-              className="user-menu-trigger"
-              onClick={() => setUserMenuOpen((prev) => !prev)}
-              aria-haspopup="menu"
-              aria-expanded={userMenuOpen}
-              title="User menu"
-            >
-              <div className="user-avatar-small">{initials}</div>
-            </button>
-            {userMenuOpen && (
-              <div className="user-menu-panel" role="menu">
-                <div className="user-menu-title">{displayName}</div>
-                <button
-                  className="user-menu-action"
-                  onClick={handleLogout}
-                  role="menuitem"
-                >
-                  Log out
-                </button>
+          <button
+            type="button"
+            className="user-menu"
+            onClick={() => setUserMenuOpen((prev) => !prev)}
+          >
+            <span className="user-avatar-sm">{initials}</span>
+          </button>
+          {userMenuOpen && (
+            <div className="menu-popover right" role="menu">
+              <div className="menu-title">
+                <span className="user-name-sm">{displayName}</span>
               </div>
-            )}
-          </div>
+              <button
+                className="menu-item"
+                onClick={() => {
+                  window.location.href = "/settings";
+                }}
+                role="menuitem"
+              >
+                Settings
+              </button>
+              <button
+                className="menu-item danger"
+                onClick={handleLogout}
+                role="menuitem"
+              >
+                Log Out
+              </button>
+            </div>
+          )}
         </div>
       </header>
 
