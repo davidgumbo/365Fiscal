@@ -357,6 +357,17 @@ def _to_cents(value: Decimal) -> str:
 
 
 def _sign_receipt(receipt: dict, private_key_pem: bytes) -> dict:
+    """Sign receipt per ZIMRA Section 13.2.1 spec.
+
+    Matches the proven working implementation exactly:
+    concat = deviceID + receiptType + currency + globalNo + receiptDate + totalCents
+           + for each tax sorted by taxID: taxCode(empty) + percent + taxAmountCents + salesAmountCents
+           + previousReceiptHash (if chained)
+    hash   = SHA256(concat)
+    sig    = sign(hash, Prehashed(SHA256))
+    """
+    from cryptography.hazmat.primitives.asymmetric import utils as asym_utils
+
     key = serialization.load_pem_private_key(private_key_pem, password=None)
 
     # Use integer form of device ID (no leading zeros) for signature concatenation
@@ -369,29 +380,50 @@ def _sign_receipt(receipt: dict, private_key_pem: bytes) -> dict:
 
     concat = f"{device_id}{receipt_type}{currency}{global_no}{receipt_date}{total_cents}"
 
+    # Sort taxes by taxID ascending
     taxes = sorted(receipt.get("receiptTaxes", []), key=lambda x: int(x.get("taxID", 0)))
     for tax in taxes:
-        tax_id = str(int(tax.get("taxID", 0)))
-        tax_percent = str(Decimal(str(tax.get("taxPercent", 0))).quantize(Decimal("0.01")))
-        tax_amount = _to_cents(Decimal(str(tax.get("taxAmount", 0))))
-        sales_amount = _to_cents(Decimal(str(tax.get("salesAmountWithTax", 0))))
-        concat += f"{tax_id}{tax_percent}{tax_amount}{sales_amount}"
+        # taxCode is empty string per working implementation
+        tax_code = ""
 
+        tax_percent_raw = tax.get("taxPercent", "")
+        if tax_percent_raw == "" or tax_percent_raw is None:
+            percent_str = ""
+        else:
+            percent_str = f"{float(tax_percent_raw):.2f}"
+
+        tax_amount_cents = _to_cents(Decimal(str(tax.get("taxAmount", 0))))
+        sales_amount_cents = _to_cents(Decimal(str(tax.get("salesAmountWithTax", 0))))
+
+        # For credit notes, amounts must be negative in signature
+        if receipt_type == "CREDITNOTE":
+            if tax_amount_cents != "0":
+                tax_amount_cents = str(-abs(int(tax_amount_cents)))
+            if sales_amount_cents != "0":
+                sales_amount_cents = str(-abs(int(sales_amount_cents)))
+
+        concat += f"{tax_code}{percent_str}{tax_amount_cents}{sales_amount_cents}"
+
+    # Append previous receipt hash for chained receipts (counter > 1)
+    prev_hash = receipt.get("previousReceiptHash")
+    if prev_hash:
+        concat += str(prev_hash).strip()
+
+    # Step 1: hash = SHA256(concat)
     data = concat.encode("utf-8")
+    digest = hashlib.sha256(data).digest()
+    hash_b64 = base64.b64encode(digest).decode("ascii")
 
-    # ZIMRA: hash = SHA256(concat), signature = sign(concat)
-    receipt_hash = hashlib.sha256(data).digest()
-    receipt_hash_b64 = base64.b64encode(receipt_hash).decode("ascii")
-
+    # Step 2: signature = sign(digest, Prehashed(SHA256))
     if isinstance(key, rsa.RSAPrivateKey):
-        signature = key.sign(data, padding.PKCS1v15(), hashes.SHA256())
+        signature = key.sign(digest, padding.PKCS1v15(), asym_utils.Prehashed(hashes.SHA256()))
     elif isinstance(key, ec.EllipticCurvePrivateKey):
-        signature = key.sign(data, ec.ECDSA(hashes.SHA256()))
+        signature = key.sign(digest, ec.ECDSA(asym_utils.Prehashed(hashes.SHA256())))
     else:
         raise ValueError("Unsupported private key type")
 
     signature_b64 = base64.b64encode(signature).decode("ascii")
-    return {"signature": signature_b64, "hash": receipt_hash_b64, "concat": concat}
+    return {"signature": signature_b64, "hash": hash_b64, "concat": concat}
 
 
 def _generate_qr(signature_b64: str, receipt_global_no: int, device_id: str, qr_base: str) -> dict:
