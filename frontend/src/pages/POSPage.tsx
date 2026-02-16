@@ -800,26 +800,32 @@ export default function POSPage() {
           <button className="pos-btn pos-btn-icon" onClick={() => navigate("/")} title="Back to Home">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
           </button>
-          <div className="pos-session-badge">
-            <span className="pos-session-dot" />
-            {session?.name}
-          </div>
-          {companyInfo && <span className="pos-company-name">{companyInfo.name}</span>}
+          {companyInfo && (
+            <div className="pos-topbar-brand">
+              <span className="pos-company-name">{companyInfo.name}</span>
+              <div className="pos-session-badge">
+                <span className="pos-session-dot" />
+                {session?.name}
+              </div>
+            </div>
+          )}
         </div>
         <div className="pos-topbar-center">
           <div className="pos-barcode-wrapper">
-            <svg className="pos-barcode-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h.01M7 12h.01M12 7h.01M17 7h.01M12 12h.01M17 12h.01M7 17h.01M12 17h.01M17 17h.01"/></svg>
+            <svg className="pos-barcode-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <input
               ref={barcodeRef}
               className="pos-barcode-input"
-              placeholder="Scan barcode or search…"
+              placeholder="Search products or scan barcode…"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyDown={handleBarcode}
               autoFocus
             />
             {searchTerm && (
-              <button className="pos-barcode-clear" onClick={() => { setSearchTerm(""); barcodeRef.current?.focus(); }}>✕</button>
+              <button className="pos-barcode-clear" onClick={() => { setSearchTerm(""); barcodeRef.current?.focus(); }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
             )}
           </div>
         </div>
@@ -827,12 +833,13 @@ export default function POSPage() {
           {/* Cashier / PIN login */}
           <button className="pos-btn pos-btn-sm pos-btn-topbar" onClick={() => setShowPinDialog(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 4 }}>
             <div style={{
-              width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+              width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 12, fontWeight: 700, color: '#fff',
+              fontSize: 13, fontWeight: 700, color: '#fff',
               background: currentCashier
-                ? currentCashier.role === 'admin' ? '#ef4444' : currentCashier.role === 'manager' ? '#f59e0b' : '#6366f1'
-                : 'rgba(255,255,255,0.2)',
+                ? currentCashier.role === 'admin' ? 'linear-gradient(135deg, #ef4444, #dc2626)' : currentCashier.role === 'manager' ? 'linear-gradient(135deg, #f59e0b, #d97706)' : 'linear-gradient(135deg, #6366f1, #4f46e5)'
+                : 'rgba(255,255,255,0.15)',
+              border: '2px solid rgba(255,255,255,0.2)',
             }}>
               {currentCashier ? currentCashier.name.charAt(0).toUpperCase() : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
             </div>
@@ -841,19 +848,16 @@ export default function POSPage() {
           {/* Customer display */}
           <button className="pos-btn pos-btn-sm pos-btn-topbar" onClick={openCustomerDisplay} title="Open customer-facing display">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-            Display
           </button>
           <button className={`pos-btn pos-btn-sm pos-btn-topbar ${showOrders ? "active" : ""}`} onClick={() => { setShowOrders(!showOrders); if (!showOrders) refreshOrders(); }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-            Orders
           </button>
           <button className="pos-btn pos-btn-sm pos-btn-topbar" onClick={() => setShowCustomerSearch(!showCustomerSearch)}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            {selectedCustomer ? selectedCustomer.name : "Customer"}
+            {selectedCustomer ? selectedCustomer.name : ""}
           </button>
           <button className="pos-btn pos-btn-sm pos-btn-close-session" onClick={() => setShowCloseDialog(true)}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-            Close
           </button>
         </div>
       </header>
@@ -862,32 +866,52 @@ export default function POSPage() {
       <div className="pos-body">
         {/* ── PRODUCT PANEL ── */}
         <div className="pos-products-panel">
-          {/* Category chips */}
+          {/* Category tabs - prominent top bar */}
           <div className="pos-categories">
             <button
               className={`pos-cat-chip ${selectedCategory === null ? "active" : ""}`}
               onClick={() => setSelectedCategory(null)}
             >
-              All
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+              All ({products.length})
             </button>
-            {categories.map((c) => (
-              <button
-                key={c.id}
-                className={`pos-cat-chip ${selectedCategory === c.id ? "active" : ""}`}
-                onClick={() => setSelectedCategory(c.id)}
-              >
-                {c.name}
-              </button>
-            ))}
+            {categories.map((c) => {
+              const count = products.filter(p => p.category_id === c.id).length;
+              return (
+                <button
+                  key={c.id}
+                  className={`pos-cat-chip ${selectedCategory === c.id ? "active" : ""}`}
+                  onClick={() => setSelectedCategory(c.id)}
+                >
+                  {c.name}
+                  <span className="pos-cat-count">{count}</span>
+                </button>
+              );
+            })}
+            {categories.length === 0 && (
+              <span className="pos-cat-empty-hint">No categories yet — add them in Inventory</span>
+            )}
+          </div>
+
+          {/* Product count & view info */}
+          <div className="pos-products-info">
+            <span>{filteredProducts.length} product{filteredProducts.length !== 1 ? "s" : ""}</span>
+            {searchTerm && <span className="pos-search-active">Searching: "{searchTerm}"</span>}
           </div>
 
           {/* Product grid */}
           <div className="pos-product-grid">
             {filteredProducts.length === 0 && (
               <div className="pos-no-products">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--slate-300)" strokeWidth="1.5"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-                <p>No products found</p>
-                <p style={{ fontSize: "0.78rem" }}>Add products in Inventory or adjust your search</p>
+                <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="var(--slate-300)" strokeWidth="1">
+                  <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+                  <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                  <line x1="12" y1="22.08" x2="12" y2="12"/>
+                </svg>
+                <p style={{ fontWeight: 600, marginTop: 12, color: "var(--slate-500)" }}>No products found</p>
+                <p style={{ fontSize: "0.82rem", color: "var(--slate-400)" }}>
+                  {searchTerm ? "Try a different search term" : "Add products in Inventory to get started"}
+                </p>
               </div>
             )}
             {filteredProducts.map((p) => (
@@ -898,7 +922,7 @@ export default function POSPage() {
                   </div>
                 ) : (
                   <div className="pos-product-card-img pos-product-card-img-placeholder">
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.2">
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.15">
                       <rect x="3" y="3" width="18" height="18" rx="2"/>
                       <circle cx="8.5" cy="8.5" r="1.5"/>
                       <path d="M21 15l-5-5L5 21"/>
@@ -910,7 +934,7 @@ export default function POSPage() {
                   <div className="pos-product-card-price">${fmt(p.sale_price)}</div>
                   {p.track_inventory && p.product_type === "storable" && (
                     <div className={`pos-product-card-stock ${p.stock_on_hand <= 0 ? "out" : p.stock_on_hand <= 5 ? "low" : ""}`}>
-                      {p.stock_on_hand <= 0 ? "Out of stock" : `${p.stock_on_hand} ${p.uom}`}
+                      {p.stock_on_hand <= 0 ? "Out of stock" : `${p.stock_on_hand} in stock`}
                     </div>
                   )}
                 </div>
@@ -965,7 +989,9 @@ export default function POSPage() {
             <div className="pos-customer-banner">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               <span>{selectedCustomer.name}</span>
-              <button className="pos-btn-inline" onClick={() => setSelectedCustomer(null)}>✕</button>
+              <button className="pos-btn-inline" onClick={() => setSelectedCustomer(null)}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
             </div>
           )}
 
@@ -973,15 +999,19 @@ export default function POSPage() {
           <div className="pos-cart-header">
             <span className="pos-cart-header-title">Current Order</span>
             <span className="pos-cart-header-count">{itemCount} item{itemCount !== 1 ? "s" : ""}</span>
+            {cart.length > 0 && (
+              <button className="pos-cart-clear-btn" onClick={clearCart} title="Clear cart">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+              </button>
+            )}
           </div>
 
           {/* Cart lines */}
           <div className="pos-cart-lines">
             {cart.length === 0 && (
               <div className="pos-cart-empty">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" strokeWidth="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
-                <p>Cart is empty</p>
-                <p className="pos-cart-empty-hint">Tap products or scan barcode to add items</p>
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--slate-300)" strokeWidth="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
+                <p style={{ marginTop: 8, fontWeight: 500, color: "var(--slate-400)" }}>Start adding products</p>
               </div>
             )}
             {cart.map((line) => (
@@ -1021,16 +1051,8 @@ export default function POSPage() {
             <div className="pos-totals-row pos-total-row"><span>TOTAL</span><span>${fmt(cartTotal)}</span></div>
           </div>
 
-          {/* Cart buttons */}
+          {/* Pay button - large and prominent */}
           <div className="pos-cart-actions">
-            <button
-              className="pos-btn pos-btn-ghost pos-btn-full"
-              onClick={clearCart}
-              disabled={cart.length === 0}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
-              Clear
-            </button>
             <button
               className="pos-btn pos-btn-success pos-btn-full pos-btn-pay"
               onClick={() => {
@@ -1039,7 +1061,7 @@ export default function POSPage() {
               }}
               disabled={cart.length === 0}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
               Pay ${fmt(cartTotal)}
             </button>
           </div>
