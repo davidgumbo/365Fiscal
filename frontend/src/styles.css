@@ -1961,7 +1961,7 @@ thead.table-light th {
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
-  filter: blur(6px);
+  filter: blur(2px);
   transform: scale(1.02);
   z-index: 0;
 }
