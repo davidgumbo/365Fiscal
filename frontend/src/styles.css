@@ -6318,6 +6318,7 @@ tr:hover .o-quick-actions {
   position: relative;
   overflow: hidden;
   flex-direction: column;
+  display: flex;
 }
 
 .app-launcher-page::after {
@@ -6493,6 +6494,8 @@ tr:hover .o-quick-actions {
 
 .activation-card {
   max-width: 440px;
+  position: relative;
+  z-index: 2;
 }
 
 .activation-card-body {

@@ -661,10 +661,12 @@ export default function AppLauncherPage() {
               <p className="activation-note">
                 Don't have a code?{" "}
                 <a
-                  href="geenet.co.zw"
-                  ref="noreferrer"
+                  style={{
+                    textDecoration: "underline",
+                  }}
                   target="_blank"
-                  style={{ textDecoration: "underline" }}
+                  rel="noreferrer"
+                  href="http://www.geenet.co.zw"
                 >
                   Contact us for support
                 </a>
