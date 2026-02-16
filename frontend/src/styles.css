@@ -8895,6 +8895,27 @@ button.danger:disabled {
   margin-top: 2px;
 }
 
+/* Product card image */
+.pos-product-card-img {
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 6px;
+  flex-shrink: 0;
+}
+.pos-product-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.pos-product-card-img-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--slate-100, #f1f5f9);
+}
+
 /* ── Cart Panel ── */
 .pos-cart-panel {
   width: 380px;

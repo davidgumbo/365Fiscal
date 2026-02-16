@@ -7,6 +7,7 @@ class ProductCreate(BaseModel):
     category_id: int | None = None
     name: str
     description: str = ""
+    image_url: str = ""
     sale_price: float = 0
     tax_rate: float = 0
     tax_id: int | None = None
@@ -34,6 +35,7 @@ class ProductRead(ORMBase):
     category_id: int | None = None
     name: str
     description: str
+    image_url: str = ""
     sale_price: float
     tax_rate: float
     tax_id: int | None = None
@@ -59,6 +61,7 @@ class ProductUpdate(BaseModel):
     category_id: int | None = None
     name: str | None = None
     description: str | None = None
+    image_url: str | None = None
     sale_price: float | None = None
     tax_rate: float | None = None
     tax_id: int | None = None

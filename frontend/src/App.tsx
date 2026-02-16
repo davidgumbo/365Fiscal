@@ -21,6 +21,7 @@ import AuditLogsPage from "./pages/AuditLogsPage";
 import PaymentsPage from "./pages/PaymentsPage";
 import SubscriptionsPage from "./pages/SubscriptionsPage";
 import POSPage from "./pages/POSPage";
+import CustomerDisplayPage from "./pages/CustomerDisplayPage";
 import { apiFetch } from "./api";
 import { useMe } from "./hooks/useMe";
 import BackIcon from "./assets/back.svg?react";
@@ -311,6 +312,7 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/portal-login" element={<PortalLoginPage />} />
+      <Route path="/pos/customer-display" element={<CustomerDisplayPage />} />
       <Route
         path="/*"
         element={

@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+﻿import { useEffect, useState, useRef } from "react";
 import { apiFetch } from "../api";
 import { useCompanies, Company } from "../hooks/useCompanies";
 
@@ -7,6 +7,7 @@ type Product = {
   company_id: number;
   name: string;
   description: string;
+  image_url: string;
   sale_price: number;
   tax_rate: number;
   sales_cost: number;
@@ -75,6 +76,9 @@ export default function ProductsPage() {
     can_be_sold: true,
     can_be_purchased: true,
   });
+  const [productImageUrl, setProductImageUrl] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (companies.length && companyId === null) {
@@ -88,6 +92,7 @@ export default function ProductsPage() {
     if (data.length && selectedProductId === null) {
       const first = data[0];
       setSelectedProductId(first.id);
+      setProductImageUrl(first.image_url || "");
       setForm({
         name: first.name,
         category_id: first.category_id ?? null,
@@ -172,12 +177,14 @@ export default function ProductsPage() {
 
   const startNew = () => {
     setSelectedProductId(null);
+    setProductImageUrl("");
     setForm(emptyForm());
     setIsEditing(true);
   };
 
   const selectProduct = (product: Product) => {
     setSelectedProductId(product.id);
+    setProductImageUrl(product.image_url || "");
     setForm({
       name: product.name,
       category_id: product.category_id ?? null,
@@ -204,6 +211,45 @@ export default function ProductsPage() {
     setIsEditing(false);
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!selectedProductId || !e.target.files?.length) return;
+    const file = e.target.files[0];
+    setUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const token = localStorage.getItem("token");
+      const resp = await fetch(`/api/products/${selectedProductId}/image`, {
+        method: "POST",
+        headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: formData,
+      });
+      if (!resp.ok) throw new Error("Upload failed");
+      const updated = await resp.json();
+      setProductImageUrl(updated.image_url || "");
+      loadProducts(companyId!);
+    } catch {
+      alert("Failed to upload image");
+    } finally {
+      setUploadingImage(false);
+      if (imageInputRef.current) imageInputRef.current.value = "";
+    }
+  };
+
+  const handleImageDelete = async () => {
+    if (!selectedProductId) return;
+    setUploadingImage(true);
+    try {
+      const updated = await apiFetch<Product>(`/products/${selectedProductId}/image`, { method: "DELETE" });
+      setProductImageUrl(updated.image_url || "");
+      loadProducts(companyId!);
+    } catch {
+      alert("Failed to remove image");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   return (
     <div className="page-container">
       <div className="two-panel-left">
@@ -219,10 +265,19 @@ export default function ProductsPage() {
                   className={`list-item ${selectedProductId === p.id ? "active" : ""}`}
                   onClick={() => selectProduct(p)}
                 >
-                  <div>
-                    <div className="list-item-title">{p.name}</div>
-                    <div className="list-item-sub">
-                      ${p.sale_price.toFixed(2)} • {p.tax_rate}%
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1 }}>
+                    {p.image_url ? (
+                      <img src={p.image_url} alt="" style={{ width: 36, height: 36, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
+                    ) : (
+                      <div style={{ width: 36, height: 36, borderRadius: 6, background: "var(--bg-secondary, #f0f0f0)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                      </div>
+                    )}
+                    <div>
+                      <div className="list-item-title">{p.name}</div>
+                      <div className="list-item-sub">
+                        ${p.sale_price.toFixed(2)} • {p.tax_rate}%
+                      </div>
                     </div>
                   </div>
                   <span
@@ -308,6 +363,75 @@ export default function ProductsPage() {
 
           {activeTab === "general" && (
             <div className="form-grid-pro">
+              {/* Product Image Upload */}
+              <div className="input-group" style={{ gridColumn: "span 2" }}>
+                <label className="input-label">Product Image</label>
+                <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                  <div
+                    style={{
+                      width: 120,
+                      height: 120,
+                      borderRadius: 12,
+                      border: "2px dashed var(--border-color, #ddd)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      overflow: "hidden",
+                      background: productImageUrl ? "transparent" : "var(--bg-secondary, #f8f9fa)",
+                      cursor: isEditing && selectedProductId ? "pointer" : "default",
+                      flexShrink: 0,
+                    }}
+                    onClick={() => isEditing && selectedProductId && imageInputRef.current?.click()}
+                  >
+                    {productImageUrl ? (
+                      <img
+                        src={productImageUrl}
+                        alt="Product"
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      />
+                    ) : (
+                      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.5">
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <circle cx="8.5" cy="8.5" r="1.5" />
+                        <path d="M21 15l-5-5L5 21" />
+                      </svg>
+                    )}
+                  </div>
+                  {isEditing && selectedProductId && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      <input
+                        ref={imageInputRef}
+                        type="file"
+                        accept="image/*"
+                        style={{ display: "none" }}
+                        onChange={handleImageUpload}
+                      />
+                      <button
+                        className="btn btn-secondary"
+                        onClick={() => imageInputRef.current?.click()}
+                        disabled={uploadingImage}
+                        style={{ fontSize: "0.85rem" }}
+                      >
+                        {uploadingImage ? "Uploading…" : productImageUrl ? "Change Image" : "Upload Image"}
+                      </button>
+                      {productImageUrl && (
+                        <button
+                          className="btn btn-secondary"
+                          onClick={handleImageDelete}
+                          disabled={uploadingImage}
+                          style={{ fontSize: "0.85rem", color: "#e53e3e" }}
+                        >
+                          Remove
+                        </button>
+                      )}
+                      <span style={{ fontSize: "0.75rem", color: "#888" }}>JPEG, PNG, WebP. Max 5MB</span>
+                    </div>
+                  )}
+                  {!isEditing && !productImageUrl && (
+                    <span style={{ fontSize: "0.85rem", color: "#aaa" }}>No image uploaded</span>
+                  )}
+                </div>
+              </div>
               <div className="input-group">
                 <label className="input-label">Company</label>
                 <select

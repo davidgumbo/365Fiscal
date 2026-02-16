@@ -1,4 +1,4 @@
-﻿from sqlalchemy import Boolean, Float, ForeignKey, String
+﻿from sqlalchemy import Boolean, Float, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -13,6 +13,7 @@ class Product(Base, TimestampMixin):
     category_id: Mapped[int | None] = mapped_column(ForeignKey("categories.id"), nullable=True)
     name: Mapped[str] = mapped_column(String(255))
     description: Mapped[str] = mapped_column(String(1000), default="")
+    image_url: Mapped[str] = mapped_column(Text, default="")
     sale_price: Mapped[float] = mapped_column(Float, default=0)
     tax_rate: Mapped[float] = mapped_column(Float, default=0)
     tax_id: Mapped[int | None] = mapped_column(ForeignKey("tax_settings.id"), nullable=True, default=None)

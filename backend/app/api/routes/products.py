@@ -1,6 +1,7 @@
-﻿from fastapi import APIRouter, Depends, HTTPException
+﻿from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from sqlalchemy import func
+import base64
 
 from app.api.deps import get_db, ensure_company_access, require_company_access, require_portal_user
 from app.models.product import Product
@@ -138,3 +139,50 @@ def delete_product(
     db.delete(product)
     db.commit()
     return {"status": "deleted"}
+
+
+@router.post("/{product_id}/image", response_model=ProductRead)
+def upload_product_image(
+    product_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    user=Depends(require_portal_user),
+):
+    """Upload a product image. Stores as base64 data URL."""
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    ensure_company_access(db, user, product.company_id)
+
+    # Validate file type
+    allowed = {"image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"}
+    if file.content_type not in allowed:
+        raise HTTPException(status_code=400, detail="Invalid image type. Allowed: JPEG, PNG, GIF, WebP, SVG")
+
+    # Read and encode
+    content = file.file.read()
+    if len(content) > 5 * 1024 * 1024:  # 5MB limit
+        raise HTTPException(status_code=400, detail="Image too large. Max 5MB")
+
+    b64 = base64.b64encode(content).decode("utf-8")
+    product.image_url = f"data:{file.content_type};base64,{b64}"
+    db.commit()
+    db.refresh(product)
+    return product
+
+
+@router.delete("/{product_id}/image", response_model=ProductRead)
+def delete_product_image(
+    product_id: int,
+    db: Session = Depends(get_db),
+    user=Depends(require_portal_user),
+):
+    """Remove a product image."""
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    ensure_company_access(db, user, product.company_id)
+    product.image_url = ""
+    db.commit()
+    db.refresh(product)
+    return product

@@ -735,6 +735,7 @@ def pos_products(
             "category_id": p.category_id,
             "category_name": p.category.name if p.category else "",
             "description": p.description,
+            "image_url": p.image_url or "",
             "stock_on_hand": round(stock_map.get(p.id, 0), 2),
             "track_inventory": p.track_inventory,
             "product_type": p.product_type,

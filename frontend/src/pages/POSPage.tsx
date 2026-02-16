@@ -16,6 +16,7 @@ type POSProduct = {
   category_id: number | null;
   category_name: string;
   description: string;
+  image_url: string;
   stock_on_hand: number;
   track_inventory: boolean;
   product_type: string;
@@ -268,6 +269,15 @@ export default function POSPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // PIN login
+  const [showPinDialog, setShowPinDialog] = useState(false);
+  const [pinValue, setPinValue] = useState("");
+  const [pinError, setPinError] = useState("");
+  const [currentCashier, setCurrentCashier] = useState<{ id: number; name: string; role: string } | null>(null);
+
+  // Customer display
+  const customerDisplayRef = useRef<Window | null>(null);
+
   // ── calculated ──
   const cartSubtotal = cart.reduce((s, l) => s + lineSubtotal(l), 0);
   const cartTax = cart.reduce((s, l) => s + lineTax(l), 0);
@@ -329,6 +339,63 @@ export default function POSPage() {
     const t = setTimeout(() => setError(""), 8000);
     return () => clearTimeout(t);
   }, [error]);
+
+  // ── PIN verification ──
+  const verifyPin = async () => {
+    if (!companyId || !pinValue.trim()) return;
+    setPinError("");
+    try {
+      const resp = await apiFetch<{ id: number; name: string; role: string }>(
+        "/pos/employees/verify-pin",
+        { method: "POST", body: JSON.stringify({ company_id: companyId, pin: pinValue }) }
+      );
+      setCurrentCashier(resp);
+      setShowPinDialog(false);
+      setPinValue("");
+    } catch (e: any) {
+      setPinError(e.message || "Invalid PIN");
+    }
+  };
+
+  // ── Customer display sync ──
+  const syncCustomerDisplay = useCallback(() => {
+    if (!customerDisplayRef.current || customerDisplayRef.current.closed) return;
+    const data = {
+      type: "pos-cart-update",
+      cart: cart.map(l => ({
+        name: l.product.name,
+        qty: l.qty,
+        price: l.price,
+        discount: l.discount,
+        vat_rate: l.vat_rate,
+        image_url: l.product.image_url,
+        subtotal: lineSubtotal(l),
+        total: lineTotal(l),
+      })),
+      subtotal: cartSubtotal,
+      tax: cartTax,
+      total: cartTotal,
+      companyName: companyInfo?.name || "365 Fiscal",
+      companyLogo: companyInfo?.logo_data || "",
+    };
+    try {
+      customerDisplayRef.current.postMessage(data, "*");
+    } catch { /* window closed */ }
+  }, [cart, cartSubtotal, cartTax, cartTotal, companyInfo]);
+
+  useEffect(() => {
+    syncCustomerDisplay();
+  }, [syncCustomerDisplay]);
+
+  const openCustomerDisplay = () => {
+    if (customerDisplayRef.current && !customerDisplayRef.current.closed) {
+      customerDisplayRef.current.focus();
+      return;
+    }
+    customerDisplayRef.current = window.open("/pos/customer-display", "customer-display", "width=1024,height=768");
+    // Sync after the window loads
+    setTimeout(syncCustomerDisplay, 1500);
+  };
 
   // ── actions ──
   const openSession = async () => {
@@ -691,6 +758,16 @@ export default function POSPage() {
           </div>
         </div>
         <div className="pos-topbar-right">
+          {/* Cashier / PIN login */}
+          <button className="pos-btn pos-btn-sm pos-btn-topbar" onClick={() => setShowPinDialog(true)}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            {currentCashier ? currentCashier.name : "Cashier"}
+          </button>
+          {/* Customer display */}
+          <button className="pos-btn pos-btn-sm pos-btn-topbar" onClick={openCustomerDisplay} title="Open customer-facing display">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            Display
+          </button>
           <button className={`pos-btn pos-btn-sm pos-btn-topbar ${showOrders ? "active" : ""}`} onClick={() => { setShowOrders(!showOrders); if (!showOrders) refreshOrders(); }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
             Orders
@@ -740,6 +817,19 @@ export default function POSPage() {
             )}
             {filteredProducts.map((p) => (
               <button key={p.id} className="pos-product-card" onClick={() => addToCart(p)}>
+                {p.image_url ? (
+                  <div className="pos-product-card-img">
+                    <img src={p.image_url} alt={p.name} />
+                  </div>
+                ) : (
+                  <div className="pos-product-card-img pos-product-card-img-placeholder">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" opacity="0.3">
+                      <rect x="3" y="3" width="18" height="18" rx="2"/>
+                      <circle cx="8.5" cy="8.5" r="1.5"/>
+                      <path d="M21 15l-5-5L5 21"/>
+                    </svg>
+                  </div>
+                )}
                 <div className="pos-product-card-name">{p.name}</div>
                 <div className="pos-product-card-price">${fmt(p.sale_price)}</div>
                 {p.track_inventory && p.product_type === "storable" && (
@@ -1365,6 +1455,62 @@ export default function POSPage() {
             <div className="pos-dialog-footer">
               <button className="pos-btn pos-btn-ghost" onClick={() => setShowCloseDialog(false)}>Cancel</button>
               <button className="pos-btn pos-btn-danger" onClick={closeSession}>Close & End Session</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── PIN LOGIN DIALOG ── */}
+      {showPinDialog && (
+        <div className="pos-overlay" style={{ zIndex: 1200 }} onClick={() => setShowPinDialog(false)}>
+          <div className="pos-dialog pos-dialog-sm" onClick={(e) => e.stopPropagation()}>
+            <div className="pos-dialog-header">
+              <h2>Cashier Login</h2>
+              <button className="pos-btn pos-btn-icon pos-btn-xs" onClick={() => setShowPinDialog(false)}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <div className="pos-dialog-body" style={{ textAlign: "center" }}>
+              {currentCashier && (
+                <div style={{ marginBottom: 12, padding: "8px 16px", borderRadius: 8, background: "var(--emerald-50, #ecfdf5)", color: "var(--emerald-700, #047857)", fontSize: "0.85rem" }}>
+                  Current: <strong>{currentCashier.name}</strong> ({currentCashier.role})
+                </div>
+              )}
+              <p style={{ fontSize: "0.85rem", color: "var(--slate-500)", marginBottom: 16 }}>Enter your PIN to identify as cashier</p>
+              <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
+                <input
+                  type="password"
+                  className="pos-input"
+                  style={{ width: 180, textAlign: "center", fontSize: "1.5rem", letterSpacing: 8 }}
+                  maxLength={6}
+                  value={pinValue}
+                  onChange={(e) => { setPinValue(e.target.value.replace(/\D/g, "")); setPinError(""); }}
+                  onKeyDown={(e) => { if (e.key === "Enter") verifyPin(); }}
+                  placeholder="• • • •"
+                  autoFocus
+                />
+              </div>
+              {/* Number pad */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, maxWidth: 240, margin: "0 auto 16px" }}>
+                {[1,2,3,4,5,6,7,8,9].map(n => (
+                  <button
+                    key={n}
+                    className="pos-btn pos-btn-outline"
+                    style={{ height: 48, fontSize: "1.2rem" }}
+                    onClick={() => pinValue.length < 6 && setPinValue(pinValue + n)}
+                  >
+                    {n}
+                  </button>
+                ))}
+                <button className="pos-btn pos-btn-ghost" style={{ height: 48, fontSize: "0.85rem" }} onClick={() => setPinValue("")}>Clear</button>
+                <button className="pos-btn pos-btn-outline" style={{ height: 48, fontSize: "1.2rem" }} onClick={() => pinValue.length < 6 && setPinValue(pinValue + "0")}>0</button>
+                <button className="pos-btn pos-btn-ghost" style={{ height: 48, fontSize: "1.2rem" }} onClick={() => setPinValue(pinValue.slice(0, -1))}>⌫</button>
+              </div>
+              {pinError && <div className="pos-error">{pinError}</div>}
+            </div>
+            <div className="pos-dialog-footer">
+              <button className="pos-btn pos-btn-ghost" onClick={() => { setShowPinDialog(false); setPinValue(""); setPinError(""); }}>Cancel</button>
+              <button className="pos-btn pos-btn-primary" onClick={verifyPin} disabled={pinValue.length < 4}>Confirm</button>
             </div>
           </div>
         </div>
