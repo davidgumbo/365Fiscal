@@ -217,15 +217,14 @@ export default function LoginPage() {
 
         <div className="login-card-footer">
           <span>
-            Powered by{" "}
             <strong>
               <a
-                style={{ textDecoration: "underline" }}
+                style={{ textDecoration: "underline", color: "var(--blue-50)" }}
                 target="_blank"
                 rel="noreferrer"
                 href="http://www.geenet.co.zw"
               >
-                Geenet
+                Powered by Geenet
               </a>
             </strong>
           </span>
