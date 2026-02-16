@@ -4,8 +4,6 @@ import { useMe } from "../hooks/useMe";
 import { getInitials } from "../hooks/getInitials";
 import { apiFetch } from "../api";
 
-import { getInitials } from "../hooks/getInitials";
-
 type ActivationStatus = {
   activated: boolean;
   plan: string | null;
