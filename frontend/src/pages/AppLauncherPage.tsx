@@ -568,12 +568,8 @@ export default function AppLauncherPage() {
               </div>
 
               <h2 className="login-card-title activation-title">
-                Activate Your Subscription
+                Enter you subscription code
               </h2>
-              <p className="login-card-sub activation-sub">
-                Enter the activation code provided by your administrator to
-                unlock access to all applications.
-              </p>
 
               {activateError && (
                 <div className="login-error activation-message">
@@ -663,7 +659,16 @@ export default function AppLauncherPage() {
               </div>
 
               <p className="activation-note">
-                Don't have a code? Contact your company administrator.
+                Don't have a code?{" "}
+                <a
+                  href="geenet.co.zw"
+                  ref="noreferrer"
+                  target="_blank"
+                  style={{ textDecoration: "underline" }}
+                >
+                  Contact us for support
+                </a>
+                .
               </p>
             </div>
           </div>
