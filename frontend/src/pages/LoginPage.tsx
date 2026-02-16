@@ -216,7 +216,9 @@ export default function LoginPage() {
         </div>
 
         <div className="login-card-footer">
-          <img src="/geenet.trim.png" alt="GeeNet" className="footer-logo" />
+          <span>
+            Powered by <strong>Geenet</strong>
+          </span>
         </div>
       </div>
     </div>
