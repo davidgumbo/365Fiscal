@@ -30,5 +30,6 @@ class Device(Base, TimestampMixin):
     qr_url: Mapped[str] = mapped_column(String(255), default="")
     last_ping_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     reporting_frequency: Mapped[int] = mapped_column(Integer, default=5)  # minutes
+    fiscal_day_opened_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     company = relationship("Company", back_populates="devices")

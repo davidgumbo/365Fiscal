@@ -251,6 +251,7 @@ def open_fiscal_day(device_id: int, db: Session = Depends(get_db), user=Depends(
         device.fiscal_day_status = result.get("fiscalDayStatus", device.fiscal_day_status)
         device.current_fiscal_day_no = result.get("currentFiscalDayNo", device.current_fiscal_day_no)
         device.last_fiscal_day_no = result.get("lastFiscalDayNo", device.last_fiscal_day_no)
+        # NOTE: fiscal_day_opened_at is already set inside open_day() in fdms.py
         db.commit()
         return result
     except Exception as exc:

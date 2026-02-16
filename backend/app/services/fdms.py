@@ -1,10 +1,16 @@
 import base64
 import hashlib
 import json
+import logging
 import tempfile
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Any
+
+logger = logging.getLogger(__name__)
+
+# ZIMRA devices are in Central Africa Time (CAT = UTC+2)
+_CAT = timezone(timedelta(hours=2))
 
 import requests
 from cryptography.hazmat.primitives import hashes, serialization
@@ -206,6 +212,7 @@ def open_day(device: Device, db) -> dict:
     """POST /Device/v1/{deviceID}/OpenDay – open a new fiscal day.
 
     Fetches GetStatus first to determine the correct next day number.
+    Stores the opened timestamp on the device for CloseDay signature.
     """
     # Get current status from FDMS to find the correct next day
     try:
@@ -229,16 +236,30 @@ def open_day(device: Device, db) -> dict:
         last_day = device.last_fiscal_day_no or device.current_fiscal_day_no or 0
 
     next_day_no = last_day + 1
-    now = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")
+    # Capture the timestamp BEFORE sending the request (same approach as farmware)
+    now_utc = datetime.now(timezone.utc)
+    now_str = now_utc.strftime("%Y-%m-%dT%H:%M:%S")
     payload = {
         "fiscalDayNo": next_day_no,
-        "fiscalDayOpened": now,
+        "fiscalDayOpened": now_str,
     }
-    return _call_fdms(device, db, f"Device/v1/{_unpadded_device_id(device)}/OpenDay", payload=payload)
+    result = _call_fdms(device, db, f"Device/v1/{_unpadded_device_id(device)}/OpenDay", payload=payload)
+
+    # Store the opened timestamp on the device so CloseDay can compute the
+    # correct fiscalDayDate for the signature (must be the date the day was
+    # opened in local time, not the date the day is closed).
+    device.fiscal_day_opened_at = now_utc
+    db.commit()
+
+    return result
 
 
 def _sort_fiscal_counters(counters: list[dict]) -> list[dict]:
-    """Sort fiscal counters per ZIMRA Section 13.3.1 spec and filter out zeros."""
+    """Sort fiscal counters per ZIMRA Section 13.3.1 spec and filter out non-positive values.
+
+    CRITICAL: Only POSITIVE non-zero counters are included in the signature.
+    Credit note adjustments can produce negative counter values which must be excluded.
+    """
     _TYPE_ORDER = {
         "SaleByTax": 1,
         "SaleTaxByTax": 2,
@@ -249,12 +270,15 @@ def _sort_fiscal_counters(counters: list[dict]) -> list[dict]:
         "BalanceByMoneyType": 7,
     }
 
-    non_zero = []
+    positive = []
     for c in counters:
         raw = c.get("fiscalCounterValue", 0) or 0
         val = Decimal(str(raw)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-        if val != Decimal("0.00"):
-            non_zero.append(c)
+        if val > Decimal("0.00"):
+            positive.append(c)
+        else:
+            logger.debug("Excluding counter with value <= 0: type=%s, value=%s",
+                         c.get("fiscalCounterType"), val)
 
     def _key(c):
         ct = str(c.get("fiscalCounterType", ""))
@@ -270,8 +294,8 @@ def _sort_fiscal_counters(counters: list[dict]) -> list[dict]:
             pass
         return (order, cur, tid)
 
-    non_zero.sort(key=_key)
-    return non_zero
+    positive.sort(key=_key)
+    return positive
 
 
 def _build_counters_concat(counters: list[dict]) -> str:
@@ -340,21 +364,58 @@ def close_day(device: Device, db) -> dict:
 
     Fetches GetStatus first to get counters from ZIMRA, then signs and submits.
     ZIMRA requires: fiscalDayNo, fiscalDayCounters, fiscalDayDeviceSignature, receiptCounter
+
+    CRITICAL NOTES:
+    - lastFiscalDayNo from GetStatus is the last CLOSED day, NOT the current open day.
+      When a day is open the current day = lastFiscalDayNo + 1.
+    - fiscalDayDate in the signature must be the date the day was OPENED (local time),
+      not the date it is being closed.
+    - Only positive non-zero counter values are included in the signature.
     """
     # 1. Get current status from ZIMRA
     status = get_status(device, db)
-    current_day = status.get("lastFiscalDayNo", device.current_fiscal_day_no or device.last_fiscal_day_no or 0)
     receipt_counter = status.get("lastReceiptCounter", device.last_receipt_counter or 0)
 
-    # 2. Get fiscal day counters from ZIMRA status (they may be in either key)
+    # 2. Determine the CORRECT current fiscal day number
+    #    GetStatus.lastFiscalDayNo = last CLOSED day.
+    #    When day is open: current open day = lastFiscalDayNo + 1
+    fiscal_day_status = status.get("fiscalDayStatus", "")
+    last_closed_day = status.get("lastFiscalDayNo", device.last_fiscal_day_no or 0)
+
+    if fiscal_day_status == "FiscalDayOpened":
+        current_day = last_closed_day + 1
+    else:
+        # Fallback: use device's stored value (set during OpenDay)
+        current_day = device.current_fiscal_day_no or last_closed_day
+
+    logger.info(
+        "CloseDay: lastFiscalDayNo=%s, fiscalDayStatus=%s → current_day=%s",
+        last_closed_day, fiscal_day_status, current_day,
+    )
+
+    # 3. Get fiscal day counters from ZIMRA status (they may be in either key)
     raw_counters = status.get("fiscalDayCounter") or status.get("fiscalDayCounters") or []
 
-    # 3. Sort and filter out zero-value counters
+    # 4. Sort and filter out non-positive counters
     sorted_counters = _sort_fiscal_counters(raw_counters)
 
-    # 4. Build and sign
-    fiscal_day_date = datetime.utcnow().strftime("%Y-%m-%d")
+    # 5. Determine the correct fiscal_day_date
+    #    Must be the LOCAL date when the fiscal day was OPENED, not the current date.
+    if device.fiscal_day_opened_at:
+        # Convert stored UTC timestamp to local time (CAT = UTC+2)
+        local_opened = device.fiscal_day_opened_at.replace(tzinfo=timezone.utc).astimezone(_CAT) \
+            if device.fiscal_day_opened_at.tzinfo is None \
+            else device.fiscal_day_opened_at.astimezone(_CAT)
+        fiscal_day_date = local_opened.strftime("%Y-%m-%d")
+        logger.info("CloseDay: Using stored opened date → %s (from %s)", fiscal_day_date, device.fiscal_day_opened_at)
+    else:
+        # Fallback: current local date (CAT)
+        fiscal_day_date = datetime.now(_CAT).strftime("%Y-%m-%d")
+        logger.warning("CloseDay: No fiscal_day_opened_at stored, using current local date → %s", fiscal_day_date)
+
+    # 6. Build and sign
     sig = _sign_close_day(device, db, current_day, fiscal_day_date, sorted_counters)
+    logger.info("CloseDay: concat=%s", sig.get("concat", ""))
 
     payload = {
         "fiscalDayNo": current_day,
