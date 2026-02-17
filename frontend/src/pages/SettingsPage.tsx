@@ -275,6 +275,9 @@ export default function SettingsPage() {
   const [posPmForm, setPosPmForm] = useState<{ name: string; code: string }>({ name: "", code: "cash" });
   const [posPmEditing, setPosPmEditing] = useState<number | null>(null);
   const [posError, setPosError] = useState<string | null>(null);
+  const [posConfigTab, setPosConfigTab] = useState<"employees" | "payments">(
+    "employees",
+  );
   const [showPinField, setShowPinField] = useState<number | null>(null);
   const [posEmpSaving, setPosEmpSaving] = useState(false);
   const [posPmSaving, setPosPmSaving] = useState(false);
@@ -1566,7 +1569,20 @@ export default function SettingsPage() {
                       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--violet-600)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8" /><path d="M12 17v4" /><path d="M7 8h2" /><path d="M7 12h2" /><path d="M15 8h2" /><path d="M15 12h2" /></svg>
                       <h4 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "var(--slate-800)" }}>Point of Sale Configuration</h4>
                     </div>
-                    
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <button
+                        className={posConfigTab === "employees" ? "tab active" : "tab"}
+                        onClick={() => setPosConfigTab("employees")}
+                      >
+                        Employees &amp; Login
+                      </button>
+                      <button
+                        className={posConfigTab === "payments" ? "tab active" : "tab"}
+                        onClick={() => setPosConfigTab("payments")}
+                      >
+                        Payment Methods
+                      </button>
+                    </div>
                   </div>
 
                   {posError && (
@@ -1581,239 +1597,240 @@ export default function SettingsPage() {
                     </div>
                   )}
 
-                  {/* ── Employees & Login PINs Card ── */}
-                  <div style={{
-                    border: "1px solid var(--gray-200, #e5e7eb)", borderRadius: 10,
-                    background: "var(--white-500, #fff)", marginBottom: 24, overflow: "hidden"
-                  }}>
-                    {/* Card header */}
+                  {posConfigTab === "employees" && (
                     <div style={{
-                      display: "flex", alignItems: "center", justifyContent: "space-between",
-                      padding: "16px 20px", borderBottom: "1px solid var(--gray-100, #f3f4f6)",
-                      background: "var(--gray-50, #f9fafb)"
+                      border: "1px solid var(--gray-200, #e5e7eb)", borderRadius: 10,
+                      background: "var(--white-500, #fff)", marginBottom: 24, overflow: "hidden"
                     }}>
-                      <div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--slate-600)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
-                          <h5 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "var(--slate-700)" }}>Employees &amp; Login PINs</h5>
-                        </div>
-                        
-                      </div>
-                      <span style={{
-                        padding: "3px 12px", borderRadius: 20, fontSize: 11, fontWeight: 700,
-                        color: "var(--violet-700, #6d28d9)", background: "var(--violet-50, #f5f3ff)"
+                      {/* Card header */}
+                      <div style={{
+                        display: "flex", alignItems: "center", justifyContent: "space-between",
+                        padding: "16px 20px", borderBottom: "1px solid var(--gray-100, #f3f4f6)",
+                        background: "var(--gray-50, #f9fafb)"
                       }}>
-                        {posEmployees.length} {posEmployees.length === 1 ? "employee" : "employees"}
-                      </span>
-                    </div>
+                        <div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--slate-600)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+                            <h5 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "var(--slate-700)" }}>Employees &amp; Login PINs</h5>
+                          </div>
+                          
+                        </div>
+                        <span style={{
+                          padding: "3px 12px", borderRadius: 20, fontSize: 11, fontWeight: 700,
+                          color: "var(--violet-700, #6d28d9)", background: "var(--violet-50, #f5f3ff)"
+                        }}>
+                          {posEmployees.length} {posEmployees.length === 1 ? "employee" : "employees"}
+                        </span>
+                      </div>
 
-                    {/* Add / Edit form */}
-                    <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--gray-100, #f3f4f6)", background: posEmpEditing ? "var(--violet-50, #f5f3ff)" : "transparent" }}>
-                      {posEmpEditing && (
-                        <div style={{ fontSize: 12, fontWeight: 600, color: "var(--violet-600)", marginBottom: 8 }}>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ marginRight: 4 }}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
-                          Editing: {posEmployees.find(e => e.id === posEmpEditing)?.name}
+                      {/* Add / Edit form */}
+                      <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--gray-100, #f3f4f6)", background: posEmpEditing ? "var(--violet-50, #f5f3ff)" : "transparent" }}>
+                        {posEmpEditing && (
+                          <div style={{ fontSize: 12, fontWeight: 600, color: "var(--violet-600)", marginBottom: 8 }}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ marginRight: 4 }}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                            Editing: {posEmployees.find(e => e.id === posEmpEditing)?.name}
+                          </div>
+                        )}
+                        <div style={{ display: "grid", gridTemplateColumns: "2fr 2fr 1fr 1fr auto", gap: 10, alignItems: "end" }}>
+                          <label className="input" style={{ margin: 0 }}>
+                            <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-500)" }}>Name</span>
+                            <input
+                              value={posEmpForm.name}
+                              onChange={(e) => setPosEmpForm({ ...posEmpForm, name: e.target.value })}
+                              placeholder="Employee name"
+                              style={{ fontSize: 13 }}
+                            />
+                          </label>
+                          <label className="input" style={{ margin: 0 }}>
+                            <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-500)" }}>Email</span>
+                            <input
+                              type="email"
+                              value={posEmpForm.email || ""}
+                              onChange={(e) => setPosEmpForm({ ...posEmpForm, email: e.target.value })}
+                              placeholder="support@geenet.co.zw"
+                              style={{ fontSize: 13 }}
+                            />
+                          </label>
+                          <label className="input" style={{ margin: 0 }}>
+                            <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-500)" }}>PIN</span>
+                            <input
+                              type="password"
+                              value={posEmpForm.pin}
+                              onChange={(e) => {
+                                const val = e.target.value.replace(/\D/g, "").slice(0, 6);
+                                setPosEmpForm({ ...posEmpForm, pin: val });
+                              }}
+                              placeholder="4-6 digits"
+                              maxLength={6}
+                              style={{ fontSize: 13, letterSpacing: "2px" }}
+                            />
+                          </label>
+                          <label className="input" style={{ margin: 0 }}>
+                            <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-500)" }}>Role</span>
+                            <select
+                              value={posEmpForm.role}
+                              onChange={(e) => setPosEmpForm({ ...posEmpForm, role: e.target.value })}
+                              style={{ fontSize: 13 }}
+                            >
+                              <option value="cashier">Cashier</option>
+                              <option value="manager">Supervisor</option>
+                              
+                            </select>
+                          </label>
+                          <div style={{ display: "flex", gap: 6 }}>
+                            <button
+                              className="primary"
+                              onClick={savePosEmployee}
+                              disabled={!posEmpForm.name || !posEmpForm.pin || posEmpForm.pin.length < 4 || posEmpSaving}
+                              style={{ height: 36, minWidth: 80, fontSize: 13, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+                            >
+                              {posEmpSaving ? (
+                                <span style={{ display: "inline-block", width: 14, height: 14, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+                              ) : posEmpEditing ? (
+                                <>
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+                                  Save
+                                </>
+                              ) : (
+                                <><PlusIcon /> Add</>
+                              )}
+                            </button>
+                            {posEmpEditing && (
+                              <button
+                                className="outline"
+                                onClick={() => { setPosEmpEditing(null); setPosEmpForm({ name: "", pin: "", role: "cashier", email: "" }); }}
+                                style={{ height: 36, fontSize: 13, borderRadius: 8 }}
+                              >
+                                Cancel
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Employee list */}
+                      {posEmployees.length > 0 ? (
+                        <div style={{ overflowX: "auto" }}>
+                          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                            <thead>
+                              <tr style={{ background: "var(--gray-50, #f9fafb)" }}>
+                                <th style={{ padding: "10px 20px", textAlign: "left", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-400)", borderBottom: "1px solid var(--gray-200)" }}>Employee</th>
+                                <th style={{ padding: "10px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-400)", borderBottom: "1px solid var(--gray-200)" }}>PIN</th>
+                                <th style={{ padding: "10px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-400)", borderBottom: "1px solid var(--gray-200)" }}>Role</th>
+                                <th style={{ padding: "10px 16px", textAlign: "center", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-400)", borderBottom: "1px solid var(--gray-200)" }}>Status</th>
+                                <th style={{ padding: "10px 20px", textAlign: "right", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-400)", borderBottom: "1px solid var(--gray-200)" }}>Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {posEmployees.map((emp, idx) => (
+                                <tr key={emp.id} style={{
+                                  background: posEmpEditing === emp.id ? "var(--violet-50, #f5f3ff)" : idx % 2 === 0 ? "transparent" : "var(--gray-50, #f9fafb)",
+                                  transition: "background 150ms"
+                                }}>
+                                  <td style={{ padding: "12px 20px", borderBottom: "1px solid var(--gray-100)" }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                      <div style={{
+                                        width: 34, height: 34, borderRadius: "50%", flexShrink: 0,
+                                        display: "flex", alignItems: "center", justifyContent: "center",
+                                        fontSize: 13, fontWeight: 700, color: "#fff",
+                                        background: emp.role === "admin" ? "var(--red-500, #ef4444)" : emp.role === "manager" ? "var(--amber-500, #f59e0b)" : "var(--blue-500, #3b82f6)"
+                                      }}>
+                                        {emp.name.charAt(0).toUpperCase()}
+                                      </div>
+                                      <div>
+                                        <div style={{ fontWeight: 600, color: "var(--slate-800)" }}>{emp.name}</div>
+                                        <div style={{ fontSize: 11, color: "var(--slate-400)" }}>{emp.email || "No email"}</div>
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td style={{ padding: "12px 16px", borderBottom: "1px solid var(--gray-100)" }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                      <code style={{
+                                        background: "var(--slate-100, #f1f5f9)", padding: "3px 10px", borderRadius: 6,
+                                        fontSize: 13, fontFamily: "monospace", letterSpacing: "2px", color: "var(--slate-600)"
+                                      }}>
+                                        {showPinField === emp.id ? emp.pin : "•".repeat(emp.pin.length || 4)}
+                                      </code>
+                                      <button
+                                        onClick={() => setShowPinField(showPinField === emp.id ? null : emp.id)}
+                                        style={{ border: "none", background: "transparent", cursor: "pointer", padding: 2, color: "var(--slate-400)", display: "flex" }}
+                                        title={showPinField === emp.id ? "Hide PIN" : "Show PIN"}
+                                      >
+                                        {showPinField === emp.id ? (
+                                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" /><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
+                                        ) : (
+                                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                                        )}
+                                      </button>
+                                    </div>
+                                  </td>
+                                  <td style={{ padding: "12px 16px", borderBottom: "1px solid var(--gray-100)" }}>
+                                    <span style={{
+                                      display: "inline-flex", alignItems: "center", gap: 4,
+                                      padding: "3px 12px", borderRadius: 20, fontSize: 11, fontWeight: 700, textTransform: "capitalize",
+                                      color: emp.role === "admin" ? "var(--red-600, #dc2626)" : emp.role === "manager" ? "var(--amber-700, #b45309)" : "var(--blue-600, #2563eb)",
+                                      background: emp.role === "admin" ? "var(--red-50, #fef2f2)" : emp.role === "manager" ? "var(--amber-50, #fffbeb)" : "var(--blue-50, #eff6ff)",
+                                    }}>
+                                      {emp.role === "admin" && <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>}
+                                      {emp.role === "manager" && <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1l3.22 6.636 7.28 1.06-5.25 5.146 1.24 7.248L12 17.77l-6.49 3.42 1.24-7.248L1.5 8.696l7.28-1.06L12 1z"/></svg>}
+                                      {emp.role}
+                                    </span>
+                                  </td>
+                                  <td style={{ padding: "12px 16px", textAlign: "center", borderBottom: "1px solid var(--gray-100)" }}>
+                                    <label className="switch" style={{ margin: "0 auto" }}>
+                                      <input
+                                        type="checkbox"
+                                        checked={emp.is_active}
+                                        onChange={async (e) => {
+                                          await apiFetch(`/pos/employees/${emp.id}`, {
+                                            method: "PUT",
+                                            body: JSON.stringify({ is_active: e.target.checked }),
+                                          });
+                                          if (companyId) loadPosEmployees(companyId);
+                                        }}
+                                      />
+                                      <span className="slider" />
+                                    </label>
+                                  </td>
+                                  <td style={{ padding: "12px 20px", textAlign: "right", borderBottom: "1px solid var(--gray-100)" }}>
+                                    <div style={{ display: "flex", gap: 4, justifyContent: "flex-end" }}>
+                                      <button
+                                        className="icon-btn"
+                                        title="Edit employee"
+                                        onClick={() => {
+                                          setPosEmpEditing(emp.id);
+                                          setPosEmpForm({ name: emp.name, email: emp.email, pin: emp.pin, role: emp.role });
+                                        }}
+                                        style={{ width: 30, height: 30, borderRadius: 6 }}
+                                      >
+                                        <EditIcon />
+                                      </button>
+                                      <button
+                                        className="icon-btn"
+                                        title="Delete employee"
+                                        onClick={() => deletePosEmployee(emp.id)}
+                                        style={{ width: 30, height: 30, borderRadius: 6, color: "var(--red-400)" }}
+                                      >
+                                        <TrashIcon />
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
+                        <div style={{ padding: "32px 20px", textAlign: "center" }}>
+                          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--slate-300)" strokeWidth="1.5" strokeLinecap="round" style={{ marginBottom: 8 }}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+                          <div style={{ color: "var(--slate-400)", fontSize: 13, marginBottom: 4 }}>No POS employees configured yet</div>
+                          <div style={{ color: "var(--slate-300)", fontSize: 12 }}>Add your first cashier using the form above</div>
                         </div>
                       )}
-                      <div style={{ display: "grid", gridTemplateColumns: "2fr 2fr 1fr 1fr auto", gap: 10, alignItems: "end" }}>
-                        <label className="input" style={{ margin: 0 }}>
-                          <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-500)" }}>Name</span>
-                          <input
-                            value={posEmpForm.name}
-                            onChange={(e) => setPosEmpForm({ ...posEmpForm, name: e.target.value })}
-                            placeholder="Employee name"
-                            style={{ fontSize: 13 }}
-                          />
-                        </label>
-                        <label className="input" style={{ margin: 0 }}>
-                          <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-500)" }}>Email</span>
-                          <input
-                            type="email"
-                            value={posEmpForm.email || ""}
-                            onChange={(e) => setPosEmpForm({ ...posEmpForm, email: e.target.value })}
-                            placeholder="support@geenet.co.zw"
-                            style={{ fontSize: 13 }}
-                          />
-                        </label>
-                        <label className="input" style={{ margin: 0 }}>
-                          <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-500)" }}>PIN</span>
-                          <input
-                            type="password"
-                            value={posEmpForm.pin}
-                            onChange={(e) => {
-                              const val = e.target.value.replace(/\D/g, "").slice(0, 6);
-                              setPosEmpForm({ ...posEmpForm, pin: val });
-                            }}
-                            placeholder="4-6 digits"
-                            maxLength={6}
-                            style={{ fontSize: 13, letterSpacing: "2px" }}
-                          />
-                        </label>
-                        <label className="input" style={{ margin: 0 }}>
-                          <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-500)" }}>Role</span>
-                          <select
-                            value={posEmpForm.role}
-                            onChange={(e) => setPosEmpForm({ ...posEmpForm, role: e.target.value })}
-                            style={{ fontSize: 13 }}
-                          >
-                            <option value="cashier">Cashier</option>
-                            <option value="manager">Supervisor</option>
-                            
-                          </select>
-                        </label>
-                        <div style={{ display: "flex", gap: 6 }}>
-                          <button
-                            className="primary"
-                            onClick={savePosEmployee}
-                            disabled={!posEmpForm.name || !posEmpForm.pin || posEmpForm.pin.length < 4 || posEmpSaving}
-                            style={{ height: 36, minWidth: 80, fontSize: 13, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
-                          >
-                            {posEmpSaving ? (
-                              <span style={{ display: "inline-block", width: 14, height: 14, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
-                            ) : posEmpEditing ? (
-                              <>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
-                                Save
-                              </>
-                            ) : (
-                              <><PlusIcon /> Add</>
-                            )}
-                          </button>
-                          {posEmpEditing && (
-                            <button
-                              className="outline"
-                              onClick={() => { setPosEmpEditing(null); setPosEmpForm({ name: "", pin: "", role: "cashier", email: "" }); }}
-                              style={{ height: 36, fontSize: 13, borderRadius: 8 }}
-                            >
-                              Cancel
-                            </button>
-                          )}
-                        </div>
-                      </div>
                     </div>
+                  )}
 
-                    {/* Employee list */}
-                    {posEmployees.length > 0 ? (
-                      <div style={{ overflowX: "auto" }}>
-                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-                          <thead>
-                            <tr style={{ background: "var(--gray-50, #f9fafb)" }}>
-                              <th style={{ padding: "10px 20px", textAlign: "left", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-400)", borderBottom: "1px solid var(--gray-200)" }}>Employee</th>
-                              <th style={{ padding: "10px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-400)", borderBottom: "1px solid var(--gray-200)" }}>PIN</th>
-                              <th style={{ padding: "10px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-400)", borderBottom: "1px solid var(--gray-200)" }}>Role</th>
-                              <th style={{ padding: "10px 16px", textAlign: "center", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-400)", borderBottom: "1px solid var(--gray-200)" }}>Status</th>
-                              <th style={{ padding: "10px 20px", textAlign: "right", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-400)", borderBottom: "1px solid var(--gray-200)" }}>Actions</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {posEmployees.map((emp, idx) => (
-                              <tr key={emp.id} style={{
-                                background: posEmpEditing === emp.id ? "var(--violet-50, #f5f3ff)" : idx % 2 === 0 ? "transparent" : "var(--gray-50, #f9fafb)",
-                                transition: "background 150ms"
-                              }}>
-                                <td style={{ padding: "12px 20px", borderBottom: "1px solid var(--gray-100)" }}>
-                                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                                    <div style={{
-                                      width: 34, height: 34, borderRadius: "50%", flexShrink: 0,
-                                      display: "flex", alignItems: "center", justifyContent: "center",
-                                      fontSize: 13, fontWeight: 700, color: "#fff",
-                                      background: emp.role === "admin" ? "var(--red-500, #ef4444)" : emp.role === "manager" ? "var(--amber-500, #f59e0b)" : "var(--blue-500, #3b82f6)"
-                                    }}>
-                                      {emp.name.charAt(0).toUpperCase()}
-                                    </div>
-                                    <div>
-                                      <div style={{ fontWeight: 600, color: "var(--slate-800)" }}>{emp.name}</div>
-                                      <div style={{ fontSize: 11, color: "var(--slate-400)" }}>{emp.email || "No email"}</div>
-                                    </div>
-                                  </div>
-                                </td>
-                                <td style={{ padding: "12px 16px", borderBottom: "1px solid var(--gray-100)" }}>
-                                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                    <code style={{
-                                      background: "var(--slate-100, #f1f5f9)", padding: "3px 10px", borderRadius: 6,
-                                      fontSize: 13, fontFamily: "monospace", letterSpacing: "2px", color: "var(--slate-600)"
-                                    }}>
-                                      {showPinField === emp.id ? emp.pin : "•".repeat(emp.pin.length || 4)}
-                                    </code>
-                                    <button
-                                      onClick={() => setShowPinField(showPinField === emp.id ? null : emp.id)}
-                                      style={{ border: "none", background: "transparent", cursor: "pointer", padding: 2, color: "var(--slate-400)", display: "flex" }}
-                                      title={showPinField === emp.id ? "Hide PIN" : "Show PIN"}
-                                    >
-                                      {showPinField === emp.id ? (
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" /><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
-                                      ) : (
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
-                                      )}
-                                    </button>
-                                  </div>
-                                </td>
-                                <td style={{ padding: "12px 16px", borderBottom: "1px solid var(--gray-100)" }}>
-                                  <span style={{
-                                    display: "inline-flex", alignItems: "center", gap: 4,
-                                    padding: "3px 12px", borderRadius: 20, fontSize: 11, fontWeight: 700, textTransform: "capitalize",
-                                    color: emp.role === "admin" ? "var(--red-600, #dc2626)" : emp.role === "manager" ? "var(--amber-700, #b45309)" : "var(--blue-600, #2563eb)",
-                                    background: emp.role === "admin" ? "var(--red-50, #fef2f2)" : emp.role === "manager" ? "var(--amber-50, #fffbeb)" : "var(--blue-50, #eff6ff)",
-                                  }}>
-                                    {emp.role === "admin" && <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>}
-                                    {emp.role === "manager" && <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1l3.22 6.636 7.28 1.06-5.25 5.146 1.24 7.248L12 17.77l-6.49 3.42 1.24-7.248L1.5 8.696l7.28-1.06L12 1z"/></svg>}
-                                    {emp.role}
-                                  </span>
-                                </td>
-                                <td style={{ padding: "12px 16px", textAlign: "center", borderBottom: "1px solid var(--gray-100)" }}>
-                                  <label className="switch" style={{ margin: "0 auto" }}>
-                                    <input
-                                      type="checkbox"
-                                      checked={emp.is_active}
-                                      onChange={async (e) => {
-                                        await apiFetch(`/pos/employees/${emp.id}`, {
-                                          method: "PUT",
-                                          body: JSON.stringify({ is_active: e.target.checked }),
-                                        });
-                                        if (companyId) loadPosEmployees(companyId);
-                                      }}
-                                    />
-                                    <span className="slider" />
-                                  </label>
-                                </td>
-                                <td style={{ padding: "12px 20px", textAlign: "right", borderBottom: "1px solid var(--gray-100)" }}>
-                                  <div style={{ display: "flex", gap: 4, justifyContent: "flex-end" }}>
-                                    <button
-                                      className="icon-btn"
-                                      title="Edit employee"
-                                      onClick={() => {
-                                        setPosEmpEditing(emp.id);
-                                        setPosEmpForm({ name: emp.name, email: emp.email, pin: emp.pin, role: emp.role });
-                                      }}
-                                      style={{ width: 30, height: 30, borderRadius: 6 }}
-                                    >
-                                      <EditIcon />
-                                    </button>
-                                    <button
-                                      className="icon-btn"
-                                      title="Delete employee"
-                                      onClick={() => deletePosEmployee(emp.id)}
-                                      style={{ width: 30, height: 30, borderRadius: 6, color: "var(--red-400)" }}
-                                    >
-                                      <TrashIcon />
-                                    </button>
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    ) : (
-                      <div style={{ padding: "32px 20px", textAlign: "center" }}>
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--slate-300)" strokeWidth="1.5" strokeLinecap="round" style={{ marginBottom: 8 }}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
-                        <div style={{ color: "var(--slate-400)", fontSize: 13, marginBottom: 4 }}>No POS employees configured yet</div>
-                        <div style={{ color: "var(--slate-300)", fontSize: 12 }}>Add your first cashier using the form above</div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* ── Payment Methods Card ── */}
+                  {posConfigTab === "payments" && (
                   <div style={{
                     border: "1px solid var(--gray-200, #e5e7eb)", borderRadius: 10,
                     background: "var(--white-500, #fff)", overflow: "hidden"
@@ -2027,6 +2044,7 @@ export default function SettingsPage() {
                       </div>
                     )}
                   </div>
+                  )}
                 </section>
               )}
             </>
