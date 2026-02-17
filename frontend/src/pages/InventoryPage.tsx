@@ -324,6 +324,17 @@ export default function InventoryPage() {
     can_be_sold: true,
     can_be_purchased: true,
   });
+  const [productInfoTab, setProductInfoTab] = useState<
+    "general" | "inventory" | "description"
+  >("general");
+  useEffect(() => {
+    if (
+      productForm.product_type !== "storable" &&
+      productInfoTab === "inventory"
+    ) {
+      setProductInfoTab("general");
+    }
+  }, [productForm.product_type, productInfoTab]);
   const [productImageUrl, setProductImageUrl] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -2287,250 +2298,374 @@ export default function InventoryPage() {
                           </div>
                         </div>
                       </div>
-
-                      <div className="o-group-separator">
-                        <div className="o-group-separator-line" />
-                        <span className="o-group-separator-text">
-                          General Information
-                        </span>
-                        <div className="o-group-separator-line" />
+                      <div style={{ marginTop: 24, display: "flex", gap: 24 }}>
+                        <label
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                            cursor: "pointer",
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={productForm.can_be_sold}
+                            onChange={(e) =>
+                              setProductForm({
+                                ...productForm,
+                                can_be_sold: e.target.checked,
+                              })
+                            }
+                          />
+                          Can be Sold
+                        </label>
+                        <label
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                            cursor: "pointer",
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={productForm.can_be_purchased}
+                            onChange={(e) =>
+                              setProductForm({
+                                ...productForm,
+                                can_be_purchased: e.target.checked,
+                              })
+                            }
+                          />
+                          Can be Purchased
+                        </label>
+                        <label
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                            cursor: "pointer",
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={productForm.is_active}
+                            onChange={(e) =>
+                              setProductForm({
+                                ...productForm,
+                                is_active: e.target.checked,
+                              })
+                            }
+                          />
+                          Active
+                        </label>
                       </div>
 
                       <div
                         style={{
-                          display: "grid",
-                          gridTemplateColumns: "1fr 1fr",
-                          gap: 24,
+                          marginTop: 16,
+                          display: "flex",
+                          gap: 8,
+                          flexWrap: "wrap",
                         }}
                       >
-                        <div>
-                          <div className="o-form-group">
-                            <label className="o-form-label">Product Type</label>
-                            <div className="o-form-field">
-                              <select
-                                className="o-form-select"
-                                value={productForm.product_type}
-                                onChange={(e) =>
-                                  setProductForm({
-                                    ...productForm,
-                                    product_type: e.target.value,
-                                  })
-                                }
-                              >
-                                {PRODUCT_TYPES.map((t) => (
-                                  <option key={t.value} value={t.value}>
-                                    {t.label}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                          </div>
-
-                          <div className="o-form-group">
-                            <label className="o-form-label">Category</label>
-                            <div className="o-form-field">
-                              <select
-                                className="o-form-select"
-                                value={productForm.category_id ?? ""}
-                                onChange={(e) =>
-                                  setProductForm({
-                                    ...productForm,
-                                    category_id: e.target.value
-                                      ? Number(e.target.value)
-                                      : null,
-                                  })
-                                }
-                              >
-                                <option value="">No category</option>
-                                {categories.map((c) => (
-                                  <option key={c.id} value={c.id}>
-                                    {c.name}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                          </div>
-
-                          <div className="o-form-group">
-                            <label className="o-form-label">Product Code</label>
-                            <div className="o-form-field">
-                              <input
-                                type="text"
-                                className="o-form-input"
-                                value={productForm.reference}
-                                onChange={(e) =>
-                                  setProductForm({
-                                    ...productForm,
-                                    reference: e.target.value,
-                                  })
-                                }
-                                placeholder="e.g., PROD-001"
-                              />
-                            </div>
-                          </div>
-
-                          <div className="o-form-group">
-                            <label className="o-form-label">Barcode</label>
-                            <div className="o-form-field">
-                              <input
-                                type="text"
-                                className="o-form-input"
-                                value={productForm.barcode}
-                                onChange={(e) =>
-                                  setProductForm({
-                                    ...productForm,
-                                    barcode: e.target.value,
-                                  })
-                                }
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        <div>
-                          <div className="o-form-group">
-                            <label className="o-form-label">Sales Price</label>
-                            <div className="o-form-field">
-                              <input
-                                type="number"
-                                className="o-form-input"
-                                value={productForm.sale_price}
-                                onChange={(e) =>
-                                  setProductForm({
-                                    ...productForm,
-                                    sale_price: Number(e.target.value),
-                                  })
-                                }
-                                step="0.01"
-                                min="0"
-                              />
-                            </div>
-                          </div>
-
-                          <div className="o-form-group">
-                            <label className="o-form-label">Sales Cost</label>
-                            <div className="o-form-field">
-                              <input
-                                type="number"
-                                className="o-form-input"
-                                value={productForm.sales_cost}
-                                onChange={(e) =>
-                                  setProductForm({
-                                    ...productForm,
-                                    sales_cost: Number(e.target.value),
-                                  })
-                                }
-                                step="0.01"
-                                min="0"
-                              />
-                            </div>
-                          </div>
-
-                          <div className="o-form-group">
-                            <label className="o-form-label">
-                              Purchase Cost
-                            </label>
-                            <div className="o-form-field">
-                              <input
-                                type="number"
-                                className="o-form-input"
-                                value={productForm.purchase_cost}
-                                onChange={(e) =>
-                                  setProductForm({
-                                    ...productForm,
-                                    purchase_cost: Number(e.target.value),
-                                  })
-                                }
-                                step="0.01"
-                                min="0"
-                              />
-                            </div>
-                          </div>
-
-                          <div className="o-form-group">
-                            <label className="o-form-label">ZIMRA Tax</label>
-                            <div className="o-form-field">
-                              <select
-                                className="o-form-select"
-                                value={productForm.tax_id ?? ""}
-                                onChange={(e) => {
-                                  const tid = e.target.value
-                                    ? Number(e.target.value)
-                                    : null;
-                                  const matched = taxSettings.find(
-                                    (t) => t.id === tid,
-                                  );
-                                  setProductForm({
-                                    ...productForm,
-                                    tax_id: tid,
-                                    tax_rate: matched
-                                      ? matched.rate
-                                      : productForm.tax_rate,
-                                  });
-                                }}
-                              >
-                                <option value="">— Manual rate —</option>
-                                {taxSettings
-                                  .filter((t) => t.is_active)
-                                  .map((t) => (
-                                    <option key={t.id} value={t.id}>
-                                      {t.name} ({t.rate}%)
-                                      {t.is_zimra_tax && t.zimra_tax_id
-                                        ? ` [ZIMRA ID: ${t.zimra_tax_id}]`
-                                        : ""}
-                                    </option>
-                                  ))}
-                              </select>
-                            </div>
-                          </div>
-
-                          <div className="o-form-group">
-                            <label className="o-form-label">Tax Rate (%)</label>
-                            <div className="o-form-field">
-                              <input
-                                type="number"
-                                className="o-form-input"
-                                value={productForm.tax_rate}
-                                onChange={(e) =>
-                                  setProductForm({
-                                    ...productForm,
-                                    tax_rate: Number(e.target.value),
-                                  })
-                                }
-                                step="0.1"
-                                min="0"
-                                disabled={!!productForm.tax_id}
-                              />
-                            </div>
-                          </div>
-
-                          <div className="o-form-group">
-                            <label className="o-form-label">
-                              Unit of Measure
-                            </label>
-                            <div className="o-form-field">
-                              <select
-                                className="o-form-select"
-                                value={productForm.uom}
-                                onChange={(e) =>
-                                  setProductForm({
-                                    ...productForm,
-                                    uom: e.target.value,
-                                  })
-                                }
-                              >
-                                {UOMS.map((u) => (
-                                  <option key={u.value} value={u.value}>
-                                    {u.label}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                          </div>
-                        </div>
+                        <button
+                          className={
+                            productInfoTab === "general" ? "tab active" : "tab"
+                          }
+                          onClick={() => setProductInfoTab("general")}
+                        >
+                          General
+                        </button>
+                        <button
+                          className={
+                            productInfoTab === "inventory"
+                              ? "tab active"
+                              : "tab"
+                          }
+                          onClick={() => setProductInfoTab("inventory")}
+                          disabled={productForm.product_type !== "storable"}
+                          style={
+                            productForm.product_type !== "storable"
+                              ? { opacity: 0.5, cursor: "not-allowed" }
+                              : undefined
+                          }
+                          title={
+                            productForm.product_type !== "storable"
+                              ? "Inventory is only for storable products"
+                              : undefined
+                          }
+                        >
+                          Inventory
+                        </button>
+                        <button
+                          className={
+                            productInfoTab === "description"
+                              ? "tab active"
+                              : "tab"
+                          }
+                          onClick={() => setProductInfoTab("description")}
+                        >
+                          Description
+                        </button>
                       </div>
 
-                      {productForm.product_type === "storable" && (
+                      {productInfoTab === "general" && (
+                        <>
+                          <div className="o-group-separator">
+                            <div className="o-group-separator-line" />
+                            <span className="o-group-separator-text">
+                              General Information
+                            </span>
+                            <div className="o-group-separator-line" />
+                          </div>
+
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: "1fr 1fr",
+                              gap: 24,
+                            }}
+                          >
+                            <div>
+                              <div className="o-form-group">
+                                <label className="o-form-label">
+                                  Product Type
+                                </label>
+                                <div className="o-form-field">
+                                  <select
+                                    className="o-form-select"
+                                    value={productForm.product_type}
+                                    onChange={(e) =>
+                                      setProductForm({
+                                        ...productForm,
+                                        product_type: e.target.value,
+                                      })
+                                    }
+                                  >
+                                    {PRODUCT_TYPES.map((t) => (
+                                      <option key={t.value} value={t.value}>
+                                        {t.label}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                              </div>
+
+                              <div className="o-form-group">
+                                <label className="o-form-label">Category</label>
+                                <div className="o-form-field">
+                                  <select
+                                    className="o-form-select"
+                                    value={productForm.category_id ?? ""}
+                                    onChange={(e) =>
+                                      setProductForm({
+                                        ...productForm,
+                                        category_id: e.target.value
+                                          ? Number(e.target.value)
+                                          : null,
+                                      })
+                                    }
+                                  >
+                                    <option value="">No category</option>
+                                    {categories.map((c) => (
+                                      <option key={c.id} value={c.id}>
+                                        {c.name}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                              </div>
+
+                              <div className="o-form-group">
+                                <label className="o-form-label">
+                                  Product Code
+                                </label>
+                                <div className="o-form-field">
+                                  <input
+                                    type="text"
+                                    className="o-form-input"
+                                    value={productForm.reference}
+                                    onChange={(e) =>
+                                      setProductForm({
+                                        ...productForm,
+                                        reference: e.target.value,
+                                      })
+                                    }
+                                    placeholder="e.g., PROD-001"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="o-form-group">
+                                <label className="o-form-label">Barcode</label>
+                                <div className="o-form-field">
+                                  <input
+                                    type="text"
+                                    className="o-form-input"
+                                    value={productForm.barcode}
+                                    onChange={(e) =>
+                                      setProductForm({
+                                        ...productForm,
+                                        barcode: e.target.value,
+                                      })
+                                    }
+                                  />
+                                </div>
+                              </div>
+                            </div>
+
+                            <div>
+                              <div className="o-form-group">
+                                <label className="o-form-label">
+                                  Sales Price
+                                </label>
+                                <div className="o-form-field">
+                                  <input
+                                    type="number"
+                                    className="o-form-input"
+                                    value={productForm.sale_price}
+                                    onChange={(e) =>
+                                      setProductForm({
+                                        ...productForm,
+                                        sale_price: Number(e.target.value),
+                                      })
+                                    }
+                                    step="0.01"
+                                    min="0"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="o-form-group">
+                                <label className="o-form-label">Sales Cost</label>
+                                <div className="o-form-field">
+                                  <input
+                                    type="number"
+                                    className="o-form-input"
+                                    value={productForm.sales_cost}
+                                    onChange={(e) =>
+                                      setProductForm({
+                                        ...productForm,
+                                        sales_cost: Number(e.target.value),
+                                      })
+                                    }
+                                    step="0.01"
+                                    min="0"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="o-form-group">
+                                <label className="o-form-label">
+                                  Purchase Cost
+                                </label>
+                                <div className="o-form-field">
+                                  <input
+                                    type="number"
+                                    className="o-form-input"
+                                    value={productForm.purchase_cost}
+                                    onChange={(e) =>
+                                      setProductForm({
+                                        ...productForm,
+                                        purchase_cost: Number(e.target.value),
+                                      })
+                                    }
+                                    step="0.01"
+                                    min="0"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="o-form-group">
+                                <label className="o-form-label">ZIMRA Tax</label>
+                                <div className="o-form-field">
+                                  <select
+                                    className="o-form-select"
+                                    value={productForm.tax_id ?? ""}
+                                    onChange={(e) => {
+                                      const tid = e.target.value
+                                        ? Number(e.target.value)
+                                        : null;
+                                      const matched = taxSettings.find(
+                                        (t) => t.id === tid,
+                                      );
+                                      setProductForm({
+                                        ...productForm,
+                                        tax_id: tid,
+                                        tax_rate: matched
+                                          ? matched.rate
+                                          : productForm.tax_rate,
+                                      });
+                                    }}
+                                  >
+                                    <option value="">— Manual rate —</option>
+                                    {taxSettings
+                                      .filter((t) => t.is_active)
+                                      .map((t) => (
+                                        <option key={t.id} value={t.id}>
+                                          {t.name} ({t.rate}%)
+                                          {t.is_zimra_tax && t.zimra_tax_id
+                                            ? ` [ZIMRA ID: ${t.zimra_tax_id}]`
+                                            : ""}
+                                        </option>
+                                      ))}
+                                  </select>
+                                </div>
+                              </div>
+
+                              <div className="o-form-group">
+                                <label className="o-form-label">
+                                  Tax Rate (%)
+                                </label>
+                                <div className="o-form-field">
+                                  <input
+                                    type="number"
+                                    className="o-form-input"
+                                    value={productForm.tax_rate}
+                                    onChange={(e) =>
+                                      setProductForm({
+                                        ...productForm,
+                                        tax_rate: Number(e.target.value),
+                                      })
+                                    }
+                                    step="0.1"
+                                    min="0"
+                                    disabled={!!productForm.tax_id}
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="o-form-group">
+                                <label className="o-form-label">
+                                  Unit of Measure
+                                </label>
+                                <div className="o-form-field">
+                                  <select
+                                    className="o-form-select"
+                                    value={productForm.uom}
+                                    onChange={(e) =>
+                                      setProductForm({
+                                        ...productForm,
+                                        uom: e.target.value,
+                                      })
+                                    }
+                                  >
+                                    {UOMS.map((u) => (
+                                      <option key={u.value} value={u.value}>
+                                        {u.label}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {productInfoTab === "inventory" &&
+                        productForm.product_type === "storable" && (
                         <>
                           <div className="o-group-separator">
                             <div className="o-group-separator-line" />
@@ -2689,90 +2824,31 @@ export default function InventoryPage() {
                         </>
                       )}
 
-                      <div className="o-group-separator">
-                        <div className="o-group-separator-line" />
-                        <span className="o-group-separator-text">
-                          Description
-                        </span>
-                        <div className="o-group-separator-line" />
-                      </div>
+                      {productInfoTab === "description" && (
+                        <>
+                          <div className="o-group-separator">
+                            <div className="o-group-separator-line" />
+                            <span className="o-group-separator-text">
+                              Description
+                            </span>
+                            <div className="o-group-separator-line" />
+                          </div>
 
-                      <textarea
-                        className="o-form-textarea"
-                        rows={4}
-                        value={productForm.description}
-                        onChange={(e) =>
-                          setProductForm({
-                            ...productForm,
-                            description: e.target.value,
-                          })
-                        }
-                        placeholder="Product description..."
-                        style={{ width: "100%" }}
-                      />
-
-                      <div style={{ marginTop: 24, display: "flex", gap: 24 }}>
-                        <label
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 8,
-                            cursor: "pointer",
-                          }}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={productForm.can_be_sold}
+                          <textarea
+                            className="o-form-textarea"
+                            rows={4}
+                            value={productForm.description}
                             onChange={(e) =>
                               setProductForm({
                                 ...productForm,
-                                can_be_sold: e.target.checked,
+                                description: e.target.value,
                               })
                             }
+                            placeholder="Product description..."
+                            style={{ width: "100%" }}
                           />
-                          Can be Sold
-                        </label>
-                        <label
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 8,
-                            cursor: "pointer",
-                          }}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={productForm.can_be_purchased}
-                            onChange={(e) =>
-                              setProductForm({
-                                ...productForm,
-                                can_be_purchased: e.target.checked,
-                              })
-                            }
-                          />
-                          Can be Purchased
-                        </label>
-                        <label
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 8,
-                            cursor: "pointer",
-                          }}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={productForm.is_active}
-                            onChange={(e) =>
-                              setProductForm({
-                                ...productForm,
-                                is_active: e.target.checked,
-                              })
-                            }
-                          />
-                          Active
-                        </label>
-                      </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>

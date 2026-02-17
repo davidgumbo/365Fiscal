@@ -224,8 +224,8 @@ export default function ContactsPage() {
                   />
                 </th>
                 <th>Name</th>
-                <th>VAT</th>
-                <th>TIN</th>
+                {contactTypeFilter !== "personal" && <th>VAT</th>}
+                {contactTypeFilter !== "personal" && <th>TIN</th>}
                 <th>Phone</th>
                 <th>Email</th>
               </tr>
@@ -242,8 +242,12 @@ export default function ContactsPage() {
                     />
                   </td>
                   <td onClick={() => openContact(c)} style={{ cursor: "pointer" }}>{c.name}</td>
-                  <td onClick={() => openContact(c)} style={{ cursor: "pointer" }}>{c.vat}</td>
-                  <td onClick={() => openContact(c)} style={{ cursor: "pointer" }}>{c.tin}</td>
+                  {contactTypeFilter !== "personal" && (
+                    <td onClick={() => openContact(c)} style={{ cursor: "pointer" }}>{c.vat}</td>
+                  )}
+                  {contactTypeFilter !== "personal" && (
+                    <td onClick={() => openContact(c)} style={{ cursor: "pointer" }}>{c.tin}</td>
+                  )}
                   <td onClick={() => openContact(c)} style={{ cursor: "pointer" }}>{c.phone}</td>
                   <td onClick={() => openContact(c)} style={{ cursor: "pointer" }}>{c.email}</td>
                 </tr>
