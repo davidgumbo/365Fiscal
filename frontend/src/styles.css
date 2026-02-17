@@ -1406,6 +1406,7 @@ thead.table-light th {
   border-radius: 15px;
   background: var(--slate-100);
   border: 1px solid transparent;
+  margin: 1rem 0;
   cursor: pointer;
 }
 
