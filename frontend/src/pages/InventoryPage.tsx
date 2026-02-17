@@ -522,17 +522,22 @@ export default function InventoryPage() {
     }
   };
 
-  const handleProductImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProductImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     if (!selectedProductId || !e.target.files?.length) return;
     const file = e.target.files[0];
     setUploadingImage(true);
     try {
       const fd = new FormData();
       fd.append("file", file);
-      const updated = await apiFetch<Product>(`/products/${selectedProductId}/image`, {
-        method: "POST",
-        body: fd,
-      });
+      const updated = await apiFetch<Product>(
+        `/products/${selectedProductId}/image`,
+        {
+          method: "POST",
+          body: fd,
+        },
+      );
       setProductImageUrl(updated.image_url || "");
     } catch (err: any) {
       alert(err.message || "Failed to upload image");
@@ -546,7 +551,10 @@ export default function InventoryPage() {
     if (!selectedProductId) return;
     setUploadingImage(true);
     try {
-      const updated = await apiFetch<Product>(`/products/${selectedProductId}/image`, { method: "DELETE" });
+      const updated = await apiFetch<Product>(
+        `/products/${selectedProductId}/image`,
+        { method: "DELETE" },
+      );
       setProductImageUrl(updated.image_url || "");
     } catch {
       alert("Failed to remove image");
@@ -848,7 +856,8 @@ export default function InventoryPage() {
   const selectedMove = stockMoves.find((m) => m.id === selectedMoveId);
 
   const filteredProducts = products.filter((p) => {
-    if (filterCategoryId !== null && p.category_id !== filterCategoryId) return false;
+    if (filterCategoryId !== null && p.category_id !== filterCategoryId)
+      return false;
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
     return (
@@ -1734,60 +1743,153 @@ export default function InventoryPage() {
                   {/* Sidebar */}
                   <div className="o-sidebar">
                     <div className="o-sidebar-section">
-                      <div className="o-sidebar-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <span>Categories</span>
-                        <button
-                          onClick={() => openCategoryModal()}
-                          style={{ background: "none", border: "none", cursor: "pointer", color: "var(--indigo-500)", fontSize: 18, fontWeight: 700, lineHeight: 1 }}
-                          title="Add Category"
-                        >+</button>
-                      </div>
-                      <div
-                        className={`o-sidebar-item ${filterCategoryId === null ? "active" : ""}`}
-                        onClick={() => setFilterCategoryId(null)}
-                        style={{ cursor: "pointer" }}
-                      >
-                        <span>All Products</span>
-                        <span className="o-sidebar-count">
-                          {products.length}
-                        </span>
-                      </div>
-                      {categories.map((c) => (
-                        <div key={c.id} className={`o-sidebar-item ${filterCategoryId === c.id ? "active" : ""}`} style={{ cursor: "pointer" }}>
-                          <span onClick={() => setFilterCategoryId(c.id)} style={{ flex: 1 }}>{c.name}</span>
-                          <span className="o-sidebar-count" style={{ marginRight: 6 }}>
-                            {
-                              products.filter((p) => p.category_id === c.id)
-                                .length
-                            }
-                          </span>
-                          <span style={{ display: "flex", gap: 2 }}>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); openCategoryModal(c); }}
-                              style={{ background: "none", border: "none", cursor: "pointer", padding: 2, color: "var(--slate-400)", fontSize: 11 }}
-                              title="Edit"
-                            >
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                            </button>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); deleteCategory(c.id); }}
-                              style={{ background: "none", border: "none", cursor: "pointer", padding: 2, color: "var(--red-400)", fontSize: 11 }}
-                              title="Delete"
-                            >
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
-                            </button>
-                          </span>
-                        </div>
-                      ))}
-                      {categories.length === 0 && (
-                        <div style={{ padding: "12px 16px", color: "var(--slate-400)", fontSize: 12, textAlign: "center" }}>
-                          No categories yet.<br />
+                      <details className="o-sidebar-dropdown" open>
+                        <summary
+                          className="o-sidebar-title"
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                          }}
+                        >
+                          <span>Categories</span>
                           <button
-                            onClick={() => openCategoryModal()}
-                            style={{ background: "none", border: "none", cursor: "pointer", color: "var(--indigo-500)", fontWeight: 600, fontSize: 12, marginTop: 4 }}
-                          >+ Create a category</button>
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              openCategoryModal();
+                            }}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              cursor: "pointer",
+                              color: "var(--indigo-500)",
+                              fontSize: 18,
+                              fontWeight: 700,
+                              lineHeight: 1,
+                            }}
+                            title="Add Category"
+                          >
+                            +
+                          </button>
+                        </summary>
+                        <div
+                          className={`o-sidebar-item ${filterCategoryId === null ? "active" : ""}`}
+                          onClick={() => setFilterCategoryId(null)}
+                          style={{ cursor: "pointer" }}
+                        >
+                          <span>All Products</span>
+                          <span className="o-sidebar-count">
+                            {products.length}
+                          </span>
                         </div>
-                      )}
+                        {categories.map((c) => (
+                          <div
+                            key={c.id}
+                            className={`o-sidebar-item ${filterCategoryId === c.id ? "active" : ""}`}
+                            style={{ cursor: "pointer" }}
+                          >
+                            <span
+                              onClick={() => setFilterCategoryId(c.id)}
+                              style={{ flex: 1 }}
+                            >
+                              {c.name}
+                            </span>
+                            <span
+                              className="o-sidebar-count"
+                              style={{ marginRight: 6 }}
+                            >
+                              {
+                                products.filter((p) => p.category_id === c.id)
+                                  .length
+                              }
+                            </span>
+                            <span style={{ display: "flex", gap: 2 }}>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openCategoryModal(c);
+                                }}
+                                style={{
+                                  background: "none",
+                                  border: "none",
+                                  cursor: "pointer",
+                                  padding: 2,
+                                  color: "var(--slate-400)",
+                                  fontSize: 11,
+                                }}
+                                title="Edit"
+                              >
+                                <svg
+                                  width="12"
+                                  height="12"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                >
+                                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                                  <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                </svg>
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteCategory(c.id);
+                                }}
+                                style={{
+                                  background: "none",
+                                  border: "none",
+                                  cursor: "pointer",
+                                  padding: 2,
+                                  color: "var(--red-400)",
+                                  fontSize: 11,
+                                }}
+                                title="Delete"
+                              >
+                                <svg
+                                  width="12"
+                                  height="12"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                >
+                                  <polyline points="3 6 5 6 21 6" />
+                                  <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                                </svg>
+                              </button>
+                            </span>
+                          </div>
+                        ))}
+                        {categories.length === 0 && (
+                          <div
+                            style={{
+                              padding: "12px 16px",
+                              color: "var(--slate-400)",
+                              fontSize: 12,
+                              textAlign: "center",
+                            }}
+                          >
+                            No categories yet.
+                            <br />
+                            <button
+                              onClick={() => openCategoryModal()}
+                              style={{
+                                background: "none",
+                                border: "none",
+                                cursor: "pointer",
+                                color: "var(--indigo-500)",
+                                fontWeight: 600,
+                                fontSize: 12,
+                                marginTop: 4,
+                              }}
+                            >
+                              + Create a category
+                            </button>
+                          </div>
+                        )}
+                      </details>
                     </div>
 
                     <div className="o-sidebar-section">
@@ -1819,9 +1921,9 @@ export default function InventoryPage() {
                             <th>Type</th>
                             <th>On Hand</th>
                             <th>Available</th>
-                            <th>Sale Price</th>
-                            <th>Cost</th>
-                            <th>Stock Value</th>
+                            <th className="text-end">Sale Price</th>
+                            <th className="text-end">Cost</th>
+                            <th className="text-end">Stock Value</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -2032,16 +2134,32 @@ export default function InventoryPage() {
                             justifyContent: "center",
                             overflow: "hidden",
                             flexShrink: 0,
-                            background: productImageUrl ? "transparent" : "var(--gray-50, #f9fafb)",
+                            background: productImageUrl
+                              ? "transparent"
+                              : "var(--gray-50, #f9fafb)",
                             cursor: selectedProductId ? "pointer" : "default",
                             position: "relative",
                           }}
-                          onClick={() => selectedProductId && imageInputRef.current?.click()}
-                          title={selectedProductId ? "Click to upload image" : "Save product first to upload image"}
+                          onClick={() =>
+                            selectedProductId && imageInputRef.current?.click()
+                          }
+                          title={
+                            selectedProductId
+                              ? "Click to upload image"
+                              : "Save product first to upload image"
+                          }
                         >
                           {productImageUrl ? (
                             <>
-                              <img src={productImageUrl} alt="Product" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                              <img
+                                src={productImageUrl}
+                                alt="Product"
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  objectFit: "cover",
+                                }}
+                              />
                               {selectedProductId && (
                                 <div
                                   style={{
@@ -2055,21 +2173,43 @@ export default function InventoryPage() {
                                     opacity: 0,
                                     transition: "opacity 0.2s",
                                   }}
-                                  onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
-                                  onMouseLeave={(e) => (e.currentTarget.style.opacity = "0")}
+                                  onMouseEnter={(e) =>
+                                    (e.currentTarget.style.opacity = "1")
+                                  }
+                                  onMouseLeave={(e) =>
+                                    (e.currentTarget.style.opacity = "0")
+                                  }
                                 >
                                   <button
                                     className="o-btn"
-                                    style={{ background: "#fff", color: "#333", fontSize: 11, padding: "4px 8px", borderRadius: 4 }}
-                                    onClick={(e) => { e.stopPropagation(); imageInputRef.current?.click(); }}
+                                    style={{
+                                      background: "#fff",
+                                      color: "#333",
+                                      fontSize: 11,
+                                      padding: "4px 8px",
+                                      borderRadius: 4,
+                                    }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      imageInputRef.current?.click();
+                                    }}
                                     disabled={uploadingImage}
                                   >
                                     Change
                                   </button>
                                   <button
                                     className="o-btn"
-                                    style={{ background: "#ef4444", color: "#fff", fontSize: 11, padding: "4px 8px", borderRadius: 4 }}
-                                    onClick={(e) => { e.stopPropagation(); handleProductImageDelete(); }}
+                                    style={{
+                                      background: "#ef4444",
+                                      color: "#fff",
+                                      fontSize: 11,
+                                      padding: "4px 8px",
+                                      borderRadius: 4,
+                                    }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleProductImageDelete();
+                                    }}
                                     disabled={uploadingImage}
                                   >
                                     Remove
@@ -2078,9 +2218,20 @@ export default function InventoryPage() {
                               )}
                             </>
                           ) : uploadingImage ? (
-                            <span style={{ fontSize: 12, color: "var(--gray-400)" }}>Uploading…</span>
+                            <span
+                              style={{ fontSize: 12, color: "var(--gray-400)" }}
+                            >
+                              Uploading…
+                            </span>
                           ) : (
-                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--zinc-300)" strokeWidth="1.5">
+                            <svg
+                              width="36"
+                              height="36"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="var(--zinc-300)"
+                              strokeWidth="1.5"
+                            >
                               <rect x="3" y="3" width="18" height="18" rx="2" />
                               <circle cx="8.5" cy="8.5" r="1.5" />
                               <path d="M21 15l-5-5L5 21" />
@@ -2201,9 +2352,7 @@ export default function InventoryPage() {
                           </div>
 
                           <div className="o-form-group">
-                            <label className="o-form-label">
-                              Internal Reference
-                            </label>
+                            <label className="o-form-label">Product Code</label>
                             <div className="o-form-field">
                               <input
                                 type="text"

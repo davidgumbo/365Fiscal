@@ -4708,7 +4708,7 @@ button.danger:hover {
 /* Two Panel Layout */
 .two-panel {
   display: grid;
-  grid-template-columns: 1fr 340px;
+  grid-template-columns: 1fr 260px;
   align-items: start;
   gap: 1rem;
   min-height: 0;
@@ -4716,7 +4716,7 @@ button.danger:hover {
 
 .two-panel-left {
   display: grid;
-  grid-template-columns: 340px 1fr;
+  grid-template-columns: 260px 1fr;
   align-items: start;
   gap: 1rem;
   min-height: 0
@@ -5426,6 +5426,19 @@ button.danger:hover {
   color: var(--muted);
   margin-bottom: 8px;
   padding-left: 4px;
+}
+
+.o-sidebar-dropdown summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.o-sidebar-dropdown summary::-webkit-details-marker {
+  display: none;
+}
+
+.o-sidebar-dropdown[open] summary {
+  margin-bottom: 8px;
 }
 
 .o-sidebar-item {
@@ -6312,7 +6325,6 @@ tr:hover .o-quick-actions {
 .app-launcher-page {
   min-height: 100vh;
   background: var(--zinc-50);
-  background: linear-gradient(155deg, rgba(252, 252, 252, 1) 0%, rgba(2, 20, 51, 1) 100%);
   position: relative;
   overflow: hidden;
   flex-direction: column;
