@@ -514,40 +514,6 @@ export default function AppLauncherPage() {
   if (!isAdmin && !hasActiveSubscription) {
     return (
       <div className="app-launcher-page">
-        <header className="app-launcher-header">
-          <div className="app-launcher-user">
-            <button
-              type="button"
-              className="user-menu"
-              onClick={() => setUserMenuOpen((prev) => !prev)}
-            >
-              <span className="user-avatar-sm">{initials}</span>
-            </button>
-            {userMenuOpen && (
-              <div className="menu-popover right" role="menu">
-                <div className="menu-title">
-                  <span className="user-name-sm">{displayName}</span>
-                </div>
-                <button
-                  className="menu-item"
-                  onClick={() => {
-                    window.location.href = "/settings";
-                  }}
-                  role="menuitem"
-                >
-                  Settings
-                </button>
-                <button
-                  className="app-launcher-logout"
-                  onClick={handleLogout}
-                  title="Log out"
-                >
-                  Log Out
-                </button>
-              </div>
-            )}
-          </div>
-        </header>
         <div className="app-launcher-container app-launcher-activation">
           <div className="login-card login-card-glass activation-card">
             <div className="login-card-body activation-card-body">
@@ -658,12 +624,15 @@ export default function AppLauncherPage() {
                 </button>
               </div>
 
-              <p className="activation-note">
+              <p
+                className="activation-note,  "
+                style={{ color: "var(--black-500)" }}
+              >
                 Don't have a code?{" "}
                 <a
                   style={{
                     textDecoration: "underline",
-                    color: "var(--blue-50)",
+                    color: "var(--black-500)",
                   }}
                   target="_blank"
                   rel="noreferrer"
