@@ -1406,7 +1406,7 @@ thead.table-light th {
   border-radius: 15px;
   background: var(--slate-100);
   border: 1px solid transparent;
-  margin: 1rem 0;
+  margin: 1rem 0;                                                                   
   cursor: pointer;
 }
 
@@ -6501,6 +6501,7 @@ tr:hover .o-quick-actions {
 .app-launcher-activation {
   align-items: center;
   min-height: 70vh;
+  background-image: url('/bg.jpg');
 }
 
 .activation-card {
