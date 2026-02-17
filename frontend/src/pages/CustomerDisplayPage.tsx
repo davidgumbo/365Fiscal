@@ -27,6 +27,9 @@ export default function CustomerDisplayPage() {
   const [data, setData] = useState<DisplayData | null>(null);
   const [clock, setClock] = useState(new Date());
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [displayMode, setDisplayMode] = useState<"personal" | "company">(
+    "personal",
+  );
 
   // Listen for messages from POS window
   useEffect(() => {
@@ -86,6 +89,70 @@ export default function CustomerDisplayPage() {
         .cd-company-name { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.5px; }
         .cd-clock { font-size: 1.2rem; font-weight: 500; color: #94a3b8; font-variant-numeric: tabular-nums; }
         .cd-body { flex: 1; display: flex; overflow: hidden; }
+        .cd-content { flex: 1; display: flex; overflow: hidden; }
+        .cd-sidebar {
+          width: 200px;
+          background: rgba(255,255,255,0.03);
+          border-right: 1px solid rgba(255,255,255,0.06);
+          padding: 12px;
+          flex-shrink: 0;
+        }
+        .cd-sidebar .o-sidebar-title { color: #94a3b8; }
+        .cd-sidebar .o-sidebar-item {
+          color: #e2e8f0;
+          background: transparent;
+        }
+        .cd-sidebar .o-sidebar-item:hover { background: rgba(255,255,255,0.06); }
+        .cd-sidebar .o-sidebar-item.active {
+          background: rgba(37,99,235,0.2);
+          color: #bfdbfe;
+        }
+        .cd-company-section {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 24px 32px;
+        }
+        .cd-company-card {
+          width: min(720px, 100%);
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 16px;
+          padding: 28px 32px;
+          text-align: center;
+        }
+        .cd-company-logo {
+          width: 120px;
+          height: 120px;
+          border-radius: 16px;
+          object-fit: contain;
+          margin-bottom: 16px;
+          background: rgba(255,255,255,0.05);
+          padding: 12px;
+        }
+        .cd-company-title { font-size: 2rem; font-weight: 700; }
+        .cd-company-subtitle { color: #94a3b8; margin-top: 6px; }
+        .cd-company-stats {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 12px;
+          margin-top: 20px;
+        }
+        .cd-company-stat {
+          background: rgba(255,255,255,0.03);
+          border: 1px solid rgba(255,255,255,0.06);
+          border-radius: 12px;
+          padding: 12px;
+          font-size: 0.95rem;
+          color: #94a3b8;
+        }
+        .cd-company-stat strong {
+          display: block;
+          font-size: 1.1rem;
+          color: #f1f5f9;
+          margin-top: 4px;
+        }
         .cd-cart-section {
           flex: 1;
           display: flex;
@@ -209,57 +276,108 @@ export default function CustomerDisplayPage() {
 
       {/* Body */}
       <div className="cd-body">
-        {cart.length === 0 ? (
-          <div className="cd-empty">
-            <div className="cd-empty-icon">
-              <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-                <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
-                <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6" />
-              </svg>
-            </div>
-            <p>Welcome!</p>
-            <small>Your items will appear here</small>
+        <div className="o-sidebar cd-sidebar">
+          <div className="o-sidebar-section">
+            <div className="o-sidebar-title">VIEW</div>
+            {[
+              { key: "personal", label: "Personal" },
+              { key: "company", label: "Company" },
+            ].map((item) => (
+              <div
+                key={item.key}
+                className={`o-sidebar-item ${displayMode === item.key ? "active" : ""}`}
+                onClick={() =>
+                  setDisplayMode(item.key as "personal" | "company")
+                }
+                style={{ cursor: "pointer" }}
+              >
+                <span>{item.label}</span>
+              </div>
+            ))}
           </div>
-        ) : (
-          <>
-            <div className="cd-cart-section">
-              <div className="cd-cart-title">Your Items ({cart.reduce((s, l) => s + l.qty, 0)})</div>
-              <div className="cd-cart-list" ref={scrollRef}>
-                {cart.map((l, i) => (
-                  <div key={i} className="cd-line">
-                    <div className="cd-line-img">
-                      {l.image_url ? (
-                        <img src={l.image_url} alt={l.name} />
-                      ) : (
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="1.2">
-                          <rect x="3" y="3" width="18" height="18" rx="2" />
-                          <circle cx="8.5" cy="8.5" r="1.5" />
-                          <path d="M21 15l-5-5L5 21" />
-                        </svg>
-                      )}
-                    </div>
-                    <div className="cd-line-info">
-                      <div className="cd-line-name">{l.name}</div>
-                      <div className="cd-line-meta">
-                        {l.qty} × ${fmt(l.price)}
-                        {l.discount > 0 && ` (−${l.discount}%)`}
+        </div>
+
+        <div className="cd-content">
+          {displayMode === "personal" ? (
+            cart.length === 0 ? (
+              <div className="cd-empty">
+                <div className="cd-empty-icon">
+                  <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
+                    <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
+                    <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6" />
+                  </svg>
+                </div>
+                <p>Welcome!</p>
+                <small>Your items will appear here</small>
+              </div>
+            ) : (
+              <>
+                <div className="cd-cart-section">
+                  <div className="cd-cart-title">Your Items ({cart.reduce((s, l) => s + l.qty, 0)})</div>
+                  <div className="cd-cart-list" ref={scrollRef}>
+                    {cart.map((l, i) => (
+                      <div key={i} className="cd-line">
+                        <div className="cd-line-img">
+                          {l.image_url ? (
+                            <img src={l.image_url} alt={l.name} />
+                          ) : (
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="1.2">
+                              <rect x="3" y="3" width="18" height="18" rx="2" />
+                              <circle cx="8.5" cy="8.5" r="1.5" />
+                              <path d="M21 15l-5-5L5 21" />
+                            </svg>
+                          )}
+                        </div>
+                        <div className="cd-line-info">
+                          <div className="cd-line-name">{l.name}</div>
+                          <div className="cd-line-meta">
+                            {l.qty} × ${fmt(l.price)}
+                            {l.discount > 0 && ` (−${l.discount}%)`}
+                          </div>
+                        </div>
+                        <div className="cd-line-total">${fmt(l.total)}</div>
                       </div>
-                    </div>
-                    <div className="cd-line-total">${fmt(l.total)}</div>
+                    ))}
                   </div>
-                ))}
+                </div>
+                <div className="cd-totals-section">
+                  <div className="cd-total-row"><span>Subtotal</span><span>${fmt(subtotal)}</span></div>
+                  <div className="cd-total-row"><span>Tax</span><span>${fmt(tax)}</span></div>
+                  <div className="cd-grand-total"><span>Total</span><span>${fmt(total)}</span></div>
+                  <div className="cd-item-count">
+                    {cart.reduce((s, l) => s + l.qty, 0)} item{cart.reduce((s, l) => s + l.qty, 0) !== 1 ? "s" : ""} in cart
+                  </div>
+                </div>
+              </>
+            )
+          ) : (
+            <div className="cd-company-section">
+              <div className="cd-company-card">
+                {companyLogo && (
+                  <img className="cd-company-logo" src={companyLogo} alt="" />
+                )}
+                <div className="cd-company-title">{companyName}</div>
+                <div className="cd-company-subtitle">
+                  Thanks for shopping with us.
+                </div>
+                <div className="cd-company-stats">
+                  <div className="cd-company-stat">
+                    Subtotal
+                    <strong>${fmt(subtotal)}</strong>
+                  </div>
+                  <div className="cd-company-stat">
+                    Tax
+                    <strong>${fmt(tax)}</strong>
+                  </div>
+                  <div className="cd-company-stat">
+                    Total
+                    <strong>${fmt(total)}</strong>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="cd-totals-section">
-              <div className="cd-total-row"><span>Subtotal</span><span>${fmt(subtotal)}</span></div>
-              <div className="cd-total-row"><span>Tax</span><span>${fmt(tax)}</span></div>
-              <div className="cd-grand-total"><span>Total</span><span>${fmt(total)}</span></div>
-              <div className="cd-item-count">
-                {cart.reduce((s, l) => s + l.qty, 0)} item{cart.reduce((s, l) => s + l.qty, 0) !== 1 ? "s" : ""} in cart
-              </div>
-            </div>
-          </>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Footer */}

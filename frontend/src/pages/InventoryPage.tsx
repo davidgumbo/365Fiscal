@@ -3274,8 +3274,8 @@ export default function InventoryPage() {
                               <th>Type</th>
                               <th>Warehouse</th>
                               <th>Quantity</th>
-                              <th>Unit Cost</th>
-                              <th>Total</th>
+                              <th className="text-end">Unit Cost</th>
+                              <th className="text-end">Total</th>
                               <th>Status</th>
                               <th></th>
                             </tr>

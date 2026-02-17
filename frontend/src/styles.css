@@ -9013,7 +9013,7 @@ button.danger:disabled {
 
 /* ── Cart Panel ── */
 .pos-cart-panel {
-  width: 380px;
+  min-width: 30vw;
   display: flex;
   flex-direction: column;
   background: var(--white-500, #fff);
@@ -9128,7 +9128,7 @@ button.danger:disabled {
   gap: 2px;
 }
 .pos-qty-btn {
-  width: 28px;
+  min-width: 5rem;
   height: 28px;
   display: flex;
   align-items: center;
