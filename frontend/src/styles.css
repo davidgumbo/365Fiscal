@@ -1403,7 +1403,7 @@ thead.table-light th {
 
 .tab {
   padding: 8px 12px;
-  border-radius: 999px;
+  border-radius: 15px;
   background: var(--slate-100);
   border: 1px solid transparent;
   cursor: pointer;
