@@ -893,155 +893,132 @@ export default function InvoicesPage({
       })
       .join("");
 
+    const titleUpper =
+      selectedInvoice.invoice_type === "credit_note"
+        ? "FISCAL TAX CREDIT NOTE"
+        : "FISCAL TAX INVOICE";
+
     const html = `
       <html>
         <head>
           <title>${selectedInvoice.reference}</title>
           <style>
-            :root { --ink: var(--slate-900); --muted: var(--gray-500); --line: var(--gray-200); --soft: var(--slate-50); --accent: var(--blue-800); }
+            :root { --ink: #111827; --muted: #6b7280; --line: #e5e7eb; --soft: #f9fafb; --accent: #1f2937; }
             * { box-sizing: border-box; }
-            body { font-family: "Segoe UI", Inter, Arial, sans-serif; padding: 0; margin: 0; color: var(--ink); background: var(--white-500); }
-            .doc { padding: 26px 30px 34px; position: relative; }
-            .watermark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 64px; font-weight: 700; color: var(--slate-400); opacity: ${companySettings?.document_watermark_opacity || "0.08"}; pointer-events: none; transform: rotate(-25deg); }
+            body { font-family: "Segoe UI", Inter, Arial, sans-serif; padding: 0; margin: 0; color: var(--ink); background: #ffffff; }
+            .doc { padding: 20px 24px 28px; position: relative; }
             .layout-boxed { border: 1px solid var(--line); }
             .layout-bubble { border: 1px solid var(--line); box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08); }
-            .header-row { display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; }
-            .brand { display: flex; align-items: center; gap: 14px; }
-            .logo { width: 86px; height: 86px; object-fit: contain; border-radius: 0; border: none; background: transparent; padding: 0; }
-            .brand-details { font-size: 12px; line-height: 1.5; color: var(--muted); }
-            .brand-details strong { color: var(--ink); }
-            .company-details { text-align: right; font-size: 12px; line-height: 1.5; color: var(--muted); }
-            .company-details strong { color: var(--ink); }
-            .invoice-title { text-align: left; }
-            .invoice-title h1 { margin: 0 0 8px; font-size: 20px; letter-spacing: 0.6px; }
-            .invoice-meta { display: grid; gap: 6px; font-size: 12px; color: var(--muted); }
-            .divider { border-top: 1px solid var(--line); margin: 16px 0; }
-            .addresses { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; font-size: 12px; }
-            .addresses h4 { margin: 0 0 6px; font-size: 11px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--accent); }
-            .addresses .block { line-height: 1.5; }
-            table { width: 100%; border-collapse: collapse; margin-top: 18px; font-size: 12px; }
-            thead th { background: var(--accent); color: var(--white-500); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 10px; text-align: left; }
-            tbody td { padding: 8px 10px; border-bottom: 1px solid var(--line); }
-            tbody tr:nth-child(even) td { background: var(--gray-50); }
-            .totals { margin-top: 16px; display: flex; justify-content: flex-end; }
-            .totals-card { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
-            .totals-row { display: flex; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 12px; }
-            .totals-row:last-child { border-bottom: none; font-weight: 700; background: var(--slate-50); }
-            .doc-footer { margin-top: 18px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 11px; color: var(--muted); text-align: center; }
+            .title { text-align: center; font-weight: 700; font-size: 18px; letter-spacing: .6px; margin: 4px 0 10px; }
+            .party { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; background: #f3f4f6; border: 1px solid var(--line); padding: 10px 12px; }
+            .party h5 { margin: 0 0 6px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; }
+            .party .block { font-size: 12px; line-height: 1.6; }
+            .party .block strong { color: var(--ink); }
+            .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; font-size: 12px; margin: 12px 0; }
+            .meta .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+            table { width: 100%; border-collapse: collapse; font-size: 12px; }
+            thead th { background: #e5e7eb; color: #111827; font-weight: 700; text-transform: none; padding: 8px 10px; border: 1px solid var(--line); }
+            tbody td { padding: 8px 10px; border: 1px solid var(--line); }
+            .totals-card { margin-top: 12px; width: 320px; margin-left: auto; border: 1px solid var(--line); }
+            .totals-card .row { display: grid; grid-template-columns: 1fr auto; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+            .totals-card .row:last-child { border-bottom: none; font-weight: 700; }
+            .qr { text-align: left; margin-top: 10px; }
+            .footer { margin-top: 12px; font-size: 11px; color: var(--muted); text-align: center; }
           </style>
         </head>
         <body>
           <div class="doc ${layoutKey}">
-            ${companySettings?.document_watermark ? `<div class="watermark">${companySettings.document_watermark}</div>` : ""}
-            <div class="header-row">
-              <div class="brand">
-                ${logoMarkup || `<div class="logo"></div>`}
-              </div>
-              <div class="company-details">
-                <strong>${company?.name || "Your Company"}</strong><br />
+            <div class="title">${titleUpper}</div>
+            <div class="party">
+              <div class="block">
+                <h5>Seller</h5>
+                <strong>${company?.name || "Company"}</strong><br />
                 ${companyAddress.line1 ? `${companyAddress.line1}<br />` : ""}
                 ${companyAddress.line2 ? `${companyAddress.line2}<br />` : ""}
                 ${companyAddress.line3 ? `${companyAddress.line3}<br />` : ""}
-                ${company?.email || ""}<br />
-                ${company?.phone || ""}<br />
-                TIN: ${company?.tin || "-"} | VAT: ${company?.vat || "-"}
+                ${company?.email ? `Email: ${company.email}<br />` : ""}
+                ${company?.phone ? `Phone: ${company.phone}<br />` : ""}
+                ${company?.tin ? `TIN: ${company.tin}<br />` : ""}
+                ${company?.vat ? `VAT: ${company.vat}` : ""}
               </div>
-            </div>
-
-            <div class="divider"></div>
-
-            <div class="addresses">
               <div class="block">
-                <h4>Bill To</h4>
-                <strong>${customer?.name || "-"}</strong><br />
+                <h5>Buyer</h5>
+                <strong>${customer?.name || "Customer"}</strong><br />
                 ${customerAddress.line1 ? `${customerAddress.line1}<br />` : ""}
                 ${customerAddress.line2 ? `${customerAddress.line2}<br />` : ""}
                 ${customerAddress.line3 ? `${customerAddress.line3}<br />` : ""}
-                ${customer?.phone || ""}<br />
-                ${customer?.email || ""}<br />
-                TIN: ${customer?.tin || "-"}<br />
-                VAT: ${customer?.vat || "-"}
+                ${customer?.email ? `Email: ${customer.email}<br />` : ""}
+                ${customer?.phone ? `Phone: ${customer.phone}<br />` : ""}
+                ${customer?.tin ? `TIN: ${customer.tin}<br />` : ""}
+                ${customer?.vat ? `VAT: ${customer.vat}` : ""}
               </div>
-              <div class="block invoice-title">
-                <h1>${title.toUpperCase()}</h1>
-                <div class="invoice-meta">
-                  <div><strong>Issue Date:</strong> ${invoiceDateLabel}</div>
-                  <div><strong>Due Date:</strong> ${selectedInvoice.due_date ? new Date(selectedInvoice.due_date).toLocaleDateString() : "-"}</div>
-                  <div><strong>Invoice #:</strong> ${selectedInvoice.reference}</div>
-                  <div><strong>Status:</strong> ${statusLabel}</div>
-                </div>
-              </div>
+            </div>
+
+            <div class="meta">
+              <div class="row"><div>Receipt No.:</div><div>${selectedInvoice.zimra_receipt_id || "-"}</div></div>
+              <div class="row"><div>Customer reference No.:</div><div>${selectedInvoice.payment_reference || selectedInvoice.notes || "-"}</div></div>
+              <div class="row"><div>Invoice No.:</div><div>${selectedInvoice.reference}</div></div>
+              <div class="row"><div>Order No.:</div><div>${linkedQuotation?.reference || "-"}</div></div>
+              <div class="row"><div>Device Serial No.:</div><div>${devices.find((d)=>d.id===selectedInvoice.device_id)?.serial_number || "-"}</div></div>
+              <div class="row"><div>Device ID:</div><div>${devices.find((d)=>d.id===selectedInvoice.device_id)?.device_id || "-"}</div></div>
+              <div class="row"><div>Date:</div><div>${invoiceDateLabel}${selectedInvoice.fiscalized_at ? ` ${new Date(selectedInvoice.fiscalized_at).toLocaleTimeString()}` : ""}</div></div>
+              <div class="row"><div>Fiscal day No.:</div><div>${selectedInvoice.zimra_receipt_counter || "-"}</div></div>
             </div>
 
             <table>
               <thead>
                 <tr>
-                  <th>Item</th>
-                  <th style="text-align:right;">Quantity</th>
-                  <th style="text-align:right;">Price</th>
-                  <th style="text-align:right;">Disc %</th>
-                  <th style="text-align:right;">VAT %</th>
-                  <th style="text-align:right;">Total</th>
+                  <th style="width:90px">Code</th>
+                  <th style="width:100px">HS Code</th>
+                  <th>Description</th>
+                  <th style="width:70px; text-align:right">Qty</th>
+                  <th style="width:90px; text-align:right">Price</th>
+                  <th style="width:70px; text-align:right">VAT</th>
+                  <th style="width:110px; text-align:right">Total (inc VAT)</th>
                 </tr>
               </thead>
               <tbody>
-                ${rows}
+                ${lines
+                  .map((line) => {
+                    const prod = line.product_id ? productMap.get(line.product_id) : null;
+                    const subtotal = (line.quantity || 0) * (line.unit_price || 0) * (1 - (line.discount || 0) / 100);
+                    const tax = subtotal * ((line.vat_rate || 0) / 100);
+                    const total = subtotal + tax;
+                    return `
+                      <tr>
+                        <td>${prod?.reference || ""}</td>
+                        <td>${prod?.hs_code || line.hs_code || ""}</td>
+                        <td>${line.description || ""}</td>
+                        <td style="text-align:right;">${(line.quantity || 0).toFixed(2)}</td>
+                        <td style="text-align:right;">${(line.unit_price || 0).toFixed(2)}</td>
+                        <td style="text-align:right;">${(line.vat_rate || 0).toFixed(2)}</td>
+                        <td style="text-align:right;">${formatCurrency(total, currency)}</td>
+                      </tr>`;
+                  })
+                  .join("")}
               </tbody>
             </table>
 
-            <div class="totals">
-              <div class="totals-card">
-                <div class="totals-row"><span>Subtotal</span><span>${formatCurrency(selectedInvoice.subtotal || 0, currency)}</span></div>
-                <div class="totals-row"><span>Discount</span><span>${formatCurrency(selectedInvoice.discount_amount || 0, currency)}</span></div>
-                <div class="totals-row"><span>VAT</span><span>${formatCurrency(selectedInvoice.tax_amount || 0, currency)}</span></div>
-                <div class="totals-row"><span>Total</span><span>${formatCurrency(selectedInvoice.total_amount || 0, currency)}</span></div>
-                <div class="totals-row"><span>Amount Paid</span><span>${formatCurrency(selectedInvoice.amount_paid || 0, currency)}</span></div>
-                <div class="totals-row"><strong>Balance Due</strong><strong>${formatCurrency(selectedInvoice.amount_due || 0, currency)}</strong></div>
-              </div>
+            <div class="totals-card">
+              <div class="row"><div>Total excl. VAT:</div><div>${formatCurrency(selectedInvoice.subtotal || 0, currency)}</div></div>
+              <div class="row"><div>VAT Total, ${currency}:</div><div>${formatCurrency(selectedInvoice.tax_amount || 0, currency)}</div></div>
+              <div class="row"><div>Invoice Total, ${currency}:</div><div>${formatCurrency(selectedInvoice.total_amount || 0, currency)}</div></div>
             </div>
 
             ${
-              selectedInvoice.zimra_status === "submitted"
-                ? (() => {
-                    const dev = devices.find(
-                      (d) => d.id === selectedInvoice.device_id,
-                    );
-                    return `
-            <div style="margin-top:24px; border-top:1px solid var(--slate-200); padding-top:18px;">
-              <div style="text-align:center;">
-                ${
-                  zimraVerifyUrl
-                    ? `
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(zimraVerifyUrl)}" width="180" height="180" style="margin-bottom:10px;" />
-                `
-                    : ""
-                }
-                <div style="font-size:12px; color:var(--gray-700); line-height:1.7;">
-                  <div><strong>Verification code:</strong> ${selectedInvoice.zimra_verification_code || "-"}</div>
-                  <div><strong>Fiscal Day:</strong> ${selectedInvoice.zimra_receipt_counter || "-"}</div>
-                  <div><strong>Device ID:</strong> ${dev?.device_id || "-"}</div>
-                  <div><strong>Invoice Number:</strong> ${selectedInvoice.zimra_receipt_global_no || "-"}</div>
-                </div>
-                ${
-                  zimraVerifyUrl
-                    ? `
-                <div style="margin-top:8px; font-size:11px; color:var(--gray-500);">
-                  Verify this receipt manually at
-                </div>
-                <div style="font-size:11px; color:var(--blue-600); text-decoration:underline; word-break:break-all;">
-                  ${zimraVerifyUrl}
-                </div>
-                `
-                    : ""
-                }
-              </div>
+              selectedInvoice.zimra_verification_url
+                ? `
+            <div class="qr">
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(zimraVerifyUrl)}" width="140" height="140" alt="QR" />
+              <div style="font-size:11px; margin-top:4px;">Verification code: <strong>${selectedInvoice.zimra_verification_code || "-"}</strong></div>
+              <div style="font-size:11px; color: var(--muted);">You can verify this receipt manually at</div>
+              <div style="font-size:11px; word-break:break-all; color:#1d4ed8;">${zimraVerifyUrl}</div>
             </div>
-            `;
-                  })()
+            `
                 : ""
             }
 
-            ${footerHtml ? `<div class="doc-footer">${footerHtml}</div>` : ""}
+            ${footerHtml ? `<div class="footer">${footerHtml}</div>` : ""}
           </div>
         </body>
       </html>
