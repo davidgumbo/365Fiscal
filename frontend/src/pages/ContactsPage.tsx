@@ -21,6 +21,9 @@ export default function ContactsPage() {
   const [companyId, setCompanyId] = useState<number | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
+  const [contactTypeFilter, setContactTypeFilter] = useState<
+    "all" | "personal" | "company"
+  >("all");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [deleting, setDeleting] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -60,11 +63,35 @@ export default function ContactsPage() {
     });
   };
 
+  const isCompanyContact = (contact: Contact) =>
+    Boolean(
+      (contact.vat && contact.vat.trim().length) ||
+        (contact.tin && contact.tin.trim().length),
+    );
+
+  const filteredContacts = contacts.filter((c) => {
+    if (contactTypeFilter === "all") return true;
+    return contactTypeFilter === "company"
+      ? isCompanyContact(c)
+      : !isCompanyContact(c);
+  });
+
   const toggleSelectAll = () => {
-    if (selectedIds.size === contacts.length) {
-      setSelectedIds(new Set());
+    const visibleIds = filteredContacts.map((c) => c.id);
+    const allVisibleSelected =
+      visibleIds.length > 0 && visibleIds.every((id) => selectedIds.has(id));
+    if (allVisibleSelected) {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        visibleIds.forEach((id) => next.delete(id));
+        return next;
+      });
     } else {
-      setSelectedIds(new Set(contacts.map((c) => c.id)));
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        visibleIds.forEach((id) => next.add(id));
+        return next;
+      });
     }
   };
 
@@ -111,22 +138,60 @@ export default function ContactsPage() {
     }
   };
 
-  const allSelected = contacts.length > 0 && selectedIds.size === contacts.length;
+  const allSelected =
+    filteredContacts.length > 0 &&
+    filteredContacts.every((c) => selectedIds.has(c.id));
   const someSelected = selectedIds.size > 0;
+  const companyCount = contacts.filter((c) => isCompanyContact(c)).length;
+  const personalCount = contacts.length - companyCount;
 
   return (
     <div className="content">
-      <div className="form-shell">
-        <div className="toolbar" style={{ marginBottom: 12 }}>
-          <div className="toolbar-left">
-            <h3>Customers</h3>
-          </div>
-          <div className="toolbar-right">
-            <button className={viewMode === "list" ? "tab active" : "tab"} onClick={() => setViewMode("list")}>List</button>
-            <button className={viewMode === "kanban" ? "tab active" : "tab"} onClick={() => setViewMode("kanban")}>Kanban</button>
-            <button className="primary" onClick={startNew}>New</button>
+      <div className="two-panel two-panel-left">
+        <div className="o-sidebar">
+          <div className="o-sidebar-section">
+            <div className="o-sidebar-title">CONTACT TYPE</div>
+            {[
+              { key: "all", label: "ALL CONTACTS", count: contacts.length },
+              { key: "personal", label: "PERSONAL", count: personalCount },
+              { key: "company", label: "COMPANY", count: companyCount },
+            ].map((item) => (
+              <div
+                key={item.key}
+                className={`o-sidebar-item ${contactTypeFilter === item.key ? "active" : ""}`}
+                onClick={() =>
+                  setContactTypeFilter(
+                    item.key as "all" | "personal" | "company",
+                  )
+                }
+                style={{ cursor: "pointer" }}
+              >
+                <span
+                  style={{
+                    letterSpacing: "0.5px",
+                    fontSize: 12,
+                    fontWeight: 500,
+                  }}
+                >
+                  {item.label}
+                </span>
+                <span className="o-sidebar-count">{item.count}</span>
+              </div>
+            ))}
           </div>
         </div>
+
+        <div className="form-shell">
+          <div className="toolbar" style={{ marginBottom: 12 }}>
+            <div className="toolbar-left">
+              <h3>Customers</h3>
+            </div>
+            <div className="toolbar-right">
+              <button className={viewMode === "list" ? "tab active" : "tab"} onClick={() => setViewMode("list")}>List</button>
+              <button className={viewMode === "kanban" ? "tab active" : "tab"} onClick={() => setViewMode("kanban")}>Kanban</button>
+              <button className="primary" onClick={startNew}>New</button>
+            </div>
+          </div>
 
         {/* Batch action bar */}
         {someSelected && (
@@ -166,7 +231,7 @@ export default function ContactsPage() {
               </tr>
             </thead>
             <tbody>
-              {contacts.map((c) => (
+              {filteredContacts.map((c) => (
                 <tr key={c.id} className={selectedIds.has(c.id) ? "row-selected" : ""}>
                   <td style={{ width: 40 }} onClick={(e) => e.stopPropagation()}>
                     <input
@@ -187,7 +252,7 @@ export default function ContactsPage() {
           </table>
         ) : (
           <div className="card-grid">
-            {contacts.map((c) => (
+            {filteredContacts.map((c) => (
               <div
                 key={c.id}
                 className={`card ${selectedIds.has(c.id) ? "card-selected" : ""}`}
@@ -215,6 +280,7 @@ export default function ContactsPage() {
             ))}
           </div>
         )}
+        </div>
       </div>
     </div>
   );
