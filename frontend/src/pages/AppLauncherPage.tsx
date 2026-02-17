@@ -517,7 +517,7 @@ export default function AppLauncherPage() {
         <div className="app-launcher-container app-launcher-activation">
           <div className="login-card login-card-glass activation-card">
             <div className="login-card-body activation-card-body">
-              <div className="activation-icon">
+              {/* <div className="activation-icon">
                 <svg
                   width="44"
                   height="44"
@@ -531,7 +531,8 @@ export default function AppLauncherPage() {
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                   <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                 </svg>
-              </div>
+              </div> */}
+              <img src="/365.png" alt="365 Fiscal" className="logo-365" />
 
               <h2 className="login-card-title activation-title">
                 Enter you subscription code
@@ -626,7 +627,7 @@ export default function AppLauncherPage() {
 
               <p
                 className="activation-note,  "
-                style={{ color: "var(--black-500)" }}
+                style={{ color: "var(--black-500)", textAlign: "center" }}
               >
                 Don't have a code?{" "}
                 <a
