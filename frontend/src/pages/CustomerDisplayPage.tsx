@@ -197,10 +197,9 @@ export default function CustomerDisplayPage() {
 
       {/* Header */}
       <div className="cd-header">
-        <div className="cd-header-left">
+        {/* <div className="cd-header-left">
           {companyLogo && <img className="cd-logo" src={companyLogo} alt="" />}
-          <div className="cd-company-name">{companyName}</div>
-        </div>
+        </div> */}
         <div className="cd-clock">
           {clock.toLocaleDateString(undefined, {
             weekday: "long",
@@ -299,7 +298,7 @@ export default function CustomerDisplayPage() {
       </div>
 
       {/* Footer */}
-      <div className="cd-footer">Powered by 365 Fiscal</div>
+      <div className="cd-footer">Powered by GeeNet</div>
     </div>
   );
 }
