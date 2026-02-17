@@ -194,6 +194,7 @@ export default function SettingsPage() {
   const navigate = useNavigate();
   const { me } = useMe();
   const companies = useCompanies();
+  const isAdmin = Boolean(me?.is_admin);
   const [companyId, setCompanyId] = useState<number | null>(null);
   const [companyQuery, setCompanyQuery] = useState("");
   const [taxes, setTaxes] = useState<TaxSetting[]>([]);
