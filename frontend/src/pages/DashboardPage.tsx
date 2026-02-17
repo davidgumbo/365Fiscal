@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { apiFetch } from "../api";
 import { useMe } from "../hooks/useMe";
+import { useCompanies } from "../hooks/useCompanies";
 
 interface DashboardMetrics {
   active_companies: number;
@@ -237,8 +238,32 @@ const PlusIcon = () => (
 
 export default function DashboardPage() {
   const { me } = useMe();
+  const allCompanies = useCompanies();
   const isAdmin = Boolean(me?.is_admin);
-  const companyId = me?.company_ids?.[0];
+  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(
+    null,
+  );
+  const [companyQuery, setCompanyQuery] = useState("");
+
+  // Portal users auto-select their first company
+  useEffect(() => {
+    if (!isAdmin && me?.company_ids?.length && !selectedCompanyId) {
+      setSelectedCompanyId(me.company_ids[0]);
+    }
+  }, [isAdmin, me?.company_ids, selectedCompanyId]);
+
+  const companyId = selectedCompanyId;
+
+  const filteredCompanies = useMemo(() => {
+    if (!companyQuery.trim()) return allCompanies;
+    const q = companyQuery.toLowerCase();
+    return allCompanies.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        (c.tin && c.tin.toLowerCase().includes(q)) ||
+        (c.vat && c.vat.toLowerCase().includes(q)),
+    );
+  }, [allCompanies, companyQuery]);
 
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -266,7 +291,7 @@ export default function DashboardPage() {
     // Must have a company to load data
     if (!companyId) {
       setLoading(false);
-      setError("No company assigned to your account.");
+      if (!isAdmin) setError("No company assigned to your account.");
       return;
     }
 
@@ -458,6 +483,107 @@ export default function DashboardPage() {
         <div className="dashboard-loading">
           <div className="loading-spinner"></div>
           <p>Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isAdmin && !companyId) {
+    return (
+      <div className="content">
+        <div
+          className=""
+          style={{
+            display: "flex",
+            width: "auto",
+            justifyContent: "space-between",
+            marginBottom: 24,
+          }}
+        >
+          <div className="company-search">
+            <input
+              type="text"
+              placeholder="Search company by name, VAT, or TIN"
+              value={companyQuery}
+              onChange={(e) => setCompanyQuery(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <p style={{ color: "var(--muted)", marginBottom: 20, fontSize: 14 }}>
+          Select a company to view its purchase orders.
+        </p>
+
+        <div className="device-company-grid">
+          {filteredCompanies.map((c) => (
+            <button
+              key={c.id}
+              className="device-company-card"
+              onClick={() => setSelectedCompanyId(c.id)}
+            >
+              <div className="device-company-icon">
+                <svg
+                  width="36"
+                  height="36"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
+                  <path d="M9 22v-4h6v4" />
+                  <line x1="8" y1="6" x2="8" y2="6.01" />
+                  <line x1="16" y1="6" x2="16" y2="6.01" />
+                  <line x1="12" y1="6" x2="12" y2="6.01" />
+                  <line x1="8" y1="10" x2="8" y2="10.01" />
+                  <line x1="16" y1="10" x2="16" y2="10.01" />
+                  <line x1="12" y1="10" x2="12" y2="10.01" />
+                  <line x1="8" y1="14" x2="8" y2="14.01" />
+                  <line x1="16" y1="14" x2="16" y2="14.01" />
+                  <line x1="12" y1="14" x2="12" y2="14.01" />
+                </svg>
+              </div>
+              <div className="device-company-info">
+                <div className="device-company-name">{c.name}</div>
+                {c.tin && (
+                  <div className="device-company-detail">TIN: {c.tin}</div>
+                )}
+                {c.vat && (
+                  <div className="device-company-detail">VAT: {c.vat}</div>
+                )}
+              </div>
+              <div className="device-company-arrow">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </div>
+            </button>
+          ))}
+          {!filteredCompanies.length && (
+            <div
+              style={{
+                gridColumn: "1 / -1",
+                textAlign: "center",
+                padding: 40,
+                color: "var(--muted)",
+              }}
+            >
+              {companyQuery.trim()
+                ? "No companies match your search."
+                : "No companies found. Create a company first."}
+            </div>
+          )}
         </div>
       </div>
     );

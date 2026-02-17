@@ -627,7 +627,11 @@ export default function AppLauncherPage() {
 
               <p
                 className="activation-note,  "
-                style={{ color: "var(--black-500)", textAlign: "center" }}
+                style={{
+                  color: "var(--black-500)",
+                  textAlign: "center",
+                  marginTop: "1rem",
+                }}
               >
                 Don't have a code?{" "}
                 <a

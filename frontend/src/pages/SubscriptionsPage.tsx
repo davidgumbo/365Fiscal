@@ -74,6 +74,13 @@ export default function SubscriptionsPage() {
   );
   const [companyQuery, setCompanyQuery] = useState("");
 
+  // Portal users auto-select their first company
+  useEffect(() => {
+    if (!isAdmin && me?.company_ids?.length && !selectedCompanyId) {
+      setSelectedCompanyId(me.company_ids[0]);
+    }
+  }, [isAdmin, me?.company_ids, selectedCompanyId]);
+
   const filteredCompanies = useMemo(() => {
     if (!companyQuery.trim()) return allCompanies;
     const q = companyQuery.toLowerCase();
