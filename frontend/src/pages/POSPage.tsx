@@ -83,6 +83,7 @@ type POSOrder = {
   is_fiscalized: boolean;
   zimra_verification_code: string;
   zimra_verification_url: string;
+  qr_url?: string;
   fiscal_errors: string;
   change_amount: number;
   cash_amount: number;
@@ -134,6 +135,12 @@ function buildReceiptHtml(
       : order.payment_method.charAt(0).toUpperCase() +
         order.payment_method.slice(1);
 
+  const qrSrc =
+    (order as any).qr_url ||
+    (order.zimra_verification_url
+      ? `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(order.zimra_verification_url)}`
+      : "");
+
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Receipt - ${order.reference}</title>
 <style>
   @page { size: 80mm auto; margin: 0; }
@@ -141,109 +148,74 @@ function buildReceiptHtml(
   body { font-family: 'Courier New', monospace; font-size: 12px; width: 80mm; padding: 4mm; color: #000; background: #fff; }
   .center { text-align: center; }
   .bold { font-weight: bold; }
-  .logo { max-width: 60mm; max-height: 25mm; margin: 0 auto 4px; display: block; }
-  .company-name { font-size: 16px; font-weight: bold; margin-bottom: 2px; }
+  .logo { max-width: 50mm; max-height: 18mm; margin: 0 auto 4px; display: block; }
+  .company-name { font-size: 13px; font-weight: bold; margin-bottom: 2px; text-transform: uppercase; }
   .company-info { font-size: 10px; color: #333; line-height: 1.4; }
   .divider { border-top: 1px dashed #000; margin: 6px 0; }
-  .ref { font-size: 11px; margin: 4px 0; }
-  .date { font-size: 10px; color: #555; }
-  .device-info { font-size: 9px; color: #666; margin: 2px 0; }
+  .title { font-size: 12px; font-weight: bold; text-align: center; margin: 2px 0; }
+  .two-col { display: flex; justify-content: space-between; font-size: 10px; }
+  .line { font-size: 10px; margin: 2px 0; }
   table { width: 100%; border-collapse: collapse; margin: 4px 0; }
   th { text-align: left; font-size: 10px; border-bottom: 1px solid #000; padding: 2px 0; }
   th:last-child, td:last-child { text-align: right; }
-  td { font-size: 11px; padding: 2px 0; vertical-align: top; }
-  .item-detail { font-size: 10px; color: #555; }
-  .totals-row { display: flex; justify-content: space-between; padding: 1px 0; font-size: 12px; }
-  .grand-total { font-size: 16px; font-weight: bold; border-top: 2px solid #000; border-bottom: 2px solid #000; padding: 4px 0; margin: 4px 0; }
-  .fiscal-box { border: 1px solid #000; padding: 6px; margin: 6px 0; text-align: center; }
-  .fiscal-label { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; }
-  .fiscal-code { font-size: 14px; font-weight: bold; margin: 2px 0; }
-  .fiscal-url { font-size: 9px; word-break: break-all; color: #333; }
-  .footer { font-size: 10px; color: #555; margin-top: 8px; text-align: center; line-height: 1.4; }
-  .customer-info { font-size: 10px; margin: 2px 0; }
-  .device-footer { font-size: 9px; color: #666; text-align: center; }
-  @media print {
-    html, body { width: 80mm; margin: 0; padding: 4mm; }
-    @page { size: 80mm auto; margin: 0; }
-  }
+  td { font-size: 11px; padding: 2px 0; }
+  .summary { margin-top: 4px; }
+  .summary .row { display: flex; justify-content: space-between; padding: 1px 0; font-size: 11px; }
+  .grand { display: flex; justify-content: space-between; font-size: 12px; font-weight: bold; padding: 3px 0; border-top: 1px solid #000; border-bottom: 1px solid #000; margin: 4px 0; }
+  .footer { font-size: 9px; color: #555; margin-top: 6px; text-align: center; line-height: 1.4; }
+  @media print { html, body { width: 80mm; margin: 0; padding: 4mm; } }
 </style></head><body>
   <div class="center">
     ${company?.logo_data ? `<img class="logo" src="${company.logo_data}" alt="Logo" />` : ""}
     <div class="company-name">${company?.name || "365 Fiscal"}</div>
+    ${company?.tin ? `<div class="company-info">TIN: ${company.tin}</div>` : ""}
+    ${company?.vat ? `<div class="company-info">VAT No: ${company.vat}</div>` : ""}
     <div class="company-info">
       ${company?.address ? company.address + "<br>" : ""}
-      ${company?.phone ? "Tel: " + company.phone + "<br>" : ""}
-      ${company?.email ? company.email + "<br>" : ""}
-      ${company?.tin ? "TIN: " + company.tin : ""}${company?.vat ? " | VAT: " + company.vat : ""}
+      ${company?.phone ? company.phone + "<br>" : ""}
+      ${company?.email ? company.email : ""}
     </div>
   </div>
   <div class="divider"></div>
-  <div class="center">
-    <div class="ref bold">${order.reference}</div>
-    <div class="date">${new Date(order.order_date).toLocaleString()}</div>
-    ${session ? `<div class="date">Session: ${session.name}</div>` : ""}
-    ${device ? `<div class="device-info">Device: ${device.model} | S/N: ${device.serial_number}</div><div class="device-info">Device ID: ${device.device_id} | Fiscal Day: ${device.fiscal_day_status}</div>` : ""}
-    ${customer ? `<div class="customer-info">Customer: ${customer.name}${customer.tin ? " | TIN: " + customer.tin : ""}</div>` : ""}
-  </div>
+  <div class="title">FISCAL TAX INVOICE</div>
+  <div class="two-col"><div>Invoice No: ${order.reference}</div><div>Fiscal day: ${device?.fiscal_day_status || session?.name || "N/A"}</div></div>
+  ${order.notes ? `<div class="line">Customer reference No: ${order.notes}</div>` : ""}
+  ${device ? `<div class="line">Device Serial No: ${device.serial_number}</div>` : ""}
+  ${device ? `<div class="line">Device ID: ${device.device_id}</div>` : ""}
+  <div class="line">Date: ${new Date(order.order_date).toLocaleString()}</div>
   <div class="divider"></div>
   <table>
-    <thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead>
+    <thead><tr><th>Description</th><th>Amount</th></tr></thead>
     <tbody>
       ${lines
         .map(
           (l) => `
         <tr>
           <td>${l.description}</td>
-          <td>${l.quantity}</td>
-          <td>${fmt(l.unit_price)}</td>
           <td>${fmt(l.total_price)}</td>
         </tr>
-        ${l.discount > 0 ? `<tr><td colspan="4" class="item-detail">&nbsp;&nbsp;Disc: -${l.discount}%</td></tr>` : ""}
-        ${l.vat_rate > 0 ? `<tr><td colspan="4" class="item-detail">&nbsp;&nbsp;VAT ${l.vat_rate}%: ${fmt(l.tax_amount)}</td></tr>` : ""}
       `,
         )
         .join("")}
     </tbody>
   </table>
+  <div class="two-col"><div>Total ${order.currency || "USD"}</div><div>${fmt(order.total_amount)}</div></div>
+  ${order.cash_amount > 0 ? `<div class="line">&nbsp;&nbsp;${(order.currency || "USD")} Cash ${fmt(order.cash_amount)}</div>` : ""}
+  ${order.card_amount > 0 ? `<div class="line">&nbsp;&nbsp;${(order.currency || "USD")} Card ${fmt(order.card_amount)}</div>` : ""}
+  ${order.mobile_amount > 0 ? `<div class="line">&nbsp;&nbsp;${(order.currency || "USD")} Mobile ${fmt(order.mobile_amount)}</div>` : ""}
+  <div class="line">Number of items <span style="float:right">${lines.reduce((s,l)=>s + (l.quantity||0), 0)}</span></div>
   <div class="divider"></div>
-  <div class="totals-row"><span>Subtotal</span><span>${fmt(order.subtotal)}</span></div>
-  ${order.discount_amount > 0 ? `<div class="totals-row"><span>Discount</span><span>-${fmt(order.discount_amount)}</span></div>` : ""}
-  <div class="totals-row"><span>Tax</span><span>${fmt(order.tax_amount)}</span></div>
-  <div class="grand-total center">${order.currency || "USD"} ${fmt(order.total_amount)}</div>
-  <div style="margin:4px 0">
-    <div class="totals-row"><span>Payment</span><span>${payLabel}</span></div>
-    ${order.cash_amount > 0 ? `<div class="totals-row"><span>Cash</span><span>${fmt(order.cash_amount)}</span></div>` : ""}
-    ${order.card_amount > 0 ? `<div class="totals-row"><span>Card</span><span>${fmt(order.card_amount)}</span></div>` : ""}
-    ${order.mobile_amount > 0 ? `<div class="totals-row"><span>Mobile</span><span>${fmt(order.mobile_amount)}</span></div>` : ""}
-    ${order.change_amount > 0 ? `<div class="totals-row bold"><span>Change</span><span>${fmt(order.change_amount)}</span></div>` : ""}
+  <div class="summary">
+    <div class="row"><span>Net Amount</span><span>${fmt(order.subtotal)}</span></div>
+    <div class="row"><span>VAT</span><span>${fmt(order.tax_amount)}</span></div>
+    <div class="row"><span>Gross Amount</span><span>${fmt(order.total_amount)}</span></div>
   </div>
-  ${
-    order.zimra_verification_code
-      ? `
-    <div class="fiscal-box">
-      <div class="fiscal-label">ZIMRA Verification</div>
-      <div class="fiscal-code">${order.zimra_verification_code}</div>
-      ${order.zimra_verification_url ? `<div class="fiscal-url">${order.zimra_verification_url}</div>` : ""}
-    </div>
-  `
-      : ""
-  }
-  ${
-    device
-      ? `
-    <div class="divider"></div>
-    <div class="device-footer">
-      Fiscal Device: ${device.model}<br>
-      Serial: ${device.serial_number}<br>
-      Device ID: ${device.device_id}
-    </div>
-  `
-      : ""
-  }
-  <div class="divider"></div>
+  <div class="line">Customer Ref: ${order.reference}</div>
+  ${qrSrc ? `<div class="center" style="margin:6px 0"><img src="${qrSrc}" alt="QR" style="width:45mm;height:45mm"/></div>` : ""}
+  ${order.zimra_verification_code ? `<div class="center" style="font-size:10px;margin-top:2px">Verification code: <span class="bold">${order.zimra_verification_code}</span></div>` : ""}
   <div class="footer">
-    Thank you for your business!<br>
-    Powered by 365 Fiscal
+    You can verify this receipt manually at<br>
+    ${order.zimra_verification_url || "https://fdms.zimra.co.zw/"}
   </div>
 </body></html>`;
 }
