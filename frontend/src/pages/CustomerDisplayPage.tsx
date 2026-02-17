@@ -69,8 +69,8 @@ export default function CustomerDisplayPage() {
           width: 100vw;
           display: flex;
           flex-direction: column;
-          background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
-          color: #f1f5f9;
+          background: linear-gradient(135deg, #f8fafc 0%, #ffffff 55%, #f1f5f9 100%);
+          color: #0f172a;
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
         .cd-header {
@@ -78,13 +78,14 @@ export default function CustomerDisplayPage() {
           align-items: center;
           justify-content: space-between;
           padding: 20px 32px;
-          background: rgba(255,255,255,0.03);
-          border-bottom: 1px solid rgba(255,255,255,0.06);
+          background: rgba(255,255,255,0.85);
+          border-bottom: 1px solid rgba(15,23,42,0.08);
+          backdrop-filter: blur(6px);
         }
         .cd-header-left { display: flex; align-items: center; gap: 16px; }
         .cd-logo { height: 48px; width: auto; border-radius: 8px; }
         .cd-company-name { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.5px; }
-        .cd-clock { font-size: 1.2rem; font-weight: 500; color: #94a3b8; font-variant-numeric: tabular-nums; }
+        .cd-clock { font-size: 1.2rem; font-weight: 500; color: #64748b; font-variant-numeric: tabular-nums; }
         .cd-body { flex: 1; display: flex; overflow: hidden; }
         .cd-cart-section {
           flex: 1;
@@ -96,7 +97,7 @@ export default function CustomerDisplayPage() {
         .cd-cart-title {
           font-size: 1.1rem;
           font-weight: 600;
-          color: #94a3b8;
+          color: #64748b;
           text-transform: uppercase;
           letter-spacing: 2px;
           margin-bottom: 16px;
@@ -105,17 +106,17 @@ export default function CustomerDisplayPage() {
           flex: 1;
           overflow-y: auto;
           scrollbar-width: thin;
-          scrollbar-color: rgba(255,255,255,0.1) transparent;
+          scrollbar-color: rgba(15,23,42,0.15) transparent;
         }
         .cd-cart-list::-webkit-scrollbar { width: 6px; }
         .cd-cart-list::-webkit-scrollbar-track { background: transparent; }
-        .cd-cart-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+        .cd-cart-list::-webkit-scrollbar-thumb { background: rgba(15,23,42,0.15); border-radius: 3px; }
         .cd-line {
           display: flex;
           align-items: center;
           gap: 16px;
           padding: 14px 0;
-          border-bottom: 1px solid rgba(255,255,255,0.05);
+          border-bottom: 1px solid rgba(15,23,42,0.08);
           animation: cd-fade-in 0.3s ease;
         }
         @keyframes cd-fade-in {
@@ -127,7 +128,7 @@ export default function CustomerDisplayPage() {
           height: 52px;
           border-radius: 10px;
           overflow: hidden;
-          background: rgba(255,255,255,0.05);
+          background: rgba(15,23,42,0.04);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -144,33 +145,33 @@ export default function CustomerDisplayPage() {
           flex-direction: column;
           justify-content: center;
           padding: 32px;
-          background: rgba(255,255,255,0.03);
-          border-left: 1px solid rgba(255,255,255,0.06);
+          background: rgba(15,23,42,0.02);
+          border-left: 1px solid rgba(15,23,42,0.08);
         }
         .cd-total-row {
           display: flex;
           justify-content: space-between;
           padding: 8px 0;
           font-size: 1.1rem;
-          color: #94a3b8;
+          color: #64748b;
         }
-        .cd-total-row span:last-child { font-weight: 600; color: #f1f5f9; }
+        .cd-total-row span:last-child { font-weight: 600; color: #0f172a; }
         .cd-grand-total {
           display: flex;
           justify-content: space-between;
           padding: 20px 0;
           margin-top: 12px;
-          border-top: 2px solid rgba(255,255,255,0.1);
+          border-top: 2px solid rgba(15,23,42,0.1);
           font-size: 2.2rem;
           font-weight: 800;
-          color: #10b981;
+          color: #16a34a;
         }
         .cd-item-count {
           text-align: center;
           padding: 12px;
           margin-top: 16px;
           border-radius: 12px;
-          background: rgba(255,255,255,0.05);
+          background: rgba(15,23,42,0.04);
           font-size: 1rem;
           color: #64748b;
         }
@@ -184,13 +185,13 @@ export default function CustomerDisplayPage() {
         }
         .cd-empty-icon { margin-bottom: 16px; opacity: 0.4; }
         .cd-empty p { font-size: 1.4rem; font-weight: 500; }
-        .cd-empty small { font-size: 1rem; color: #334155; margin-top: 8px; }
+        .cd-empty small { font-size: 1rem; color: #64748b; margin-top: 8px; }
         .cd-footer {
           text-align: center;
           padding: 12px;
           font-size: 0.85rem;
-          color: #334155;
-          border-top: 1px solid rgba(255,255,255,0.04);
+          color: #64748b;
+          border-top: 1px solid rgba(15,23,42,0.06);
         }
       `}</style>
 
