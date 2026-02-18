@@ -9193,7 +9193,7 @@ button.danger:disabled {
   gap: 2px;
 }
 .pos-qty-btn {
-  min-width: 5rem;
+  min-width: 2rem;
   height: 28px;
   display: flex;
   align-items: center;
@@ -9212,7 +9212,7 @@ button.danger:disabled {
   border-color: var(--slate-300, #cbd5e1);
 }
 .pos-qty-input {
-  width: 36px;
+  width: 5rem;
   text-align: center;
   border: 1px solid var(--slate-200, #e2e8f0);
   border-radius: 6px;
