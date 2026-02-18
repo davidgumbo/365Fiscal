@@ -8735,6 +8735,45 @@ button.danger:disabled {
   align-items: center;
   gap: 6px;
 }
+.pos-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pos-mobile-menu {
+  display: none;
+  position: relative;
+}
+.pos-mobile-menu-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  background: #fff;
+  border: 1px solid var(--slate-200, #e2e8f0);
+  border-radius: 12px;
+  min-width: 200px;
+  box-shadow: 0 12px 28px rgba(15,23,42,0.18);
+  padding: 6px;
+  z-index: 20;
+}
+.pos-mobile-menu-item {
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--slate-700, #334155);
+  cursor: pointer;
+}
+.pos-mobile-menu-item:hover {
+  background: var(--slate-100, #f1f5f9);
+}
+.pos-mobile-menu-close {
+  color: var(--slate-500, #64748b);
+}
 .pos-session-badge {
   display: inline-flex;
   align-items: center;
@@ -8769,6 +8808,22 @@ button.danger:disabled {
   align-items: center;
   width: 100%;
   max-width: 480px;
+}
+.pos-search-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.pos-search-toggle:hover {
+  background: rgba(255,255,255,0.2);
 }
 .pos-barcode-icon {
   position: absolute;
@@ -9217,6 +9272,29 @@ button.danger:disabled {
 @media (max-width: 900px) {
   .pos-mobile-tabs {
     display: flex;
+  }
+  .pos-search-toggle {
+    display: inline-flex;
+  }
+  .pos-barcode-wrapper.pos-barcode-collapsed .pos-barcode-icon,
+  .pos-barcode-wrapper.pos-barcode-collapsed .pos-barcode-input,
+  .pos-barcode-wrapper.pos-barcode-collapsed .pos-barcode-clear {
+    display: none;
+  }
+  .pos-barcode-wrapper.pos-barcode-open .pos-search-toggle {
+    display: none;
+  }
+  .pos-barcode-wrapper.pos-barcode-open .pos-barcode-input {
+    display: block;
+  }
+  .pos-barcode-wrapper.pos-barcode-open .pos-barcode-icon {
+    display: block;
+  }
+  .pos-topbar-actions {
+    display: none;
+  }
+  .pos-mobile-menu {
+    display: block;
   }
   .pos-topbar {
     flex-wrap: wrap;

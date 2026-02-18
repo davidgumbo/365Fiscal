@@ -200,10 +200,10 @@ function buildReceiptHtml(
     </tbody>
   </table>
   <div class="two-col"><div>Total ${order.currency || "USD"}</div><div>${fmt(order.total_amount)}</div></div>
-  ${order.cash_amount > 0 ? `<div class="line">&nbsp;&nbsp;${(order.currency || "USD")} Cash ${fmt(order.cash_amount)}</div>` : ""}
-  ${order.card_amount > 0 ? `<div class="line">&nbsp;&nbsp;${(order.currency || "USD")} Card ${fmt(order.card_amount)}</div>` : ""}
-  ${order.mobile_amount > 0 ? `<div class="line">&nbsp;&nbsp;${(order.currency || "USD")} Mobile ${fmt(order.mobile_amount)}</div>` : ""}
-  <div class="line">Number of items <span style="float:right">${lines.reduce((s,l)=>s + (l.quantity||0), 0)}</span></div>
+  ${order.cash_amount > 0 ? `<div class="line">&nbsp;&nbsp;${order.currency || "USD"} Cash ${fmt(order.cash_amount)}</div>` : ""}
+  ${order.card_amount > 0 ? `<div class="line">&nbsp;&nbsp;${order.currency || "USD"} Card ${fmt(order.card_amount)}</div>` : ""}
+  ${order.mobile_amount > 0 ? `<div class="line">&nbsp;&nbsp;${order.currency || "USD"} Mobile ${fmt(order.mobile_amount)}</div>` : ""}
+  <div class="line">Number of items <span style="float:right">${lines.reduce((s, l) => s + (l.quantity || 0), 0)}</span></div>
   <div class="divider"></div>
   <div class="summary">
     <div class="row"><span>Net Amount</span><span>${fmt(order.subtotal)}</span></div>
@@ -1179,131 +1179,131 @@ export default function POSPage() {
         </div>
         <div className="pos-topbar-right">
           <div className="pos-topbar-actions">
-          {/* Cashier / PIN login */}
-          <button
-            className="pos-btn pos-btn-sm pos-btn-topbar"
-            onClick={() => setShowPinDialog(true)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              paddingLeft: 4,
-            }}
-          >
-            <div
+            {/* Cashier / PIN login */}
+            <button
+              className="pos-btn pos-btn-sm pos-btn-topbar"
+              onClick={() => setShowPinDialog(true)}
               style={{
-                width: 30,
-                height: 30,
-                borderRadius: "50%",
-                flexShrink: 0,
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "center",
-                fontSize: 13,
-                fontWeight: 700,
-                color: "#fff",
-                background: currentCashier
-                  ? currentCashier.role === "admin"
-                    ? "linear-gradient(135deg, #ef4444, #dc2626)"
-                    : currentCashier.role === "manager"
-                      ? "linear-gradient(135deg, #f59e0b, #d97706)"
-                      : "linear-gradient(135deg, #6366f1, #4f46e5)"
-                  : "rgba(255,255,255,0.15)",
-                border: "2px solid rgba(255,255,255,0.2)",
+                gap: 8,
+                paddingLeft: 4,
               }}
             >
-              {currentCashier ? (
-                currentCashier.name.charAt(0).toUpperCase()
-              ) : (
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
-                </svg>
-              )}
-            </div>
-            <span>{currentCashier ? currentCashier.name : "Cashier"}</span>
-          </button>
-          {/* Customer display */}
-          <button
-            className="pos-btn pos-btn-sm pos-btn-topbar"
-            onClick={openCustomerDisplay}
-            title="Open customer-facing display"
-          >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
+              <div
+                style={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: "50%",
+                  flexShrink: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: "#fff",
+                  background: currentCashier
+                    ? currentCashier.role === "admin"
+                      ? "linear-gradient(135deg, #ef4444, #dc2626)"
+                      : currentCashier.role === "manager"
+                        ? "linear-gradient(135deg, #f59e0b, #d97706)"
+                        : "linear-gradient(135deg, #6366f1, #4f46e5)"
+                    : "rgba(255,255,255,0.15)",
+                  border: "2px solid rgba(255,255,255,0.2)",
+                }}
+              >
+                {currentCashier ? (
+                  currentCashier.name.charAt(0).toUpperCase()
+                ) : (
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                )}
+              </div>
+              <span>{currentCashier ? currentCashier.name : "Cashier"}</span>
+            </button>
+            {/* Customer display */}
+            <button
+              className="pos-btn pos-btn-sm pos-btn-topbar"
+              onClick={openCustomerDisplay}
+              title="Open customer-facing display"
             >
-              <rect x="2" y="3" width="20" height="14" rx="2" />
-              <line x1="8" y1="21" x2="16" y2="21" />
-              <line x1="12" y1="17" x2="12" y2="21" />
-            </svg>
-          </button>
-          <button
-            className={`pos-btn pos-btn-sm pos-btn-topbar ${showOrders ? "active" : ""}`}
-            onClick={() => {
-              setShowOrders(!showOrders);
-              if (!showOrders) refreshOrders();
-            }}
-          >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <rect x="2" y="3" width="20" height="14" rx="2" />
+                <line x1="8" y1="21" x2="16" y2="21" />
+                <line x1="12" y1="17" x2="12" y2="21" />
+              </svg>
+            </button>
+            <button
+              className={`pos-btn pos-btn-sm pos-btn-topbar ${showOrders ? "active" : ""}`}
+              onClick={() => {
+                setShowOrders(!showOrders);
+                if (!showOrders) refreshOrders();
+              }}
             >
-              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-              <line x1="16" y1="13" x2="8" y2="13" />
-              <line x1="16" y1="17" x2="8" y2="17" />
-              <polyline points="10 9 9 9 8 9" />
-            </svg>
-          </button>
-          <button
-            className="pos-btn pos-btn-sm pos-btn-topbar"
-            onClick={() => setShowCustomerSearch(!showCustomerSearch)}
-          >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+                <polyline points="10 9 9 9 8 9" />
+              </svg>
+            </button>
+            <button
+              className="pos-btn pos-btn-sm pos-btn-topbar"
+              onClick={() => setShowCustomerSearch(!showCustomerSearch)}
             >
-              <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-            {selectedCustomer ? selectedCustomer.name : ""}
-          </button>
-          <button
-            className="pos-btn pos-btn-sm pos-btn-close-session"
-            onClick={() => setShowCloseDialog(true)}
-          >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              {selectedCustomer ? selectedCustomer.name : ""}
+            </button>
+            <button
+              className="pos-btn pos-btn-sm pos-btn-close-session"
+              onClick={() => setShowCloseDialog(true)}
             >
-              <rect x="3" y="11" width="18" height="11" rx="2" />
-              <path d="M7 11V7a5 5 0 0110 0v4" />
-            </svg>
-          </button>
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <rect x="3" y="11" width="18" height="11" rx="2" />
+                <path d="M7 11V7a5 5 0 0110 0v4" />
+              </svg>
+            </button>
           </div>
           <div className="pos-mobile-menu">
             <button
@@ -1336,13 +1336,22 @@ export default function POSPage() {
                   Cashier Login
                 </button>
                 <button
-                  className="pos-mobile-menu-item"
-                  onClick={() => {
-                    openCustomerDisplay();
-                    setShowMobileMenu(false);
-                  }}
+                  className="pos-btn pos-btn-sm pos-btn-topbar"
+                  onClick={openCustomerDisplay}
+                  title="Open customer-facing display"
                 >
-                  Customer Display
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <rect x="2" y="3" width="20" height="14" rx="2" />
+                    <line x1="8" y1="21" x2="16" y2="21" />
+                    <line x1="12" y1="17" x2="12" y2="21" />
+                  </svg>
                 </button>
                 <button
                   className="pos-mobile-menu-item"
