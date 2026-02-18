@@ -9296,14 +9296,7 @@ button.danger:disabled {
     display: block;
   }
   .pos-topbar-actions {
-    display: flex;
-    gap: 6px;
-  }
-  .pos-topbar-actions .pos-btn-topbar {
     display: none;
-  }
-  .pos-topbar-actions .pos-btn-cashier {
-    display: inline-flex;
   }
   .pos-mobile-menu {
     display: block;
