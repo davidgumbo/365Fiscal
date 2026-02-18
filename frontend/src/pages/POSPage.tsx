@@ -1145,7 +1145,7 @@ export default function POSPage() {
               onKeyDown={handleBarcode}
             />
             <button
-              style={{ width: "20vw" }}
+              style={{ width: "50vw" }}
               className="pos-search-toggle"
               onClick={() => {
                 setShowMobileSearch((prev) => !prev);
@@ -1153,6 +1153,18 @@ export default function POSPage() {
               }}
               type="button"
             >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                aria-hidden="true"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
               {showMobileSearch ? "Close Search" : "Search"}
             </button>
             {searchTerm && (
