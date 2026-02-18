@@ -1099,7 +1099,7 @@ export default function POSPage() {
     <div className="pos-page">
       {/* ─── TOP BAR ─── */}
       <header className="pos-topbar">
-        <div className="pos-topbar-left">
+        <div className="">
           <button
             className="pos-btn pos-btn-icon"
             onClick={() => navigate("/")}
@@ -1118,7 +1118,7 @@ export default function POSPage() {
             </div>
           )}
         </div>
-        <div className="pos-topbar-center">
+        <div className="">
           <div
             className={`pos-barcode-wrapper ${
               showMobileSearch ? "pos-barcode-open" : "pos-barcode-collapsed"
@@ -1177,7 +1177,7 @@ export default function POSPage() {
             )}
           </div>
         </div>
-        <div className="pos-topbar-right">
+        <div className="">
           <div className="pos-topbar-actions">
             {/* Cashier / PIN login */}
             <button
@@ -1288,7 +1288,7 @@ export default function POSPage() {
               </svg>
               {selectedCustomer ? selectedCustomer.name : ""}
             </button>
-            {/* <button
+            <button
               className="pos-btn pos-btn-sm pos-btn-close-session"
               onClick={() => setShowCloseDialog(true)}
             >
@@ -1303,7 +1303,7 @@ export default function POSPage() {
                 <rect x="3" y="11" width="18" height="11" rx="2" />
                 <path d="M7 11V7a5 5 0 0110 0v4" />
               </svg>
-            </button> */}
+            </button>
           </div>
           <div className="pos-mobile-menu">
             <button
@@ -1326,26 +1326,57 @@ export default function POSPage() {
             </button>
             {showMobileMenu && (
               <div className="pos-mobile-menu-dropdown">
-                {/* <button
-                  className="pos-mobile-menu-item"
+                <button
+                  className="pos-mobile-menu-item pos-mobile-menu-cashier"
                   onClick={() => {
                     setShowPinDialog(true);
                     setShowMobileMenu(false);
                   }}
                 >
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
+                  <div
+                    className="pos-cashier-avatar"
+                    aria-hidden="true"
+                    style={{
+                      width: 30,
+                      height: 30,
+                      borderRadius: "50%",
+                      flexShrink: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 13,
+                      fontWeight: 700,
+                      color: "#fff",
+                      background: currentCashier
+                        ? currentCashier.role === "admin"
+                          ? "linear-gradient(135deg, #ef4444, #dc2626)"
+                          : currentCashier.role === "manager"
+                            ? "linear-gradient(135deg, #f59e0b, #d97706)"
+                            : "linear-gradient(135deg, #6366f1, #4f46e5)"
+                        : "rgba(255,255,255,0.2)",
+                      border: "2px solid rgba(255,255,255,0.25)",
+                    }}
                   >
-                    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-                    <circle cx="12" cy="7" r="4" />
-                  </svg>
-                  Cashier Login
-                </button> */}
+                    {currentCashier ? (
+                      currentCashier.name.charAt(0).toUpperCase()
+                    ) : (
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                      </svg>
+                    )}
+                  </div>
+                  <span>
+                    {currentCashier ? currentCashier.name : "Cashier Login"}
+                  </span>
+                </button>
                 {/* <button
                   className="pos-mobile-menu-item"
                   onClick={openCustomerDisplay}

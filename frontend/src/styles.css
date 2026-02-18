@@ -8713,6 +8713,7 @@ button.danger:disabled {
   flex-shrink: 0;
   z-index: 10;
   box-shadow: 0 2px 12px rgba(30,27,75,0.3);
+  justify-content: space-between;
 }
 .pos-topbar-left {
   display: flex;
