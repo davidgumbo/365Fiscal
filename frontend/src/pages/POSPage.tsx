@@ -1288,7 +1288,7 @@ export default function POSPage() {
               </svg>
               {selectedCustomer ? selectedCustomer.name : ""}
             </button>
-            <button
+            {/* <button
               className="pos-btn pos-btn-sm pos-btn-close-session"
               onClick={() => setShowCloseDialog(true)}
             >
@@ -1303,7 +1303,7 @@ export default function POSPage() {
                 <rect x="3" y="11" width="18" height="11" rx="2" />
                 <path d="M7 11V7a5 5 0 0110 0v4" />
               </svg>
-            </button>
+            </button> */}
           </div>
           <div className="pos-mobile-menu">
             <button
@@ -1326,7 +1326,7 @@ export default function POSPage() {
             </button>
             {showMobileMenu && (
               <div className="pos-mobile-menu-dropdown">
-                <button
+                {/* <button
                   className="pos-mobile-menu-item"
                   onClick={() => {
                     setShowPinDialog(true);
@@ -1345,8 +1345,8 @@ export default function POSPage() {
                     <circle cx="12" cy="7" r="4" />
                   </svg>
                   Cashier Login
-                </button>
-                <button
+                </button> */}
+                {/* <button
                   className="pos-mobile-menu-item"
                   onClick={openCustomerDisplay}
                   title="Open customer-facing display"
@@ -1364,7 +1364,7 @@ export default function POSPage() {
                     <line x1="12" y1="17" x2="12" y2="21" />
                   </svg>
                   Customer Display
-                </button>
+                </button> */}
                 <button
                   className="pos-mobile-menu-item"
                   onClick={() => {
@@ -1410,6 +1410,7 @@ export default function POSPage() {
                   Customer Search
                 </button>
                 <button
+                  style={{ color: "var(--red-600" }}
                   className="pos-mobile-menu-item"
                   onClick={() => {
                     setShowCloseDialog(true);
@@ -1429,7 +1430,7 @@ export default function POSPage() {
                   </svg>
                   Close Session
                 </button>
-                <button
+                {/* <button
                   className="pos-mobile-menu-item pos-mobile-menu-close"
                   onClick={() => setShowMobileMenu(false)}
                 >
@@ -1445,7 +1446,7 @@ export default function POSPage() {
                     <line x1="6" y1="6" x2="18" y2="18" />
                   </svg>
                   Close Menu
-                </button>
+                </button> */}
               </div>
             )}
           </div>

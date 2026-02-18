@@ -9477,6 +9477,7 @@ button.danger:disabled {
   padding: 5px 12px;
   font-size: 0.8rem;
   border-radius: 6px;
+  height: 2.5rem;
 }
 .pos-btn-xs {
   padding: 3px 8px;
