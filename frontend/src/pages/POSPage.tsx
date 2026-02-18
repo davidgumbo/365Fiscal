@@ -150,7 +150,7 @@ function buildReceiptHtml(
   .bold { font-weight: bold; }
   .logo { max-width: 50mm; max-height: 18mm; margin: 0 auto 4px; display: block; }
   .company-name { font-size: 13px; font-weight: bold; margin-bottom: 2px; text-transform: uppercase; }
-  .company-info { font-size: 1rem; color: #333; line-height: 1.4; overflow-wrap: anywhere; word-break: break-word; }
+  .company-info { font-size: 0.8rem; color: #333; line-height: 1.4; overflow-wrap: anywhere; word-break: break-word; }
   .divider { border-top: 1px dashed #000; margin: 6px 0; }
   .title { font-size: 1.2rem; font-weight: bold; text-align: center; margin: 2px 0; }
   .two-col { display: flex; justify-content: space-between; font-size: 1rem; }
@@ -162,7 +162,9 @@ function buildReceiptHtml(
   .summary { margin-top: 4px; }
   .summary .row { display: flex; justify-content: space-between; padding: 1px 0; font-size: 0.8; }
   .grand { display: flex; justify-content: space-between; font-size: 12px; font-weight: bold; padding: 3px 0; border-top: 1px solid #000; border-bottom: 1px solid #000; margin: 4px 0; }
-  .footer { font-size: 13px; color: #555; margin-top: 6px; text-align: center; line-height: 1.4; word-break: break-all; }
+  .footer { font-size: 13px; color: #555; margin-top: 6px; text-align: center; line-height: 1.4; word-break: normal; overflow-wrap: normal; }
+  .receipt-code { white-space: nowrap; }
+  .receipt-url { display: inline-block; max-width: 100%; overflow-wrap: anywhere; word-break: break-word; }
   @media print { html, body { width: 80mm; margin: 0; padding: 4mm; } }
 </style></head><body>
   <div class="center">
@@ -205,10 +207,10 @@ function buildReceiptHtml(
     <div class="row  "><span>Gross Amount</span><span>${fmt(order.total_amount)}</span></div>
   </div>
   ${qrSrc ? `<div class="center" style="margin:6px 0"><img src="${qrSrc}" alt="QR" style="width:25mm;height:25mm"/></div>` : ""}
-  ${order.zimra_verification_code ? `<div class="center" style="font-size:1rem;margin-top:2px">Verification code: <span class="bold">${order.zimra_verification_code}</span></div>` : ""}
+  ${order.zimra_verification_code ? `<div class="center" style="font-size:1rem;margin-top:2px">Verification code: <span class="bold receipt-code">${order.zimra_verification_code}</span></div>` : ""}
   <div class="footer">
     You can verify this receipt manually at<br>
-    ${order.zimra_verification_url || "https://fdms.zimra.co.zw/"}
+    <span class="receipt-url">${order.zimra_verification_url || "https://fdms.zimra.co.zw/"}</span>
   </div>
 </body></html>`;
 }
