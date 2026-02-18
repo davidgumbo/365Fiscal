@@ -84,7 +84,7 @@ export default function QuotationsPage({
   const { quotationId } = useParams();
   const routeQuotationId = quotationId ? Number(quotationId) : null;
   const { me } = useMe();
-  const companies = useCompanies();
+  const { companies, loading: companiesLoading } = useCompanies();
   const isAdmin = Boolean(me?.is_admin);
   const [companyId, setCompanyId] = useState<number | null>(null);
   const [companyQuery, setCompanyQuery] = useState("");
@@ -612,6 +612,13 @@ export default function QuotationsPage({
     setWarehouses([]);
     navigate("/quotations");
   };
+
+  if (companiesLoading && companyId === null) {
+    return <div className="loading-indicator">Loading companies...</div>;
+  }
+  if (!isAdmin && companyId === null && companies.length) {
+    return <div className="loading-indicator">Loading companies...</div>;
+  }
 
   // ─── Admin company selection view ───
   if (isAdmin && !companyId && mode === "list") {

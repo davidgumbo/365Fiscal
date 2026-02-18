@@ -172,7 +172,7 @@ export default function InvoicesPage({
   const { invoiceId } = useParams();
   const routeInvoiceId = invoiceId ? Number(invoiceId) : null;
   const { me } = useMe();
-  const allCompanies = useCompanies();
+  const { companies: allCompanies, loading: companiesLoading } = useCompanies();
   const isAdmin = Boolean(me?.is_admin);
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(
     null,
@@ -187,6 +187,7 @@ export default function InvoicesPage({
   }, [isAdmin, me?.company_ids, selectedCompanyId]);
 
   const companyId = selectedCompanyId;
+
   const company =
     me?.companies?.find((c) => c.id === companyId) ||
     allCompanies.find((c) => c.id === companyId);
@@ -1057,6 +1058,13 @@ export default function InvoicesPage({
     setQuotations([]);
     navigate("/invoices");
   };
+
+  if (companiesLoading && !companyId) {
+    return <div className="loading-indicator">Loading companies...</div>;
+  }
+  if (!isAdmin && !companyId && allCompanies.length) {
+    return <div className="loading-indicator">Loading companies...</div>;
+  }
 
   // ─── Admin company selection view ───
   if (isAdmin && !companyId && mode === "list") {

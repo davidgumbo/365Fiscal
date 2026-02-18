@@ -108,7 +108,7 @@ function parseFdmsError(raw: string): { message: string; code: string } {
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
 export default function PortalDevicesPage() {
-  const companies = useCompanies();
+  const { companies, loading: companiesLoading } = useCompanies();
   const [devices, setDevices] = useState<Device[]>([]);
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
   const [tab, setTab] = useState<"days" | "logs">("days");
@@ -119,6 +119,7 @@ export default function PortalDevicesPage() {
   const [logsLoading, setLogsLoading] = useState(false);
   const [statusResult, setStatusResult] = useState<DeviceStatusResult | null>(null);
   const [fiscalDays, setFiscalDays] = useState<FiscalDayEntry[]>([]);
+
 
   // Load devices for all user companies
   useEffect(() => {
@@ -280,6 +281,10 @@ export default function PortalDevicesPage() {
   const companyName = (companyId: number) => {
     return companies.find((c) => c.id === companyId)?.name || "—";
   };
+
+  if (companiesLoading) {
+    return <div className="loading-indicator">Loading companies...</div>;
+  }
 
   // ─── Device List View ───
   if (!selectedDevice) {

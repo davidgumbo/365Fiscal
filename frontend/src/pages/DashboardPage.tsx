@@ -238,7 +238,7 @@ const PlusIcon = () => (
 
 export default function DashboardPage() {
   const { me } = useMe();
-  const allCompanies = useCompanies();
+  const { companies: allCompanies, loading: companiesLoading } = useCompanies();
   const isAdmin = Boolean(me?.is_admin);
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(
     null,
@@ -476,6 +476,13 @@ export default function DashboardPage() {
       total: summary?.metrics.devices_total || 0,
     };
   }, [filteredCompanyStatus, summary]);
+
+  if (companiesLoading && !companyId) {
+    return <div className="loading-indicator">Loading companies...</div>;
+  }
+  if (!isAdmin && !companyId && allCompanies.length) {
+    return <div className="loading-indicator">Loading companies...</div>;
+  }
 
   if (loading) {
     return (

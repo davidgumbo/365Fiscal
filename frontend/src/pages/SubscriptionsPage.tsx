@@ -65,7 +65,7 @@ const daysRemaining = (d: string | null) => {
 export default function SubscriptionsPage() {
   const navigate = useNavigate();
   const { me } = useMe();
-  const allCompanies = useCompanies();
+  const { companies: allCompanies, loading: companiesLoading } = useCompanies();
   const isAdmin = Boolean(me?.is_admin);
 
   // Company selection (admin-first flow)
@@ -73,6 +73,7 @@ export default function SubscriptionsPage() {
     null,
   );
   const [companyQuery, setCompanyQuery] = useState("");
+  const companyId = selectedCompanyId;
 
   // Portal users auto-select their first company
   useEffect(() => {
@@ -246,6 +247,13 @@ export default function SubscriptionsPage() {
     setCodes([]);
     navigate("/subscriptions");
   };
+
+  if (companiesLoading && !companyId) {
+    return <div className="loading-indicator">Loading companies...</div>;
+  }
+  if (!isAdmin && !companyId && allCompanies.length) {
+    return <div className="loading-indicator">Loading companies...</div>;
+  }
 
   // ─── Admin company selection view ───
   if (!selectedCompanyId) {

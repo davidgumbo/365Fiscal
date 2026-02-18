@@ -234,7 +234,7 @@ const MONTH_NAMES = [
 export default function ReportsPage() {
   const navigate = useNavigate();
   const { me } = useMe();
-  const allCompanies = useCompanies();
+  const { companies: allCompanies, loading: companiesLoading } = useCompanies();
   const isAdmin = Boolean(me?.is_admin);
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(
     null,
@@ -249,6 +249,7 @@ export default function ReportsPage() {
   }, [isAdmin, me?.company_ids, selectedCompanyId]);
 
   const companyId = selectedCompanyId;
+
   const company =
     me?.companies?.find((c) => c.id === companyId) ||
     allCompanies.find((c) => c.id === companyId);
@@ -1141,6 +1142,13 @@ export default function ReportsPage() {
     setPurchaseReport(null);
     navigate("/reports");
   };
+
+  if (companiesLoading && !companyId) {
+    return <div className="loading-indicator">Loading companies...</div>;
+  }
+  if (!isAdmin && !companyId && allCompanies.length) {
+    return <div className="loading-indicator">Loading companies...</div>;
+  }
 
   // ─── Admin company selection view ───
   if (isAdmin && !companyId) {

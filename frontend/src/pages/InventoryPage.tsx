@@ -272,7 +272,7 @@ const TrashIcon = () => (
 export default function InventoryPage() {
   const navigate = useNavigate();
   const { me } = useMe();
-  const companies = useCompanies();
+  const { companies, loading: companiesLoading } = useCompanies();
   const isAdmin = Boolean(me?.is_admin);
   const [companyId, setCompanyId] = useState<number | null>(null);
   const [companyQuery, setCompanyQuery] = useState("");
@@ -984,6 +984,13 @@ export default function InventoryPage() {
     setTaxSettings([]);
     navigate("/inventory");
   };
+
+  if (companiesLoading && companyId === null) {
+    return <div className="loading-indicator">Loading companies...</div>;
+  }
+  if (!isAdmin && companyId === null && companies.length) {
+    return <div className="loading-indicator">Loading companies...</div>;
+  }
 
   // ─── Admin company selection view ───
   if (isAdmin && !companyId) {

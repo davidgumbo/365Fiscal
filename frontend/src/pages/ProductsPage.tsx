@@ -42,7 +42,7 @@ const PRODUCT_TYPES = [
 ];
 
 export default function ProductsPage() {
-  const companies = useCompanies();
+  const { companies, loading: companiesLoading } = useCompanies();
   const [companyId, setCompanyId] = useState<number | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -245,6 +245,13 @@ export default function ProductsPage() {
       setUploadingImage(false);
     }
   };
+
+  if (companiesLoading && companyId === null) {
+    return <div className="loading-indicator">Loading companies...</div>;
+  }
+  if (companyId === null && companies.length) {
+    return <div className="loading-indicator">Loading companies...</div>;
+  }
 
   return (
     <div className="page-container">

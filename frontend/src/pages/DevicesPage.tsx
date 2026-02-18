@@ -229,13 +229,14 @@ function formatResponse(action: string, raw: string): string {
 /* ------------------------------------------------------------------ */
 
 export default function DevicesPage() {
-  const companies = useCompanies();
+  const { companies, loading: companiesLoading } = useCompanies();
   const { state } = useListView();
 
   /* ---- navigation state ---- */
   const [view, setView] = useState<PageView>("companies");
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [companyQuery, setCompanyQuery] = useState("");
+
 
   /* ---- data ---- */
   const [devices, setDevices] = useState<Device[]>([]);
@@ -621,6 +622,10 @@ export default function DevicesPage() {
   /* ================================================================ */
   /*  VIEW: Company Grid                                               */
   /* ================================================================ */
+
+  if (companiesLoading) {
+    return <div className="loading-indicator">Loading companies...</div>;
+  }
 
   if (view === "companies") {
     return (

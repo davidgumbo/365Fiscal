@@ -19,7 +19,7 @@ type Contact = {
 export default function ContactsPage() {
   const navigate = useNavigate();
   const { me } = useMe();
-  const allCompanies = useCompanies();
+  const { companies: allCompanies, loading: companiesLoading } = useCompanies();
   const isAdmin = Boolean(me?.is_admin);
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(
     null,
@@ -168,6 +168,13 @@ export default function ContactsPage() {
   const someSelected = selectedIds.size > 0;
   const companyCount = contacts.filter((c) => isCompanyContact(c)).length;
   const personalCount = contacts.length - companyCount;
+
+  if (companiesLoading && !companyId) {
+    return <div className="loading-indicator">Loading companies...</div>;
+  }
+  if (!isAdmin && !companyId && allCompanies.length) {
+    return <div className="loading-indicator">Loading companies...</div>;
+  }
 
   if (isAdmin && !companyId) {
     return (

@@ -15,21 +15,30 @@ export type Company = {
 };
 
 export function useCompanies() {
-  const { me } = useMe();
+  const { me, loading: meLoading } = useMe();
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (meLoading) return;
+    let isMounted = true;
     const load = async () => {
+      setLoading(true);
       const path = me?.is_admin ? "/companies" : "/companies/me";
       try {
         const data = await apiFetch<Company[]>(path);
-        setCompanies(data);
+        if (isMounted) setCompanies(data);
       } catch {
-        setCompanies([]);
+        if (isMounted) setCompanies([]);
+      } finally {
+        if (isMounted) setLoading(false);
       }
     };
     load();
-  }, [me?.is_admin]);
+    return () => {
+      isMounted = false;
+    };
+  }, [me?.is_admin, meLoading]);
 
-  return companies;
+  return { companies, loading };
 }

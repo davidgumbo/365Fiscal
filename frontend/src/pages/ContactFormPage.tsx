@@ -32,7 +32,7 @@ const emptyForm = {
 export default function ContactFormPage() {
   const { contactId } = useParams<RouteParams>();
   const navigate = useNavigate();
-  const companies = useCompanies();
+  const { companies, loading: companiesLoading } = useCompanies();
   const isNew = !contactId;
   const [companyId, setCompanyId] = useState<number | null>(null);
   const [selectedContactId, setSelectedContactId] = useState<number | null>(null);
@@ -147,6 +147,13 @@ export default function ContactFormPage() {
       setIsEditing(true);
     }
   }, [isNew]);
+
+  if (companiesLoading && companyId === null) {
+    return <div className="loading-indicator">Loading companies...</div>;
+  }
+  if (companyId === null && companies.length) {
+    return <div className="loading-indicator">Loading companies...</div>;
+  }
 
   if (notFound) {
     return (

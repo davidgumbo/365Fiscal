@@ -193,7 +193,7 @@ const XIcon = () => (
 export default function SettingsPage() {
   const navigate = useNavigate();
   const { me } = useMe();
-  const companies = useCompanies();
+  const { companies, loading: companiesLoading } = useCompanies();
   const isAdmin = Boolean(me?.is_admin);
   const [companyId, setCompanyId] = useState<number | null>(null);
   const [companyQuery, setCompanyQuery] = useState("");
@@ -1030,6 +1030,13 @@ export default function SettingsPage() {
     () => companies.find((c) => c.id === companyId) || null,
     [companies, companyId],
   );
+
+  if (companiesLoading && companyId === null) {
+    return <div className="loading-indicator">Loading companies...</div>;
+  }
+  if (!isAdmin && companyId === null && companies.length) {
+    return <div className="loading-indicator">Loading companies...</div>;
+  }
 
   if (!me) {
     return <div className="content">Loading...</div>;
