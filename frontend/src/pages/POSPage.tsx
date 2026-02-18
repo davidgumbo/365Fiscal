@@ -149,14 +149,14 @@ function buildReceiptHtml(
   .center { text-align: center; }
   .bold { font-weight: bold; }
   .logo { max-width: 50mm; max-height: 18mm; margin: 0 auto 4px; display: block; }
-  .company-name { font-size: 2rem; font-weight: bold; margin-bottom: 2px; text-transform: uppercase; }
-  .company-info { font-size: 10px; color: #333; line-height: 1.4; }
+  .company-name { font-size: 13px; font-weight: bold; margin-bottom: 2px; text-transform: uppercase; }
+  .company-info { font-size: 1rem; color: #333; line-height: 1.4; }
   .divider { border-top: 1px dashed #000; margin: 6px 0; }
   .title { font-size: 12px; font-weight: bold; text-align: center; margin: 2px 0; }
-  .two-col { display: flex; justify-content: space-between; font-size: 10px; }
-  .line { font-size: 10px; margin: 2px 0; }
+  .two-col { display: flex; justify-content: space-between; font-size: 1rem; }
+  .line { font-size: 1rem; margin: 2px 0; }
   table { width: 100%; border-collapse: collapse; margin: 4px 0; }
-  th { text-align: left; font-size: 10px; border-bottom: 1px solid #000; padding: 2px 0; }
+  th { text-align: left; font-size: 1rem; border-bottom: 1px solid #000; padding: 2px 0; }
   th:last-child, td:last-child { text-align: right; }
   td { font-size: 11px; padding: 2px 0; }
   .summary { margin-top: 4px; }
@@ -212,7 +212,7 @@ function buildReceiptHtml(
   </div>
   <div class="line">Customer Ref: ${order.reference}</div>
   ${qrSrc ? `<div class="center" style="margin:6px 0"><img src="${qrSrc}" alt="QR" style="width:25mm;height:25mm"/></div>` : ""}
-  ${order.zimra_verification_code ? `<div class="center" style="font-size:10px;margin-top:2px">Verification code: <span class="bold">${order.zimra_verification_code}</span></div>` : ""}
+  ${order.zimra_verification_code ? `<div class="center" style="font-size:1rem;margin-top:2px">Verification code: <span class="bold">${order.zimra_verification_code}</span></div>` : ""}
   <div class="footer">
     You can verify this receipt manually at<br>
     ${order.zimra_verification_url || "https://fdms.zimra.co.zw/"}
