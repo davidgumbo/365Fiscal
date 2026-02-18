@@ -313,13 +313,13 @@ const adminApps: AppItem[] = [
     color: "var(--white-500)",
     bgColor: "var(--violet-600)",
   },
-  {
-    to: "/pos",
-    label: "Point of Sale",
-    icon: POSLauncherIcon,
-    color: "var(--white-500)",
-    bgColor: "var(--green-500)",
-  },
+  // {
+  //   to: "/pos",
+  //   label: "Point of Sale",
+  //   icon: POSLauncherIcon,
+  //   color: "var(--white-500)",
+  //   bgColor: "var(--green-500)",
+  // },
   {
     to: "/devices",
     label: "Devices",
