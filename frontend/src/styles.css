@@ -9342,7 +9342,19 @@ button.danger:disabled {
     flex-direction: column;
   }
   .pos-page {
-    padding-bottom: 66px;
+    padding-bottom: 0;
+  }
+  .pos-product-grid {
+    padding-bottom: 72px;
+  }
+  .pos-cart-lines {
+    padding-bottom: 72px;
+  }
+  .pos-cart-totals,
+  .pos-cart-actions {
+    position: sticky;
+    bottom: 56px;
+    z-index: 5;
   }
   .pos-body.pos-mobile-products .pos-cart-panel {
     display: none;
