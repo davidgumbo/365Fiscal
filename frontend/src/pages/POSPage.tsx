@@ -640,6 +640,7 @@ export default function POSPage() {
       setCashTendered("");
       setCardAmount("");
       setMobileAmount("");
+      printReceipt(order, companyInfo, selectedCustomer, session, activeDevice);
 
       // Refresh session, products & orders
       const ordUrl =
