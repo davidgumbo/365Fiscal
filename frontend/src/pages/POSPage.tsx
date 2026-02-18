@@ -350,6 +350,8 @@ export default function POSPage() {
   const [refundReason, setRefundReason] = useState("");
   const [refundingOrderId, setRefundingOrderId] = useState<number | null>(null);
   const [mobileTab, setMobileTab] = useState<"products" | "cart">("products");
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -556,7 +558,6 @@ export default function POSPage() {
         },
       ];
     });
-    setMobileTab("cart");
   }, []);
 
   const updateQty = (lineUid: string, qty: number) => {
@@ -1118,7 +1119,11 @@ export default function POSPage() {
           )}
         </div>
         <div className="pos-topbar-center">
-          <div className="pos-barcode-wrapper">
+          <div
+            className={`pos-barcode-wrapper ${
+              showMobileSearch ? "pos-barcode-open" : "pos-barcode-collapsed"
+            }`}
+          >
             <svg
               className="pos-barcode-icon"
               width="18"
@@ -1138,8 +1143,17 @@ export default function POSPage() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyDown={handleBarcode}
-              autoFocus
             />
+            <button
+              className="pos-search-toggle"
+              onClick={() => {
+                setShowMobileSearch((prev) => !prev);
+                setTimeout(() => barcodeRef.current?.focus(), 50);
+              }}
+              type="button"
+            >
+              {showMobileSearch ? "Close Search" : "Search"}
+            </button>
             {searchTerm && (
               <button
                 className="pos-barcode-clear"
@@ -1164,6 +1178,7 @@ export default function POSPage() {
           </div>
         </div>
         <div className="pos-topbar-right">
+          <div className="pos-topbar-actions">
           {/* Cashier / PIN login */}
           <button
             className="pos-btn pos-btn-sm pos-btn-topbar"
@@ -1289,6 +1304,83 @@ export default function POSPage() {
               <path d="M7 11V7a5 5 0 0110 0v4" />
             </svg>
           </button>
+          </div>
+          <div className="pos-mobile-menu">
+            <button
+              className="pos-btn pos-btn-sm pos-btn-topbar"
+              onClick={() => setShowMobileMenu((prev) => !prev)}
+              title="Menu"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
+            </button>
+            {showMobileMenu && (
+              <div className="pos-mobile-menu-dropdown">
+                <button
+                  className="pos-mobile-menu-item"
+                  onClick={() => {
+                    setShowPinDialog(true);
+                    setShowMobileMenu(false);
+                  }}
+                >
+                  Cashier Login
+                </button>
+                <button
+                  className="pos-mobile-menu-item"
+                  onClick={() => {
+                    openCustomerDisplay();
+                    setShowMobileMenu(false);
+                  }}
+                >
+                  Customer Display
+                </button>
+                <button
+                  className="pos-mobile-menu-item"
+                  onClick={() => {
+                    setShowOrders(!showOrders);
+                    if (!showOrders) refreshOrders();
+                    setShowMobileMenu(false);
+                  }}
+                >
+                  Orders
+                </button>
+                <button
+                  className="pos-mobile-menu-item"
+                  onClick={() => {
+                    setShowCustomerSearch(!showCustomerSearch);
+                    setShowMobileMenu(false);
+                  }}
+                >
+                  Customer Search
+                </button>
+                <button
+                  className="pos-mobile-menu-item"
+                  onClick={() => {
+                    setShowCloseDialog(true);
+                    setShowMobileMenu(false);
+                  }}
+                >
+                  Close Session
+                </button>
+                <button
+                  className="pos-mobile-menu-item pos-mobile-menu-close"
+                  onClick={() => setShowMobileMenu(false)}
+                >
+                  Close Menu
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
