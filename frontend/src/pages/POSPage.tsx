@@ -185,13 +185,14 @@ function buildReceiptHtml(
   <div class="line">Date: ${new Date(order.order_date).toLocaleString()}</div>
   <div class="divider"></div>
   <table>
-    <thead><tr><th>Description</th><th>Amount</th></tr></thead>
+    <thead><tr><th>Description</th><th>Qty</th><th>Amount</th></tr></thead>
     <tbody>
       ${lines
         .map(
           (l) => `
         <tr>
           <td>${l.description}</td>
+          <td>${l.quantity}</td>
           <td>${fmt(l.total_price)}</td>
         </tr>
       `,
