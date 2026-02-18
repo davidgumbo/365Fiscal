@@ -9368,6 +9368,8 @@ button.danger:disabled {
   .pos-cart-panel {
     min-width: 0;
     width: 100%;
+    flex: 1;
+    min-height: 0;
     border-left: none;
     border-top: 1px solid var(--slate-200, #e2e8f0);
     box-shadow: none;
@@ -9385,6 +9387,9 @@ button.danger:disabled {
   }
   .pos-cart-lines {
     /* max-height: 40vh; */
+  }
+  .pos-cart-totals {
+    margin-top: auto;
   }
   .pos-cart-actions {
     padding-bottom: 20px;
