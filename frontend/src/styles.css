@@ -5488,6 +5488,7 @@ button.danger:hover {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  height: 85vh
 }
 
 /* List View */

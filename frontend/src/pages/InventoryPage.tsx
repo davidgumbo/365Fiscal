@@ -136,6 +136,7 @@ const UOMS = [
 type MainView =
   | "overview"
   | "products"
+  | "categories"
   | "warehouses"
   | "operations"
   | "reporting";
@@ -180,6 +181,26 @@ const ProductsIcon = ({ color }: InventoryIconProps) => (
     <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
     <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
     <line x1="12" y1="22.08" x2="12" y2="12" />
+  </svg>
+);
+
+const CategoriesIcon = ({ color }: InventoryIconProps) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+    style={color ? { color } : undefined}
+  >
+    <rect x="3" y="4" width="7" height="7" rx="1" />
+    <rect x="3" y="13" width="7" height="7" rx="1" />
+    <rect x="14" y="6" width="7" height="12" rx="1" />
   </svg>
 );
 
@@ -922,6 +943,21 @@ export default function InventoryPage() {
     );
   }, [filteredProducts]);
 
+  const categoryProductCounts = useMemo(() => {
+    const counts = new Map<number, number>();
+    for (const p of products) {
+      if (p.category_id === null) continue;
+      counts.set(p.category_id, (counts.get(p.category_id) ?? 0) + 1);
+    }
+    return counts;
+  }, [products]);
+
+  const filteredCategories = useMemo(() => {
+    if (!searchQuery) return categories;
+    const q = searchQuery.toLowerCase();
+    return categories.filter((c) => c.name.toLowerCase().includes(q));
+  }, [categories, searchQuery]);
+
   // Stats
   const stats = {
     totalProducts: products.length,
@@ -1120,6 +1156,12 @@ export default function InventoryPage() {
                   color: "var(--amber-500)",
                 },
                 {
+                  key: "categories",
+                  label: "CATEGORIES",
+                  icon: CategoriesIcon,
+                  color: "var(--indigo-500)",
+                },
+                {
                   key: "warehouses",
                   label: "WAREHOUSES",
                   icon: WarehousesIcon,
@@ -1271,22 +1313,24 @@ export default function InventoryPage() {
                   </div>
 
                   <div className="o-control-panel-right">
-                    <div className="o-view-switcher">
-                      <button
-                        className={subView === "list" ? "active" : ""}
-                        onClick={() => setSubView("list")}
-                        title="List View"
-                      >
-                        List
-                      </button>
-                      <button
-                        className={subView === "kanban" ? "active" : ""}
-                        onClick={() => setSubView("kanban")}
-                        title="Kanban View"
-                      >
-                        Grid
-                      </button>
-                    </div>
+                    {mainView === "products" && (
+                      <div className="o-view-switcher">
+                        <button
+                          className={subView === "list" ? "active" : ""}
+                          onClick={() => setSubView("list")}
+                          title="List View"
+                        >
+                          List
+                        </button>
+                        <button
+                          className={subView === "kanban" ? "active" : ""}
+                          onClick={() => setSubView("kanban")}
+                          title="Kanban View"
+                        >
+                          Grid
+                        </button>
+                      </div>
+                    )}
 
                     {mainView === "products" && (
                       <>
@@ -1303,6 +1347,15 @@ export default function InventoryPage() {
                           + New Product
                         </button>
                       </>
+                    )}
+
+                    {mainView === "categories" && (
+                      <button
+                        className="o-btn o-btn-primary"
+                        onClick={() => openCategoryModal()}
+                      >
+                        + New Category
+                      </button>
                     )}
 
                     {mainView === "warehouses" && (
@@ -2105,6 +2158,72 @@ export default function InventoryPage() {
                     </div>
                   </div>
                 </>
+              )}
+
+              {/* ============= CATEGORIES LIST ============= */}
+              {mainView === "categories" && subView === "list" && (
+                <div className="o-main" style={{ width: "100%" }}>
+                  <div className="o-list-view">
+                    <table className="o-list-table">
+                      <thead>
+                        <tr>
+                          <th>Category</th>
+                          <th>Products</th>
+                          <th style={{ width: 160 }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredCategories.map((c) => (
+                          <tr key={c.id}>
+                            <td style={{ fontWeight: 500 }}>{c.name}</td>
+                            <td>{categoryProductCounts.get(c.id) ?? 0}</td>
+                            <td>
+                              <button
+                                className="o-btn o-btn-link"
+                                style={{ padding: "4px 8px", fontSize: 12 }}
+                                onClick={() => openCategoryModal(c)}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                className="o-btn o-btn-link"
+                                style={{
+                                  padding: "4px 8px",
+                                  fontSize: 12,
+                                  color: "var(--red-500)",
+                                }}
+                                onClick={() => deleteCategory(c.id)}
+                              >
+                                Delete
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                        {filteredCategories.length === 0 && (
+                          <tr>
+                            <td
+                              colSpan={3}
+                              style={{ textAlign: "center", padding: 40 }}
+                            >
+                              {categories.length === 0 ? (
+                                <button
+                                  className="o-btn o-btn-primary"
+                                  onClick={() => openCategoryModal()}
+                                >
+                                  + Create Category
+                                </button>
+                              ) : (
+                                <span style={{ color: "var(--muted)" }}>
+                                  No categories match your search.
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               )}
 
               {/* ============= PRODUCTS KANBAN ============= */}
