@@ -9384,7 +9384,7 @@ button.danger:disabled {
     padding: 6px 12px;
   }
   .pos-cart-lines {
-    max-height: 40vh;
+    /* max-height: 40vh; */
   }
   .pos-cart-actions {
     padding-bottom: 20px;
@@ -10624,7 +10624,6 @@ button.danger:disabled {
   }
   .pos-cart-panel {
     width: 100%;
-    max-height: 50vh;
     border-left: none;
     border-top: 2px solid var(--slate-200, #e2e8f0);
   }
