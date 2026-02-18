@@ -178,7 +178,7 @@ function buildReceiptHtml(
   </div>
   <div class="divider"></div>
   <div class="title">FISCAL TAX INVOICE</div>
-  <div class="two-col"><div>Invoice No: ${order.reference}</div><div>Fiscal day: ${device?.fiscal_day_status || session?.name || "N/A"}</div></div>
+  <div class=""><div>Invoice No: ${order.reference}</div><div>Fiscal day: day 27</div></div>
   ${order.notes ? `<div class="line">Customer reference No: ${order.notes}</div>` : ""}
   ${device ? `<div class="line">Device Serial No: ${device.serial_number}</div>` : ""}
   ${device ? `<div class="line">Device ID: ${device.device_id}</div>` : ""}
