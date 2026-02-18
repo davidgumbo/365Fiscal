@@ -9277,6 +9277,13 @@ button.danger:disabled {
 @media (max-width: 900px) {
   .pos-mobile-tabs {
     display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 50;
+    border-bottom: none;
+    border-top: 1px solid var(--slate-200, #e2e8f0);
   }
   .pos-search-toggle {
     display: inline-flex;
@@ -9331,6 +9338,9 @@ button.danger:disabled {
 
   .pos-body {
     flex-direction: column;
+  }
+  .pos-page {
+    padding-bottom: 66px;
   }
   .pos-body.pos-mobile-products .pos-cart-panel {
     display: none;

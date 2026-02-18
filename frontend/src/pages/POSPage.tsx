@@ -1145,6 +1145,7 @@ export default function POSPage() {
               onKeyDown={handleBarcode}
             />
             <button
+              style={{ width: "20vw" }}
               className="pos-search-toggle"
               onClick={() => {
                 setShowMobileSearch((prev) => !prev);
