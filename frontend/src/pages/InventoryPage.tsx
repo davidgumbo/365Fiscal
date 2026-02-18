@@ -428,14 +428,16 @@ export default function InventoryPage() {
         const current = stockValueByProductId.get(quant.product_id) ?? 0;
         stockValueByProductId.set(
           quant.product_id,
-          current + (Number.isFinite(quant.total_value) ? quant.total_value : 0),
+          current +
+            (Number.isFinite(quant.total_value) ? quant.total_value : 0),
         );
       }
       const productsWithStockValue = prods.map((p) => {
         const valueFromQuants = stockValueByProductId.get(p.id);
         const computedValue =
           valueFromQuants ??
-          (Number.isFinite(p.quantity_on_hand) && Number.isFinite(p.purchase_cost)
+          (Number.isFinite(p.quantity_on_hand) &&
+          Number.isFinite(p.purchase_cost)
             ? p.quantity_on_hand * p.purchase_cost
             : 0);
         return { ...p, stock_value: computedValue };
@@ -2060,16 +2062,41 @@ export default function InventoryPage() {
                         </tbody>
                         <tfoot>
                           <tr>
-                            <td colSpan={7} style={{ textAlign: "right" }}>
+                            <td
+                              colSpan={7}
+                              style={{
+                                textAlign: "left",
+                                fontWeight: "bold",
+                                background: "var(--gray-200)",
+                              }}
+                            >
                               Totals:
                             </td>
-                            <td className="o-monetary" style={{ fontWeight: 700 }}>
+                            <td
+                              className="o-monetary"
+                              style={{
+                                fontWeight: 700,
+                                background: "var(--gray-200)",
+                              }}
+                            >
                               ${productMonetaryTotals.salePrice.toFixed(2)}
                             </td>
-                            <td className="o-monetary" style={{ fontWeight: 700 }}>
+                            <td
+                              className="o-monetary"
+                              style={{
+                                fontWeight: 700,
+                                background: "var(--gray-200)",
+                              }}
+                            >
                               ${productMonetaryTotals.purchaseCost.toFixed(2)}
                             </td>
-                            <td className="o-monetary" style={{ fontWeight: 700 }}>
+                            <td
+                              className="o-monetary"
+                              style={{
+                                fontWeight: 700,
+                                background: "var(--gray-200)",
+                              }}
+                            >
                               ${productMonetaryTotals.stockValue.toFixed(2)}
                             </td>
                           </tr>
@@ -2585,7 +2612,9 @@ export default function InventoryPage() {
                               </div>
 
                               <div className="o-form-group">
-                                <label className="o-form-label">Sales Cost</label>
+                                <label className="o-form-label">
+                                  Sales Cost
+                                </label>
                                 <div className="o-form-field">
                                   <input
                                     type="number"
@@ -2625,7 +2654,9 @@ export default function InventoryPage() {
                               </div>
 
                               <div className="o-form-group">
-                                <label className="o-form-label">ZIMRA Tax</label>
+                                <label className="o-form-label">
+                                  ZIMRA Tax
+                                </label>
                                 <div className="o-form-field">
                                   <select
                                     className="o-form-select"
@@ -2713,163 +2744,165 @@ export default function InventoryPage() {
 
                       {productInfoTab === "inventory" &&
                         productForm.product_type === "storable" && (
-                        <>
-                          <div className="o-group-separator">
-                            <div className="o-group-separator-line" />
-                            <span className="o-group-separator-text">
-                              Inventory
-                            </span>
-                            <div className="o-group-separator-line" />
-                          </div>
+                          <>
+                            <div className="o-group-separator">
+                              <div className="o-group-separator-line" />
+                              <span className="o-group-separator-text">
+                                Inventory
+                              </span>
+                              <div className="o-group-separator-line" />
+                            </div>
 
-                          <div
-                            style={{
-                              display: "grid",
-                              gridTemplateColumns: "1fr 1fr",
-                              gap: 24,
-                            }}
-                          >
-                            <div>
-                              <div className="o-form-group">
-                                <label className="o-form-label">
-                                  Reorder Point
-                                </label>
-                                <div className="o-form-field">
-                                  <input
-                                    type="number"
-                                    className="o-form-input"
-                                    value={productForm.reorder_point}
-                                    onChange={(e) =>
-                                      setProductForm({
-                                        ...productForm,
-                                        reorder_point: Number(e.target.value),
-                                      })
-                                    }
-                                    min="0"
-                                  />
+                            <div
+                              style={{
+                                display: "grid",
+                                gridTemplateColumns: "1fr 1fr",
+                                gap: 24,
+                              }}
+                            >
+                              <div>
+                                <div className="o-form-group">
+                                  <label className="o-form-label">
+                                    Reorder Point
+                                  </label>
+                                  <div className="o-form-field">
+                                    <input
+                                      type="number"
+                                      className="o-form-input"
+                                      value={productForm.reorder_point}
+                                      onChange={(e) =>
+                                        setProductForm({
+                                          ...productForm,
+                                          reorder_point: Number(e.target.value),
+                                        })
+                                      }
+                                      min="0"
+                                    />
+                                  </div>
+                                </div>
+                                <div className="o-form-group">
+                                  <label className="o-form-label">
+                                    Maximum Stock
+                                  </label>
+                                  <div className="o-form-field">
+                                    <input
+                                      type="number"
+                                      className="o-form-input"
+                                      value={productForm.max_stock_quantity}
+                                      onChange={(e) =>
+                                        setProductForm({
+                                          ...productForm,
+                                          max_stock_quantity: Number(
+                                            e.target.value,
+                                          ),
+                                        })
+                                      }
+                                      min="0"
+                                    />
+                                  </div>
                                 </div>
                               </div>
-                              <div className="o-form-group">
-                                <label className="o-form-label">
-                                  Maximum Stock
-                                </label>
-                                <div className="o-form-field">
-                                  <input
-                                    type="number"
-                                    className="o-form-input"
-                                    value={productForm.max_stock_quantity}
-                                    onChange={(e) =>
-                                      setProductForm({
-                                        ...productForm,
-                                        max_stock_quantity: Number(
-                                          e.target.value,
-                                        ),
-                                      })
-                                    }
-                                    min="0"
-                                  />
+                              <div>
+                                <div className="o-form-group">
+                                  <label className="o-form-label">
+                                    Minimum Stock
+                                  </label>
+                                  <div className="o-form-field">
+                                    <input
+                                      type="number"
+                                      className="o-form-input"
+                                      value={productForm.min_stock_quantity}
+                                      onChange={(e) =>
+                                        setProductForm({
+                                          ...productForm,
+                                          min_stock_quantity: Number(
+                                            e.target.value,
+                                          ),
+                                        })
+                                      }
+                                      min="0"
+                                    />
+                                  </div>
+                                </div>
+                                <div className="o-form-group">
+                                  <label className="o-form-label">
+                                    Track Inventory
+                                  </label>
+                                  <div className="o-form-field">
+                                    <select
+                                      className="o-form-select"
+                                      value={
+                                        productForm.track_inventory
+                                          ? "yes"
+                                          : "no"
+                                      }
+                                      onChange={(e) =>
+                                        setProductForm({
+                                          ...productForm,
+                                          track_inventory:
+                                            e.target.value === "yes",
+                                        })
+                                      }
+                                    >
+                                      <option value="yes">Yes</option>
+                                      <option value="no">No</option>
+                                    </select>
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                            <div>
-                              <div className="o-form-group">
-                                <label className="o-form-label">
-                                  Minimum Stock
-                                </label>
-                                <div className="o-form-field">
-                                  <input
-                                    type="number"
-                                    className="o-form-input"
-                                    value={productForm.min_stock_quantity}
-                                    onChange={(e) =>
-                                      setProductForm({
-                                        ...productForm,
-                                        min_stock_quantity: Number(
-                                          e.target.value,
-                                        ),
-                                      })
-                                    }
-                                    min="0"
-                                  />
-                                </div>
-                              </div>
-                              <div className="o-form-group">
-                                <label className="o-form-label">
-                                  Track Inventory
-                                </label>
-                                <div className="o-form-field">
-                                  <select
-                                    className="o-form-select"
-                                    value={
-                                      productForm.track_inventory ? "yes" : "no"
-                                    }
-                                    onChange={(e) =>
-                                      setProductForm({
-                                        ...productForm,
-                                        track_inventory:
-                                          e.target.value === "yes",
-                                      })
-                                    }
-                                  >
-                                    <option value="yes">Yes</option>
-                                    <option value="no">No</option>
-                                  </select>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
 
-                          <div
-                            style={{
-                              display: "grid",
-                              gridTemplateColumns: "1fr 1fr",
-                              gap: 24,
-                              marginTop: 16,
-                            }}
-                          >
-                            <div>
-                              <div className="o-form-group">
-                                <label className="o-form-label">Weight</label>
-                                <div className="o-form-field">
-                                  <input
-                                    type="number"
-                                    className="o-form-input"
-                                    value={productForm.weight}
-                                    onChange={(e) =>
-                                      setProductForm({
-                                        ...productForm,
-                                        weight: Number(e.target.value),
-                                      })
-                                    }
-                                    step="0.01"
-                                    min="0"
-                                  />
+                            <div
+                              style={{
+                                display: "grid",
+                                gridTemplateColumns: "1fr 1fr",
+                                gap: 24,
+                                marginTop: 16,
+                              }}
+                            >
+                              <div>
+                                <div className="o-form-group">
+                                  <label className="o-form-label">Weight</label>
+                                  <div className="o-form-field">
+                                    <input
+                                      type="number"
+                                      className="o-form-input"
+                                      value={productForm.weight}
+                                      onChange={(e) =>
+                                        setProductForm({
+                                          ...productForm,
+                                          weight: Number(e.target.value),
+                                        })
+                                      }
+                                      step="0.01"
+                                      min="0"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                              <div>
+                                <div className="o-form-group">
+                                  <label className="o-form-label">
+                                    Weight UOM
+                                  </label>
+                                  <div className="o-form-field">
+                                    <input
+                                      type="text"
+                                      className="o-form-input"
+                                      value={productForm.weight_uom}
+                                      onChange={(e) =>
+                                        setProductForm({
+                                          ...productForm,
+                                          weight_uom: e.target.value,
+                                        })
+                                      }
+                                    />
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                            <div>
-                              <div className="o-form-group">
-                                <label className="o-form-label">
-                                  Weight UOM
-                                </label>
-                                <div className="o-form-field">
-                                  <input
-                                    type="text"
-                                    className="o-form-input"
-                                    value={productForm.weight_uom}
-                                    onChange={(e) =>
-                                      setProductForm({
-                                        ...productForm,
-                                        weight_uom: e.target.value,
-                                      })
-                                    }
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </>
-                      )}
+                          </>
+                        )}
 
                       {productInfoTab === "description" && (
                         <>
