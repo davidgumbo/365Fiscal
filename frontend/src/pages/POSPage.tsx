@@ -178,7 +178,7 @@ function buildReceiptHtml(
   </div>
   <div class="divider"></div>
   <div class="title">FISCAL TAX INVOICE</div>
-  <div class="line"><div>Invoice No: ${order.reference}</div><div>Fiscal day: day 27</div></div>
+  <div class="line"><div>Invoice No: ${order.reference}</div>
   <div class="line">Date: ${new Date(order.order_date).toLocaleString()}</div>
   <div class="divider"></div>
   <table>
@@ -188,25 +188,21 @@ function buildReceiptHtml(
         .map(
           (l) => `
         <tr>
-          <td>${l.description}</td>
-          <td>${l.quantity}</td>
-          <td>${fmt(l.total_price)}</td>
+          <td class="line">${l.description}</td>
+          <td class="line">${l.quantity}</td>
+          <td class="line">${fmt(l.total_price)}</td>
         </tr>
       `,
         )
         .join("")}
     </tbody>
   </table>
-  <div class="two-col"><div>Total ${order.currency || "USD"}</div><div>${fmt(order.total_amount)}</div></div>
-  ${order.cash_amount > 0 ? `<div class="line">&nbsp;&nbsp;${order.currency || "USD"} Cash ${fmt(order.cash_amount)}</div>` : ""}
-  ${order.card_amount > 0 ? `<div class="line">&nbsp;&nbsp;${order.currency || "USD"} Card ${fmt(order.card_amount)}</div>` : ""}
-  ${order.mobile_amount > 0 ? `<div class="line">&nbsp;&nbsp;${order.currency || "USD"} Mobile ${fmt(order.mobile_amount)}</div>` : ""}
-  <div class="line">Number of items <span style="float:right">${lines.reduce((s, l) => s + (l.quantity || 0), 0)}</span></div>
+  <div class="two-col"><div>Total ${order.currency}</div><div>${fmt(order.total_amount)}</div></div>
   <div class="divider"></div>
   <div class="summary">
-    <div class="row"><span>Net Amount</span><span>${fmt(order.subtotal)}</span></div>
-    <div class="row"><span>VAT</span><span>${fmt(order.tax_amount)}</span></div>
-    <div class="row"><span>Gross Amount</span><span>${fmt(order.total_amount)}</span></div>
+    <div class="row line"><span>Net Amount</span><span>${fmt(order.subtotal)}</span></div>
+    <div class="row line"><span>VAT</span><span>${fmt(order.tax_amount)}</span></div>
+    <div class="row line "><span>Gross Amount</span><span>${fmt(order.total_amount)}</span></div>
   </div>
   <div class="line">Customer Ref: ${order.reference}</div>
   ${qrSrc ? `<div class="center" style="margin:6px 0"><img src="${qrSrc}" alt="QR" style="width:25mm;height:25mm"/></div>` : ""}
