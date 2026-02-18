@@ -8714,6 +8714,7 @@ button.danger:disabled {
   z-index: 10;
   box-shadow: 0 2px 12px rgba(30,27,75,0.3);
   justify-content: space-between;
+  flex-direction: row;
 }
 .pos-topbar-left {
   display: flex;

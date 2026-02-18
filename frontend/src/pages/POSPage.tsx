@@ -1177,7 +1177,7 @@ export default function POSPage() {
             )}
           </div>
         </div>
-        <div className="">
+        <div className="" style={{ display: "flex" }}>
           <div className="pos-topbar-actions">
             {/* Cashier / PIN login */}
             <button
