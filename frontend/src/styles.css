@@ -9185,6 +9185,98 @@ button.danger:disabled {
   background: var(--red-50, #fef2f2);
 }
 
+/* ── POS Mobile Tabs ── */
+.pos-mobile-tabs {
+  display: none;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #fff;
+  border-bottom: 1px solid var(--slate-200, #e2e8f0);
+}
+.pos-mobile-tab {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 999px;
+  border: 1.5px solid var(--slate-200, #e2e8f0);
+  background: var(--white-500, #fff);
+  color: var(--slate-600, #475569);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.pos-mobile-tab.active {
+  background: var(--indigo-600, #4f46e5);
+  border-color: var(--indigo-600, #4f46e5);
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(79,70,229,0.25);
+}
+
+/* ── POS Mobile Layout ── */
+@media (max-width: 900px) {
+  .pos-mobile-tabs {
+    display: flex;
+  }
+  .pos-topbar {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 12px;
+    min-height: unset;
+  }
+  .pos-topbar-left {
+    order: 1;
+  }
+  .pos-topbar-right {
+    order: 2;
+    width: 100%;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+  .pos-topbar-center {
+    order: 3;
+    width: 100%;
+    padding: 0;
+  }
+
+  .pos-body {
+    flex-direction: column;
+  }
+  .pos-body.pos-mobile-products .pos-cart-panel {
+    display: none;
+  }
+  .pos-body.pos-mobile-cart .pos-products-panel {
+    display: none;
+  }
+  .pos-products-panel {
+    flex: none;
+  }
+  .pos-cart-panel {
+    min-width: 0;
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid var(--slate-200, #e2e8f0);
+    box-shadow: none;
+  }
+  .pos-product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    padding: 16px;
+    gap: 12px;
+  }
+  .pos-categories {
+    padding: 10px 12px;
+  }
+  .pos-products-info {
+    padding: 6px 12px;
+  }
+  .pos-cart-lines {
+    max-height: 40vh;
+  }
+  .pos-cart-actions {
+    padding-bottom: 20px;
+  }
+}
+
 /* ── Cart Totals ── */
 .pos-cart-totals {
   padding: 12px 16px;

@@ -349,6 +349,7 @@ export default function POSPage() {
   const [showRefundDialog, setShowRefundDialog] = useState(false);
   const [refundReason, setRefundReason] = useState("");
   const [refundingOrderId, setRefundingOrderId] = useState<number | null>(null);
+  const [mobileTab, setMobileTab] = useState<"products" | "cart">("products");
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -555,6 +556,7 @@ export default function POSPage() {
         },
       ];
     });
+    setMobileTab("cart");
   }, []);
 
   const updateQty = (lineUid: string, qty: number) => {
@@ -1290,8 +1292,28 @@ export default function POSPage() {
         </div>
       </header>
 
+      {/* ─── MOBILE TAB SWITCHER ─── */}
+      <div className="pos-mobile-tabs">
+        <button
+          className={`pos-mobile-tab ${mobileTab === "products" ? "active" : ""}`}
+          onClick={() => setMobileTab("products")}
+        >
+          Products
+        </button>
+        <button
+          className={`pos-mobile-tab ${mobileTab === "cart" ? "active" : ""}`}
+          onClick={() => setMobileTab("cart")}
+        >
+          Cart ({itemCount})
+        </button>
+      </div>
+
       {/* ─── MAIN BODY: left = products, right = cart ─── */}
-      <div className="pos-body">
+      <div
+        className={`pos-body ${
+          mobileTab === "cart" ? "pos-mobile-cart" : "pos-mobile-products"
+        }`}
+      >
         {/* ── PRODUCT PANEL ── */}
         <div className="pos-products-panel">
           {/* Category tabs - prominent top bar */}
