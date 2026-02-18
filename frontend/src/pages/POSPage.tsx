@@ -154,7 +154,7 @@ function buildReceiptHtml(
   .divider { border-top: 1px dashed #000; margin: 6px 0; }
   .title { font-size: 1.2rem; font-weight: bold; text-align: center; margin: 2px 0; }
   .two-col { display: flex; justify-content: space-between; font-size: 1rem; }
-  .line { font-size: 1rem; margin: 2px 0; }
+  .line { font-size: 0.8rem; margin: 2px 0; }
   table { width: 100%; border-collapse: collapse; margin: 4px 0; }
   th { text-align: left; font-size: 1rem; border-bottom: 1px solid #000; padding: 2px 0; }
   th:last-child, td:last-child { text-align: right; }
@@ -162,7 +162,7 @@ function buildReceiptHtml(
   .summary { margin-top: 4px; }
   .summary .row { display: flex; justify-content: space-between; padding: 1px 0; font-size: 11px; }
   .grand { display: flex; justify-content: space-between; font-size: 12px; font-weight: bold; padding: 3px 0; border-top: 1px solid #000; border-bottom: 1px solid #000; margin: 4px 0; }
-  .footer { font-size: 9px; color: #555; margin-top: 6px; text-align: center; line-height: 1.4; }
+  .footer { font-size: 13px; color: #555; margin-top: 6px; text-align: center; line-height: 1.4; }
   @media print { html, body { width: 80mm; margin: 0; padding: 4mm; } }
 </style></head><body>
   <div class="center">
@@ -204,7 +204,6 @@ function buildReceiptHtml(
     <div class="row line"><span>VAT</span><span>${fmt(order.tax_amount)}</span></div>
     <div class="row line "><span>Gross Amount</span><span>${fmt(order.total_amount)}</span></div>
   </div>
-  <div class="line">Customer Ref: ${order.reference}</div>
   ${qrSrc ? `<div class="center" style="margin:6px 0"><img src="${qrSrc}" alt="QR" style="width:25mm;height:25mm"/></div>` : ""}
   ${order.zimra_verification_code ? `<div class="center" style="font-size:1rem;margin-top:2px">Verification code: <span class="bold">${order.zimra_verification_code}</span></div>` : ""}
   <div class="footer">
