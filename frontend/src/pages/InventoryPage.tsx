@@ -423,7 +423,24 @@ export default function InventoryPage() {
         quants: quants.length,
       });
       console.log("Warehouses loaded:", whs);
-      setProducts(prods);
+      const stockValueByProductId = new Map<number, number>();
+      for (const quant of quants) {
+        const current = stockValueByProductId.get(quant.product_id) ?? 0;
+        stockValueByProductId.set(
+          quant.product_id,
+          current + (Number.isFinite(quant.total_value) ? quant.total_value : 0),
+        );
+      }
+      const productsWithStockValue = prods.map((p) => {
+        const valueFromQuants = stockValueByProductId.get(p.id);
+        const computedValue =
+          valueFromQuants ??
+          (Number.isFinite(p.quantity_on_hand) && Number.isFinite(p.purchase_cost)
+            ? p.quantity_on_hand * p.purchase_cost
+            : 0);
+        return { ...p, stock_value: computedValue };
+      });
+      setProducts(productsWithStockValue);
       setCategories(cats);
       setWarehouses(whs);
       setStockMoves(moves);
@@ -888,6 +905,20 @@ export default function InventoryPage() {
       product?.name.toLowerCase().includes(q)
     );
   });
+
+  const productMonetaryTotals = useMemo(() => {
+    return filteredProducts.reduce(
+      (acc, p) => {
+        acc.salePrice += Number.isFinite(p.sale_price) ? p.sale_price : 0;
+        acc.purchaseCost += Number.isFinite(p.purchase_cost)
+          ? p.purchase_cost
+          : 0;
+        acc.stockValue += Number.isFinite(p.stock_value) ? p.stock_value : 0;
+        return acc;
+      },
+      { salePrice: 0, purchaseCost: 0, stockValue: 0 },
+    );
+  }, [filteredProducts]);
 
   // Stats
   const stats = {
@@ -2027,6 +2058,22 @@ export default function InventoryPage() {
                             </tr>
                           )}
                         </tbody>
+                        <tfoot>
+                          <tr>
+                            <td colSpan={7} style={{ textAlign: "right" }}>
+                              Totals:
+                            </td>
+                            <td className="o-monetary" style={{ fontWeight: 700 }}>
+                              ${productMonetaryTotals.salePrice.toFixed(2)}
+                            </td>
+                            <td className="o-monetary" style={{ fontWeight: 700 }}>
+                              ${productMonetaryTotals.purchaseCost.toFixed(2)}
+                            </td>
+                            <td className="o-monetary" style={{ fontWeight: 700 }}>
+                              ${productMonetaryTotals.stockValue.toFixed(2)}
+                            </td>
+                          </tr>
+                        </tfoot>
                       </table>
                     </div>
                   </div>

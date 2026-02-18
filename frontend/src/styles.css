@@ -8780,7 +8780,7 @@ button.danger:disabled {
   padding: 10px 40px 10px 42px;
   border-radius: 12px;
   border: 1px solid rgba(255,255,255,0.15);
-  background: rgba(255,255,255,0.08);
+  background: rgba(255, 255, 255, 0.404);
   color: #fff;
   font-size: 0.92rem;
   outline: none;
