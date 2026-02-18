@@ -145,24 +145,24 @@ function buildReceiptHtml(
 <style>
   @page { size: 80mm auto; margin: 0; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Courier New', monospace; font-size: 12px; width: 80mm; padding: 4mm; color: #000; background: #fff; }
+  body { font-family: 'Courier New', monospace; font-size: 12px; width: 80mm; padding: 4mm; color: #000; background: #fff; overflow-wrap: anywhere; word-break: break-word; }
   .center { text-align: center; }
   .bold { font-weight: bold; }
   .logo { max-width: 50mm; max-height: 18mm; margin: 0 auto 4px; display: block; }
   .company-name { font-size: 13px; font-weight: bold; margin-bottom: 2px; text-transform: uppercase; }
-  .company-info { font-size: 1rem; color: #333; line-height: 1.4; }
+  .company-info { font-size: 1rem; color: #333; line-height: 1.4; overflow-wrap: anywhere; word-break: break-word; }
   .divider { border-top: 1px dashed #000; margin: 6px 0; }
   .title { font-size: 1.2rem; font-weight: bold; text-align: center; margin: 2px 0; }
   .two-col { display: flex; justify-content: space-between; font-size: 1rem; }
   .line { font-size: 0.8rem; margin: 2px 0; }
   table { width: 100%; border-collapse: collapse; margin: 4px 0; }
-  th { text-align: left; font-size: 1rem; border-bottom: 1px solid #000; padding: 2px 0; }
+  th { text-align: left; font-size: 1rem; border-bottom: 1px solid #000; padding: 2px 0; overflow-wrap: anywhere; word-break: break-word; }
   th:last-child, td:last-child { text-align: right; }
-  td { font-size: 11px; padding: 2px 0; }
+  td { font-size: 11px; padding: 2px 0; overflow-wrap: anywhere; word-break: break-word; }
   .summary { margin-top: 4px; }
-  .summary .row { display: flex; justify-content: space-between; padding: 1px 0; font-size: 11px; }
+  .summary .row { display: flex; justify-content: space-between; padding: 1px 0; font-size: 0.8; }
   .grand { display: flex; justify-content: space-between; font-size: 12px; font-weight: bold; padding: 3px 0; border-top: 1px solid #000; border-bottom: 1px solid #000; margin: 4px 0; }
-  .footer { font-size: 13px; color: #555; margin-top: 6px; text-align: center; line-height: 1.4; }
+  .footer { font-size: 13px; color: #555; margin-top: 6px; text-align: center; line-height: 1.4; word-break: break-all; }
   @media print { html, body { width: 80mm; margin: 0; padding: 4mm; } }
 </style></head><body>
   <div class="center">
@@ -200,9 +200,9 @@ function buildReceiptHtml(
   <div class="two-col"><div>Total ${order.currency}</div><div>${fmt(order.total_amount)}</div></div>
   <div class="divider"></div>
   <div class="summary">
-    <div class="row line"><span>Net Amount</span><span>${fmt(order.subtotal)}</span></div>
-    <div class="row line"><span>VAT</span><span>${fmt(order.tax_amount)}</span></div>
-    <div class="row line "><span>Gross Amount</span><span>${fmt(order.total_amount)}</span></div>
+    <div class="row "><span>Net Amount</span><span>${fmt(order.subtotal)}</span></div>
+    <div class="row "><span>VAT</span><span>${fmt(order.tax_amount)}</span></div>
+    <div class="row  "><span>Gross Amount</span><span>${fmt(order.total_amount)}</span></div>
   </div>
   ${qrSrc ? `<div class="center" style="margin:6px 0"><img src="${qrSrc}" alt="QR" style="width:25mm;height:25mm"/></div>` : ""}
   ${order.zimra_verification_code ? `<div class="center" style="font-size:1rem;margin-top:2px">Verification code: <span class="bold">${order.zimra_verification_code}</span></div>` : ""}
