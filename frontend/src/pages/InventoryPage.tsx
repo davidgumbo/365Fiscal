@@ -1157,7 +1157,7 @@ export default function InventoryPage() {
                 },
                 {
                   key: "categories",
-                  label: "CATEGORIES",
+                  label: "PRODUCT CATEGORIES",
                   icon: CategoriesIcon,
                   color: "var(--indigo-500)",
                 },
@@ -1840,153 +1840,65 @@ export default function InventoryPage() {
                   {/* Sidebar */}
                   <div className="o-sidebar">
                     <div className="o-sidebar-section">
-                      <details className="o-sidebar-dropdown" open>
-                        <summary
-                          className="o-sidebar-title"
+                      <div
+                        className="o-sidebar-title"
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                        }}
+                      >
+                        <span>Categories</span>
+                        <button
+                          onClick={() => openCategoryModal()}
                           style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
+                            background: "none",
+                            border: "none",
+                            cursor: "pointer",
+                            color: "var(--indigo-500)",
+                            fontSize: 18,
+                            fontWeight: 700,
+                            lineHeight: 1,
+                          }}
+                          title="Add Category"
+                        >
+                          +
+                        </button>
+                      </div>
+                      <select
+                        className="o-form-select"
+                        value={filterCategoryId ?? ""}
+                        onChange={(e) =>
+                          setFilterCategoryId(
+                            e.target.value ? Number(e.target.value) : null,
+                          )
+                        }
+                      >
+                        <option value="">
+                          All Products ({products.length})
+                        </option>
+                        {categories.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name} (
+                            {
+                              products.filter((p) => p.category_id === c.id)
+                                .length
+                            }
+                            )
+                          </option>
+                        ))}
+                      </select>
+                      {categories.length === 0 && (
+                        <div
+                          style={{
+                            paddingTop: 8,
+                            color: "var(--slate-400)",
+                            fontSize: 12,
                           }}
                         >
-                          <span>Categories</span>
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              openCategoryModal();
-                            }}
-                            style={{
-                              background: "none",
-                              border: "none",
-                              cursor: "pointer",
-                              color: "var(--indigo-500)",
-                              fontSize: 18,
-                              fontWeight: 700,
-                              lineHeight: 1,
-                            }}
-                            title="Add Category"
-                          >
-                            +
-                          </button>
-                        </summary>
-                        <div
-                          className={`o-sidebar-item ${filterCategoryId === null ? "active" : ""}`}
-                          onClick={() => setFilterCategoryId(null)}
-                          style={{ cursor: "pointer" }}
-                        >
-                          <span>All Products</span>
-                          <span className="o-sidebar-count">
-                            {products.length}
-                          </span>
+                          No categories yet.
                         </div>
-                        {categories.map((c) => (
-                          <div
-                            key={c.id}
-                            className={`o-sidebar-item ${filterCategoryId === c.id ? "active" : ""}`}
-                            style={{ cursor: "pointer" }}
-                          >
-                            <span
-                              onClick={() => setFilterCategoryId(c.id)}
-                              style={{ flex: 1 }}
-                            >
-                              {c.name}
-                            </span>
-                            <span
-                              className="o-sidebar-count"
-                              style={{ marginRight: 6 }}
-                            >
-                              {
-                                products.filter((p) => p.category_id === c.id)
-                                  .length
-                              }
-                            </span>
-                            <span style={{ display: "flex", gap: 2 }}>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  openCategoryModal(c);
-                                }}
-                                style={{
-                                  background: "none",
-                                  border: "none",
-                                  cursor: "pointer",
-                                  padding: 2,
-                                  color: "var(--slate-400)",
-                                  fontSize: 11,
-                                }}
-                                title="Edit"
-                              >
-                                <svg
-                                  width="12"
-                                  height="12"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                >
-                                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-                                  <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-                                </svg>
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  deleteCategory(c.id);
-                                }}
-                                style={{
-                                  background: "none",
-                                  border: "none",
-                                  cursor: "pointer",
-                                  padding: 2,
-                                  color: "var(--red-400)",
-                                  fontSize: 11,
-                                }}
-                                title="Delete"
-                              >
-                                <svg
-                                  width="12"
-                                  height="12"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                >
-                                  <polyline points="3 6 5 6 21 6" />
-                                  <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
-                                </svg>
-                              </button>
-                            </span>
-                          </div>
-                        ))}
-                        {categories.length === 0 && (
-                          <div
-                            style={{
-                              padding: "12px 16px",
-                              color: "var(--slate-400)",
-                              fontSize: 12,
-                              textAlign: "center",
-                            }}
-                          >
-                            No categories yet.
-                            <br />
-                            <button
-                              onClick={() => openCategoryModal()}
-                              style={{
-                                background: "none",
-                                border: "none",
-                                cursor: "pointer",
-                                color: "var(--indigo-500)",
-                                fontWeight: 600,
-                                fontSize: 12,
-                                marginTop: 4,
-                              }}
-                            >
-                              + Create a category
-                            </button>
-                          </div>
-                        )}
-                      </details>
+                      )}
                     </div>
 
                     <div className="o-sidebar-section">
