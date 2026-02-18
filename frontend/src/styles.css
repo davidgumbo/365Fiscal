@@ -8748,8 +8748,8 @@ button.danger:disabled {
   position: absolute;
   right: 0;
   top: calc(100% + 8px);
-  background: #fff;
-  border: 1px solid var(--slate-200, #e2e8f0);
+  background: linear-gradient(135deg,#1e1b4b,#312e81);
+  /* border: 1px solid var(--slate-200, #e2e8f0); */
   border-radius: 12px;
   min-width: 200px;
   box-shadow: 0 12px 28px rgba(15,23,42,0.18);
