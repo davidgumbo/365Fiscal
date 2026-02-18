@@ -152,7 +152,7 @@ function buildReceiptHtml(
   .company-name { font-size: 13px; font-weight: bold; margin-bottom: 2px; text-transform: uppercase; }
   .company-info { font-size: 1rem; color: #333; line-height: 1.4; }
   .divider { border-top: 1px dashed #000; margin: 6px 0; }
-  .title { font-size: 12px; font-weight: bold; text-align: center; margin: 2px 0; }
+  .title { font-size: 1.2rem; font-weight: bold; text-align: center; margin: 2px 0; }
   .two-col { display: flex; justify-content: space-between; font-size: 1rem; }
   .line { font-size: 1rem; margin: 2px 0; }
   table { width: 100%; border-collapse: collapse; margin: 4px 0; }
@@ -167,7 +167,7 @@ function buildReceiptHtml(
 </style></head><body>
   <div class="center">
     ${company?.logo_data ? `<img class="logo" src="${company.logo_data}" alt="Logo" />` : ""}
-    <div class="company-name">${company?.name || "365 Fiscal"}</div>
+    <div class="company-name">${company?.name}</div>
     ${company?.tin ? `<div class="company-info">TIN: ${company.tin}</div>` : ""}
     ${company?.vat ? `<div class="company-info">VAT No: ${company.vat}</div>` : ""}
     <div class="company-info">
@@ -178,10 +178,7 @@ function buildReceiptHtml(
   </div>
   <div class="divider"></div>
   <div class="title">FISCAL TAX INVOICE</div>
-  <div class=""><div>Invoice No: ${order.reference}</div><div>Fiscal day: day 27</div></div>
-  ${order.notes ? `<div class="line">Customer reference No: ${order.notes}</div>` : ""}
-  ${device ? `<div class="line">Device Serial No: ${device.serial_number}</div>` : ""}
-  ${device ? `<div class="line">Device ID: ${device.device_id}</div>` : ""}
+  <div class="line"><div>Invoice No: ${order.reference}</div><div>Fiscal day: day 27</div></div>
   <div class="line">Date: ${new Date(order.order_date).toLocaleString()}</div>
   <div class="divider"></div>
   <table>
