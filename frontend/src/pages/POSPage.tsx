@@ -687,7 +687,13 @@ export default function POSPage() {
       });
       setSession(null);
       setShowCloseDialog(false);
-      backToHome();
+      setCurrentCashier(null);
+      setPinValue("");
+      setPinError("");
+      setShowSessionDialog(false);
+      setShowPinDialog(true);
+      setCart([]);
+      setSelectedCustomer(null);
     } catch (e: any) {
       setError(e.message);
     }
