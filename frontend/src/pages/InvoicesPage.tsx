@@ -1095,7 +1095,7 @@ export default function InvoicesPage({
             .party .block { font-size: 12px; line-height: 1.6; }
             .party .block strong { color: var(--ink); }
             .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; font-size: 12px; margin: 12px 0; }
-            .meta .row { display: grid; grid-template-columns: 50px 1fr; gap: 8px; }
+            .meta .row { display: grid; grid-template-columns: 100px 1fr; gap: 8px; }
             table { width: 100%; border-collapse: collapse; font-size: 12px; }
             thead th { background: var(--thead); color: var(--ink); font-weight: 700; text-transform: none; padding: 8px 10px; border: 1px solid var(--line); }
             tbody td { padding: 8px 10px; border: 1px solid var(--line); }

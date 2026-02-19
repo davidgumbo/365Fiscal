@@ -109,9 +109,6 @@ type CompanyInfo = {
 /* ────────────────────────── helpers ────────────────────────── */
 const fmt = (n: number) => n.toFixed(2);
 const uid = () => Math.random().toString(36).slice(2, 10);
-const POS_LOCK_KEY = "pos_pin_lock_required";
-const POS_LOCK_COMPANY_KEY = "pos_lock_company_id";
-const POS_WINDOW_OPEN_KEY = "pos_window_open";
 
 function lineSubtotal(l: CartLine) {
   return l.qty * l.price * (1 - l.discount / 100);
@@ -366,22 +363,14 @@ export default function POSPage() {
 
   // Customer display
   const customerDisplayRef = useRef<Window | null>(null);
-  const markPOSClosed = useCallback(() => {
-    localStorage.setItem(POS_LOCK_KEY, "1");
-    if (companyId) {
-      localStorage.setItem(POS_LOCK_COMPANY_KEY, String(companyId));
-    }
-    localStorage.removeItem(POS_WINDOW_OPEN_KEY);
-  }, [companyId]);
 
   const backToHome = useCallback(() => {
-    markPOSClosed();
     if (window.opener && !window.opener.closed) {
       window.close();
       return;
     }
     navigate("/");
-  }, [markPOSClosed, navigate]);
+  }, [navigate]);
 
   // ── calculated ──
   const cartSubtotal = cart.reduce((s, l) => s + lineSubtotal(l), 0);
@@ -392,18 +381,6 @@ export default function POSPage() {
     0,
   );
   const itemCount = cart.reduce((s, l) => s + l.qty, 0);
-
-  useEffect(() => {
-    localStorage.setItem(POS_WINDOW_OPEN_KEY, "1");
-    if (companyId) {
-      localStorage.setItem(POS_LOCK_COMPANY_KEY, String(companyId));
-    }
-    const onPageHide = () => markPOSClosed();
-    window.addEventListener("pagehide", onPageHide);
-    return () => {
-      window.removeEventListener("pagehide", onPageHide);
-    };
-  }, [companyId, markPOSClosed]);
 
   // ── data loading ──
   useEffect(() => {
@@ -430,9 +407,13 @@ export default function POSPage() {
         if (sessions.length > 0) {
           setSession(sessions[0]);
         } else {
-          // Show PIN login first — session dialog comes after PIN is verified
-          setShowPinDialog(true);
+          setSession(null);
         }
+        // Always require cashier PIN when POS opens.
+        setCurrentCashier(null);
+        setPinValue("");
+        setPinError("");
+        setShowPinDialog(true);
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));

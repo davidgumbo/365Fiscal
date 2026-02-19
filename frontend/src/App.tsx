@@ -38,9 +38,7 @@ import ListViewContext, {
 } from "./context/ListViewContext";
 import AuthGuard from "./components/AuthGuard";
 
-const POS_LOCK_KEY = "pos_pin_lock_required";
 const POS_WINDOW_NAME = "pos-terminal";
-const POS_LOCK_COMPANY_KEY = "pos_lock_company_id";
 
 const adminNav = [
   { to: "/", label: "Home", icon: HomeIcon },
@@ -141,12 +139,6 @@ function AppContent() {
   const [fieldValues, setFieldValues] = useState<Record<string, string[]>>({});
   const [appMenuOpen, setAppMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [isPosLocked, setIsPosLocked] = useState(
-    () => localStorage.getItem(POS_LOCK_KEY) === "1",
-  );
-  const [unlockPin, setUnlockPin] = useState("");
-  const [unlockError, setUnlockError] = useState("");
-  const [unlocking, setUnlocking] = useState(false);
 
   // (moved) fetch choice field values when filter menu opens; placed after currentPath declaration
   const [conditions, setConditions] = useState<FilterCondition[]>([
@@ -158,8 +150,6 @@ function AppContent() {
   const displayName = me?.email ?? (isPortalMode ? "Portal User" : "Admin");
   const initials = getInitials(displayName);
   const currentPath = location.pathname === "/" ? "/" : location.pathname;
-  const companyId = me?.company_ids?.[0];
-  const skipPosLock = currentPath.startsWith("/pos/window");
   const isDashboard = currentPath === "/";
   const listState = listViewByPath[currentPath] ?? {
     search: "",
@@ -180,9 +170,6 @@ function AppContent() {
     [currentPath],
   );
   const breadcrumb = getBreadcrumb(currentPath, navItems);
-  const syncPosLock = useCallback(() => {
-    setIsPosLocked(localStorage.getItem(POS_LOCK_KEY) === "1");
-  }, []);
 
   useEffect(() => {
     const fields = getCustomFields(currentPath).filter((f) => f.valuesEndpoint);
@@ -195,19 +182,6 @@ function AppContent() {
         .catch(() => {});
     });
   }, [currentPath, me?.company_ids]);
-
-  useEffect(() => {
-    syncPosLock();
-    const onStorage = (event: StorageEvent) => {
-      if (event.key === POS_LOCK_KEY) syncPosLock();
-    };
-    window.addEventListener("storage", onStorage);
-    window.addEventListener("focus", syncPosLock);
-    return () => {
-      window.removeEventListener("storage", onStorage);
-      window.removeEventListener("focus", syncPosLock);
-    };
-  }, [syncPosLock]);
 
   const updateListState = (next: Partial<ListViewState>) => {
     setListViewByPath((prev) => ({
@@ -254,74 +228,6 @@ function AppContent() {
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
-
-  const unlockWithPin = async () => {
-    const posCompanyId =
-      Number(localStorage.getItem(POS_LOCK_COMPANY_KEY)) || companyId;
-    if (!posCompanyId || !unlockPin.trim()) return;
-    setUnlockError("");
-    setUnlocking(true);
-    try {
-      await apiFetch<{ id: number; name: string; role: string }>(
-        "/pos/employees/verify-pin",
-        {
-          method: "POST",
-          body: JSON.stringify({ company_id: posCompanyId, pin: unlockPin }),
-        },
-      );
-      localStorage.removeItem(POS_LOCK_KEY);
-      localStorage.removeItem(POS_LOCK_COMPANY_KEY);
-      setIsPosLocked(false);
-      setUnlockPin("");
-    } catch (err: any) {
-      setUnlockError(err.message || "Invalid PIN");
-    } finally {
-      setUnlocking(false);
-    }
-  };
-
-  if (isPosLocked && !skipPosLock) {
-    return (
-      <div className="content" style={{ maxWidth: 420, margin: "8rem auto" }}>
-        <div className="card shadow-sm">
-          <div className="card-body">
-            <h3 style={{ marginBottom: 8 }}>Session Locked</h3>
-            <p style={{ color: "var(--muted)", marginBottom: 12 }}>
-              Enter cashier PIN to continue.
-            </p>
-            <input
-              type="password"
-              className="form-control"
-              value={unlockPin}
-              placeholder="Cashier PIN"
-              onChange={(e) => {
-                setUnlockPin(e.target.value.replace(/\D/g, ""));
-                setUnlockError("");
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !unlocking) unlockWithPin();
-              }}
-              maxLength={6}
-              autoFocus
-            />
-            {unlockError && (
-              <div style={{ color: "var(--red-600)", marginTop: 8 }}>
-                {unlockError}
-              </div>
-            )}
-            <button
-              className="btn btn-primary"
-              style={{ marginTop: 12, width: "100%" }}
-              onClick={unlockWithPin}
-              disabled={unlocking || unlockPin.length < 4}
-            >
-              {unlocking ? "Verifying..." : "Unlock"}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   const isHomePage = currentPath === "/";
 
@@ -379,8 +285,6 @@ function AppContent() {
                     <button
                       className="menu-item danger"
                       onClick={() => {
-                        localStorage.removeItem(POS_LOCK_KEY);
-                        localStorage.removeItem(POS_LOCK_COMPANY_KEY);
                         localStorage.removeItem("access_token");
                         window.location.href = "/login";
                       }}
