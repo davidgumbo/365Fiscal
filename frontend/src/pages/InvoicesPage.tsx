@@ -161,6 +161,154 @@ const getPaymentStatus = (amountPaid: number, amountDue: number) => {
   return "Unpaid";
 };
 
+type Rgb = { r: number; g: number; b: number };
+
+type InvoiceTheme = {
+  primary: string;
+  ink: string;
+  muted: string;
+  line: string;
+  panel: string;
+  tableHead: string;
+};
+
+const DEFAULT_THEME_PRIMARY = "#1f2937";
+
+const clampColor = (value: number) => Math.max(0, Math.min(255, value));
+
+const rgbToHex = ({ r, g, b }: Rgb) =>
+  `#${[r, g, b]
+    .map((value) => clampColor(Math.round(value)).toString(16).padStart(2, "0"))
+    .join("")}`;
+
+const hexToRgb = (hex: string): Rgb | null => {
+  const normalized = hex.replace("#", "").trim();
+  if (!/^[0-9a-fA-F]{6}$/.test(normalized)) return null;
+  return {
+    r: parseInt(normalized.slice(0, 2), 16),
+    g: parseInt(normalized.slice(2, 4), 16),
+    b: parseInt(normalized.slice(4, 6), 16),
+  };
+};
+
+const mixColors = (base: Rgb, target: Rgb, ratio: number): Rgb => {
+  const weight = Math.max(0, Math.min(1, ratio));
+  return {
+    r: base.r * (1 - weight) + target.r * weight,
+    g: base.g * (1 - weight) + target.g * weight,
+    b: base.b * (1 - weight) + target.b * weight,
+  };
+};
+
+const rgbToHsl = ({ r, g, b }: Rgb) => {
+  const rn = r / 255;
+  const gn = g / 255;
+  const bn = b / 255;
+  const max = Math.max(rn, gn, bn);
+  const min = Math.min(rn, gn, bn);
+  const delta = max - min;
+
+  let hue = 0;
+  if (delta !== 0) {
+    if (max === rn) hue = ((gn - bn) / delta) % 6;
+    else if (max === gn) hue = (bn - rn) / delta + 2;
+    else hue = (rn - gn) / delta + 4;
+  }
+
+  const lightness = (max + min) / 2;
+  const saturation =
+    delta === 0 ? 0 : delta / (1 - Math.abs(2 * lightness - 1));
+
+  return {
+    saturation,
+    lightness,
+    hue: ((hue * 60 + 360) % 360) / 360,
+  };
+};
+
+const buildInvoiceTheme = (primaryHex: string): InvoiceTheme => {
+  const primaryRgb = hexToRgb(primaryHex) ?? hexToRgb(DEFAULT_THEME_PRIMARY)!;
+  return {
+    primary: rgbToHex(mixColors(primaryRgb, { r: 0, g: 0, b: 0 }, 0.12)),
+    ink: "#111827",
+    muted: "#6b7280",
+    line: rgbToHex(mixColors(primaryRgb, { r: 255, g: 255, b: 255 }, 0.82)),
+    panel: rgbToHex(mixColors(primaryRgb, { r: 255, g: 255, b: 255 }, 0.9)),
+    tableHead: rgbToHex(
+      mixColors(primaryRgb, { r: 255, g: 255, b: 255 }, 0.78),
+    ),
+  };
+};
+
+const extractPrimaryColorFromLogo = (logoSrc: string): Promise<string> =>
+  new Promise((resolve) => {
+    if (!logoSrc) {
+      resolve(DEFAULT_THEME_PRIMARY);
+      return;
+    }
+
+    const img = new Image();
+    img.decoding = "async";
+    img.crossOrigin = "anonymous";
+
+    img.onload = () => {
+      try {
+        const canvas = document.createElement("canvas");
+        const sampleSize = 64;
+        canvas.width = sampleSize;
+        canvas.height = sampleSize;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          resolve(DEFAULT_THEME_PRIMARY);
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, sampleSize, sampleSize);
+        const { data } = ctx.getImageData(0, 0, sampleSize, sampleSize);
+        let weightedR = 0;
+        let weightedG = 0;
+        let weightedB = 0;
+        let weightedCount = 0;
+
+        for (let index = 0; index < data.length; index += 4) {
+          const alpha = data[index + 3];
+          if (alpha < 140) continue;
+
+          const r = data[index];
+          const g = data[index + 1];
+          const b = data[index + 2];
+          const { saturation, lightness } = rgbToHsl({ r, g, b });
+
+          if (lightness > 0.96 || lightness < 0.07) continue;
+
+          const weight = Math.max(0.2, saturation * 1.8 + 0.2);
+          weightedR += r * weight;
+          weightedG += g * weight;
+          weightedB += b * weight;
+          weightedCount += weight;
+        }
+
+        if (weightedCount === 0) {
+          resolve(DEFAULT_THEME_PRIMARY);
+          return;
+        }
+
+        resolve(
+          rgbToHex({
+            r: weightedR / weightedCount,
+            g: weightedG / weightedCount,
+            b: weightedB / weightedCount,
+          }),
+        );
+      } catch {
+        resolve(DEFAULT_THEME_PRIMARY);
+      }
+    };
+
+    img.onerror = () => resolve(DEFAULT_THEME_PRIMARY);
+    img.src = logoSrc;
+  });
+
 type InvoicesPageMode = "list" | "new" | "detail";
 
 export default function InvoicesPage({
@@ -212,6 +360,9 @@ export default function InvoicesPage({
   const [locations, setLocations] = useState<Location[]>([]);
   const [companySettings, setCompanySettings] =
     useState<CompanySettings | null>(null);
+  const [logoPrimaryColor, setLogoPrimaryColor] = useState(
+    DEFAULT_THEME_PRIMARY,
+  );
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<number | null>(
     null,
   );
@@ -265,6 +416,27 @@ export default function InvoicesPage({
   const [quotationDropdownOpen, setQuotationDropdownOpen] = useState(false);
   const customerDropdownRef = useRef<HTMLDivElement>(null);
   const quotationDropdownRef = useRef<HTMLDivElement>(null);
+  const invoiceTheme = useMemo(
+    () => buildInvoiceTheme(logoPrimaryColor),
+    [logoPrimaryColor],
+  );
+
+  useEffect(() => {
+    let disposed = false;
+    const logoSrc = companySettings?.logo_data;
+    if (!logoSrc) {
+      setLogoPrimaryColor(DEFAULT_THEME_PRIMARY);
+      return;
+    }
+
+    extractPrimaryColorFromLogo(logoSrc).then((color) => {
+      if (!disposed) setLogoPrimaryColor(color);
+    });
+
+    return () => {
+      disposed = true;
+    };
+  }, [companySettings?.logo_data]);
 
   const filteredContacts = contacts.filter((c) =>
     c.name.toLowerCase().includes(customerSearch.toLowerCase()),
@@ -532,6 +704,11 @@ export default function InvoicesPage({
       : paymentStatus === "Partial"
         ? "warning"
         : "secondary";
+  const invoiceHeadingStyle = { color: invoiceTheme.primary };
+  const invoicePanelStyle = {
+    backgroundColor: invoiceTheme.panel,
+    border: `1px solid ${invoiceTheme.line}`,
+  };
 
   const beginNew = () => {
     setNewMode(true);
@@ -904,7 +1081,7 @@ export default function InvoicesPage({
         <head>
           <title>${selectedInvoice.reference}</title>
           <style>
-            :root { --ink: #111827; --muted: #6b7280; --line: #e5e7eb; --soft: #f9fafb; --accent: #1f2937; }
+            :root { --ink: ${invoiceTheme.ink}; --muted: ${invoiceTheme.muted}; --line: ${invoiceTheme.line}; --soft: #f9fafb; --accent: ${invoiceTheme.primary}; --panel: ${invoiceTheme.panel}; --thead: ${invoiceTheme.tableHead}; }
             * { box-sizing: border-box; }
             body { font-family: "Segoe UI", Inter, Arial, sans-serif; padding: 0; margin: 0; color: var(--ink); background: #ffffff; }
             .doc { padding: 20px 24px 28px; position: relative; }
@@ -912,21 +1089,21 @@ export default function InvoicesPage({
             .doc-header .logo { display: block; max-width: 180px; max-height: 70px; width: auto; height: auto; object-fit: contain; }
             .layout-boxed { border: 1px solid var(--line); }
             .layout-bubble { border: 1px solid var(--line); box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08); }
-            .title { text-align: center; text-decoration: underline; font-weight: 700; font-size: 18px; letter-spacing: .6px; margin: 4px 0 10px; }
-            .party { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; background: #f3f4f6; border: 1px solid var(--line); padding: 10px 12px; }
+            .title { text-align: center; text-decoration: underline; font-weight: 700; font-size: 18px; letter-spacing: .6px; margin: 4px 0 10px; color: var(--accent); }
+            .party { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; background: var(--panel); border: 1px solid var(--line); padding: 10px 12px; }
             .party h5 { margin: 0 0 6px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; }
             .party .block { font-size: 12px; line-height: 1.6; }
             .party .block strong { color: var(--ink); }
             .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; font-size: 12px; margin: 12px 0; }
-            .meta .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+            .meta .row { display: grid; grid-template-columns: 360px 1fr; gap: 8px; }
             table { width: 100%; border-collapse: collapse; font-size: 12px; }
-            thead th { background: #e5e7eb; color: #111827; font-weight: 700; text-transform: none; padding: 8px 10px; border: 1px solid var(--line); }
+            thead th { background: var(--thead); color: var(--ink); font-weight: 700; text-transform: none; padding: 8px 10px; border: 1px solid var(--line); }
             tbody td { padding: 8px 10px; border: 1px solid var(--line); }
             .totals-card { margin-top: 12px; width: 320px; margin-left: auto; border: 1px solid var(--line); }
             .totals-card .row { display: grid; grid-template-columns: 1fr auto; padding: 8px 10px; border-bottom: 1px solid var(--line); }
             .totals-card .row:last-child { border-bottom: none; font-weight: 700; }
             .qr { text-align: left; margin-top: 10px; }
-            .d-flex { display: flex; align-items: center; gap: 6px; }
+            .d-flex { display: flex; gap: 6px; }
             .footer { margin-top: 12px; font-size: 11px; color: var(--muted); text-align: center; }
           </style>
         </head>
@@ -1724,7 +1901,7 @@ export default function InvoicesPage({
               >
                 ← Back
               </button>
-              <h4 className="fw-bold mb-0">
+              <h4 className="fw-bold mb-0" style={invoiceHeadingStyle}>
                 {newMode
                   ? "New Invoice"
                   : selectedInvoice?.reference || "Invoice"}
@@ -2244,7 +2421,7 @@ export default function InvoicesPage({
                 {/* Summary cards */}
                 <div className="row g-3 mb-4">
                   <div className="col-md-3">
-                    <div className="card border-0 bg-light h-100">
+                    <div className="card h-100" style={invoicePanelStyle}>
                       <div className="card-body py-2">
                         <small className="text-muted">Total Amount</small>
                         <div className="fs-5 fw-bold">
@@ -2257,7 +2434,7 @@ export default function InvoicesPage({
                     </div>
                   </div>
                   <div className="col-md-3">
-                    <div className="card border-0 bg-light h-100">
+                    <div className="card h-100" style={invoicePanelStyle}>
                       <div className="card-body py-2">
                         <small className="text-muted">Amount Paid</small>
                         <div className="fs-5 fw-bold">
@@ -2273,7 +2450,7 @@ export default function InvoicesPage({
                     </div>
                   </div>
                   <div className="col-md-3">
-                    <div className="card border-0 bg-light h-100">
+                    <div className="card h-100" style={invoicePanelStyle}>
                       <div className="card-body py-2">
                         <small className="text-muted">Amount Due</small>
                         <div className="fs-5 fw-bold">
@@ -2286,7 +2463,7 @@ export default function InvoicesPage({
                     </div>
                   </div>
                   <div className="col-md-3">
-                    <div className="card border-0 bg-light h-100">
+                    <div className="card h-100" style={invoicePanelStyle}>
                       <div className="card-body py-2">
                         <small className="text-muted">Fiscalization</small>
                         <div
@@ -3017,7 +3194,7 @@ export default function InvoicesPage({
                 {/* Totals */}
                 <div className="row g-3 mt-3">
                   <div className="col-md-6">
-                    <div className="card border-0 bg-light">
+                    <div className="card" style={invoicePanelStyle}>
                       <div className="card-body py-2">
                         <div className="fw-semibold mb-1">Tax Breakdown</div>
                         {taxBreakdown.length === 0 && (
@@ -3036,7 +3213,7 @@ export default function InvoicesPage({
                     </div>
                   </div>
                   <div className="col-md-6">
-                    <div className="card border-0 bg-light">
+                    <div className="card" style={invoicePanelStyle}>
                       <div className="card-body py-2">
                         <div className="d-flex justify-content-between">
                           <span>Subtotal</span>
