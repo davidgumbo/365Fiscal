@@ -1,6 +1,9 @@
 export const API_BASE = "/api";
 
-export type ApiOptions = RequestInit & { auth?: boolean };
+export type ApiOptions = RequestInit & {
+  auth?: boolean;
+  suppress401Redirect?: boolean;
+};
 
 function buildHeaders(path: string, options: ApiOptions): Record<string, string> {
   const headers: Record<string, string> = {
@@ -24,7 +27,7 @@ function buildHeaders(path: string, options: ApiOptions): Record<string, string>
 export async function apiRequest(path: string, options: ApiOptions = {}): Promise<Response> {
   const headers = buildHeaders(path, options);
   const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
-  if (!res.ok && res.status === 401) {
+  if (!res.ok && res.status === 401 && !options.suppress401Redirect) {
     console.error("401 Unauthorized - Token may be invalid or expired. Redirecting to login...");
     localStorage.removeItem("access_token");
     window.location.href = "/login";

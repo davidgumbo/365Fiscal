@@ -463,6 +463,7 @@ export default function POSPage() {
         "/pos/employees/verify-pin",
         {
           method: "POST",
+          suppress401Redirect: true,
           body: JSON.stringify({ company_id: companyId, pin: pinValue }),
         },
       );
