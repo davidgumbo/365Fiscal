@@ -109,6 +109,9 @@ type CompanyInfo = {
 /* ────────────────────────── helpers ────────────────────────── */
 const fmt = (n: number) => n.toFixed(2);
 const uid = () => Math.random().toString(36).slice(2, 10);
+const POS_LOCK_KEY = "pos_pin_lock_required";
+const POS_LOCK_COMPANY_KEY = "pos_lock_company_id";
+const POS_WINDOW_OPEN_KEY = "pos_window_open";
 
 function lineSubtotal(l: CartLine) {
   return l.qty * l.price * (1 - l.discount / 100);
@@ -363,6 +366,22 @@ export default function POSPage() {
 
   // Customer display
   const customerDisplayRef = useRef<Window | null>(null);
+  const markPOSClosed = useCallback(() => {
+    localStorage.setItem(POS_LOCK_KEY, "1");
+    if (companyId) {
+      localStorage.setItem(POS_LOCK_COMPANY_KEY, String(companyId));
+    }
+    localStorage.removeItem(POS_WINDOW_OPEN_KEY);
+  }, [companyId]);
+
+  const backToHome = useCallback(() => {
+    markPOSClosed();
+    if (window.opener && !window.opener.closed) {
+      window.close();
+      return;
+    }
+    navigate("/");
+  }, [markPOSClosed, navigate]);
 
   // ── calculated ──
   const cartSubtotal = cart.reduce((s, l) => s + lineSubtotal(l), 0);
@@ -373,6 +392,18 @@ export default function POSPage() {
     0,
   );
   const itemCount = cart.reduce((s, l) => s + l.qty, 0);
+
+  useEffect(() => {
+    localStorage.setItem(POS_WINDOW_OPEN_KEY, "1");
+    if (companyId) {
+      localStorage.setItem(POS_LOCK_COMPANY_KEY, String(companyId));
+    }
+    const onPageHide = () => markPOSClosed();
+    window.addEventListener("pagehide", onPageHide);
+    return () => {
+      window.removeEventListener("pagehide", onPageHide);
+    };
+  }, [companyId, markPOSClosed]);
 
   // ── data loading ──
   useEffect(() => {
@@ -675,7 +706,7 @@ export default function POSPage() {
       });
       setSession(null);
       setShowCloseDialog(false);
-      navigate("/");
+      backToHome();
     } catch (e: any) {
       setError(e.message);
     }
@@ -937,7 +968,7 @@ export default function POSPage() {
             <div className="pos-dialog-footer flex">
               <button
                 className="pos-btn pos-btn-ghost"
-                onClick={() => navigate("/")}
+                onClick={backToHome}
                 title="Back to Home"
               >
                 <BackIcon aria-hidden="true" focusable="false" />
@@ -1074,7 +1105,7 @@ export default function POSPage() {
             <div className="pos-dialog-footer">
               <button
                 className="pos-btn pos-btn-ghost"
-                onClick={() => navigate("/")}
+                onClick={backToHome}
                 title="Back to Home"
               >
                 <BackIcon aria-hidden="true" focusable="false" />
@@ -1098,7 +1129,7 @@ export default function POSPage() {
         <div className="flex">
           <button
             className="pos-btn pos-btn-icon"
-            onClick={() => navigate("/")}
+            onClick={backToHome}
             title="Back to Home"
             aria-label="Back to Home"
           >

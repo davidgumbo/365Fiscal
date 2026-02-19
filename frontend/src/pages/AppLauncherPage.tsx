@@ -486,6 +486,8 @@ export default function AppLauncherPage() {
   };
 
   const handleLogout = () => {
+    localStorage.removeItem("pos_pin_lock_required");
+    localStorage.removeItem("pos_lock_company_id");
     localStorage.removeItem("access_token");
     window.location.href = "/login";
   };
