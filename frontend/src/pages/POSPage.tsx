@@ -1095,7 +1095,7 @@ export default function POSPage() {
     <div className="pos-page">
       {/* ─── TOP BAR ─── */}
       <header className="pos-topbar">
-        <div className="">
+        <div className="flex">
           <button
             className="pos-btn pos-btn-icon"
             onClick={() => navigate("/")}
