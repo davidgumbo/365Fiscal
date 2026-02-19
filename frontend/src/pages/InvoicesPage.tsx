@@ -908,6 +908,8 @@ export default function InvoicesPage({
             * { box-sizing: border-box; }
             body { font-family: "Segoe UI", Inter, Arial, sans-serif; padding: 0; margin: 0; color: var(--ink); background: #ffffff; }
             .doc { padding: 20px 24px 28px; position: relative; }
+            .doc-header { display: flex; justify-content: flex-start; align-items: flex-start; margin-bottom: 10px; min-height: 48px; }
+            .doc-header .logo { display: block; max-width: 180px; max-height: 70px; width: auto; height: auto; object-fit: contain; }
             .layout-boxed { border: 1px solid var(--line); }
             .layout-bubble { border: 1px solid var(--line); box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08); }
             .title { text-align: center; font-weight: 700; font-size: 18px; letter-spacing: .6px; margin: 4px 0 10px; }
@@ -929,7 +931,7 @@ export default function InvoicesPage({
         </head>
         <body>
           <div class="doc ${layoutKey}">
-            <div class="title">${titleUpper}</div>
+            ${logoMarkup ? `<div class="doc-header">${logoMarkup}</div>` : ""}
             <div class="party">
               <div class="block">
                 <h5>Seller</h5>
@@ -955,13 +957,15 @@ export default function InvoicesPage({
               </div>
             </div>
 
+            <div class="title">${titleUpper}</div>
+
             <div class="meta">
               <div class="row"><div>Receipt No.:</div><div>${selectedInvoice.zimra_receipt_id || "-"}</div></div>
               <div class="row"><div>Customer reference No.:</div><div>${selectedInvoice.payment_reference || selectedInvoice.notes || "-"}</div></div>
               <div class="row"><div>Invoice No.:</div><div>${selectedInvoice.reference}</div></div>
               <div class="row"><div>Order No.:</div><div>${linkedQuotation?.reference || "-"}</div></div>
-              <div class="row"><div>Device Serial No.:</div><div>${devices.find((d)=>d.id===selectedInvoice.device_id)?.serial_number || "-"}</div></div>
-              <div class="row"><div>Device ID:</div><div>${devices.find((d)=>d.id===selectedInvoice.device_id)?.device_id || "-"}</div></div>
+              <div class="row"><div>Device Serial No.:</div><div>${devices.find((d) => d.id === selectedInvoice.device_id)?.serial_number || "-"}</div></div>
+              <div class="row"><div>Device ID:</div><div>${devices.find((d) => d.id === selectedInvoice.device_id)?.device_id || "-"}</div></div>
               <div class="row"><div>Date:</div><div>${invoiceDateLabel}${selectedInvoice.fiscalized_at ? ` ${new Date(selectedInvoice.fiscalized_at).toLocaleTimeString()}` : ""}</div></div>
               <div class="row"><div>Fiscal day No.:</div><div>${selectedInvoice.zimra_receipt_counter || "-"}</div></div>
             </div>
@@ -981,8 +985,13 @@ export default function InvoicesPage({
               <tbody>
                 ${lines
                   .map((line) => {
-                    const prod = line.product_id ? productMap.get(line.product_id) : null;
-                    const subtotal = (line.quantity || 0) * (line.unit_price || 0) * (1 - (line.discount || 0) / 100);
+                    const prod = line.product_id
+                      ? productMap.get(line.product_id)
+                      : null;
+                    const subtotal =
+                      (line.quantity || 0) *
+                      (line.unit_price || 0) *
+                      (1 - (line.discount || 0) / 100);
                     const tax = subtotal * ((line.vat_rate || 0) / 100);
                     const total = subtotal + tax;
                     return `
@@ -1010,7 +1019,7 @@ export default function InvoicesPage({
               selectedInvoice.zimra_verification_url
                 ? `
             <div class="qr">
-              <img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(zimraVerifyUrl)}" width="140" height="140" alt="QR" />
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(zimraVerifyUrl)}" width="100" height="100" alt="QR" />
               <div style="font-size:11px; margin-top:4px;">Verification code: <strong>${selectedInvoice.zimra_verification_code || "-"}</strong></div>
               <div style="font-size:11px; color: var(--muted);">You can verify this receipt manually at</div>
               <div style="font-size:11px; word-break:break-all; color:#1d4ed8;">${zimraVerifyUrl}</div>
@@ -2213,6 +2222,22 @@ export default function InvoicesPage({
           {selectedInvoice && !newMode && (
             <div className="card shadow-sm">
               <div className="card-body invoice-form">
+                {companySettings?.logo_data && (
+                  <div className="mb-3">
+                    <img
+                      src={companySettings.logo_data}
+                      alt="Company logo"
+                      style={{
+                        maxWidth: 180,
+                        maxHeight: 70,
+                        width: "auto",
+                        height: "auto",
+                        objectFit: "contain",
+                        display: "block",
+                      }}
+                    />
+                  </div>
+                )}
                 {/* Summary cards */}
                 <div className="row g-3 mb-4">
                   <div className="col-md-3">
