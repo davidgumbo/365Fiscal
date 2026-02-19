@@ -912,7 +912,7 @@ export default function InvoicesPage({
             .doc-header .logo { display: block; max-width: 180px; max-height: 70px; width: auto; height: auto; object-fit: contain; }
             .layout-boxed { border: 1px solid var(--line); }
             .layout-bubble { border: 1px solid var(--line); box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08); }
-            .title { text-align: center; font-weight: 700; font-size: 18px; letter-spacing: .6px; margin: 4px 0 10px; }
+            .title { text-align: center; text-decoration: underline; font-weight: 700; font-size: 18px; letter-spacing: .6px; margin: 4px 0 10px; }
             .party { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; background: #f3f4f6; border: 1px solid var(--line); padding: 10px 12px; }
             .party h5 { margin: 0 0 6px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; }
             .party .block { font-size: 12px; line-height: 1.6; }
@@ -926,6 +926,7 @@ export default function InvoicesPage({
             .totals-card .row { display: grid; grid-template-columns: 1fr auto; padding: 8px 10px; border-bottom: 1px solid var(--line); }
             .totals-card .row:last-child { border-bottom: none; font-weight: 700; }
             .qr { text-align: left; margin-top: 10px; }
+            .d-flex { display: flex; align-items: center; gap: 6px; }
             .footer { margin-top: 12px; font-size: 11px; color: var(--muted); text-align: center; }
           </style>
         </head>
@@ -960,14 +961,14 @@ export default function InvoicesPage({
             <div class="title">${titleUpper}</div>
 
             <div class="meta">
-              <div class="row"><div>Receipt No.:</div><div>${selectedInvoice.zimra_receipt_id || "-"}</div></div>
-              <div class="row"><div>Customer reference No.:</div><div>${selectedInvoice.payment_reference || selectedInvoice.notes || "-"}</div></div>
-              <div class="row"><div>Invoice No.:</div><div>${selectedInvoice.reference}</div></div>
-              <div class="row"><div>Order No.:</div><div>${linkedQuotation?.reference || "-"}</div></div>
-              <div class="row"><div>Device Serial No.:</div><div>${devices.find((d) => d.id === selectedInvoice.device_id)?.serial_number || "-"}</div></div>
+              <div class="row"><div>Receipt No:</div><div>${selectedInvoice.zimra_receipt_id || "-"}</div></div>
+              <div class="row"><div>Customer reference No:</div><div>${selectedInvoice.payment_reference || selectedInvoice.notes || "-"}</div></div>
+              <div class="row"><div>Invoice No:</div><div>${selectedInvoice.reference}</div></div>
+              <div class="row"><div>Order No:</div><div>${linkedQuotation?.reference || "-"}</div></div>
+              <div class="row"><div>Device Serial No:</div><div>${devices.find((d) => d.id === selectedInvoice.device_id)?.serial_number || "-"}</div></div>
               <div class="row"><div>Device ID:</div><div>${devices.find((d) => d.id === selectedInvoice.device_id)?.device_id || "-"}</div></div>
               <div class="row"><div>Date:</div><div>${invoiceDateLabel}${selectedInvoice.fiscalized_at ? ` ${new Date(selectedInvoice.fiscalized_at).toLocaleTimeString()}` : ""}</div></div>
-              <div class="row"><div>Fiscal day No.:</div><div>${selectedInvoice.zimra_receipt_counter || "-"}</div></div>
+              <div class="row"><div>Fiscal day No:</div><div>${selectedInvoice.zimra_receipt_counter || "-"}</div></div>
             </div>
 
             <table>
@@ -1018,11 +1019,13 @@ export default function InvoicesPage({
             ${
               selectedInvoice.zimra_verification_url
                 ? `
-            <div class="qr">
+            <div class="qr d-flex">
               <img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(zimraVerifyUrl)}" width="100" height="100" alt="QR" />
-              <div style="font-size:11px; margin-top:4px;">Verification code: <strong>${selectedInvoice.zimra_verification_code || "-"}</strong></div>
-              <div style="font-size:11px; color: var(--muted);">You can verify this receipt manually at</div>
-              <div style="font-size:11px; word-break:break-all; color:#1d4ed8;">${zimraVerifyUrl}</div>
+              <div>              
+                <div style="font-size:11px; margin-top:4px;">Verification code: <strong>${selectedInvoice.zimra_verification_code || "-"}</strong></div>
+                <div style="font-size:11px; color: var(--muted);">You can verify this receipt manually at</div>
+                <div style="font-size:11px; word-break:break-all; color:#1d4ed8;">${zimraVerifyUrl}</div>
+              </div>
             </div>
             `
                 : ""
