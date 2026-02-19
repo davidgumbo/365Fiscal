@@ -256,7 +256,7 @@ const TrashIcon = () => (
     viewBox="0 0 24 24"
     strokeWidth={1.5}
     stroke="currentColor"
-    className="size-6"
+    className="size-5"
     width="16"
     height="16"
     aria-hidden="true"
@@ -1263,7 +1263,7 @@ export default function InventoryPage() {
                   </button>
                   {!isNew && (
                     <button
-                      className="danger w-12 h-12"
+                      className="danger"
                       title="Delete"
                       aria-label="Delete"
                       onClick={() => {
