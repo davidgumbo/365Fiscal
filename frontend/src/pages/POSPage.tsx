@@ -934,7 +934,7 @@ export default function POSPage() {
               </div>
               {pinError && <div className="pos-error">{pinError}</div>}
             </div>
-            <div className="pos-dialog-footer">
+            <div className="pos-dialog-footer flex">
               <button
                 className="pos-btn pos-btn-ghost"
                 onClick={() => navigate("/")}

@@ -8725,7 +8725,9 @@ button.danger:disabled {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  margin: 0 1rem;
 }
+
 .pos-topbar-center {
   flex: 1;
   display: flex;
