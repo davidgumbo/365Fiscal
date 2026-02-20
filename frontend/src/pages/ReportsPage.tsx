@@ -618,7 +618,10 @@ export default function ReportsPage() {
       return true;
     });
 
-    const open = filtered.filter((po) => (po.status || "draft") !== "received");
+    // Treat "unpaid" purchase orders as confirmed POs that are not yet received.
+    const open = filtered.filter(
+      (po) => (po.status || "draft") === "confirmed",
+    );
 
     const totalAmount = open.reduce((s, p) => s + (p.total_amount || 0), 0);
 
@@ -996,10 +999,10 @@ export default function ReportsPage() {
       );
     } else if (activeReport === "creditors" && creditorsReport) {
       filename = `creditors-${dateRange.from}-to-${dateRange.to}.csv`;
-      rows.push(["Creditors", `${dateRange.from} to ${dateRange.to}`]);
+      rows.push(["Creditors - Unpaid Purchase Orders", `${dateRange.from} to ${dateRange.to}`]);
       rows.push([]);
       rows.push(["Total Purchase Orders", String(creditorsReport.total_orders)]);
-      rows.push(["Open Purchase Orders", String(creditorsReport.open_orders)]);
+      rows.push(["Unpaid Purchase Orders", String(creditorsReport.open_orders)]);
       rows.push(["Total Outstanding", creditorsReport.total_amount.toFixed(2)]);
       rows.push([]);
       rows.push(["By Vendor"]);
@@ -2043,9 +2046,9 @@ export default function ReportsPage() {
 
               <div className="report-grid">
                 <div className="report-card">
-                  <h3>Creditors by Vendor</h3>
+                  <h3>Unpaid Purchase Orders by Vendor</h3>
                   {creditorsReport.by_vendor.length === 0 ? (
-                    <p className="empty-state">No open purchase orders in this period.</p>
+                    <p className="empty-state">No unpaid purchase orders in this period.</p>
                   ) : (
                     <table className="report-table">
                       <thead>
@@ -2069,9 +2072,9 @@ export default function ReportsPage() {
                 </div>
 
                 <div className="report-card">
-                  <h3>Recent Open Purchase Orders</h3>
+                  <h3>Recent Unpaid Purchase Orders</h3>
                   {creditorsReport.recent_orders.length === 0 ? (
-                    <p className="empty-state">No open purchase orders in this period.</p>
+                    <p className="empty-state">No unpaid purchase orders in this period.</p>
                   ) : (
                     <table className="report-table">
                       <thead>
