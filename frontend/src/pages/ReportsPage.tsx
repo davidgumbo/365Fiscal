@@ -158,20 +158,35 @@ interface StockReport {
   }[];
 }
 
-interface PaymentReport {
-  total_payments: number;
-  total_amount: number;
-  reconciled_count: number;
-  reconciled_amount: number;
-  pending_count: number;
-  pending_amount: number;
-  by_method: { method: string; count: number; amount: number }[];
-  recent_payments: {
+interface ReceivableReport {
+  total_invoices: number;
+  unpaid_invoices: number;
+  partial_invoices: number;
+  total_invoiced: number;
+  total_due: number;
+  average_due: number;
+  recent_unpaid: {
     reference: string;
-    invoice: string;
+    customer: string;
+    total: number;
+    paid: number;
+    due: number;
+    date: string;
+    status: string;
+  }[];
+}
+
+interface CreditorsReport {
+  total_orders: number;
+  open_orders: number;
+  total_amount: number;
+  by_status: { status: string; count: number; amount: number }[];
+  by_vendor: { name: string; count: number; amount: number }[];
+  recent_orders: {
+    reference: string;
+    vendor: string;
     amount: number;
     date: string;
-    method: string;
     status: string;
   }[];
 }
@@ -212,7 +227,13 @@ interface PurchaseReportData {
   recent_orders: { reference: string; vendor: string; amount: number; date: string; status: string }[];
 }
 
-type ReportType = "sales" | "stock" | "payments" | "vat" | "purchases";
+type ReportType =
+  | "sales"
+  | "stock"
+  | "receivable"
+  | "creditors"
+  | "vat"
+  | "purchases";
 
 const MONTH_NAMES = [
   "Jan",
@@ -272,9 +293,10 @@ export default function ReportsPage() {
 
   const [salesReport, setSalesReport] = useState<SalesReport | null>(null);
   const [stockReport, setStockReport] = useState<StockReport | null>(null);
-  const [paymentReport, setPaymentReport] = useState<PaymentReport | null>(
-    null,
-  );
+  const [receivableReport, setReceivableReport] =
+    useState<ReceivableReport | null>(null);
+  const [creditorsReport, setCreditorsReport] =
+    useState<CreditorsReport | null>(null);
   const [vatReport, setVatReport] = useState<VatReport | null>(null);
   const [purchaseReport, setPurchaseReport] = useState<PurchaseReportData | null>(null);
   const [companySettings, setCompanySettings] =
@@ -495,81 +517,164 @@ export default function ReportsPage() {
     });
   }, [companyId]);
 
-  const loadPaymentReport = useCallback(async () => {
+  // Payments report replaced by Receivable + Creditors
+
+  const loadReceivableReport = useCallback(async () => {
     if (!companyId) return;
-    const payments = await apiFetch<PaymentItem[]>(
-      `/payments?company_id=${companyId}`,
-    ).catch(() => [] as PaymentItem[]);
-    const invoices = await apiFetch<Invoice[]>(
-      `/invoices?company_id=${companyId}`,
-    ).catch(() => [] as Invoice[]);
+
+    const [invoices, contacts] = await Promise.all([
+      apiFetch<Invoice[]>(`/invoices?company_id=${companyId}`).catch(
+        () => [] as Invoice[],
+      ),
+      apiFetch<{ id: number; name: string }[]>(
+        `/contacts?company_id=${companyId}`,
+      ).catch(() => [] as { id: number; name: string }[]),
+    ]);
 
     const fromDate = dateRange.from ? new Date(dateRange.from) : null;
     const toDate = dateRange.to ? new Date(dateRange.to + "T23:59:59") : null;
 
-    const filtered = payments.filter((p) => {
-      const d = p.payment_date
-        ? new Date(p.payment_date)
-        : new Date(p.created_at);
+    const contactLookup = new Map(contacts.map((c) => [c.id, c.name]));
+
+    const filtered = invoices.filter((inv) => {
+      if (inv.invoice_type === "credit_note") return false;
+      if (inv.status === "cancelled") return false;
+      const d = inv.invoice_date ? new Date(inv.invoice_date) : new Date(inv.created_at);
       if (fromDate && d < fromDate) return false;
       if (toDate && d > toDate) return false;
       return true;
     });
 
-    const invLookup = new Map(invoices.map((i) => [i.id, i.reference]));
+    const withDue = filtered
+      .map((inv) => {
+        const total = inv.total_amount || 0;
+        const paid = inv.amount_paid || 0;
+        const due = Math.max(0, total - paid);
+        return { inv, total, paid, due };
+      })
+      .filter(({ due }) => due > 0.00001);
 
-    const totalAmount = filtered.reduce((s, p) => s + (p.amount || 0), 0);
-    const reconciled = filtered.filter(
-      (p) => p.status === "reconciled" || p.reconciled_at,
-    );
-    const reconciledAmount = reconciled.reduce(
-      (s, p) => s + (p.amount || 0),
-      0,
-    );
-    const pending = filtered.filter(
-      (p) => p.status !== "reconciled" && p.status !== "cancelled",
-    );
-    const pendingAmount = pending.reduce((s, p) => s + (p.amount || 0), 0);
+    const unpaid = withDue.filter(({ paid }) => (paid || 0) <= 0.00001);
+    const partial = withDue.filter(({ paid }) => (paid || 0) > 0.00001);
 
-    // By method
-    const methodMap = new Map<string, { count: number; amount: number }>();
-    for (const p of filtered) {
-      const method = p.payment_method || "other";
-      const existing = methodMap.get(method);
-      if (existing) {
-        existing.count++;
-        existing.amount += p.amount || 0;
-      } else {
-        methodMap.set(method, { count: 1, amount: p.amount || 0 });
-      }
+    const totalInvoiced = filtered.reduce((s, i) => s + (i.total_amount || 0), 0);
+    const totalDue = withDue.reduce((s, x) => s + x.due, 0);
+
+    const recent = withDue
+      .slice()
+      .sort((a, b) => {
+        const da = a.inv.invoice_date ? new Date(a.inv.invoice_date) : new Date(a.inv.created_at);
+        const db = b.inv.invoice_date ? new Date(b.inv.invoice_date) : new Date(b.inv.created_at);
+        return db.getTime() - da.getTime();
+      })
+      .slice(0, 25)
+      .map(({ inv, total, paid, due }) => ({
+        reference: inv.reference,
+        customer: inv.customer_id
+          ? contactLookup.get(inv.customer_id) || `Customer #${inv.customer_id}`
+          : "-",
+        total,
+        paid,
+        due,
+        date: inv.invoice_date
+          ? new Date(inv.invoice_date).toLocaleDateString()
+          : new Date(inv.created_at).toLocaleDateString(),
+        status: inv.status,
+      }));
+
+    setReceivableReport({
+      total_invoices: filtered.length,
+      unpaid_invoices: unpaid.length,
+      partial_invoices: partial.length,
+      total_invoiced: totalInvoiced,
+      total_due: totalDue,
+      average_due: withDue.length > 0 ? totalDue / withDue.length : 0,
+      recent_unpaid: recent,
+    });
+  }, [companyId, dateRange]);
+
+  const loadCreditorsReport = useCallback(async () => {
+    if (!companyId) return;
+
+    const [purchases, contacts] = await Promise.all([
+      apiFetch<PurchaseOrder[]>(`/purchases?company_id=${companyId}`).catch(
+        () => [] as PurchaseOrder[],
+      ),
+      apiFetch<{ id: number; name: string }[]>(
+        `/contacts?company_id=${companyId}`,
+      ).catch(() => [] as { id: number; name: string }[]),
+    ]);
+
+    const fromDate = dateRange.from ? new Date(dateRange.from) : null;
+    const toDate = dateRange.to ? new Date(dateRange.to + "T23:59:59") : null;
+
+    const contactLookup = new Map(contacts.map((c) => [c.id, c.name]));
+
+    const filtered = purchases.filter((po) => {
+      if (po.status === "cancelled") return false;
+      const d = po.order_date ? new Date(po.order_date) : null;
+      if (fromDate && d && d < fromDate) return false;
+      if (toDate && d && d > toDate) return false;
+      return true;
+    });
+
+    const open = filtered.filter((po) => (po.status || "draft") !== "received");
+
+    const totalAmount = open.reduce((s, p) => s + (p.total_amount || 0), 0);
+
+    const statusMap = new Map<string, { count: number; amount: number }>();
+    for (const po of open) {
+      const st = po.status || "draft";
+      const ex = statusMap.get(st) || { count: 0, amount: 0 };
+      ex.count++;
+      ex.amount += po.total_amount || 0;
+      statusMap.set(st, ex);
     }
 
-    setPaymentReport({
-      total_payments: filtered.length,
+    const vendorMap = new Map<
+      number,
+      { name: string; count: number; amount: number }
+    >();
+    for (const po of open) {
+      const vid = po.vendor_id || 0;
+      const vname = po.vendor_id
+        ? contactLookup.get(po.vendor_id) || `Vendor #${po.vendor_id}`
+        : "No Vendor";
+      const ex = vendorMap.get(vid) || { name: vname, count: 0, amount: 0 };
+      ex.count++;
+      ex.amount += po.total_amount || 0;
+      vendorMap.set(vid, ex);
+    }
+
+    const recentOrders = open
+      .slice()
+      .sort((a, b) => {
+        const da = a.order_date ? new Date(a.order_date).getTime() : 0;
+        const db = b.order_date ? new Date(b.order_date).getTime() : 0;
+        return db - da;
+      })
+      .slice(0, 25)
+      .map((po) => ({
+        reference: po.reference,
+        vendor: po.vendor_id
+          ? contactLookup.get(po.vendor_id) || `Vendor #${po.vendor_id}`
+          : "-",
+        amount: po.total_amount || 0,
+        date: po.order_date ? new Date(po.order_date).toLocaleDateString() : "-",
+        status: po.status,
+      }));
+
+    setCreditorsReport({
+      total_orders: filtered.length,
+      open_orders: open.length,
       total_amount: totalAmount,
-      reconciled_count: reconciled.length,
-      reconciled_amount: reconciledAmount,
-      pending_count: pending.length,
-      pending_amount: pendingAmount,
-      by_method: Array.from(methodMap.entries())
+      by_status: Array.from(statusMap.entries())
         .sort(([, a], [, b]) => b.amount - a.amount)
-        .map(([method, data]) => ({
-          method: method.replace(/_/g, " "),
-          count: data.count,
-          amount: data.amount,
-        })),
-      recent_payments: filtered.slice(0, 15).map((p) => ({
-        reference: p.reference || "-",
-        invoice: p.invoice_id
-          ? invLookup.get(p.invoice_id) || `INV-${p.invoice_id}`
-          : "-",
-        amount: p.amount || 0,
-        date: p.payment_date
-          ? new Date(p.payment_date).toLocaleDateString()
-          : "-",
-        method: (p.payment_method || "other").replace(/_/g, " "),
-        status: p.status,
-      })),
+        .map(([status, data]) => ({ status, count: data.count, amount: data.amount })),
+      by_vendor: Array.from(vendorMap.values())
+        .sort((a, b) => b.amount - a.amount)
+        .slice(0, 10),
+      recent_orders: recentOrders,
     });
   }, [companyId, dateRange]);
 
@@ -782,7 +887,8 @@ export default function ReportsPage() {
     try {
       if (activeReport === "sales") await loadSalesReport();
       else if (activeReport === "stock") await loadStockReport();
-      else if (activeReport === "payments") await loadPaymentReport();
+      else if (activeReport === "receivable") await loadReceivableReport();
+      else if (activeReport === "creditors") await loadCreditorsReport();
       else if (activeReport === "vat") await loadVatReport();
       else if (activeReport === "purchases") await loadPurchaseReport();
     } catch (err: any) {
@@ -795,7 +901,8 @@ export default function ReportsPage() {
     activeReport,
     loadSalesReport,
     loadStockReport,
-    loadPaymentReport,
+    loadReceivableReport,
+    loadCreditorsReport,
     loadVatReport,
     loadPurchaseReport,
   ]);
@@ -835,7 +942,7 @@ export default function ReportsPage() {
       );
     } else if (activeReport === "stock" && stockReport) {
       filename = `stock-report-${new Date().toISOString().split("T")[0]}.csv`;
-      rows.push(["Stock Report"]);
+      rows.push(["Stock Valuation"]);
       rows.push([]);
       rows.push(["Total Products", String(stockReport.total_products)]);
       rows.push(["Total Inventory Value", stockReport.total_value.toFixed(2)]);
@@ -864,32 +971,53 @@ export default function ReportsPage() {
           ]),
         );
       }
-    } else if (activeReport === "payments" && paymentReport) {
-      filename = `payments-report-${dateRange.from}-to-${dateRange.to}.csv`;
-      rows.push(["Payments Report", `${dateRange.from} to ${dateRange.to}`]);
+    } else if (activeReport === "receivable" && receivableReport) {
+      filename = `receivable-${dateRange.from}-to-${dateRange.to}.csv`;
+      rows.push(["Receivable", `${dateRange.from} to ${dateRange.to}`]);
       rows.push([]);
-      rows.push(["Total Payments", String(paymentReport.total_payments)]);
-      rows.push(["Total Amount", paymentReport.total_amount.toFixed(2)]);
-      rows.push(["Reconciled", paymentReport.reconciled_amount.toFixed(2)]);
-      rows.push(["Pending", paymentReport.pending_amount.toFixed(2)]);
+      rows.push(["Total Invoices", String(receivableReport.total_invoices)]);
+      rows.push(["Unpaid Invoices", String(receivableReport.unpaid_invoices)]);
+      rows.push(["Partial Invoices", String(receivableReport.partial_invoices)]);
+      rows.push(["Total Invoiced", receivableReport.total_invoiced.toFixed(2)]);
+      rows.push(["Total Outstanding", receivableReport.total_due.toFixed(2)]);
       rows.push([]);
-      rows.push(["By Payment Method"]);
-      rows.push(["Method", "Count", "Amount"]);
-      paymentReport.by_method.forEach((m) =>
-        rows.push([m.method, String(m.count), m.amount.toFixed(2)]),
+      rows.push(["Unpaid Invoices"]);
+      rows.push(["Reference", "Customer", "Total", "Paid", "Due", "Date", "Status"]);
+      receivableReport.recent_unpaid.forEach((i) =>
+        rows.push([
+          i.reference,
+          i.customer,
+          i.total.toFixed(2),
+          i.paid.toFixed(2),
+          i.due.toFixed(2),
+          i.date,
+          i.status,
+        ]),
+      );
+    } else if (activeReport === "creditors" && creditorsReport) {
+      filename = `creditors-${dateRange.from}-to-${dateRange.to}.csv`;
+      rows.push(["Creditors", `${dateRange.from} to ${dateRange.to}`]);
+      rows.push([]);
+      rows.push(["Total Purchase Orders", String(creditorsReport.total_orders)]);
+      rows.push(["Open Purchase Orders", String(creditorsReport.open_orders)]);
+      rows.push(["Total Outstanding", creditorsReport.total_amount.toFixed(2)]);
+      rows.push([]);
+      rows.push(["By Vendor"]);
+      rows.push(["Vendor", "Orders", "Amount"]);
+      creditorsReport.by_vendor.forEach((v) =>
+        rows.push([v.name, String(v.count), v.amount.toFixed(2)]),
       );
       rows.push([]);
-      rows.push(["Recent Payments"]);
-      rows.push(["Reference", "Invoice", "Amount", "Date", "Method", "Status"]);
-      paymentReport.recent_payments.forEach((p) =>
-        rows.push([
-          p.reference,
-          p.invoice,
-          p.amount.toFixed(2),
-          p.date,
-          p.method,
-          p.status,
-        ]),
+      rows.push(["By Status"]);
+      rows.push(["Status", "Count", "Amount"]);
+      creditorsReport.by_status.forEach((s) =>
+        rows.push([s.status, String(s.count), s.amount.toFixed(2)]),
+      );
+      rows.push([]);
+      rows.push(["Recent Open Orders"]);
+      rows.push(["Reference", "Vendor", "Amount", "Date", "Status"]);
+      creditorsReport.recent_orders.forEach((o) =>
+        rows.push([o.reference, o.vendor, o.amount.toFixed(2), o.date, o.status]),
       );
     } else if (activeReport === "vat" && vatReport) {
       filename = `vat-return-${dateRange.from}-to-${dateRange.to}.csv`;
@@ -955,9 +1083,11 @@ export default function ReportsPage() {
       activeReport === "sales"
         ? "Sales Report"
         : activeReport === "stock"
-          ? "Stock Report"
-          : activeReport === "payments"
-            ? "Payments Report"
+          ? "Stock Valuation"
+          : activeReport === "receivable"
+            ? "Receivable"
+            : activeReport === "creditors"
+              ? "Creditors"
             : activeReport === "purchases"
               ? "Purchase Report"
               : "VAT RETURN";
@@ -1006,21 +1136,32 @@ export default function ReportsPage() {
         </tbody></table>`
             : ""
         }`;
-    } else if (activeReport === "payments" && paymentReport) {
+    } else if (activeReport === "receivable" && receivableReport) {
       bodyHTML = `
         <div class="summary-grid">
-          <div class="summary-box"><div class="label">Total Payments</div><div class="val">${paymentReport.total_payments}</div></div>
-          <div class="summary-box"><div class="label">Total Amount</div><div class="val">${formatCurrency(paymentReport.total_amount)}</div></div>
-          <div class="summary-box"><div class="label">Reconciled</div><div class="val">${formatCurrency(paymentReport.reconciled_amount)}</div></div>
-          <div class="summary-box"><div class="label">Pending</div><div class="val">${formatCurrency(paymentReport.pending_amount)}</div></div>
+          <div class="summary-box"><div class="label">Unpaid Invoices</div><div class="val">${receivableReport.unpaid_invoices}</div></div>
+          <div class="summary-box"><div class="label">Partial Invoices</div><div class="val">${receivableReport.partial_invoices}</div></div>
+          <div class="summary-box"><div class="label">Total Outstanding</div><div class="val">${formatCurrency(receivableReport.total_due)}</div></div>
+          <div class="summary-box"><div class="label">Avg Due</div><div class="val">${formatCurrency(receivableReport.average_due)}</div></div>
         </div>
-        <h3>By Payment Method</h3>
-        <table><thead><tr><th>Method</th><th style="text-align:right">Count</th><th style="text-align:right">Amount</th></tr></thead><tbody>
-          ${paymentReport.by_method.map((m) => `<tr><td style="text-transform:capitalize">${m.method}</td><td style="text-align:right">${m.count}</td><td style="text-align:right">${formatCurrency(m.amount)}</td></tr>`).join("")}
+        <h3>Unpaid Invoices</h3>
+        <table><thead><tr><th>Reference</th><th>Customer</th><th style="text-align:right">Total</th><th style="text-align:right">Paid</th><th style="text-align:right">Due</th><th>Date</th><th>Status</th></tr></thead><tbody>
+          ${receivableReport.recent_unpaid.map((i) => `<tr><td>${i.reference}</td><td>${i.customer}</td><td style="text-align:right">${formatCurrency(i.total)}</td><td style="text-align:right">${formatCurrency(i.paid)}</td><td style="text-align:right">${formatCurrency(i.due)}</td><td>${i.date}</td><td>${i.status}</td></tr>`).join("")}
+        </tbody></table>`;
+    } else if (activeReport === "creditors" && creditorsReport) {
+      bodyHTML = `
+        <div class="summary-grid">
+          <div class="summary-box"><div class="label">Open Orders</div><div class="val">${creditorsReport.open_orders}</div></div>
+          <div class="summary-box"><div class="label">Total Outstanding</div><div class="val">${formatCurrency(creditorsReport.total_amount)}</div></div>
+          <div class="summary-box"><div class="label">Top Vendors</div><div class="val">${creditorsReport.by_vendor.length}</div></div>
+        </div>
+        <h3>By Vendor</h3>
+        <table><thead><tr><th>Vendor</th><th style="text-align:right">Orders</th><th style="text-align:right">Amount</th></tr></thead><tbody>
+          ${creditorsReport.by_vendor.map((v) => `<tr><td>${v.name}</td><td style="text-align:right">${v.count}</td><td style="text-align:right">${formatCurrency(v.amount)}</td></tr>`).join("")}
         </tbody></table>
-        <h3>Recent Payments</h3>
-        <table><thead><tr><th>Reference</th><th>Invoice</th><th style="text-align:right">Amount</th><th>Date</th><th>Method</th><th>Status</th></tr></thead><tbody>
-          ${paymentReport.recent_payments.map((p) => `<tr><td>${p.reference}</td><td>${p.invoice}</td><td style="text-align:right">${formatCurrency(p.amount)}</td><td>${p.date}</td><td style="text-transform:capitalize">${p.method}</td><td>${p.status}</td></tr>`).join("")}
+        <h3>Recent Open Orders</h3>
+        <table><thead><tr><th>Reference</th><th>Vendor</th><th style="text-align:right">Amount</th><th>Date</th><th>Status</th></tr></thead><tbody>
+          ${creditorsReport.recent_orders.map((o) => `<tr><td>${o.reference}</td><td>${o.vendor}</td><td style="text-align:right">${formatCurrency(o.amount)}</td><td>${o.date}</td><td>${o.status}</td></tr>`).join("")}
         </tbody></table>`;
     } else if (activeReport === "vat" && vatReport) {
       const vatPeriod = `${vatReport.period_from || dateRange.from} to ${vatReport.period_to || dateRange.to}`;
@@ -1052,24 +1193,26 @@ export default function ReportsPage() {
             <tr><td>Less: Input VAT (Purchases)</td><td style="text-align:right;font-weight:600;color:#dc2626">(${formatCurrency(vatReport.input_tax)})</td></tr>
             ${vatReport.credit_notes_tax > 0 ? `<tr><td>Less: Credit Note VAT</td><td style="text-align:right;font-weight:600;color:#dc2626">(${formatCurrency(vatReport.credit_notes_tax)})</td></tr>` : ""}
             <tr style="border-top:3px double #333;font-size:16px;font-weight:700"><td>Net VAT ${vatReport.net_tax >= 0 ? "Payable" : "Refundable"}</td><td style="text-align:right;color:${vatReport.net_tax >= 0 ? "#dc2626" : "#16a34a"}">${formatCurrency(Math.abs(vatReport.net_tax))}</td></tr>
-          </tbody>
-        </table>
-        <div style="margin-top:40px;padding:16px;border:1px solid #e5e7eb;border-radius:8px;background:#f9fafb">
-          <p style="margin:0 0 8px;font-weight:600">Declaration</p>
-          <p style="margin:0;font-size:11px;color:#666">I declare that the information given in this return is correct and complete to the best of my knowledge and belief.</p>
-          <div style="display:flex;justify-content:space-between;margin-top:24px;font-size:11px">
-            <div>Signature: ____________________</div>
-            <div>Date: ____________________</div>
-          </div>
-        </div>`;
-    } else if (activeReport === "purchases" && purchaseReport) {
-      bodyHTML = `
-        <div class="summary-grid">
-          <div class="summary-box"><div class="label">Total Orders</div><div class="val">${purchaseReport.total_orders}</div></div>
-          <div class="summary-box"><div class="label">Total Amount</div><div class="val">${formatCurrency(purchaseReport.total_amount)}</div></div>
-          <div class="summary-box"><div class="label">Total Tax</div><div class="val">${formatCurrency(purchaseReport.total_tax)}</div></div>
-          <div class="summary-box"><div class="label">Avg Order</div><div class="val">${formatCurrency(purchaseReport.average_order)}</div></div>
-        </div>
+              <div
+                style={{
+                  fontSize: 14,
+                  fontWeight: 700,
+                  letterSpacing: 1,
+                  textTransform: "uppercase",
+                }}
+              >
+                {activeReport === "sales"
+                  ? "Sales Report"
+                  : activeReport === "stock"
+                    ? "Stock Valuation"
+                    : activeReport === "receivable"
+                      ? "Receivable"
+                      : activeReport === "creditors"
+                        ? "Creditors"
+                        : activeReport === "purchases"
+                          ? "Purchase Report"
+                          : "VAT Return"}
+              </div>
         <h3>By Vendor</h3>
         <table><thead><tr><th>Vendor</th><th style="text-align:right">Orders</th><th style="text-align:right">Amount</th></tr></thead><tbody>
           ${purchaseReport.by_vendor.map((v) => `<tr><td>${v.name}</td><td style="text-align:right">${v.count}</td><td style="text-align:right">${formatCurrency(v.amount)}</td></tr>`).join("")}
@@ -1137,7 +1280,8 @@ export default function ReportsPage() {
     setSelectedCompanyId(null);
     setSalesReport(null);
     setStockReport(null);
-    setPaymentReport(null);
+    setReceivableReport(null);
+    setCreditorsReport(null);
     setVatReport(null);
     setPurchaseReport(null);
     navigate("/reports");
@@ -1319,7 +1463,7 @@ export default function ReportsPage() {
               },
               {
                 key: "stock",
-                label: "STOCK REPORT",
+                label: "STOCK VALUATION",
                 icon: (
                   <svg
                     width="18"
@@ -1339,8 +1483,8 @@ export default function ReportsPage() {
                 ),
               },
               {
-                key: "payments",
-                label: "PAYMENTS REPORT",
+                key: "receivable",
+                label: "RECEIVABLE",
                 icon: (
                   <svg
                     width="18"
@@ -1352,8 +1496,31 @@ export default function ReportsPage() {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   >
-                    <rect width="20" height="14" x="2" y="5" rx="2" />
-                    <path d="M2 10h20" />
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <path d="M8 13h8" />
+                    <path d="M8 17h8" />
+                  </svg>
+                ),
+              },
+              {
+                key: "creditors",
+                label: "CREDITORS",
+                icon: (
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="var(--rose-500)"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="9" cy="21" r="1" />
+                    <circle cx="20" cy="21" r="1" />
+                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                    <path d="M8 10h10" />
                   </svg>
                 ),
               },
@@ -1785,151 +1952,150 @@ export default function ReportsPage() {
             </div>
           )}
 
-          {/* ─── Payments Report ─── */}
-          {!loading && activeReport === "payments" && paymentReport && (
+          {/* ─── Receivable (Unpaid Invoices) ─── */}
+          {!loading && activeReport === "receivable" && receivableReport && (
             <div className="report-content">
               <div className="metrics-row">
                 <MetricCard
-                  label="Total Payments"
-                  value={String(paymentReport.total_payments)}
+                  label="Unpaid Invoices"
+                  value={String(receivableReport.unpaid_invoices)}
                 />
                 <MetricCard
-                  label="Total Amount"
-                  value={formatCurrency(paymentReport.total_amount)}
+                  label="Total Outstanding"
+                  value={formatCurrency(receivableReport.total_due)}
                 />
                 <MetricCard
-                  label="Reconciled"
-                  value={`${paymentReport.reconciled_count} (${formatCurrency(paymentReport.reconciled_amount)})`}
-                  variant="success"
-                />
-                <MetricCard
-                  label="Pending"
-                  value={`${paymentReport.pending_count} (${formatCurrency(paymentReport.pending_amount)})`}
+                  label="Partial Invoices"
+                  value={String(receivableReport.partial_invoices)}
                   variant="warning"
+                />
+                <MetricCard
+                  label="Avg Due"
+                  value={formatCurrency(receivableReport.average_due)}
                 />
               </div>
 
               <div className="report-grid">
                 <div className="report-card">
-                  <h3>Payments by Method</h3>
-                  {paymentReport.by_method.length === 0 ? (
-                    <p className="empty-state">No payments in this period.</p>
-                  ) : (
-                    <>
-                      <table className="report-table">
-                        <thead>
-                          <tr>
-                            <th>Method</th>
-                            <th className="text-right">Count</th>
-                            <th className="text-right">Amount</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {paymentReport.by_method.map((m, i) => (
-                            <tr key={i}>
-                              <td style={{ textTransform: "capitalize" }}>
-                                {m.method}
-                              </td>
-                              <td className="text-right">{m.count}</td>
-                              <td className="text-right">
-                                {formatCurrency(m.amount)}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                      {/* Horizontal bar chart for payment methods */}
-                      <div style={{ marginTop: 16 }}>
-                        {paymentReport.by_method.map((m, i) => {
-                          const maxAmt = Math.max(
-                            ...paymentReport.by_method.map((x) => x.amount),
-                            1,
-                          );
-                          const pct = (m.amount / maxAmt) * 100;
-                          return (
-                            <div key={i} style={{ marginBottom: 8 }}>
-                              <div
-                                style={{
-                                  display: "flex",
-                                  justifyContent: "space-between",
-                                  fontSize: 12,
-                                  marginBottom: 3,
-                                }}
-                              >
-                                <span style={{ textTransform: "capitalize" }}>
-                                  {m.method}
-                                </span>
-                                <span style={{ fontWeight: 600 }}>
-                                  {formatCurrency(m.amount)}
-                                </span>
-                              </div>
-                              <div
-                                style={{
-                                  height: 8,
-                                  background: "var(--gray-100)",
-                                  borderRadius: 4,
-                                  overflow: "hidden",
-                                }}
-                              >
-                                <div
-                                  style={{
-                                    width: `${pct}%`,
-                                    height: "100%",
-                                    background: "var(--blue-600)",
-                                    borderRadius: 4,
-                                    transition: "width 0.5s",
-                                  }}
-                                />
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                <div className="report-card">
-                  <h3>Recent Payments</h3>
-                  {paymentReport.recent_payments.length === 0 ? (
-                    <p className="empty-state">No payments in this period.</p>
+                  <h3>Unpaid Invoices</h3>
+                  {receivableReport.recent_unpaid.length === 0 ? (
+                    <p className="empty-state">No unpaid invoices in this period.</p>
                   ) : (
                     <table className="report-table">
                       <thead>
                         <tr>
                           <th>Reference</th>
-                          <th>Invoice</th>
-                          <th className="text-right">Amount</th>
+                          <th>Customer</th>
+                          <th className="text-right">Total</th>
+                          <th className="text-right">Paid</th>
+                          <th className="text-right">Due</th>
                           <th>Date</th>
-                          <th>Method</th>
                           <th>Status</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {paymentReport.recent_payments.map((p, i) => (
+                        {receivableReport.recent_unpaid.map((inv, i) => (
                           <tr key={i}>
                             <td
                               style={{ fontFamily: "monospace", fontSize: 12 }}
                             >
-                              {p.reference}
+                              {inv.reference}
                             </td>
-                            <td
-                              style={{ fontFamily: "monospace", fontSize: 12 }}
-                            >
-                              {p.invoice}
-                            </td>
-                            <td className="text-right">
-                              {formatCurrency(p.amount)}
-                            </td>
-                            <td>{p.date}</td>
-                            <td style={{ textTransform: "capitalize" }}>
-                              {p.method}
-                            </td>
+                            <td>{inv.customer}</td>
+                            <td className="text-right">{formatCurrency(inv.total)}</td>
+                            <td className="text-right">{formatCurrency(inv.paid)}</td>
+                            <td className="text-right">{formatCurrency(inv.due)}</td>
+                            <td>{inv.date}</td>
                             <td>
                               <span
-                                className={`badge ${p.status === "reconciled" ? "badge-success" : p.status === "posted" ? "badge-info" : p.status === "cancelled" ? "badge-danger" : "badge-secondary"}`}
+                                className={`badge ${inv.status === "paid" || inv.status === "fiscalized" ? "badge-success" : inv.status === "posted" ? "badge-info" : inv.status === "cancelled" ? "badge-danger" : "badge-secondary"}`}
                               >
-                                {p.status}
+                                {inv.status}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ─── Creditors (Open Purchase Orders) ─── */}
+          {!loading && activeReport === "creditors" && creditorsReport && (
+            <div className="report-content">
+              <div className="metrics-row">
+                <MetricCard
+                  label="Open Orders"
+                  value={String(creditorsReport.open_orders)}
+                />
+                <MetricCard
+                  label="Total Outstanding"
+                  value={formatCurrency(creditorsReport.total_amount)}
+                />
+                <MetricCard
+                  label="Total Orders"
+                  value={String(creditorsReport.total_orders)}
+                />
+              </div>
+
+              <div className="report-grid">
+                <div className="report-card">
+                  <h3>Creditors by Vendor</h3>
+                  {creditorsReport.by_vendor.length === 0 ? (
+                    <p className="empty-state">No open purchase orders in this period.</p>
+                  ) : (
+                    <table className="report-table">
+                      <thead>
+                        <tr>
+                          <th>Vendor</th>
+                          <th className="text-right">Orders</th>
+                          <th className="text-right">Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {creditorsReport.by_vendor.map((v, i) => (
+                          <tr key={i}>
+                            <td>{v.name}</td>
+                            <td className="text-right">{v.count}</td>
+                            <td className="text-right">{formatCurrency(v.amount)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+
+                <div className="report-card">
+                  <h3>Recent Open Purchase Orders</h3>
+                  {creditorsReport.recent_orders.length === 0 ? (
+                    <p className="empty-state">No open purchase orders in this period.</p>
+                  ) : (
+                    <table className="report-table">
+                      <thead>
+                        <tr>
+                          <th>Reference</th>
+                          <th>Vendor</th>
+                          <th className="text-right">Amount</th>
+                          <th>Date</th>
+                          <th>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {creditorsReport.recent_orders.map((o, i) => (
+                          <tr key={i}>
+                            <td style={{ fontFamily: "monospace", fontSize: 12 }}>{o.reference}</td>
+                            <td>{o.vendor}</td>
+                            <td className="text-right">{formatCurrency(o.amount)}</td>
+                            <td>{o.date}</td>
+                            <td>
+                              <span
+                                className={`badge ${o.status === "received" ? "badge-success" : o.status === "confirmed" ? "badge-info" : o.status === "cancelled" ? "badge-danger" : "badge-secondary"}`}
+                                style={{ textTransform: "capitalize" }}
+                              >
+                                {o.status}
                               </span>
                             </td>
                           </tr>
@@ -2274,7 +2440,8 @@ export default function ReportsPage() {
             !error &&
             ((activeReport === "sales" && !salesReport) ||
               (activeReport === "stock" && !stockReport) ||
-              (activeReport === "payments" && !paymentReport) ||
+              (activeReport === "receivable" && !receivableReport) ||
+              (activeReport === "creditors" && !creditorsReport) ||
               (activeReport === "vat" && !vatReport) ||
               (activeReport === "purchases" && !purchaseReport)) && (
               <div
