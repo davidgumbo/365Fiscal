@@ -172,9 +172,9 @@ export default function ExpensesPage() {
       const vendor =
         contacts.find((c) => c.id === e.vendor_id)?.name?.toLowerCase() || "";
       return (
-        e.reference.toLowerCase().includes(term) ||
-        e.description.toLowerCase().includes(term) ||
-        e.category.toLowerCase().includes(term) ||
+        (e.reference || "").toLowerCase().includes(term) ||
+        (e.description || "").toLowerCase().includes(term) ||
+        (e.category || "").toLowerCase().includes(term) ||
         vendor.includes(term)
       );
     });
@@ -184,6 +184,23 @@ export default function ExpensesPage() {
     () => expenses.find((e) => e.id === selectedExpenseId) ?? null,
     [expenses, selectedExpenseId],
   );
+
+  useEffect(() => {
+    if (selectedExpenseId && !expenses.some((e) => e.id === selectedExpenseId)) {
+      setSelectedExpenseId(null);
+      setIsEditing(false);
+    }
+  }, [expenses, selectedExpenseId]);
+
+  useEffect(() => {
+    if (
+      selectedExpenseId &&
+      !filteredExpenses.some((e) => e.id === selectedExpenseId)
+    ) {
+      setSelectedExpenseId(null);
+      setIsEditing(false);
+    }
+  }, [filteredExpenses, selectedExpenseId]);
 
   useEffect(() => {
     if (!selectedExpense) {
@@ -437,11 +454,24 @@ export default function ExpensesPage() {
 
       <div className="two-panel-left">
         <div className="sidebar-panel">
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 12,
+              marginBottom: 16,
+            }}
+          >
             <h4 style={{ margin: 0 }}>Expenses List</h4>
-            <button className="btn btn-secondary" onClick={startNew}>
-              + New
-            </button>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button className="btn btn-secondary" onClick={startNew}>
+                + New
+              </button>
+              <button className="btn btn-secondary" onClick={loadData}>
+                Refresh
+              </button>
+            </div>
           </div>
           <div style={{ marginTop: 6, color: "var(--muted)", fontSize: 13 }}>
             {isAdmin && company ? `Company: ${company.name}` : "Manage company expenses"}
@@ -521,9 +551,21 @@ export default function ExpensesPage() {
           <div style={{ marginTop: 14, maxHeight: "600px", overflowY: "auto" }}>
             {filteredExpenses.length === 0 ? (
               <div className="empty-state-pro">
-                <div style={{ color: "var(--muted)", padding: 12 }}>
-                  {loading ? "Loading…" : "No expenses found."}
-                </div>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="3" y="4" width="18" height="18" rx="2" />
+                  <path d="M7 2v4" />
+                  <path d="M17 2v4" />
+                  <path d="M3 10h18" />
+                </svg>
+                <h4>{loading ? "Loading…" : "No expenses"}</h4>
+                <p>{loading ? "Fetching expenses" : "Try adjusting your filters"}</p>
               </div>
             ) : (
               filteredExpenses.map((e) => {
@@ -533,10 +575,13 @@ export default function ExpensesPage() {
                   <div
                     key={e.id}
                     className={`list-item ${selectedExpenseId === e.id ? "active" : ""}`}
-                    onClick={() => setSelectedExpenseId(e.id)}
+                    onClick={() => {
+                      setSelectedExpenseId(e.id);
+                      setIsEditing(false);
+                    }}
                   >
                     <div style={{ flex: 1 }}>
-                      <div className="list-item-title">{e.reference}</div>
+                      <div className="list-item-title">{e.reference || "Expense"}</div>
                       <div className="list-item-sub">
                         {toDateInputValue(e.expense_date)} • {vendorName}
                       </div>
@@ -613,158 +658,196 @@ export default function ExpensesPage() {
             </div>
           </div>
 
-          <div className="form-grid-pro">
-            <div className="input-group">
-              <label className="input-label">Date</label>
-              <input
-                className="input-field"
-                type="date"
-                value={form.expense_date}
-                onChange={(e) => setForm((p) => ({ ...p, expense_date: e.target.value }))}
-                disabled={!isEditing}
-              />
-            </div>
+              {!selectedExpenseId && !isEditing ? (
+                <div className="empty-state-pro">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M12 2v20" />
+                    <path d="M2 12h20" />
+                  </svg>
+                  <h4>Select an expense</h4>
+                  <p>Choose one from the list, or click “+ New”.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="form-grid-pro">
+                    <div className="input-group">
+                      <label className="input-label">Date</label>
+                      <input
+                        className="input-field"
+                        type="date"
+                        value={form.expense_date}
+                        onChange={(e) =>
+                          setForm((p) => ({ ...p, expense_date: e.target.value }))
+                        }
+                        disabled={!isEditing}
+                      />
+                    </div>
 
-            <div className="input-group">
-              <label className="input-label">Reference</label>
-              <input
-                className="input-field"
-                value={form.reference}
-                onChange={(e) => setForm((p) => ({ ...p, reference: e.target.value }))}
-                placeholder="(auto)"
-                disabled={!isEditing}
-              />
-            </div>
+                    <div className="input-group">
+                      <label className="input-label">Reference</label>
+                      <input
+                        className="input-field"
+                        value={form.reference}
+                        onChange={(e) =>
+                          setForm((p) => ({ ...p, reference: e.target.value }))
+                        }
+                        placeholder="(auto)"
+                        disabled={!isEditing}
+                      />
+                    </div>
 
-            <div className="input-group">
-              <label className="input-label">Vendor</label>
-              <select
-                className="input-field dropdown-select"
-                value={form.vendor_id}
-                onChange={(e) =>
-                  setForm((p) => ({
-                    ...p,
-                    vendor_id: e.target.value ? Number(e.target.value) : "",
-                  }))
-                }
-                disabled={!isEditing}
-              >
-                <option value="">—</option>
-                {contacts.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+                    <div className="input-group">
+                      <label className="input-label">Vendor</label>
+                      <select
+                        className="input-field dropdown-select"
+                        value={form.vendor_id}
+                        onChange={(e) =>
+                          setForm((p) => ({
+                            ...p,
+                            vendor_id: e.target.value ? Number(e.target.value) : "",
+                          }))
+                        }
+                        disabled={!isEditing}
+                      >
+                        <option value="">—</option>
+                        {contacts.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-            <div className="input-group">
-              <label className="input-label">Status</label>
-              <select
-                className="input-field dropdown-select"
-                value={form.status}
-                onChange={(e) => setForm((p) => ({ ...p, status: e.target.value }))}
-                disabled={!isEditing}
-              >
-                <option value="posted">Posted</option>
-                <option value="draft">Draft</option>
-              </select>
-            </div>
+                    <div className="input-group">
+                      <label className="input-label">Status</label>
+                      <select
+                        className="input-field dropdown-select"
+                        value={form.status}
+                        onChange={(e) =>
+                          setForm((p) => ({ ...p, status: e.target.value }))
+                        }
+                        disabled={!isEditing}
+                      >
+                        <option value="posted">Posted</option>
+                        <option value="draft">Draft</option>
+                      </select>
+                    </div>
 
-            <div className="input-group" style={{ gridColumn: "span 2" }}>
-              <label className="input-label">Category</label>
-              <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                <select
-                  className="input-field dropdown-select"
-                  value={form.category || ""}
-                  onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))}
-                  disabled={!isEditing}
-                >
-                  <option value="">—</option>
-                  {categories
-                    .slice()
-                    .sort((a, b) => a.name.localeCompare(b.name))
-                    .map((c) => (
-                      <option key={c.id} value={c.name}>
-                        {c.name}
-                      </option>
-                    ))}
-                </select>
-                <input
-                  className="input-field"
-                  value={newCategoryName}
-                  onChange={(e) => setNewCategoryName(e.target.value)}
-                  placeholder="New category"
-                  disabled={!isEditing}
-                  style={{ maxWidth: 200 }}
-                />
-                <button
-                  className="btn btn-secondary btn-sm"
-                  onClick={createCategory}
-                  disabled={!isEditing || creatingCategory || !newCategoryName.trim()}
-                >
-                  {creatingCategory ? "Creating…" : "+ Add"}
-                </button>
-              </div>
-            </div>
+                    <div className="input-group" style={{ gridColumn: "span 2" }}>
+                      <label className="input-label">Category</label>
+                      <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                        <select
+                          className="input-field dropdown-select"
+                          value={form.category || ""}
+                          onChange={(e) =>
+                            setForm((p) => ({ ...p, category: e.target.value }))
+                          }
+                          disabled={!isEditing}
+                        >
+                          <option value="">—</option>
+                          {categories
+                            .slice()
+                            .sort((a, b) => a.name.localeCompare(b.name))
+                            .map((c) => (
+                              <option key={c.id} value={c.name}>
+                                {c.name}
+                              </option>
+                            ))}
+                        </select>
+                        <input
+                          className="input-field"
+                          value={newCategoryName}
+                          onChange={(e) => setNewCategoryName(e.target.value)}
+                          placeholder="New category"
+                          disabled={!isEditing}
+                          style={{ maxWidth: 200 }}
+                        />
+                        <button
+                          className="btn btn-secondary btn-sm"
+                          onClick={createCategory}
+                          disabled={!isEditing || creatingCategory || !newCategoryName.trim()}
+                        >
+                          {creatingCategory ? "Creating…" : "+ Add"}
+                        </button>
+                      </div>
+                    </div>
 
-            <div className="input-group" style={{ gridColumn: "span 2" }}>
-              <label className="input-label">Description</label>
-              <input
-                className="input-field"
-                value={form.description}
-                onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
-                placeholder="What was the expense for?"
-                disabled={!isEditing}
-              />
-            </div>
+                    <div className="input-group" style={{ gridColumn: "span 2" }}>
+                      <label className="input-label">Description</label>
+                      <input
+                        className="input-field"
+                        value={form.description}
+                        onChange={(e) =>
+                          setForm((p) => ({ ...p, description: e.target.value }))
+                        }
+                        placeholder="What was the expense for?"
+                        disabled={!isEditing}
+                      />
+                    </div>
 
-            <div className="input-group">
-              <label className="input-label">Amount (ex VAT)</label>
-              <input
-                className="input-field"
-                type="number"
-                value={form.subtotal}
-                onChange={(e) => setForm((p) => ({ ...p, subtotal: Number(e.target.value) }))}
-                disabled={!isEditing}
-              />
-            </div>
+                    <div className="input-group">
+                      <label className="input-label">Amount (ex VAT)</label>
+                      <input
+                        className="input-field"
+                        type="number"
+                        value={form.subtotal}
+                        onChange={(e) =>
+                          setForm((p) => ({ ...p, subtotal: Number(e.target.value) }))
+                        }
+                        disabled={!isEditing}
+                      />
+                    </div>
 
-            <div className="input-group">
-              <label className="input-label">VAT %</label>
-              <input
-                className="input-field"
-                type="number"
-                value={form.vat_rate}
-                onChange={(e) => setForm((p) => ({ ...p, vat_rate: Number(e.target.value) }))}
-                disabled={!isEditing}
-              />
-            </div>
+                    <div className="input-group">
+                      <label className="input-label">VAT %</label>
+                      <input
+                        className="input-field"
+                        type="number"
+                        value={form.vat_rate}
+                        onChange={(e) =>
+                          setForm((p) => ({ ...p, vat_rate: Number(e.target.value) }))
+                        }
+                        disabled={!isEditing}
+                      />
+                    </div>
 
-            <div className="input-group">
-              <label className="input-label">Currency</label>
-              <input
-                className="input-field"
-                value={form.currency}
-                onChange={(e) => setForm((p) => ({ ...p, currency: e.target.value }))}
-                disabled={!isEditing}
-              />
-            </div>
+                    <div className="input-group">
+                      <label className="input-label">Currency</label>
+                      <input
+                        className="input-field"
+                        value={form.currency}
+                        onChange={(e) =>
+                          setForm((p) => ({ ...p, currency: e.target.value }))
+                        }
+                        disabled={!isEditing}
+                      />
+                    </div>
 
-            <div className="input-group" style={{ gridColumn: "span 3" }}>
-              <label className="input-label">Notes</label>
-              <input
-                className="input-field"
-                value={form.notes}
-                onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))}
-                disabled={!isEditing}
-              />
-            </div>
-          </div>
+                    <div className="input-group" style={{ gridColumn: "span 3" }}>
+                      <label className="input-label">Notes</label>
+                      <input
+                        className="input-field"
+                        value={form.notes}
+                        onChange={(e) =>
+                          setForm((p) => ({ ...p, notes: e.target.value }))
+                        }
+                        disabled={!isEditing}
+                      />
+                    </div>
+                  </div>
 
-          <div style={{ marginTop: 12, color: "var(--muted)", fontSize: 13 }}>
-            VAT: {formatCurrency(calc.tax, form.currency)} · Total: {formatCurrency(calc.total, form.currency)}
-          </div>
+                  <div style={{ marginTop: 12, color: "var(--muted)", fontSize: 13 }}>
+                    VAT: {formatCurrency(calc.tax, form.currency)} · Total: {formatCurrency(calc.total, form.currency)}
+                  </div>
+                </>
+              )}
         </div>
       </div>
     </div>
