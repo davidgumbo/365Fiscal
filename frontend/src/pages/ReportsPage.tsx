@@ -1270,7 +1270,7 @@ export default function ReportsPage() {
               style={{ cursor: "pointer" }}
               onClick={goBackToCompanies}
             >
-              Reports
+              Financial Reports
             </span>
             <span className="o-breadcrumb-separator">
               <svg
@@ -1296,7 +1296,7 @@ export default function ReportsPage() {
         {/* Sidebar */}
         <div className="o-sidebar">
           <div className="o-sidebar-section">
-            <div className="o-sidebar-title">REPORTS</div>
+            <div className="o-sidebar-title">FINANCIAL REPORTS</div>
             {[
               {
                 key: "sales",
