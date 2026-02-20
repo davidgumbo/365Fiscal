@@ -14,6 +14,7 @@ class PurchaseOrder(Base, TimestampMixin):
     vendor_id: Mapped[int | None] = mapped_column(ForeignKey("contacts.id"), nullable=True, index=True)
     reference: Mapped[str] = mapped_column(String(50), unique=True, index=True)
     status: Mapped[str] = mapped_column(String(50), default="draft")
+    paid_state: Mapped[str] = mapped_column(String(20), default="unpaid")
     order_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
     expected_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     received_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

@@ -59,6 +59,7 @@ type PurchaseOrder = {
   vendor_id: number | null;
   reference: string;
   status: string;
+  paid_state: string;
   order_date: string | null;
   expected_date: string | null;
   received_at: string | null;
@@ -163,9 +164,11 @@ export default function PurchasesPage({
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [updatingPaidState, setUpdatingPaidState] = useState(false);
 
   const [listSearch, setListSearch] = useState("");
   const [listStatus, setListStatus] = useState("");
+  const [listPaidState, setListPaidState] = useState("");
   const [listFrom, setListFrom] = useState("");
   const [listTo, setListTo] = useState("");
 
@@ -535,6 +538,23 @@ export default function PurchasesPage({
     }
   };
 
+  const updatePaidState = async (nextState: string) => {
+    if (!selectedOrderId || !companyId) return;
+    setUpdatingPaidState(true);
+    try {
+      await apiFetch<PurchaseOrder>(`/purchases/${selectedOrderId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ paid_state: nextState }),
+      });
+      const updated = await apiFetch<PurchaseOrder[]>(
+        `/purchases?company_id=${companyId}`,
+      );
+      setOrders(updated);
+    } finally {
+      setUpdatingPaidState(false);
+    }
+  };
+
   const confirmOrder = async () => {
     if (!selectedOrderId || !companyId) return;
     await apiFetch<PurchaseOrder>(`/purchases/${selectedOrderId}/confirm`, {
@@ -584,6 +604,8 @@ export default function PurchasesPage({
     const toDate = listTo ? new Date(listTo + "T23:59:59") : null;
     return orders.filter((o) => {
       if (listStatus && o.status !== listStatus) return false;
+      if (listPaidState && (o.paid_state || "unpaid") !== listPaidState)
+        return false;
       const dateValue = o.order_date ? new Date(o.order_date) : null;
       if (fromDate && dateValue && dateValue < fromDate) return false;
       if (toDate && dateValue && dateValue > toDate) return false;
@@ -594,7 +616,7 @@ export default function PurchasesPage({
         o.reference.toLowerCase().includes(term) || vendorName.includes(term)
       );
     });
-  }, [orders, listSearch, listStatus, listFrom, listTo, contacts]);
+  }, [orders, listSearch, listStatus, listPaidState, listFrom, listTo, contacts]);
 
   const currentStatus = selectedOrder?.status || "draft";
   const canEdit = isEditing || mode === "new" || currentStatus === "draft";
@@ -938,6 +960,7 @@ export default function PurchasesPage({
                       "Reference",
                       "Vendor",
                       "Status",
+                      "Paid State",
                       "Order Date",
                       "Expected Date",
                       "Subtotal",
@@ -952,6 +975,7 @@ export default function PurchasesPage({
                         order.reference,
                         vendor?.name || "",
                         order.status,
+                        order.paid_state || "unpaid",
                         toDateInputValue(order.order_date),
                         toDateInputValue(order.expected_date),
                         order.subtotal || 0,
@@ -1021,6 +1045,7 @@ export default function PurchasesPage({
                           <th>Reference</th>
                           <th>Vendor</th>
                           <th>Status</th>
+                          <th>Paid</th>
                           <th>Order Date</th>
                           <th className="text-end">Total</th>
                         </tr>
@@ -1029,7 +1054,7 @@ export default function PurchasesPage({
                         {filteredOrders.length === 0 ? (
                           <tr>
                             <td
-                              colSpan={5}
+                              colSpan={6}
                               className="text-center text-muted py-4"
                             >
                               {loadingData
@@ -1063,6 +1088,13 @@ export default function PurchasesPage({
                                   {order.status}
                                 </span>
                               </td>
+                              <td>
+                                <span
+                                  className={`badge ${order.paid_state === "paid" ? "badge-success" : order.paid_state === "partial" ? "badge-warning" : "badge-secondary"}`}
+                                >
+                                  {order.paid_state || "unpaid"}
+                                </span>
+                              </td>
                               <td>{toDateInputValue(order.order_date)}</td>
                               <td className="text-end">
                                 {formatMoney(
@@ -1081,7 +1113,7 @@ export default function PurchasesPage({
                             fontWeight: 600,
                           }}
                         >
-                          <td colSpan={4} className="text-end">
+                          <td colSpan={5} className="text-end">
                             Grand Total:
                           </td>
                           <td className="text-end">
@@ -1122,6 +1154,37 @@ export default function PurchasesPage({
                     </span>
                   ))}
                 </div>
+                {selectedOrderId && selectedOrder && (
+                  <div
+                    style={{
+                      marginTop: 8,
+                      display: "flex",
+                      gap: 10,
+                      alignItems: "center",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: 12,
+                        color: "var(--gray-600)",
+                        fontWeight: 600,
+                      }}
+                    >
+                      Paid State
+                    </div>
+                    <select
+                      className="form-select"
+                      style={{ maxWidth: 180, height: 34 }}
+                      value={selectedOrder.paid_state || "unpaid"}
+                      onChange={(e) => updatePaidState(e.target.value)}
+                      disabled={updatingPaidState}
+                    >
+                      <option value="unpaid">unpaid</option>
+                      <option value="partial">partial</option>
+                      <option value="paid">paid</option>
+                    </select>
+                  </div>
+                )}
               </div>
               <div className="form-actions">
                 {selectedOrderId && (

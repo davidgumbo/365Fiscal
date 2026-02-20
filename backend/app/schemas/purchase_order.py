@@ -21,6 +21,7 @@ class PurchaseOrderUpdate(BaseModel):
     vendor_id: int | None = None
     reference: str | None = None
     status: str | None = None
+    paid_state: str | None = None
     order_date: datetime | None = None
     expected_date: datetime | None = None
     currency: str | None = None
@@ -36,6 +37,7 @@ class PurchaseOrderRead(ORMBase):
     vendor_id: int | None
     reference: str
     status: str
+    paid_state: str
     order_date: datetime | None
     expected_date: datetime | None
     received_at: datetime | None

@@ -95,8 +95,11 @@ interface PurchaseOrder {
   id: number;
   reference: string;
   status: string;
+  paid_state?: string;
   order_date: string | null;
   vendor_id: number | null;
+  subtotal?: number;
+  discount_amount?: number;
   total_amount: number;
   tax_amount: number;
   lines: PurchaseOrderLine[];
@@ -130,6 +133,12 @@ interface SalesReport {
   average_invoice: number;
   top_products: TopProduct[];
   sales_by_month: MonthlySales[];
+}
+
+interface IncomeStatementReport {
+  gross_revenue_ex_vat: number;
+  expenses_ex_vat: number;
+  net_revenue_ex_vat: number;
 }
 
 interface StockReport {
@@ -188,6 +197,7 @@ interface CreditorsReport {
     amount: number;
     date: string;
     status: string;
+    paid_state: string;
   }[];
 }
 
@@ -232,6 +242,7 @@ type ReportType =
   | "stock"
   | "receivable"
   | "creditors"
+  | "income_statement"
   | "vat"
   | "purchases";
 
@@ -297,6 +308,8 @@ export default function ReportsPage() {
     useState<ReceivableReport | null>(null);
   const [creditorsReport, setCreditorsReport] =
     useState<CreditorsReport | null>(null);
+  const [incomeStatementReport, setIncomeStatementReport] =
+    useState<IncomeStatementReport | null>(null);
   const [vatReport, setVatReport] = useState<VatReport | null>(null);
   const [purchaseReport, setPurchaseReport] = useState<PurchaseReportData | null>(null);
   const [companySettings, setCompanySettings] =
@@ -444,6 +457,56 @@ export default function ReportsPage() {
       average_invoice: filtered.length > 0 ? totalSales / filtered.length : 0,
       top_products: topProducts,
       sales_by_month: salesByMonth,
+    });
+  }, [companyId, dateRange]);
+
+  const loadIncomeStatementReport = useCallback(async () => {
+    if (!companyId) return;
+
+    const [invoices, purchases] = await Promise.all([
+      apiFetch<Invoice[]>(`/invoices?company_id=${companyId}`).catch(
+        () => [] as Invoice[],
+      ),
+      apiFetch<PurchaseOrder[]>(`/purchases?company_id=${companyId}`).catch(
+        () => [] as PurchaseOrder[],
+      ),
+    ]);
+
+    const fromDate = dateRange.from ? new Date(dateRange.from) : null;
+    const toDate = dateRange.to ? new Date(dateRange.to + "T23:59:59") : null;
+
+    const filteredInvoices = invoices.filter((inv) => {
+      if (inv.invoice_type === "credit_note") return false;
+      if (inv.status === "cancelled") return false;
+      const d = inv.invoice_date
+        ? new Date(inv.invoice_date)
+        : new Date(inv.created_at);
+      if (fromDate && d < fromDate) return false;
+      if (toDate && d > toDate) return false;
+      return true;
+    });
+
+    const filteredPurchases = purchases.filter((po) => {
+      if (po.status === "cancelled") return false;
+      const d = po.order_date ? new Date(po.order_date) : null;
+      if (fromDate && d && d < fromDate) return false;
+      if (toDate && d && d > toDate) return false;
+      return true;
+    });
+
+    const grossRevenueExVat = filteredInvoices.reduce(
+      (s, inv) => s + (inv.subtotal ?? (inv.total_amount || 0) - (inv.tax_amount || 0)),
+      0,
+    );
+    const expensesExVat = filteredPurchases.reduce(
+      (s, po) => s + ((po.total_amount || 0) - (po.tax_amount || 0)),
+      0,
+    );
+
+    setIncomeStatementReport({
+      gross_revenue_ex_vat: grossRevenueExVat,
+      expenses_ex_vat: expensesExVat,
+      net_revenue_ex_vat: grossRevenueExVat - expensesExVat,
     });
   }, [companyId, dateRange]);
 
@@ -618,10 +681,8 @@ export default function ReportsPage() {
       return true;
     });
 
-    // Treat "unpaid" purchase orders as confirmed POs that are not yet received.
-    const open = filtered.filter(
-      (po) => (po.status || "draft") === "confirmed",
-    );
+    // Treat "unpaid" purchase orders as any PO that is not marked paid.
+    const open = filtered.filter((po) => (po.paid_state || "unpaid") !== "paid");
 
     const totalAmount = open.reduce((s, p) => s + (p.total_amount || 0), 0);
 
@@ -665,6 +726,7 @@ export default function ReportsPage() {
         amount: po.total_amount || 0,
         date: po.order_date ? new Date(po.order_date).toLocaleDateString() : "-",
         status: po.status,
+        paid_state: po.paid_state || "unpaid",
       }));
 
     setCreditorsReport({
@@ -889,6 +951,8 @@ export default function ReportsPage() {
     setError("");
     try {
       if (activeReport === "sales") await loadSalesReport();
+      else if (activeReport === "income_statement")
+        await loadIncomeStatementReport();
       else if (activeReport === "stock") await loadStockReport();
       else if (activeReport === "receivable") await loadReceivableReport();
       else if (activeReport === "creditors") await loadCreditorsReport();
@@ -903,6 +967,7 @@ export default function ReportsPage() {
   }, [
     activeReport,
     loadSalesReport,
+    loadIncomeStatementReport,
     loadStockReport,
     loadReceivableReport,
     loadCreditorsReport,
@@ -922,10 +987,10 @@ export default function ReportsPage() {
     let filename = "report.csv";
 
     if (activeReport === "sales" && salesReport) {
-      filename = `sales-report-${dateRange.from}-to-${dateRange.to}.csv`;
-      rows.push(["Sales Report", `${dateRange.from} to ${dateRange.to}`]);
+      filename = `revenue-${dateRange.from}-to-${dateRange.to}.csv`;
+      rows.push(["Revenue", `${dateRange.from} to ${dateRange.to}`]);
       rows.push([]);
-      rows.push(["Total Sales", salesReport.total_sales.toFixed(2)]);
+      rows.push(["Total Revenue", salesReport.total_sales.toFixed(2)]);
       rows.push(["Total Invoices", String(salesReport.total_invoices)]);
       rows.push(["Paid Invoices", String(salesReport.paid_invoices)]);
       rows.push(["Pending Invoices", String(salesReport.pending_invoices)]);
@@ -938,11 +1003,18 @@ export default function ReportsPage() {
         rows.push([p.name, String(p.quantity), p.revenue.toFixed(2)]),
       );
       rows.push([]);
-      rows.push(["Sales by Month"]);
+      rows.push(["Revenue by Month"]);
       rows.push(["Month", "Amount", "Invoice Count"]);
       salesReport.sales_by_month.forEach((m) =>
         rows.push([m.month, m.amount.toFixed(2), String(m.count)]),
       );
+    } else if (activeReport === "income_statement" && incomeStatementReport) {
+      filename = `income-statement-${dateRange.from}-to-${dateRange.to}.csv`;
+      rows.push(["Income Statement", `${dateRange.from} to ${dateRange.to}`]);
+      rows.push([]);
+      rows.push(["Gross Revenue (VAT excl.)", incomeStatementReport.gross_revenue_ex_vat.toFixed(2)]);
+      rows.push(["Expenses (VAT excl.)", incomeStatementReport.expenses_ex_vat.toFixed(2)]);
+      rows.push(["Net Revenue (VAT excl.)", incomeStatementReport.net_revenue_ex_vat.toFixed(2)]);
     } else if (activeReport === "stock" && stockReport) {
       filename = `stock-report-${new Date().toISOString().split("T")[0]}.csv`;
       rows.push(["Stock Valuation"]);
@@ -1018,9 +1090,9 @@ export default function ReportsPage() {
       );
       rows.push([]);
       rows.push(["Recent Open Orders"]);
-      rows.push(["Reference", "Vendor", "Amount", "Date", "Status"]);
+      rows.push(["Reference", "Vendor", "Amount", "Date", "Status", "Paid State"]);
       creditorsReport.recent_orders.forEach((o) =>
-        rows.push([o.reference, o.vendor, o.amount.toFixed(2), o.date, o.status]),
+        rows.push([o.reference, o.vendor, o.amount.toFixed(2), o.date, o.status, o.paid_state]),
       );
     } else if (activeReport === "vat" && vatReport) {
       filename = `vat-return-${dateRange.from}-to-${dateRange.to}.csv`;
@@ -1084,13 +1156,15 @@ export default function ReportsPage() {
   const exportPDF = () => {
     const title =
       activeReport === "sales"
-        ? "Sales Report"
+        ? "Revenue"
         : activeReport === "stock"
           ? "Stock Valuation"
           : activeReport === "receivable"
             ? "Receivable"
             : activeReport === "creditors"
               ? "Creditors"
+              : activeReport === "income_statement"
+                ? "Income Statement"
             : activeReport === "purchases"
               ? "Purchase Report"
               : "VAT RETURN";
@@ -1104,7 +1178,7 @@ export default function ReportsPage() {
     if (activeReport === "sales" && salesReport) {
       bodyHTML = `
         <div class="summary-grid">
-          <div class="summary-box"><div class="label">Total Sales</div><div class="val">${formatCurrency(salesReport.total_sales)}</div></div>
+          <div class="summary-box"><div class="label">Total Revenue</div><div class="val">${formatCurrency(salesReport.total_sales)}</div></div>
           <div class="summary-box"><div class="label">Total Invoices</div><div class="val">${salesReport.total_invoices}</div></div>
           <div class="summary-box"><div class="label">Paid</div><div class="val">${salesReport.paid_invoices}</div></div>
           <div class="summary-box"><div class="label">Pending</div><div class="val">${salesReport.pending_invoices}</div></div>
@@ -1118,6 +1192,19 @@ export default function ReportsPage() {
         <h3>Monthly Breakdown</h3>
         <table><thead><tr><th>Month</th><th style="text-align:right">Amount</th><th style="text-align:right">Invoices</th></tr></thead><tbody>
           ${salesReport.sales_by_month.map((m) => `<tr><td>${m.month}</td><td style="text-align:right">${formatCurrency(m.amount)}</td><td style="text-align:right">${m.count}</td></tr>`).join("")}
+        </tbody></table>`;
+    } else if (activeReport === "income_statement" && incomeStatementReport) {
+      bodyHTML = `
+        <div class="summary-grid">
+          <div class="summary-box"><div class="label">Gross Revenue (VAT excl.)</div><div class="val">${formatCurrency(incomeStatementReport.gross_revenue_ex_vat)}</div></div>
+          <div class="summary-box"><div class="label">Expenses (VAT excl.)</div><div class="val">${formatCurrency(incomeStatementReport.expenses_ex_vat)}</div></div>
+          <div class="summary-box"><div class="label">Net Revenue (VAT excl.)</div><div class="val">${formatCurrency(incomeStatementReport.net_revenue_ex_vat)}</div></div>
+        </div>
+        <h3>Summary</h3>
+        <table style="max-width:520px"><tbody>
+          <tr><td>Gross Revenue (VAT excl.)</td><td style="text-align:right">${formatCurrency(incomeStatementReport.gross_revenue_ex_vat)}</td></tr>
+          <tr><td>Expenses (VAT excl.)</td><td style="text-align:right">${formatCurrency(incomeStatementReport.expenses_ex_vat)}</td></tr>
+          <tr style="font-weight:700;border-top:2px solid #333"><td>Net Revenue (VAT excl.)</td><td style="text-align:right">${formatCurrency(incomeStatementReport.net_revenue_ex_vat)}</td></tr>
         </tbody></table>`;
     } else if (activeReport === "stock" && stockReport) {
       bodyHTML = `
@@ -1163,8 +1250,8 @@ export default function ReportsPage() {
           ${creditorsReport.by_vendor.map((v) => `<tr><td>${v.name}</td><td style="text-align:right">${v.count}</td><td style="text-align:right">${formatCurrency(v.amount)}</td></tr>`).join("")}
         </tbody></table>
         <h3>Recent Open Orders</h3>
-        <table><thead><tr><th>Reference</th><th>Vendor</th><th style="text-align:right">Amount</th><th>Date</th><th>Status</th></tr></thead><tbody>
-          ${creditorsReport.recent_orders.map((o) => `<tr><td>${o.reference}</td><td>${o.vendor}</td><td style="text-align:right">${formatCurrency(o.amount)}</td><td>${o.date}</td><td>${o.status}</td></tr>`).join("")}
+        <table><thead><tr><th>Reference</th><th>Vendor</th><th style="text-align:right">Amount</th><th>Date</th><th>Status</th><th>Paid State</th></tr></thead><tbody>
+          ${creditorsReport.recent_orders.map((o) => `<tr><td>${o.reference}</td><td>${o.vendor}</td><td style="text-align:right">${formatCurrency(o.amount)}</td><td>${o.date}</td><td>${o.status}</td><td>${o.paid_state}</td></tr>`).join("")}
         </tbody></table>`;
     } else if (activeReport === "purchases" && purchaseReport) {
       bodyHTML = `
@@ -1437,7 +1524,7 @@ export default function ReportsPage() {
             {[
               {
                 key: "sales",
-                label: "SALES REPORT",
+                label: "REVENUE",
                 icon: (
                   <svg
                     width="18"
@@ -1451,6 +1538,26 @@ export default function ReportsPage() {
                   >
                     <path d="M3 3v18h18" />
                     <path d="m19 9-5 5-4-4-3 3" />
+                  </svg>
+                ),
+              },
+              {
+                key: "income_statement",
+                label: "INCOME STATEMENT",
+                icon: (
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="var(--violet-500)"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M4 19V5" />
+                    <path d="M4 19h16" />
+                    <path d="M7 15l3-3 3 2 4-6" />
                   </svg>
                 ),
               },
@@ -1718,12 +1825,12 @@ export default function ReportsPage() {
             </div>
           )}
 
-          {/* ─── Sales Report ─── */}
+          {/* ─── Revenue ─── */}
           {!loading && activeReport === "sales" && salesReport && (
             <div className="report-content">
               <div className="metrics-row">
                 <MetricCard
-                  label="Total Sales"
+                  label="Total Revenue"
                   value={formatCurrency(salesReport.total_sales)}
                 />
                 <MetricCard
@@ -1782,7 +1889,7 @@ export default function ReportsPage() {
                 </div>
 
                 <div className="report-card">
-                  <h3>Sales Trend</h3>
+                  <h3>Revenue Trend</h3>
                   {salesReport.sales_by_month.length === 0 ? (
                     <p className="empty-state">No sales data in this period.</p>
                   ) : (
@@ -1809,6 +1916,52 @@ export default function ReportsPage() {
                       </div>
                     </div>
                   )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ─── Income Statement ─── */}
+          {!loading && activeReport === "income_statement" && incomeStatementReport && (
+            <div className="report-content">
+              <div className="metrics-row">
+                <MetricCard
+                  label="Gross Revenue (VAT excl.)"
+                  value={formatCurrency(incomeStatementReport.gross_revenue_ex_vat)}
+                />
+                <MetricCard
+                  label="Expenses (VAT excl.)"
+                  value={formatCurrency(incomeStatementReport.expenses_ex_vat)}
+                  variant="warning"
+                />
+                <MetricCard
+                  label="Net Revenue (VAT excl.)"
+                  value={formatCurrency(incomeStatementReport.net_revenue_ex_vat)}
+                  variant={incomeStatementReport.net_revenue_ex_vat >= 0 ? "success" : "danger"}
+                />
+              </div>
+
+              <div className="report-grid">
+                <div className="report-card">
+                  <h3>Summary</h3>
+                  <table className="report-table">
+                    <tbody>
+                      <tr>
+                        <td style={{ fontWeight: 600 }}>Gross Revenue (VAT excl.)</td>
+                        <td className="text-right">{formatCurrency(incomeStatementReport.gross_revenue_ex_vat)}</td>
+                      </tr>
+                      <tr>
+                        <td style={{ fontWeight: 600 }}>Expenses (VAT excl.)</td>
+                        <td className="text-right">{formatCurrency(incomeStatementReport.expenses_ex_vat)}</td>
+                      </tr>
+                      <tr>
+                        <td style={{ fontWeight: 700 }}>Net Revenue (VAT excl.)</td>
+                        <td className="text-right" style={{ fontWeight: 700 }}>
+                          {formatCurrency(incomeStatementReport.net_revenue_ex_vat)}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
@@ -2074,6 +2227,7 @@ export default function ReportsPage() {
                           <th className="text-right">Amount</th>
                           <th>Date</th>
                           <th>Status</th>
+                          <th>Paid</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -2089,6 +2243,14 @@ export default function ReportsPage() {
                                 style={{ textTransform: "capitalize" }}
                               >
                                 {o.status}
+                              </span>
+                            </td>
+                            <td>
+                              <span
+                                className={`badge ${o.paid_state === "paid" ? "badge-success" : o.paid_state === "partial" ? "badge-warning" : "badge-secondary"}`}
+                                style={{ textTransform: "capitalize" }}
+                              >
+                                {o.paid_state}
                               </span>
                             </td>
                           </tr>
@@ -2432,6 +2594,7 @@ export default function ReportsPage() {
           {!loading &&
             !error &&
             ((activeReport === "sales" && !salesReport) ||
+              (activeReport === "income_statement" && !incomeStatementReport) ||
               (activeReport === "stock" && !stockReport) ||
               (activeReport === "receivable" && !receivableReport) ||
               (activeReport === "creditors" && !creditorsReport) ||

@@ -213,11 +213,14 @@ def update_purchase_order(
         raise HTTPException(status_code=404, detail="Purchase order not found")
     ensure_company_access(db, user, order.company_id)
 
-    if order.status != "draft":
-        raise HTTPException(status_code=400, detail="Can only edit draft purchase orders")
-
     updates = payload.dict(exclude_unset=True)
     lines = updates.pop("lines", None)
+
+    if order.status != "draft":
+        allowed_fields = {"paid_state"}
+        disallowed_fields = [k for k in updates.keys() if k not in allowed_fields]
+        if disallowed_fields or lines is not None:
+            raise HTTPException(status_code=400, detail="Can only edit draft purchase orders")
 
     for field, value in updates.items():
         setattr(order, field, value)
