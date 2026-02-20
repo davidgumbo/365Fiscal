@@ -449,301 +449,433 @@ export default function ExpensesPage() {
 
   const showFormView = selectedExpenseId !== null || isEditing;
 
-  /* LIST VIEW */
-  if (!showFormView) {
-    return (
-      <div className="page-content" style={{ padding: "0 24px" }}>
-        {error && (
-          <div className="alert alert-error" style={{ marginBottom: 16 }}>
-            {error}
-            <button onClick={() => setError(null)} style={{ marginLeft: 8 }}>x</button>
-          </div>
-        )}
-
-        {isAdmin && company && (
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 14, fontSize: 13, color: "var(--muted)" }}>
-            <span style={{ cursor: "pointer", color: "var(--blue-500)" }} onClick={goBackToCompanies}>Companies</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6" /></svg>
-            <span>{company.name}</span>
-          </div>
-        )}
-
-        <div className="two-panel two-panel-left">
-          <div className="o-sidebar">
-            <div className="o-sidebar-section">
-              <div className="o-sidebar-title">STATUS</div>
-              {([
-                { key: "", label: "ALL EXPENSES", stroke: "var(--indigo-500)", d1: "M3 3h18v18H3z", d2: "M3 9h18", d3: "M9 21V9" },
-                { key: "posted", label: "POSTED", stroke: "var(--blue-500)", d1: "M22 11.08V12a10 10 0 1 1-5.93-9.14", d2: "m9 11 3 3L22 4", d3: "" },
-                { key: "draft", label: "DRAFT", stroke: "var(--amber-500)", d1: "M12 20h9", d2: "M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z", d3: "" },
-              ] as const).map((item) => (
-                <div
-                  key={item.key || "all"}
-                  className={`o-sidebar-item ${statusFilter === item.key ? "active" : ""}`}
-                  onClick={() => setStatusFilter(item.key)}
-                  style={{ cursor: "pointer" }}
-                >
-                  <span style={{ display: "flex", alignItems: "center", gap: 10, opacity: 0.85 }}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={item.stroke} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d={item.d1} /><path d={item.d2} />{item.d3 && <path d={item.d3} />}
-                    </svg>
-                    <span style={{ letterSpacing: "0.5px", fontSize: 12, fontWeight: 500 }}>{item.label}</span>
-                  </span>
-                  <span className="o-sidebar-count">
-                    {item.key === "" ? expenses.length : expenses.filter((e) => e.status === item.key).length}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            <div className="o-sidebar-section">
-              <div className="o-sidebar-title">VENDOR</div>
-              <div
-                className={`o-sidebar-item ${vendorFilter === "" ? "active" : ""}`}
-                onClick={() => setVendorFilter("")}
-                style={{ cursor: "pointer" }}
-              >
-                <span style={{ display: "flex", alignItems: "center", gap: 10, opacity: 0.85 }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /></svg>
-                  <span style={{ letterSpacing: "0.5px", fontSize: 12, fontWeight: 500 }}>ALL VENDORS</span>
-                </span>
-                <span className="o-sidebar-count">{expenses.length}</span>
-              </div>
-              {contacts.slice(0, 12).map((c) => (
-                <div
-                  key={c.id}
-                  className={`o-sidebar-item ${vendorFilter === c.id ? "active" : ""}`}
-                  onClick={() => setVendorFilter(c.id)}
-                  style={{ cursor: "pointer" }}
-                >
-                  <span style={{ display: "flex", alignItems: "center", gap: 10, opacity: 0.85 }}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-                    <span style={{ letterSpacing: "0.5px", fontSize: 12, fontWeight: 500 }}>{c.name.toUpperCase().slice(0, 18)}</span>
-                  </span>
-                  <span className="o-sidebar-count">{expenses.filter((e) => e.vendor_id === c.id).length}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <div className="content-top-bar">
-              <div className="top-search">
-                <span className="search-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
-                </span>
-                <input placeholder="Search expenses..." value={search} onChange={(e) => setSearch(e.target.value)} />
-              </div>
-
-              <button
-                className="o-btn o-btn-secondary"
-                style={{ display: "flex", alignItems: "center", gap: 6 }}
-                onClick={() => {
-                  const headers = ["Reference","Date","Vendor","Category","Description","Subtotal","VAT","Total","Status"];
-                  const rows = filteredExpenses.map((e) => {
-                    const vendor = contacts.find((c) => c.id === e.vendor_id)?.name || "";
-                    return [e.reference, toDateInputValue(e.expense_date), vendor, e.category, e.description, e.subtotal, e.tax_amount, e.total_amount, e.status];
-                  });
-                  const csvContent = [headers, ...rows].map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
-                  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-                  const link = document.createElement("a");
-                  link.href = URL.createObjectURL(blob);
-                  link.download = `expenses_${new Date().toISOString().split("T")[0]}.csv`;
-                  link.click();
-                }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
-                Export
-              </button>
-
-              <button className="btn-create" onClick={startNew}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
-                New Expense
-              </button>
-            </div>
-
-            <div className="card shadow-sm card-bg-shadow">
-              <div className="card-body p-0">
-                <div className="table-responsive">
-                  <table className="table table-hover align-middle mb-0">
-                    <thead className="table-light">
-                      <tr>
-                        <th>Reference</th>
-                        <th>Vendor</th>
-                        <th>Category</th>
-                        <th>Date</th>
-                        <th>Status</th>
-                        <th className="text-end">Subtotal</th>
-                        <th className="text-end">VAT</th>
-                        <th className="text-end">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {loading && (
-                        <tr><td colSpan={8} className="text-center py-5 text-muted">Loading expenses...</td></tr>
-                      )}
-                      {!loading && filteredExpenses.length === 0 && (
-                        <tr><td colSpan={8} className="text-center py-5 text-muted">No expenses yet. Click <strong>+ New Expense</strong> to create one.</td></tr>
-                      )}
-                      {filteredExpenses.map((e) => {
-                        const vendorName = contacts.find((c) => c.id === e.vendor_id)?.name || "\u2014";
-                        return (
-                          <tr key={e.id} role="button" onClick={() => setSelectedExpenseId(e.id)}>
-                            <td>
-                              <div className="fw-semibold">{e.reference || "\u2014"}</div>
-                              <small className="text-muted">{(e.description || "").slice(0, 40)}</small>
-                            </td>
-                            <td>{vendorName}</td>
-                            <td>{e.category || "\u2014"}</td>
-                            <td className="text-muted">{e.expense_date ? new Date(e.expense_date).toLocaleDateString() : "\u2014"}</td>
-                            <td>
-                              <span className={`badge ${e.status === "posted" ? "bg-info" : "bg-secondary"}`}>{e.status}</span>
-                            </td>
-                            <td className="text-end">{formatCurrency(e.subtotal, e.currency)}</td>
-                            <td className="text-end text-muted">{formatCurrency(e.tax_amount, e.currency)}</td>
-                            <td className="text-end fw-semibold">{formatCurrency(e.total_amount, e.currency)}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                    {filteredExpenses.length > 0 && (
-                      <tfoot>
-                        <tr style={{ background: "var(--slate-50)", fontWeight: 600 }}>
-                          <td colSpan={5} className="text-end">Grand Total:</td>
-                          <td className="text-end">{formatCurrency(filteredExpenses.reduce((s, e) => s + (e.subtotal || 0), 0), "USD")}</td>
-                          <td className="text-end">{formatCurrency(filteredExpenses.reduce((s, e) => s + (e.tax_amount || 0), 0), "USD")}</td>
-                          <td className="text-end">{formatCurrency(filteredExpenses.reduce((s, e) => s + (e.total_amount || 0), 0), "USD")}</td>
-                        </tr>
-                      </tfoot>
-                    )}
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  /* FORM VIEW */
   return (
-    <div className="page-content" style={{ padding: "0 24px" }}>
+    <div className="container-fluid py-3">
       {error && (
-        <div className="alert alert-error" style={{ marginBottom: 16 }}>
+        <div className="alert alert-danger alert-dismissible fade show" role="alert">
           {error}
-          <button onClick={() => setError(null)} style={{ marginLeft: 8 }}>x</button>
+          <button type="button" className="btn-close" onClick={() => setError(null)} />
         </div>
       )}
 
-      <div className="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-        <div className="d-flex align-items-center gap-2">
-          <button className="btn btn-sm btn-light border" onClick={goBackToList}>{"\u2190"} Back</button>
-          <h4 className="fw-bold mb-0" style={{ fontSize: 18 }}>
-            {selectedExpenseId ? (selectedExpense?.reference || "Expense") : "New Expense"}
-          </h4>
-          {selectedExpenseId && (
-            <span className={`badge ms-2 ${form.status === "posted" ? "bg-info" : "bg-secondary"}`}>{form.status}</span>
+      {/* ───────────── LIST VIEW ───────────── */}
+      {!showFormView && (
+        <>
+          {isAdmin && company && (
+            <div
+              className="o-control-panel"
+              style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}
+            >
+              <div className="o-breadcrumb">
+                <span
+                  className="o-breadcrumb-item"
+                  style={{ cursor: "pointer" }}
+                  onClick={goBackToCompanies}
+                >
+                  Expenses
+                </span>
+                <span className="o-breadcrumb-separator">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
+                </span>
+                <span className="o-breadcrumb-current">{company.name}</span>
+              </div>
+            </div>
           )}
-        </div>
-        <div className="d-flex flex-wrap gap-1">
-          {isEditing ? (
-            <>
-              <button className="btn btn-sm btn-primary" onClick={saveExpense} disabled={saving}>
-                {saving ? "Saving..." : selectedExpenseId ? "Save" : "Create Expense"}
-              </button>
-              <button className="btn btn-sm btn-light border" onClick={() => {
-                if (selectedExpense) { setSelectedExpenseId(selectedExpense.id); }
-                else { goBackToList(); }
-                setIsEditing(false);
-              }}>Discard</button>
-            </>
-          ) : (
-            <>
-              <button className="btn btn-sm btn-light border" onClick={() => setIsEditing(true)}>Edit</button>
-              <button className="btn btn-sm btn-danger" onClick={deleteSelectedExpense}>Delete</button>
-            </>
-          )}
-        </div>
-      </div>
 
-      <div className="card shadow-sm">
-        <div className="card-body invoice-form">
-          <div className="row g-3">
-            <div className="col-md-4">
-              <label className="form-label fw-semibold">Date</label>
-              <input className="form-control input-underline" type="date" value={form.expense_date} onChange={(e) => setForm((p) => ({ ...p, expense_date: e.target.value }))} disabled={!isEditing} />
-            </div>
-            <div className="col-md-4">
-              <label className="form-label fw-semibold">Reference</label>
-              <input className="form-control input-underline bg-light" value={form.reference} onChange={(e) => setForm((p) => ({ ...p, reference: e.target.value }))} placeholder="(auto)" disabled={!isEditing} />
-            </div>
-            <div className="col-md-4">
-              <label className="form-label fw-semibold">Vendor</label>
-              <select className="form-select input-underline" value={form.vendor_id} onChange={(e) => setForm((p) => ({ ...p, vendor_id: e.target.value ? Number(e.target.value) : "" }))} disabled={!isEditing}>
-                <option value="">{"\u2014"} Select Vendor {"\u2014"}</option>
-                {contacts.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
-              </select>
-            </div>
+          <div className="two-panel two-panel-left">
+            {/* Sidebar */}
+            <div className="o-sidebar">
+              <div className="o-sidebar-section">
+                <div className="o-sidebar-title">STATUS</div>
+                {([
+                  {
+                    key: "",
+                    label: "ALL EXPENSES",
+                    icon: (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--indigo-500)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 3h18v18H3z" /><path d="M3 9h18" /><path d="M9 21V9" />
+                      </svg>
+                    ),
+                  },
+                  {
+                    key: "posted",
+                    label: "POSTED",
+                    icon: (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue-500)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><path d="m9 11 3 3L22 4" />
+                      </svg>
+                    ),
+                  },
+                  {
+                    key: "draft",
+                    label: "DRAFT",
+                    icon: (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--amber-500)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                      </svg>
+                    ),
+                  },
+                ] as const).map((item) => (
+                  <div
+                    key={item.key || "all"}
+                    className={`o-sidebar-item ${statusFilter === item.key ? "active" : ""}`}
+                    onClick={() => setStatusFilter(item.key)}
+                  >
+                    <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      {item.icon}
+                      <span>{item.label}</span>
+                    </span>
+                    <span className="o-sidebar-count">
+                      {item.key === "" ? expenses.length : expenses.filter((e) => e.status === item.key).length}
+                    </span>
+                  </div>
+                ))}
+              </div>
 
-            <div className="col-md-4">
-              <label className="form-label fw-semibold">Category</label>
-              <select className="form-select input-underline" value={form.category || ""} onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))} disabled={!isEditing}>
-                <option value="">{"\u2014"} Select Category {"\u2014"}</option>
-                {categories.slice().sort((a, b) => a.name.localeCompare(b.name)).map((c) => (<option key={c.id} value={c.name}>{c.name}</option>))}
-              </select>
-              {isEditing && (
-                <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-                  <input className="form-control form-control-sm" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} placeholder="New category name" style={{ maxWidth: 180 }} />
-                  <button className="btn btn-sm btn-outline-primary" onClick={createCategory} disabled={creatingCategory || !newCategoryName.trim()}>
-                    {creatingCategory ? "..." : "+ Create"}
-                  </button>
+              <div className="o-sidebar-section">
+                <div className="o-sidebar-title">VENDOR</div>
+                <div
+                  className={`o-sidebar-item ${vendorFilter === "" ? "active" : ""}`}
+                  onClick={() => setVendorFilter("")}
+                >
+                  <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" />
+                    </svg>
+                    <span>ALL VENDORS</span>
+                  </span>
+                  <span className="o-sidebar-count">{expenses.length}</span>
                 </div>
-              )}
-            </div>
-            <div className="col-md-4">
-              <label className="form-label fw-semibold">Status</label>
-              <select className="form-select input-underline" value={form.status} onChange={(e) => setForm((p) => ({ ...p, status: e.target.value }))} disabled={!isEditing}>
-                <option value="posted">Posted</option>
-                <option value="draft">Draft</option>
-              </select>
-            </div>
-            <div className="col-md-4">
-              <label className="form-label fw-semibold">Currency</label>
-              <input className="form-control input-underline" value={form.currency} onChange={(e) => setForm((p) => ({ ...p, currency: e.target.value }))} disabled={!isEditing} />
-            </div>
-
-            <div className="col-12">
-              <label className="form-label fw-semibold">Description</label>
-              <input className="form-control input-underline" value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} placeholder="What was the expense for?" disabled={!isEditing} />
-            </div>
-
-            <div className="col-md-4">
-              <label className="form-label fw-semibold">Amount (ex VAT)</label>
-              <input className="form-control input-underline" type="number" value={form.subtotal} onChange={(e) => setForm((p) => ({ ...p, subtotal: Number(e.target.value) }))} disabled={!isEditing} />
-            </div>
-            <div className="col-md-4">
-              <label className="form-label fw-semibold">VAT %</label>
-              <input className="form-control input-underline" type="number" value={form.vat_rate} onChange={(e) => setForm((p) => ({ ...p, vat_rate: Number(e.target.value) }))} disabled={!isEditing} />
-            </div>
-            <div className="col-md-4">
-              <label className="form-label">Computed</label>
-              <div style={{ paddingTop: 6, fontSize: 14 }}>
-                <span style={{ color: "var(--muted)" }}>VAT:</span>{" "}
-                <strong>{formatCurrency(calc.tax, form.currency)}</strong>
-                <span style={{ margin: "0 10px", color: "var(--muted)" }}>{"\u00B7"}</span>
-                <span style={{ color: "var(--muted)" }}>Total:</span>{" "}
-                <strong>{formatCurrency(calc.total, form.currency)}</strong>
+                {contacts.slice(0, 12).map((c) => (
+                  <div
+                    key={c.id}
+                    className={`o-sidebar-item ${vendorFilter === c.id ? "active" : ""}`}
+                    onClick={() => setVendorFilter(c.id)}
+                  >
+                    <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+                      </svg>
+                      <span>{c.name.toUpperCase().slice(0, 18)}</span>
+                    </span>
+                    <span className="o-sidebar-count">{expenses.filter((e) => e.vendor_id === c.id).length}</span>
+                  </div>
+                ))}
               </div>
             </div>
 
-            <div className="col-12">
-              <label className="form-label fw-semibold">Notes</label>
-              <textarea className="form-control input-underline" rows={3} value={form.notes} onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))} disabled={!isEditing} />
+            <div>
+              <div className="content-top-bar">
+                <div className="top-search">
+                  <span className="search-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                  </span>
+                  <input placeholder="Search expenses…" value={search} onChange={(e) => setSearch(e.target.value)} />
+                </div>
+
+                <button
+                  className="o-btn o-btn-secondary"
+                  style={{ display: "flex", alignItems: "center", gap: 6 }}
+                  onClick={() => {
+                    const headers = ["Reference","Date","Vendor","Category","Description","Subtotal","VAT","Total","Status"];
+                    const rows = filteredExpenses.map((e) => {
+                      const vendor = contacts.find((c) => c.id === e.vendor_id)?.name || "";
+                      return [e.reference, toDateInputValue(e.expense_date), vendor, e.category, e.description, e.subtotal, e.tax_amount, e.total_amount, e.status];
+                    });
+                    const csvContent = [headers, ...rows].map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
+                    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+                    const link = document.createElement("a");
+                    link.href = URL.createObjectURL(blob);
+                    link.download = `expenses_${new Date().toISOString().split("T")[0]}.csv`;
+                    link.click();
+                  }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                  Export
+                </button>
+
+                <button className="btn-create" onClick={startNew}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                  New Expense
+                </button>
+              </div>
+
+              <div className="card shadow-sm card-bg-shadow">
+                <div className="card-body p-0">
+                  <div className="table-responsive">
+                    <table className="table table-hover align-middle mb-0">
+                      <thead className="table-light">
+                        <tr>
+                          <th>Reference</th>
+                          <th>Vendor</th>
+                          <th>Category</th>
+                          <th>Date</th>
+                          <th>Status</th>
+                          <th className="text-end">Subtotal</th>
+                          <th className="text-end">VAT</th>
+                          <th className="text-end">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {loading && (
+                          <tr><td colSpan={8} className="text-center py-5 text-muted">Loading expenses…</td></tr>
+                        )}
+                        {!loading && filteredExpenses.length === 0 && (
+                          <tr><td colSpan={8} className="text-center py-5 text-muted">No expenses yet. Click <strong>+ New Expense</strong> to create one.</td></tr>
+                        )}
+                        {filteredExpenses.map((e) => {
+                          const vendorName = contacts.find((c) => c.id === e.vendor_id)?.name || "\u2014";
+                          return (
+                            <tr key={e.id} role="button" onClick={() => setSelectedExpenseId(e.id)}>
+                              <td>
+                                <div className="fw-semibold">{e.reference || "\u2014"}</div>
+                                <small className="text-muted">{(e.description || "").slice(0, 40)}</small>
+                              </td>
+                              <td>{vendorName}</td>
+                              <td>{e.category || "\u2014"}</td>
+                              <td className="text-muted">{e.expense_date ? new Date(e.expense_date).toLocaleDateString() : "\u2014"}</td>
+                              <td>
+                                <span className={`badge ${e.status === "posted" ? "bg-info" : "bg-secondary"}`}>{e.status}</span>
+                              </td>
+                              <td className="text-end">{formatCurrency(e.subtotal, e.currency)}</td>
+                              <td className="text-end text-muted">{formatCurrency(e.tax_amount, e.currency)}</td>
+                              <td className="text-end fw-semibold">{formatCurrency(e.total_amount, e.currency)}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                      {filteredExpenses.length > 0 && (
+                        <tfoot>
+                          <tr style={{ background: "var(--slate-50)", fontWeight: 600 }}>
+                            <td colSpan={5} className="text-end">Grand Total:</td>
+                            <td className="text-end">{formatCurrency(filteredExpenses.reduce((s, e) => s + (e.subtotal || 0), 0), "USD")}</td>
+                            <td className="text-end">{formatCurrency(filteredExpenses.reduce((s, e) => s + (e.tax_amount || 0), 0), "USD")}</td>
+                            <td className="text-end">{formatCurrency(filteredExpenses.reduce((s, e) => s + (e.total_amount || 0), 0), "USD")}</td>
+                          </tr>
+                        </tfoot>
+                      )}
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ───────────── FORM VIEW (New / Detail) ───────────── */}
+      {showFormView && (
+        <div>
+          {/* Top toolbar */}
+          <div className="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+            <div className="d-flex align-items-center gap-2">
+              <button className="btn btn-sm btn-light border" onClick={goBackToList}>
+                ← Back
+              </button>
+              <h4 className="fw-bold mb-0" style={{ fontSize: 18 }}>
+                {selectedExpenseId ? (selectedExpense?.reference || "Expense") : "New Expense"}
+              </h4>
+              {selectedExpenseId && (
+                <span className={`badge ms-2 ${form.status === "posted" ? "bg-info" : "bg-secondary"}`}>
+                  {form.status}
+                </span>
+              )}
+            </div>
+            <div className="d-flex flex-wrap gap-1">
+              {isEditing ? (
+                <>
+                  <button className="btn btn-sm btn-primary" onClick={saveExpense} disabled={saving}>
+                    {saving ? "Saving…" : selectedExpenseId ? "Save" : "Create Expense"}
+                  </button>
+                  <button
+                    className="btn btn-sm btn-light border"
+                    onClick={() => {
+                      if (selectedExpense) { setSelectedExpenseId(selectedExpense.id); }
+                      else { goBackToList(); }
+                      setIsEditing(false);
+                    }}
+                  >
+                    Discard
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button className="btn btn-sm btn-light border" onClick={() => setIsEditing(true)}>
+                    Edit
+                  </button>
+                  <button className="btn btn-sm btn-danger" onClick={deleteSelectedExpense}>
+                    Delete
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* ── Form Card ── */}
+          <div className="card shadow-sm">
+            <div className="card-body invoice-form">
+              <div className="row g-3">
+                <div className="col-md-6">
+                  <label className="form-label fw-semibold">Date</label>
+                  <input
+                    className="form-control input-underline"
+                    type="date"
+                    value={form.expense_date}
+                    onChange={(e) => setForm((p) => ({ ...p, expense_date: e.target.value }))}
+                    disabled={!isEditing}
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label fw-semibold">Reference</label>
+                  <input
+                    className="form-control input-underline bg-light"
+                    value={form.reference}
+                    onChange={(e) => setForm((p) => ({ ...p, reference: e.target.value }))}
+                    placeholder="(auto)"
+                    disabled={!isEditing}
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label fw-semibold">Vendor</label>
+                  <select
+                    className="form-select input-underline"
+                    value={form.vendor_id}
+                    onChange={(e) => setForm((p) => ({ ...p, vendor_id: e.target.value ? Number(e.target.value) : "" }))}
+                    disabled={!isEditing}
+                  >
+                    <option value="">— Select Vendor —</option>
+                    {contacts.map((c) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label fw-semibold">Category</label>
+                  <div className="position-relative">
+                    <select
+                      className="form-select input-underline"
+                      value={form.category || ""}
+                      onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))}
+                      disabled={!isEditing}
+                    >
+                      <option value="">— Select Category —</option>
+                      {categories.slice().sort((a, b) => a.name.localeCompare(b.name)).map((c) => (
+                        <option key={c.id} value={c.name}>{c.name}</option>
+                      ))}
+                    </select>
+                    {isEditing && (
+                      <div className="d-flex gap-2 mt-2">
+                        <input
+                          className="form-control form-control-sm"
+                          value={newCategoryName}
+                          onChange={(e) => setNewCategoryName(e.target.value)}
+                          placeholder="New category name"
+                          style={{ maxWidth: 180 }}
+                        />
+                        <button
+                          className="btn btn-sm btn-outline-primary"
+                          onClick={createCategory}
+                          disabled={creatingCategory || !newCategoryName.trim()}
+                        >
+                          {creatingCategory ? "…" : "+ Create"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="col-md-3">
+                  <label className="form-label">Status</label>
+                  <select
+                    className="form-select input-underline"
+                    value={form.status}
+                    onChange={(e) => setForm((p) => ({ ...p, status: e.target.value }))}
+                    disabled={!isEditing}
+                  >
+                    <option value="posted">Posted</option>
+                    <option value="draft">Draft</option>
+                  </select>
+                </div>
+                <div className="col-md-3">
+                  <label className="form-label">Currency</label>
+                  <input
+                    className="form-control input-underline"
+                    value={form.currency}
+                    onChange={(e) => setForm((p) => ({ ...p, currency: e.target.value }))}
+                    disabled={!isEditing}
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label fw-semibold">Description</label>
+                  <input
+                    className="form-control input-underline"
+                    value={form.description}
+                    onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
+                    placeholder="What was the expense for?"
+                    disabled={!isEditing}
+                  />
+                </div>
+
+                <div className="col-12">
+                  <hr className="my-1" />
+                </div>
+
+                <div className="col-md-3">
+                  <label className="form-label fw-semibold">Amount (ex VAT)</label>
+                  <input
+                    className="form-control input-underline"
+                    type="number"
+                    value={form.subtotal}
+                    onChange={(e) => setForm((p) => ({ ...p, subtotal: Number(e.target.value) }))}
+                    disabled={!isEditing}
+                  />
+                </div>
+                <div className="col-md-3">
+                  <label className="form-label fw-semibold">VAT %</label>
+                  <input
+                    className="form-control input-underline"
+                    type="number"
+                    value={form.vat_rate}
+                    onChange={(e) => setForm((p) => ({ ...p, vat_rate: Number(e.target.value) }))}
+                    disabled={!isEditing}
+                  />
+                </div>
+                <div className="col-md-3">
+                  <label className="form-label">Tax Amount</label>
+                  <div className="form-control-plaintext fw-semibold" style={{ fontSize: 14 }}>
+                    {formatCurrency(calc.tax, form.currency)}
+                  </div>
+                </div>
+                <div className="col-md-3">
+                  <label className="form-label">Total</label>
+                  <div className="form-control-plaintext fw-bold text-primary" style={{ fontSize: 16 }}>
+                    {formatCurrency(calc.total, form.currency)}
+                  </div>
+                </div>
+
+                <div className="col-12">
+                  <label className="form-label fw-semibold">Notes</label>
+                  <textarea
+                    className="form-control input-underline"
+                    rows={3}
+                    value={form.notes}
+                    onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))}
+                    disabled={!isEditing}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
