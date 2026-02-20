@@ -24,6 +24,7 @@ class Company(Base, TimestampMixin):
     quotations = relationship("Quotation", back_populates="company")
     invoices = relationship("Invoice", back_populates="company")
     purchase_orders = relationship("PurchaseOrder", back_populates="company")
+    expenses = relationship("Expense", back_populates="company")
     tax_settings = relationship("TaxSetting", back_populates="company")
     certificates = relationship("CompanyCertificate", back_populates="company")
     stock_moves = relationship("StockMove", back_populates="company")

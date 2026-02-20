@@ -105,6 +105,16 @@ interface PurchaseOrder {
   lines: PurchaseOrderLine[];
 }
 
+interface Expense {
+  id: number;
+  expense_date: string;
+  subtotal: number;
+  tax_amount: number;
+  total_amount: number;
+  currency: string;
+  status: string;
+}
+
 interface CompanySettings {
   currency_code?: string;
   currency_symbol?: string;
@@ -463,12 +473,12 @@ export default function ReportsPage() {
   const loadIncomeStatementReport = useCallback(async () => {
     if (!companyId) return;
 
-    const [invoices, purchases] = await Promise.all([
+    const [invoices, expenses] = await Promise.all([
       apiFetch<Invoice[]>(`/invoices?company_id=${companyId}`).catch(
         () => [] as Invoice[],
       ),
-      apiFetch<PurchaseOrder[]>(`/purchases?company_id=${companyId}`).catch(
-        () => [] as PurchaseOrder[],
+      apiFetch<Expense[]>(`/expenses?company_id=${companyId}`).catch(
+        () => [] as Expense[],
       ),
     ]);
 
@@ -486,9 +496,9 @@ export default function ReportsPage() {
       return true;
     });
 
-    const filteredPurchases = purchases.filter((po) => {
-      if (po.status === "cancelled") return false;
-      const d = po.order_date ? new Date(po.order_date) : null;
+    const filteredExpenses = expenses.filter((ex) => {
+      if (ex.status === "cancelled") return false;
+      const d = ex.expense_date ? new Date(ex.expense_date) : null;
       if (fromDate && d && d < fromDate) return false;
       if (toDate && d && d > toDate) return false;
       return true;
@@ -498,10 +508,7 @@ export default function ReportsPage() {
       (s, inv) => s + (inv.subtotal ?? (inv.total_amount || 0) - (inv.tax_amount || 0)),
       0,
     );
-    const expensesExVat = filteredPurchases.reduce(
-      (s, po) => s + ((po.total_amount || 0) - (po.tax_amount || 0)),
-      0,
-    );
+    const expensesExVat = filteredExpenses.reduce((s, ex) => s + (ex.subtotal || 0), 0);
 
     setIncomeStatementReport({
       gross_revenue_ex_vat: grossRevenueExVat,

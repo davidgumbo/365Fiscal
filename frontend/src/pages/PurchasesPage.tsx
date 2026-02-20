@@ -160,6 +160,7 @@ export default function PurchasesPage({
   const [companySettings, setCompanySettings] =
     useState<CompanySettings | null>(null);
   const [loadingData, setLoadingData] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -541,15 +542,36 @@ export default function PurchasesPage({
   const updatePaidState = async (nextState: string) => {
     if (!selectedOrderId || !companyId) return;
     setUpdatingPaidState(true);
+    setError(null);
+
+    const previousState =
+      orders.find((o) => o.id === selectedOrderId)?.paid_state || "unpaid";
+
+    // Optimistic update so the dropdown doesn't snap back on slow networks.
+    setOrders((prev) =>
+      prev.map((o) =>
+        o.id === selectedOrderId ? { ...o, paid_state: nextState } : o,
+      ),
+    );
     try {
       await apiFetch<PurchaseOrder>(`/purchases/${selectedOrderId}`, {
         method: "PATCH",
         body: JSON.stringify({ paid_state: nextState }),
       });
-      const updated = await apiFetch<PurchaseOrder[]>(
-        `/purchases?company_id=${companyId}`,
+      const updatedOrder = await apiFetch<PurchaseOrder>(
+        `/purchases/${selectedOrderId}`,
       );
-      setOrders(updated);
+      setOrders((prev) =>
+        prev.map((o) => (o.id === selectedOrderId ? updatedOrder : o)),
+      );
+    } catch (err: any) {
+      // Revert optimistic update on failure
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === selectedOrderId ? { ...o, paid_state: previousState } : o,
+        ),
+      );
+      setError(err?.message || "Failed to update paid state");
     } finally {
       setUpdatingPaidState(false);
     }
@@ -750,6 +772,15 @@ export default function PurchasesPage({
           )}
         </div>
       </div>
+
+      {error && (
+        <div className="alert alert-error" style={{ marginBottom: 16 }}>
+          {error}
+          <button onClick={() => setError(null)} style={{ marginLeft: 8 }}>
+            ×
+          </button>
+        </div>
+      )}
 
       {mode === "list" && (
         <>
