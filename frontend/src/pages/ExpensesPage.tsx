@@ -8,7 +8,7 @@ type Contact = {
   name: string;
 };
 
-type Category = {
+type ExpenseCategory = {
   id: number;
   company_id: number;
   name: string;
@@ -84,7 +84,7 @@ export default function ExpensesPage() {
     allCompanies.find((c) => c.id === selectedCompanyId) ?? null;
 
   const [contacts, setContacts] = useState<Contact[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<ExpenseCategory[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -100,6 +100,10 @@ export default function ExpensesPage() {
   const [saving, setSaving] = useState(false);
   const [creatingCategory, setCreatingCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("");
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [editingCategoryId, setEditingCategoryId] = useState<number | null>(null);
+  const [categoryFormName, setCategoryFormName] = useState("");
 
   const emptyForm = useMemo(
     () => ({
@@ -138,8 +142,8 @@ export default function ExpensesPage() {
         apiFetch<Expense[]>(`/expenses?company_id=${companyId}`).catch(
           () => [] as Expense[],
         ),
-        apiFetch<Category[]>(`/categories?company_id=${companyId}`).catch(
-          () => [] as Category[],
+        apiFetch<ExpenseCategory[]>(`/expense-categories?company_id=${companyId}`).catch(
+          () => [] as ExpenseCategory[],
         ),
       ]);
       setContacts(contactsData);
@@ -165,6 +169,7 @@ export default function ExpensesPage() {
     return expenses.filter((e) => {
       if (vendorFilter !== "" && e.vendor_id !== vendorFilter) return false;
       if (statusFilter && (e.status || "") !== statusFilter) return false;
+      if (categoryFilter && (e.category || "") !== categoryFilter) return false;
       const d = e.expense_date ? new Date(e.expense_date) : null;
       if (from && d && d < from) return false;
       if (to && d && d > to) return false;
@@ -178,7 +183,7 @@ export default function ExpensesPage() {
         vendor.includes(term)
       );
     });
-  }, [expenses, search, vendorFilter, statusFilter, fromDate, toDate, contacts]);
+  }, [expenses, search, vendorFilter, statusFilter, categoryFilter, fromDate, toDate, contacts]);
 
   const selectedExpense = useMemo(
     () => expenses.find((e) => e.id === selectedExpenseId) ?? null,
@@ -316,7 +321,7 @@ export default function ExpensesPage() {
     setCreatingCategory(true);
     setError(null);
     try {
-      const created = await apiFetch<Category>("/categories", {
+      const created = await apiFetch<ExpenseCategory>("/expense-categories", {
         method: "POST",
         body: JSON.stringify({ company_id: companyId, name }),
       });
@@ -327,6 +332,58 @@ export default function ExpensesPage() {
       setError(err.message || "Failed to create category");
     } finally {
       setCreatingCategory(false);
+    }
+  };
+
+  // ============= CATEGORY MANAGEMENT =============
+  const openCategoryModal = (cat?: ExpenseCategory) => {
+    if (cat) {
+      setEditingCategoryId(cat.id);
+      setCategoryFormName(cat.name);
+    } else {
+      setEditingCategoryId(null);
+      setCategoryFormName("");
+    }
+    setShowCategoryModal(true);
+  };
+
+  const saveCategoryModal = async () => {
+    if (!companyId || !categoryFormName.trim()) return;
+    setSaving(true);
+    setError(null);
+    try {
+      if (editingCategoryId) {
+        await apiFetch(`/expense-categories/${editingCategoryId}`, {
+          method: "PATCH",
+          body: JSON.stringify({ name: categoryFormName.trim() }),
+        });
+      } else {
+        await apiFetch("/expense-categories", {
+          method: "POST",
+          body: JSON.stringify({ company_id: companyId, name: categoryFormName.trim() }),
+        });
+      }
+      await loadData();
+      setShowCategoryModal(false);
+      setEditingCategoryId(null);
+      setCategoryFormName("");
+    } catch (err: any) {
+      setError(err.message || "Failed to save category");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteCategoryById = async (categoryId: number) => {
+    if (!confirm("Delete this expense category? Expenses using it will keep their category text.")) return;
+    setSaving(true);
+    try {
+      await apiFetch(`/expense-categories/${categoryId}`, { method: "DELETE" });
+      await loadData();
+    } catch (err: any) {
+      setError(err.message || "Failed to delete category");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -561,6 +618,56 @@ export default function ExpensesPage() {
                       <span>{c.name.toUpperCase().slice(0, 18)}</span>
                     </span>
                     <span className="o-sidebar-count">{expenses.filter((e) => e.vendor_id === c.id).length}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="o-sidebar-section">
+                <div className="o-sidebar-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  CATEGORIES
+                  <button
+                    style={{ background: "none", border: "none", cursor: "pointer", color: "var(--blue-500)", fontSize: 18, lineHeight: 1, padding: 0 }}
+                    title="Add category"
+                    onClick={() => openCategoryModal()}
+                  >+</button>
+                </div>
+                <div
+                  className={`o-sidebar-item ${categoryFilter === "" ? "active" : ""}`}
+                  onClick={() => setCategoryFilter("")}
+                >
+                  <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" />
+                    </svg>
+                    <span>ALL CATEGORIES</span>
+                  </span>
+                  <span className="o-sidebar-count">{expenses.length}</span>
+                </div>
+                {categories.map((cat) => (
+                  <div
+                    key={cat.id}
+                    className={`o-sidebar-item ${categoryFilter === cat.name ? "active" : ""}`}
+                    onClick={() => setCategoryFilter(cat.name)}
+                  >
+                    <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--teal-500, currentColor)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" /><line x1="7" y1="7" x2="7.01" y2="7" />
+                      </svg>
+                      <span>{cat.name.toUpperCase().slice(0, 18)}</span>
+                    </span>
+                    <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <span className="o-sidebar-count">{expenses.filter((e) => e.category === cat.name).length}</span>
+                      <button
+                        style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "var(--muted)", fontSize: 11, lineHeight: 1 }}
+                        title="Edit category"
+                        onClick={(ev) => { ev.stopPropagation(); openCategoryModal(cat); }}
+                      >✎</button>
+                      <button
+                        style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "var(--red-500, #ef4444)", fontSize: 11, lineHeight: 1 }}
+                        title="Delete category"
+                        onClick={(ev) => { ev.stopPropagation(); deleteCategoryById(cat.id); }}
+                      >✕</button>
+                    </span>
                   </div>
                 ))}
               </div>
@@ -872,6 +979,73 @@ export default function ExpensesPage() {
                   />
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Expense Category Modal ── */}
+      {showCategoryModal && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              background: "var(--white-500, #fff)",
+              borderRadius: 8,
+              padding: 24,
+              width: 400,
+            }}
+          >
+            <h3 style={{ margin: "0 0 16px 0" }}>
+              {editingCategoryId ? "Edit Expense Category" : "New Expense Category"}
+            </h3>
+            <div className="o-form-group">
+              <label className="o-form-label">Name</label>
+              <div className="o-form-field">
+                <input
+                  type="text"
+                  className="o-form-input"
+                  value={categoryFormName}
+                  onChange={(e) => setCategoryFormName(e.target.value)}
+                  autoFocus
+                  onKeyDown={(e) => { if (e.key === "Enter") saveCategoryModal(); }}
+                />
+              </div>
+            </div>
+            <div
+              style={{
+                display: "flex",
+                gap: 8,
+                justifyContent: "flex-end",
+                marginTop: 24,
+              }}
+            >
+              <button
+                className="o-btn o-btn-secondary"
+                onClick={() => {
+                  setShowCategoryModal(false);
+                  setEditingCategoryId(null);
+                  setCategoryFormName("");
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className="o-btn o-btn-primary"
+                onClick={saveCategoryModal}
+                disabled={saving || !categoryFormName.trim()}
+              >
+                {saving ? "Saving…" : editingCategoryId ? "Save" : "Create"}
+              </button>
             </div>
           </div>
         </div>
