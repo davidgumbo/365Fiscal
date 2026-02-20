@@ -866,37 +866,17 @@ export default function ExpensesPage() {
                 </div>
                 <div className="col-md-6">
                   <label className="form-label fw-semibold">Category</label>
-                  <div className="position-relative">
-                    <select
-                      className="form-select input-underline"
-                      value={form.category || ""}
-                      onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))}
-                      disabled={!isEditing}
-                    >
-                      <option value="">— Select Category —</option>
-                      {categories.slice().sort((a, b) => a.name.localeCompare(b.name)).map((c) => (
-                        <option key={c.id} value={c.name}>{c.name}</option>
-                      ))}
-                    </select>
-                    {isEditing && (
-                      <div className="d-flex gap-2 mt-2">
-                        <input
-                          className="form-control form-control-sm"
-                          value={newCategoryName}
-                          onChange={(e) => setNewCategoryName(e.target.value)}
-                          placeholder="New category name"
-                          style={{ maxWidth: 180 }}
-                        />
-                        <button
-                          className="btn btn-sm btn-outline-primary"
-                          onClick={createCategory}
-                          disabled={creatingCategory || !newCategoryName.trim()}
-                        >
-                          {creatingCategory ? "…" : "+ Create"}
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                  <select
+                    className="form-select input-underline"
+                    value={form.category || ""}
+                    onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))}
+                    disabled={!isEditing}
+                  >
+                    <option value="">— Select Category —</option>
+                    {categories.slice().sort((a, b) => a.name.localeCompare(b.name)).map((c) => (
+                      <option key={c.id} value={c.name}>{c.name}</option>
+                    ))}
+                  </select>
                 </div>
 
                 <div className="col-md-3">
