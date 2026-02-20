@@ -8,6 +8,12 @@ type Contact = {
   name: string;
 };
 
+type Category = {
+  id: number;
+  company_id: number;
+  name: string;
+};
+
 type Expense = {
   id: number;
   company_id: number;
@@ -78,29 +84,40 @@ export default function ExpensesPage() {
     allCompanies.find((c) => c.id === selectedCompanyId) ?? null;
 
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [search, setSearch] = useState("");
   const [vendorFilter, setVendorFilter] = useState<number | "">("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 
-  const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [form, setForm] = useState({
-    reference: "",
-    expense_date: "",
-    vendor_id: "" as number | "",
-    category: "",
-    description: "",
-    subtotal: 0,
-    vat_rate: 0,
-    currency: "USD",
-    status: "posted",
-    notes: "",
-  });
+  const [selectedExpenseId, setSelectedExpenseId] = useState<number | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [creatingCategory, setCreatingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+
+  const emptyForm = useMemo(
+    () => ({
+      reference: "",
+      expense_date: "",
+      vendor_id: "" as number | "",
+      category: "",
+      description: "",
+      subtotal: 0,
+      vat_rate: 0,
+      currency: "USD",
+      status: "posted",
+      notes: "",
+    }),
+    [],
+  );
+
+  const [form, setForm] = useState(emptyForm);
 
   const calc = useMemo(() => {
     const subtotal = Number(form.subtotal) || 0;
@@ -114,16 +131,20 @@ export default function ExpensesPage() {
     setLoading(true);
     setError(null);
     try {
-      const [contactsData, expensesData] = await Promise.all([
+      const [contactsData, expensesData, categoriesData] = await Promise.all([
         apiFetch<Contact[]>(`/contacts?company_id=${companyId}`).catch(
           () => [] as Contact[],
         ),
         apiFetch<Expense[]>(`/expenses?company_id=${companyId}`).catch(
           () => [] as Expense[],
         ),
+        apiFetch<Category[]>(`/categories?company_id=${companyId}`).catch(
+          () => [] as Category[],
+        ),
       ]);
       setContacts(contactsData);
       setExpenses(expensesData);
+      setCategories(categoriesData);
     } catch (err: any) {
       setError(err.message || "Failed to load expenses");
     } finally {
@@ -143,6 +164,7 @@ export default function ExpensesPage() {
     const to = toDate ? new Date(toDate + "T23:59:59") : null;
     return expenses.filter((e) => {
       if (vendorFilter !== "" && e.vendor_id !== vendorFilter) return false;
+      if (statusFilter && (e.status || "") !== statusFilter) return false;
       const d = e.expense_date ? new Date(e.expense_date) : null;
       if (from && d && d < from) return false;
       if (to && d && d > to) return false;
@@ -156,51 +178,60 @@ export default function ExpensesPage() {
         vendor.includes(term)
       );
     });
-  }, [expenses, search, vendorFilter, fromDate, toDate, contacts]);
+  }, [expenses, search, vendorFilter, statusFilter, fromDate, toDate, contacts]);
+
+  const selectedExpense = useMemo(
+    () => expenses.find((e) => e.id === selectedExpenseId) ?? null,
+    [expenses, selectedExpenseId],
+  );
+
+  useEffect(() => {
+    if (!selectedExpense) {
+      setForm(emptyForm);
+      setIsEditing(false);
+      setNewCategoryName("");
+      return;
+    }
+    setForm({
+      reference: selectedExpense.reference,
+      expense_date: toDateInputValue(selectedExpense.expense_date),
+      vendor_id: selectedExpense.vendor_id ?? "",
+      category: selectedExpense.category || "",
+      description: selectedExpense.description || "",
+      subtotal: selectedExpense.subtotal || 0,
+      vat_rate: selectedExpense.vat_rate || 0,
+      currency: selectedExpense.currency || "USD",
+      status: selectedExpense.status || "posted",
+      notes: selectedExpense.notes || "",
+    });
+    setIsEditing(false);
+    setNewCategoryName("");
+  }, [selectedExpense, emptyForm]);
 
   const startNew = () => {
-    setEditingId(null);
-    setShowForm(true);
+    setSelectedExpenseId(null);
     setForm({
-      reference: "",
-      expense_date: "",
-      vendor_id: "",
-      category: "",
-      description: "",
-      subtotal: 0,
-      vat_rate: 0,
+      ...emptyForm,
+      expense_date: new Date().toISOString().split("T")[0],
       currency: "USD",
       status: "posted",
-      notes: "",
     });
-  };
-
-  const startEdit = (e: Expense) => {
-    setEditingId(e.id);
-    setShowForm(true);
-    setForm({
-      reference: e.reference,
-      expense_date: toDateInputValue(e.expense_date),
-      vendor_id: e.vendor_id ?? "",
-      category: e.category || "",
-      description: e.description || "",
-      subtotal: e.subtotal || 0,
-      vat_rate: e.vat_rate || 0,
-      currency: e.currency || "USD",
-      status: e.status || "posted",
-      notes: e.notes || "",
-    });
+    setIsEditing(true);
+    setNewCategoryName("");
   };
 
   const saveExpense = async () => {
     if (!companyId) return;
     setError(null);
+    setSaving(true);
     try {
-      const payload = {
+      const createPayload = {
         company_id: companyId,
         vendor_id: form.vendor_id === "" ? null : form.vendor_id,
         reference: form.reference.trim() || null,
-        expense_date: form.expense_date ? fromDateInputValue(form.expense_date) : null,
+        expense_date: form.expense_date
+          ? fromDateInputValue(form.expense_date)
+          : null,
         category: form.category,
         description: form.description,
         subtotal: Number(form.subtotal) || 0,
@@ -210,32 +241,75 @@ export default function ExpensesPage() {
         notes: form.notes,
       };
 
-      if (editingId) {
-        await apiFetch<Expense>(`/expenses/${editingId}`, {
-          method: "PATCH",
-          body: JSON.stringify(payload),
-        });
+      if (selectedExpenseId) {
+        const updatePayload = {
+          vendor_id: createPayload.vendor_id,
+          reference: createPayload.reference,
+          expense_date: createPayload.expense_date,
+          category: createPayload.category,
+          description: createPayload.description,
+          subtotal: createPayload.subtotal,
+          vat_rate: createPayload.vat_rate,
+          currency: createPayload.currency,
+          status: createPayload.status,
+          notes: createPayload.notes,
+        };
+        const updated = await apiFetch<Expense>(`/expenses/${selectedExpenseId}`,
+          {
+            method: "PATCH",
+            body: JSON.stringify(updatePayload),
+          },
+        );
+        await loadData();
+        setSelectedExpenseId(updated.id);
+        setIsEditing(false);
       } else {
-        await apiFetch<Expense>("/expenses", {
+        const created = await apiFetch<Expense>("/expenses", {
           method: "POST",
-          body: JSON.stringify(payload),
+          body: JSON.stringify(createPayload),
         });
+        await loadData();
+        setSelectedExpenseId(created.id);
+        setIsEditing(false);
       }
-      setShowForm(false);
-      setEditingId(null);
-      await loadData();
     } catch (err: any) {
       setError(err.message || "Failed to save expense");
+    } finally {
+      setSaving(false);
     }
   };
 
-  const deleteExpense = async (id: number) => {
+  const deleteSelectedExpense = async () => {
+    if (!selectedExpenseId) return;
     if (!confirm("Delete this expense? This cannot be undone.")) return;
     try {
-      await apiRequest(`/expenses/${id}`, { method: "DELETE" });
+      await apiRequest(`/expenses/${selectedExpenseId}`, { method: "DELETE" });
       await loadData();
+      setSelectedExpenseId(null);
+      setIsEditing(false);
     } catch (err: any) {
       setError(err.message || "Failed to delete expense");
+    }
+  };
+
+  const createCategory = async () => {
+    if (!companyId) return;
+    const name = newCategoryName.trim();
+    if (!name) return;
+    setCreatingCategory(true);
+    setError(null);
+    try {
+      const created = await apiFetch<Category>("/categories", {
+        method: "POST",
+        body: JSON.stringify({ company_id: companyId, name }),
+      });
+      setCategories((prev) => [...prev, created]);
+      setForm((prev) => ({ ...prev, category: created.name }));
+      setNewCategoryName("");
+    } catch (err: any) {
+      setError(err.message || "Failed to create category");
+    } finally {
+      setCreatingCategory(false);
     }
   };
 
@@ -243,6 +317,9 @@ export default function ExpensesPage() {
     setSelectedCompanyId(null);
     setExpenses([]);
     setContacts([]);
+    setCategories([]);
+    setSelectedExpenseId(null);
+    setIsEditing(false);
   };
 
   if (companiesLoading && !companyId) {
@@ -348,26 +425,7 @@ export default function ExpensesPage() {
   }
 
   return (
-    <div className="content-area">
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Expenses</h1>
-          <p className="page-subtitle">
-            {isAdmin && company ? `Company: ${company.name}` : "Manage company expenses"}
-          </p>
-        </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          {isAdmin && companyId && (
-            <button className="btn btn-secondary" onClick={goBackToCompanies}>
-              Change Company
-            </button>
-          )}
-          <button className="btn btn-primary" onClick={startNew}>
-            + New Expense
-          </button>
-        </div>
-      </div>
-
+    <div className="page-container">
       {error && (
         <div className="alert alert-error" style={{ marginBottom: 16 }}>
           {error}
@@ -377,116 +435,219 @@ export default function ExpensesPage() {
         </div>
       )}
 
-      <div className="card" style={{ padding: 16, marginBottom: 16 }}>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "2fr 1fr 1fr 1fr",
-            gap: 12,
-            alignItems: "end",
-          }}
-        >
-          <div className="input-group">
-            <label className="input-label">Search</label>
-            <input
-              className="input-field"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Reference, description, category, vendor"
-            />
-          </div>
-          <div className="input-group">
-            <label className="input-label">Vendor</label>
-            <select
-              className="input-field dropdown-select"
-              value={vendorFilter}
-              onChange={(e) =>
-                setVendorFilter(e.target.value ? Number(e.target.value) : "")
-              }
-            >
-              <option value="">All</option>
-              {contacts.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="input-group">
-            <label className="input-label">From</label>
-            <input
-              className="input-field"
-              type="date"
-              value={fromDate}
-              onChange={(e) => setFromDate(e.target.value)}
-            />
-          </div>
-          <div className="input-group">
-            <label className="input-label">To</label>
-            <input
-              className="input-field"
-              type="date"
-              value={toDate}
-              onChange={(e) => setToDate(e.target.value)}
-            />
-          </div>
-        </div>
-      </div>
-
-      {showForm && (
-        <div className="card" style={{ padding: 16, marginBottom: 16 }}>
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <h3 style={{ margin: 0 }}>
-              {editingId ? `Edit Expense #${editingId}` : "New Expense"}
-            </h3>
-            <button
-              className="btn btn-secondary"
-              onClick={() => {
-                setShowForm(false);
-                setEditingId(null);
-              }}
-            >
-              Close
+      <div className="two-panel-left">
+        <div className="sidebar-panel">
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+            <h4 style={{ margin: 0 }}>Expenses List</h4>
+            <button className="btn btn-secondary" onClick={startNew}>
+              + New
             </button>
           </div>
+          <div style={{ marginTop: 6, color: "var(--muted)", fontSize: 13 }}>
+            {isAdmin && company ? `Company: ${company.name}` : "Manage company expenses"}
+          </div>
+          {isAdmin && companyId && (
+            <div style={{ marginTop: 10 }}>
+              <button className="btn btn-secondary" onClick={goBackToCompanies}>
+                Change Company
+              </button>
+            </div>
+          )}
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr 1fr",
-              gap: 12,
-              marginTop: 12,
-            }}
-          >
+          <div style={{ marginTop: 14, display: "grid", gap: 10 }}>
+            <div className="input-group">
+              <label className="input-label">Search</label>
+              <input
+                className="input-field"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Reference, description, category, vendor"
+              />
+            </div>
+
+            <div className="input-group">
+              <label className="input-label">Vendor</label>
+              <select
+                className="input-field dropdown-select"
+                value={vendorFilter}
+                onChange={(e) =>
+                  setVendorFilter(e.target.value ? Number(e.target.value) : "")
+                }
+              >
+                <option value="">All</option>
+                {contacts.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="input-group">
+              <label className="input-label">Status</label>
+              <select
+                className="input-field dropdown-select"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="">All</option>
+                <option value="posted">Posted</option>
+                <option value="draft">Draft</option>
+              </select>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <div className="input-group">
+                <label className="input-label">From</label>
+                <input
+                  className="input-field"
+                  type="date"
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                />
+              </div>
+              <div className="input-group">
+                <label className="input-label">To</label>
+                <input
+                  className="input-field"
+                  type="date"
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div style={{ marginTop: 14, maxHeight: "600px", overflowY: "auto" }}>
+            {filteredExpenses.length === 0 ? (
+              <div className="empty-state-pro">
+                <div style={{ color: "var(--muted)", padding: 12 }}>
+                  {loading ? "Loading…" : "No expenses found."}
+                </div>
+              </div>
+            ) : (
+              filteredExpenses.map((e) => {
+                const vendorName =
+                  contacts.find((c) => c.id === e.vendor_id)?.name || "—";
+                return (
+                  <div
+                    key={e.id}
+                    className={`list-item ${selectedExpenseId === e.id ? "active" : ""}`}
+                    onClick={() => setSelectedExpenseId(e.id)}
+                  >
+                    <div style={{ flex: 1 }}>
+                      <div className="list-item-title">{e.reference}</div>
+                      <div className="list-item-sub">
+                        {toDateInputValue(e.expense_date)} • {vendorName}
+                      </div>
+                      <div className="list-item-sub">{e.description || e.category || "—"}</div>
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-end" }}>
+                      <span
+                        className={`badge ${e.status === "posted" ? "badge-success" : "badge-secondary"}`}
+                      >
+                        {e.status}
+                      </span>
+                      <div className="money">
+                        {formatCurrency(e.total_amount, e.currency)}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        <div className="form-shell-pro">
+          <div className="section-header">
+            <div className="section-title">
+              <h3>{selectedExpenseId ? "Expense" : "New Expense"}</h3>
+              <p>
+                {selectedExpenseId
+                  ? `ID: ${selectedExpenseId}`
+                  : "Select an expense or create a new one"}
+              </p>
+            </div>
+            <div className="toolbar-right">
+              <div className="statusbar">
+                <span
+                  className={`badge ${form.status === "posted" ? "badge-success" : "badge-secondary"}`}
+                >
+                  {form.status}
+                </span>
+              </div>
+              <button className="btn btn-secondary" onClick={startNew}>
+                + New
+              </button>
+              {isEditing ? (
+                <>
+                  <button className="btn btn-primary" onClick={saveExpense} disabled={saving}>
+                    {saving ? "Saving…" : "Save"}
+                  </button>
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => {
+                      if (selectedExpense) {
+                        setSelectedExpenseId(selectedExpense.id);
+                      }
+                      if (!selectedExpenseId) {
+                        setForm(emptyForm);
+                      }
+                      setIsEditing(false);
+                    }}
+                  >
+                    Discard
+                  </button>
+                </>
+              ) : selectedExpenseId ? (
+                <button className="btn btn-primary" onClick={() => setIsEditing(true)}>
+                  Edit
+                </button>
+              ) : null}
+              {selectedExpenseId && (
+                <button className="btn btn-outline-danger btn-sm" onClick={deleteSelectedExpense}>
+                  Delete
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="form-grid-pro">
             <div className="input-group">
               <label className="input-label">Date</label>
               <input
                 className="input-field"
                 type="date"
                 value={form.expense_date}
-                onChange={(e) => setForm({ ...form, expense_date: e.target.value })}
+                onChange={(e) => setForm((p) => ({ ...p, expense_date: e.target.value }))}
+                disabled={!isEditing}
               />
             </div>
+
             <div className="input-group">
               <label className="input-label">Reference</label>
               <input
                 className="input-field"
                 value={form.reference}
-                onChange={(e) => setForm({ ...form, reference: e.target.value })}
+                onChange={(e) => setForm((p) => ({ ...p, reference: e.target.value }))}
                 placeholder="(auto)"
+                disabled={!isEditing}
               />
             </div>
+
             <div className="input-group">
               <label className="input-label">Vendor</label>
               <select
                 className="input-field dropdown-select"
                 value={form.vendor_id}
                 onChange={(e) =>
-                  setForm({
-                    ...form,
+                  setForm((p) => ({
+                    ...p,
                     vendor_id: e.target.value ? Number(e.target.value) : "",
-                  })
+                  }))
                 }
+                disabled={!isEditing}
               >
                 <option value="">—</option>
                 {contacts.map((c) => (
@@ -498,21 +659,63 @@ export default function ExpensesPage() {
             </div>
 
             <div className="input-group">
-              <label className="input-label">Category</label>
-              <input
-                className="input-field"
-                value={form.category}
-                onChange={(e) => setForm({ ...form, category: e.target.value })}
-                placeholder="e.g., Fuel"
-              />
+              <label className="input-label">Status</label>
+              <select
+                className="input-field dropdown-select"
+                value={form.status}
+                onChange={(e) => setForm((p) => ({ ...p, status: e.target.value }))}
+                disabled={!isEditing}
+              >
+                <option value="posted">Posted</option>
+                <option value="draft">Draft</option>
+              </select>
             </div>
+
+            <div className="input-group" style={{ gridColumn: "span 2" }}>
+              <label className="input-label">Category</label>
+              <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                <select
+                  className="input-field dropdown-select"
+                  value={form.category || ""}
+                  onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))}
+                  disabled={!isEditing}
+                >
+                  <option value="">—</option>
+                  {categories
+                    .slice()
+                    .sort((a, b) => a.name.localeCompare(b.name))
+                    .map((c) => (
+                      <option key={c.id} value={c.name}>
+                        {c.name}
+                      </option>
+                    ))}
+                </select>
+                <input
+                  className="input-field"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  placeholder="New category"
+                  disabled={!isEditing}
+                  style={{ maxWidth: 200 }}
+                />
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={createCategory}
+                  disabled={!isEditing || creatingCategory || !newCategoryName.trim()}
+                >
+                  {creatingCategory ? "Creating…" : "+ Add"}
+                </button>
+              </div>
+            </div>
+
             <div className="input-group" style={{ gridColumn: "span 2" }}>
               <label className="input-label">Description</label>
               <input
                 className="input-field"
                 value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
                 placeholder="What was the expense for?"
+                disabled={!isEditing}
               />
             </div>
 
@@ -522,149 +725,46 @@ export default function ExpensesPage() {
                 className="input-field"
                 type="number"
                 value={form.subtotal}
-                onChange={(e) =>
-                  setForm({ ...form, subtotal: Number(e.target.value) })
-                }
+                onChange={(e) => setForm((p) => ({ ...p, subtotal: Number(e.target.value) }))}
+                disabled={!isEditing}
               />
             </div>
+
             <div className="input-group">
               <label className="input-label">VAT %</label>
               <input
                 className="input-field"
                 type="number"
                 value={form.vat_rate}
-                onChange={(e) =>
-                  setForm({ ...form, vat_rate: Number(e.target.value) })
-                }
+                onChange={(e) => setForm((p) => ({ ...p, vat_rate: Number(e.target.value) }))}
+                disabled={!isEditing}
               />
             </div>
+
             <div className="input-group">
               <label className="input-label">Currency</label>
               <input
                 className="input-field"
                 value={form.currency}
-                onChange={(e) => setForm({ ...form, currency: e.target.value })}
+                onChange={(e) => setForm((p) => ({ ...p, currency: e.target.value }))}
+                disabled={!isEditing}
               />
             </div>
 
-            <div className="input-group">
-              <label className="input-label">Status</label>
-              <select
-                className="input-field dropdown-select"
-                value={form.status}
-                onChange={(e) => setForm({ ...form, status: e.target.value })}
-              >
-                <option value="posted">Posted</option>
-                <option value="draft">Draft</option>
-              </select>
-            </div>
-            <div className="input-group" style={{ gridColumn: "span 2" }}>
+            <div className="input-group" style={{ gridColumn: "span 3" }}>
               <label className="input-label">Notes</label>
               <input
                 className="input-field"
                 value={form.notes}
-                onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))}
+                disabled={!isEditing}
               />
             </div>
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              marginTop: 12,
-              alignItems: "center",
-            }}
-          >
-            <div style={{ color: "var(--muted)", fontSize: 13 }}>
-              VAT: {formatCurrency(calc.tax, form.currency)} · Total: {formatCurrency(calc.total, form.currency)}
-            </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button className="btn btn-secondary" onClick={() => loadData()}>
-                Refresh
-              </button>
-              <button className="btn btn-primary" onClick={saveExpense}>
-                Save
-              </button>
-            </div>
+          <div style={{ marginTop: 12, color: "var(--muted)", fontSize: 13 }}>
+            VAT: {formatCurrency(calc.tax, form.currency)} · Total: {formatCurrency(calc.total, form.currency)}
           </div>
-        </div>
-      )}
-
-      <div className="card" style={{ padding: 0 }}>
-        <div
-          style={{
-            padding: 12,
-            borderBottom: "1px solid var(--border-color, #ddd)",
-          }}
-        >
-          <strong>Expenses</strong>
-          <span style={{ marginLeft: 8, color: "var(--muted)" }}>
-            {filteredExpenses.length} item(s)
-          </span>
-        </div>
-        <div style={{ overflowX: "auto" }}>
-          <table className="table" style={{ width: "100%" }}>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Reference</th>
-                <th>Vendor</th>
-                <th>Description</th>
-                <th style={{ textAlign: "right" }}>Ex VAT</th>
-                <th style={{ textAlign: "right" }}>VAT</th>
-                <th style={{ textAlign: "right" }}>Total</th>
-                <th>Status</th>
-                <th style={{ textAlign: "right" }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredExpenses.map((e) => {
-                const vendorName =
-                  contacts.find((c) => c.id === e.vendor_id)?.name || "—";
-                return (
-                  <tr key={e.id}>
-                    <td>{toDateInputValue(e.expense_date) || "—"}</td>
-                    <td>{e.reference}</td>
-                    <td>{vendorName}</td>
-                    <td>{e.description || e.category || "—"}</td>
-                    <td style={{ textAlign: "right" }}>
-                      {formatCurrency(e.subtotal, e.currency)}
-                    </td>
-                    <td style={{ textAlign: "right" }}>
-                      {formatCurrency(e.tax_amount, e.currency)}
-                    </td>
-                    <td style={{ textAlign: "right" }}>
-                      {formatCurrency(e.total_amount, e.currency)}
-                    </td>
-                    <td>{e.status}</td>
-                    <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                      <button
-                        className="btn btn-secondary btn-sm"
-                        onClick={() => startEdit(e)}
-                        style={{ marginRight: 8 }}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="btn btn-outline-danger btn-sm"
-                        onClick={() => deleteExpense(e.id)}
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-              {!filteredExpenses.length && (
-                <tr>
-                  <td colSpan={9} style={{ textAlign: "center", padding: 24 }}>
-                    {loading ? "Loading…" : "No expenses found."}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
         </div>
       </div>
     </div>
