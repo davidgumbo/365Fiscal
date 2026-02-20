@@ -1166,6 +1166,26 @@ export default function ReportsPage() {
         <table><thead><tr><th>Reference</th><th>Vendor</th><th style="text-align:right">Amount</th><th>Date</th><th>Status</th></tr></thead><tbody>
           ${creditorsReport.recent_orders.map((o) => `<tr><td>${o.reference}</td><td>${o.vendor}</td><td style="text-align:right">${formatCurrency(o.amount)}</td><td>${o.date}</td><td>${o.status}</td></tr>`).join("")}
         </tbody></table>`;
+    } else if (activeReport === "purchases" && purchaseReport) {
+      bodyHTML = `
+        <div class="summary-grid">
+          <div class="summary-box"><div class="label">Total Orders</div><div class="val">${purchaseReport.total_orders}</div></div>
+          <div class="summary-box"><div class="label">Total Amount</div><div class="val">${formatCurrency(purchaseReport.total_amount)}</div></div>
+          <div class="summary-box"><div class="label">Total Tax</div><div class="val">${formatCurrency(purchaseReport.total_tax)}</div></div>
+          <div class="summary-box"><div class="label">Average Order</div><div class="val">${formatCurrency(purchaseReport.average_order)}</div></div>
+        </div>
+        <h3>By Vendor</h3>
+        <table><thead><tr><th>Vendor</th><th style="text-align:right">Orders</th><th style="text-align:right">Amount</th></tr></thead><tbody>
+          ${purchaseReport.by_vendor.map((v) => `<tr><td>${v.name}</td><td style="text-align:right">${v.count}</td><td style="text-align:right">${formatCurrency(v.amount)}</td></tr>`).join("")}
+        </tbody></table>
+        <h3>By Status</h3>
+        <table><thead><tr><th>Status</th><th style="text-align:right">Count</th><th style="text-align:right">Amount</th></tr></thead><tbody>
+          ${purchaseReport.by_status.map((s) => `<tr><td style="text-transform:capitalize">${s.status}</td><td style="text-align:right">${s.count}</td><td style="text-align:right">${formatCurrency(s.amount)}</td></tr>`).join("")}
+        </tbody></table>
+        <h3>Monthly Trend</h3>
+        <table><thead><tr><th>Month</th><th style="text-align:right">Amount</th><th style="text-align:right">Orders</th></tr></thead><tbody>
+          ${purchaseReport.by_month.map((m) => `<tr><td>${m.month}</td><td style="text-align:right">${formatCurrency(m.amount)}</td><td style="text-align:right">${m.count}</td></tr>`).join("")}
+        </tbody></table>`;
     } else if (activeReport === "vat" && vatReport) {
       const vatPeriod = `${vatReport.period_from || dateRange.from} to ${vatReport.period_to || dateRange.to}`;
       bodyHTML = `
@@ -1196,38 +1216,8 @@ export default function ReportsPage() {
             <tr><td>Less: Input VAT (Purchases)</td><td style="text-align:right;font-weight:600;color:#dc2626">(${formatCurrency(vatReport.input_tax)})</td></tr>
             ${vatReport.credit_notes_tax > 0 ? `<tr><td>Less: Credit Note VAT</td><td style="text-align:right;font-weight:600;color:#dc2626">(${formatCurrency(vatReport.credit_notes_tax)})</td></tr>` : ""}
             <tr style="border-top:3px double #333;font-size:16px;font-weight:700"><td>Net VAT ${vatReport.net_tax >= 0 ? "Payable" : "Refundable"}</td><td style="text-align:right;color:${vatReport.net_tax >= 0 ? "#dc2626" : "#16a34a"}">${formatCurrency(Math.abs(vatReport.net_tax))}</td></tr>
-              <div
-                style={{
-                  fontSize: 14,
-                  fontWeight: 700,
-                  letterSpacing: 1,
-                  textTransform: "uppercase",
-                }}
-              >
-                {activeReport === "sales"
-                  ? "Sales Report"
-                  : activeReport === "stock"
-                    ? "Stock Valuation"
-                    : activeReport === "receivable"
-                      ? "Receivable"
-                      : activeReport === "creditors"
-                        ? "Creditors"
-                        : activeReport === "purchases"
-                          ? "Purchase Report"
-                          : "VAT Return"}
-              </div>
-        <h3>By Vendor</h3>
-        <table><thead><tr><th>Vendor</th><th style="text-align:right">Orders</th><th style="text-align:right">Amount</th></tr></thead><tbody>
-          ${purchaseReport.by_vendor.map((v) => `<tr><td>${v.name}</td><td style="text-align:right">${v.count}</td><td style="text-align:right">${formatCurrency(v.amount)}</td></tr>`).join("")}
-        </tbody></table>
-        <h3>By Status</h3>
-        <table><thead><tr><th>Status</th><th style="text-align:right">Count</th><th style="text-align:right">Amount</th></tr></thead><tbody>
-          ${purchaseReport.by_status.map((s) => `<tr><td style="text-transform:capitalize">${s.status}</td><td style="text-align:right">${s.count}</td><td style="text-align:right">${formatCurrency(s.amount)}</td></tr>`).join("")}
-        </tbody></table>
-        <h3>Monthly Trend</h3>
-        <table><thead><tr><th>Month</th><th style="text-align:right">Amount</th><th style="text-align:right">Orders</th></tr></thead><tbody>
-          ${purchaseReport.by_month.map((m) => `<tr><td>${m.month}</td><td style="text-align:right">${formatCurrency(m.amount)}</td><td style="text-align:right">${m.count}</td></tr>`).join("")}
-        </tbody></table>`;
+          </tbody>
+        </table>`;
     }
 
     const html = `<!DOCTYPE html><html><head><title>${title}</title><style>
