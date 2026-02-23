@@ -102,6 +102,8 @@ interface AuditLog {
   action_at: string;
 }
 
+const DASHBOARD_TABLE_PAGE_SIZE = 8;
+
 // SVG Icons
 const BuildingIcon = () => (
   <svg
@@ -276,6 +278,10 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [dateRange, setDateRange] = useState({ from: "", to: "" });
+  const [invoicePage, setInvoicePage] = useState(1);
+  const [quotationPage, setQuotationPage] = useState(1);
+  const [companyStatusPage, setCompanyStatusPage] = useState(1);
+  const [auditPage, setAuditPage] = useState(1);
 
   useEffect(() => {
     const now = new Date();
@@ -311,7 +317,7 @@ export default function DashboardPage() {
       apiFetch<Product[]>(`/products${params}`).catch(() => []),
       apiFetch<Contact[]>(`/contacts${params}`).catch(() => []),
       apiFetch<PaymentStats>(`/payments/summary${params}`).catch(() => null),
-      apiFetch<AuditLog[]>(`/audit-logs${params}&limit=5`).catch(() => []),
+      apiFetch<AuditLog[]>(`/audit-logs${params}&limit=100`).catch(() => []),
     ];
 
     Promise.all(requests)
@@ -438,9 +444,95 @@ export default function DashboardPage() {
     return { totalPaid, totalDue, paidInvoices, partialPaid };
   }, [invoices]);
 
-  // Recent items
-  const recentInvoices = invoices.slice(0, 5);
-  const recentQuotations = quotations.slice(0, 5);
+  const sortedInvoicesForTable = useMemo(() => {
+    return filteredInvoices
+      .slice()
+      .sort((a, b) => {
+        const ad = a.fiscalized_at || a.created_at || "";
+        const bd = b.fiscalized_at || b.created_at || "";
+        return new Date(bd).getTime() - new Date(ad).getTime();
+      });
+  }, [filteredInvoices]);
+
+  const sortedQuotationsForTable = useMemo(() => {
+    return quotations
+      .slice()
+      .sort((a, b) => {
+        const ad = a.created_at || "";
+        const bd = b.created_at || "";
+        return new Date(bd).getTime() - new Date(ad).getTime();
+      });
+  }, [quotations]);
+
+  const sortedAuditLogs = useMemo(() => {
+    return recentAuditLogs
+      .slice()
+      .sort(
+        (a, b) =>
+          new Date(b.action_at).getTime() - new Date(a.action_at).getTime(),
+      );
+  }, [recentAuditLogs]);
+
+  const invoiceTotalPages = getTotalPages(
+    sortedInvoicesForTable.length,
+    DASHBOARD_TABLE_PAGE_SIZE,
+  );
+  const quotationTotalPages = getTotalPages(
+    sortedQuotationsForTable.length,
+    DASHBOARD_TABLE_PAGE_SIZE,
+  );
+  const companyStatusTotalPages = getTotalPages(
+    filteredCompanyStatus.length,
+    DASHBOARD_TABLE_PAGE_SIZE,
+  );
+  const auditTotalPages = getTotalPages(
+    sortedAuditLogs.length,
+    DASHBOARD_TABLE_PAGE_SIZE,
+  );
+
+  const pagedInvoices = paginateRows(
+    sortedInvoicesForTable,
+    invoicePage,
+    DASHBOARD_TABLE_PAGE_SIZE,
+  );
+  const pagedQuotations = paginateRows(
+    sortedQuotationsForTable,
+    quotationPage,
+    DASHBOARD_TABLE_PAGE_SIZE,
+  );
+  const pagedCompanyStatus = paginateRows(
+    filteredCompanyStatus,
+    companyStatusPage,
+    DASHBOARD_TABLE_PAGE_SIZE,
+  );
+  const pagedAuditLogs = paginateRows(
+    sortedAuditLogs,
+    auditPage,
+    DASHBOARD_TABLE_PAGE_SIZE,
+  );
+
+  useEffect(() => {
+    setInvoicePage((prev) => Math.min(prev, invoiceTotalPages));
+  }, [invoiceTotalPages]);
+
+  useEffect(() => {
+    setQuotationPage((prev) => Math.min(prev, quotationTotalPages));
+  }, [quotationTotalPages]);
+
+  useEffect(() => {
+    setCompanyStatusPage((prev) => Math.min(prev, companyStatusTotalPages));
+  }, [companyStatusTotalPages]);
+
+  useEffect(() => {
+    setAuditPage((prev) => Math.min(prev, auditTotalPages));
+  }, [auditTotalPages]);
+
+  useEffect(() => {
+    setInvoicePage(1);
+    setQuotationPage(1);
+    setCompanyStatusPage(1);
+    setAuditPage(1);
+  }, [companyId, dateRange.from, dateRange.to]);
 
   // Chart data - Monthly invoices (last 6 months)
   const monthlyData = useMemo(() => {
@@ -889,7 +981,7 @@ export default function DashboardPage() {
               </tr>
             </thead>
             <tbody>
-              {recentInvoices.map((invoice) => (
+              {pagedInvoices.map((invoice) => (
                 <tr key={invoice.id}>
                   <td className="ref-cell">{invoice.reference}</td>
                   <td>${invoice.total_amount?.toLocaleString() || "0"}</td>
@@ -907,7 +999,7 @@ export default function DashboardPage() {
                   </td>
                 </tr>
               ))}
-              {recentInvoices.length === 0 && (
+              {pagedInvoices.length === 0 && (
                 <tr>
                   <td colSpan={4} className="empty-cell">
                     No invoices yet
@@ -916,6 +1008,13 @@ export default function DashboardPage() {
               )}
             </tbody>
           </table>
+          <TablePagination
+            page={invoicePage}
+            totalPages={invoiceTotalPages}
+            totalItems={sortedInvoicesForTable.length}
+            pageSize={DASHBOARD_TABLE_PAGE_SIZE}
+            onPageChange={setInvoicePage}
+          />
         </div>
 
         <div className="table-card card-bg-shadow">
@@ -935,7 +1034,7 @@ export default function DashboardPage() {
               </tr>
             </thead>
             <tbody>
-              {recentQuotations.map((quotation) => (
+              {pagedQuotations.map((quotation) => (
                 <tr key={quotation.id}>
                   <td className="ref-cell">{quotation.reference}</td>
                   <td>
@@ -945,7 +1044,7 @@ export default function DashboardPage() {
                   </td>
                 </tr>
               ))}
-              {recentQuotations.length === 0 && (
+              {pagedQuotations.length === 0 && (
                 <tr>
                   <td colSpan={2} className="empty-cell">
                     No quotations yet
@@ -954,6 +1053,13 @@ export default function DashboardPage() {
               )}
             </tbody>
           </table>
+          <TablePagination
+            page={quotationPage}
+            totalPages={quotationTotalPages}
+            totalItems={sortedQuotationsForTable.length}
+            pageSize={DASHBOARD_TABLE_PAGE_SIZE}
+            onPageChange={setQuotationPage}
+          />
         </div>
       </div>
 
@@ -982,7 +1088,7 @@ export default function DashboardPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredCompanyStatus.map((company) => (
+              {pagedCompanyStatus.map((company) => (
                 <tr key={company.company_id}>
                   <td className="company-cell">{company.company_name}</td>
                   <td>
@@ -1024,6 +1130,13 @@ export default function DashboardPage() {
               ))}
             </tbody>
           </table>
+          <TablePagination
+            page={companyStatusPage}
+            totalPages={companyStatusTotalPages}
+            totalItems={filteredCompanyStatus.length}
+            pageSize={DASHBOARD_TABLE_PAGE_SIZE}
+            onPageChange={setCompanyStatusPage}
+          />
         </div>
       )}
 
@@ -1086,7 +1199,7 @@ export default function DashboardPage() {
               </tr>
             </thead>
             <tbody>
-              {recentAuditLogs.map((log) => (
+              {pagedAuditLogs.map((log) => (
                 <tr key={log.id}>
                   <td>
                     <span
@@ -1104,8 +1217,69 @@ export default function DashboardPage() {
               ))}
             </tbody>
           </table>
+          <TablePagination
+            page={auditPage}
+            totalPages={auditTotalPages}
+            totalItems={sortedAuditLogs.length}
+            pageSize={DASHBOARD_TABLE_PAGE_SIZE}
+            onPageChange={setAuditPage}
+          />
         </div>
       )}
+    </div>
+  );
+}
+
+function getTotalPages(totalItems: number, pageSize: number) {
+  return Math.max(1, Math.ceil(totalItems / pageSize));
+}
+
+function paginateRows<T>(rows: T[], page: number, pageSize: number) {
+  const start = (page - 1) * pageSize;
+  return rows.slice(start, start + pageSize);
+}
+
+function TablePagination({
+  page,
+  totalPages,
+  totalItems,
+  pageSize,
+  onPageChange,
+}: {
+  page: number;
+  totalPages: number;
+  totalItems: number;
+  pageSize: number;
+  onPageChange: (nextPage: number) => void;
+}) {
+  if (totalItems <= pageSize) return null;
+  const fromItem = (page - 1) * pageSize + 1;
+  const toItem = Math.min(totalItems, page * pageSize);
+
+  return (
+    <div className="dashboard-pagination">
+      <span className="pager-info">
+        Showing {fromItem}-{toItem} of {totalItems}
+      </span>
+      <div className="pager-buttons">
+        <button
+          className="pager-btn"
+          onClick={() => onPageChange(page - 1)}
+          disabled={page <= 1}
+        >
+          Previous
+        </button>
+        <span className="pager-page">
+          Page {page} of {totalPages}
+        </span>
+        <button
+          className="pager-btn"
+          onClick={() => onPageChange(page + 1)}
+          disabled={page >= totalPages}
+        >
+          Next
+        </button>
+      </div>
     </div>
   );
 }
