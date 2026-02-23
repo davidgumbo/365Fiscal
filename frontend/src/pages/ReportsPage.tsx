@@ -3191,7 +3191,7 @@ export default function ReportsPage() {
                     </span>
                     Net VAT Calculation
                   </h3>
-                  <table className="report-table" style={{ maxWidth: 500 }}>
+                  <table className="report-table" style={{}}>
                     <tbody>
                       <tr>
                         <td>Sales VAT</td>
