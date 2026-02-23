@@ -8346,8 +8346,8 @@ tr:hover .o-quick-actions {
   border-color: var(--danger, var(--red-600));
 }
 
-/* Danger button */
-button.danger {
+/* Danger button (exclude icon-only controls) */
+button.danger:not(.icon-btn):not(.device-icon-btn) {
   background: var(--danger, var(--red-600));
   color: var(--white-500);
   border: none;
@@ -8357,10 +8357,10 @@ button.danger {
   cursor: pointer;
   transition: background 0.15s;
 }
-button.danger:hover {
+button.danger:not(.icon-btn):not(.device-icon-btn):hover {
   background: var(--red-700);
 }
-button.danger:disabled {
+button.danger:not(.icon-btn):not(.device-icon-btn):disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
