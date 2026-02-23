@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import html2pdf from "html2pdf.js";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiFetch } from "../api";
+import { TablePagination } from "../components/TablePagination";
 import { useMe } from "../hooks/useMe";
 import { useCompanies, Company } from "../hooks/useCompanies";
 
@@ -392,6 +393,12 @@ export default function InvoicesPage({
   const [listSearch, setListSearch] = useState("");
   const [listStatus, setListStatus] = useState("");
   const [listType, setListType] = useState("");
+  const [invoiceListPage, setInvoiceListPage] = useState(1);
+  const [invoiceListPageSize, setInvoiceListPageSize] = useState(10);
+  const [newLinesPage, setNewLinesPage] = useState(1);
+  const [newLinesPageSize, setNewLinesPageSize] = useState(10);
+  const [detailLinesPage, setDetailLinesPage] = useState(1);
+  const [detailLinesPageSize, setDetailLinesPageSize] = useState(10);
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentReference, setPaymentReference] = useState("");
@@ -567,6 +574,10 @@ export default function InvoicesPage({
   useEffect(() => {
     loadAll();
   }, [companyId, listSearch, listStatus, listType]);
+
+  useEffect(() => {
+    setInvoiceListPage(1);
+  }, [companyId, listSearch, listStatus, listType, invoiceListPageSize]);
 
   useEffect(() => {
     if (mode === "list") {
@@ -979,6 +990,48 @@ export default function InvoicesPage({
   };
 
   const displayLines = isEditing ? editLines : (selectedInvoice?.lines ?? []);
+
+  const pagedInvoices = useMemo(() => {
+    const start = (invoiceListPage - 1) * invoiceListPageSize;
+    return invoices.slice(start, start + invoiceListPageSize);
+  }, [invoices, invoiceListPage, invoiceListPageSize]);
+
+  const pagedNewLines = useMemo(() => {
+    const start = (newLinesPage - 1) * newLinesPageSize;
+    return editLines
+      .slice(start, start + newLinesPageSize)
+      .map((line, offset) => ({ line, index: start + offset }));
+  }, [editLines, newLinesPage, newLinesPageSize]);
+
+  const pagedDisplayLines = useMemo(() => {
+    const start = (detailLinesPage - 1) * detailLinesPageSize;
+    return displayLines
+      .slice(start, start + detailLinesPageSize)
+      .map((line, offset) => ({ line, index: start + offset }));
+  }, [displayLines, detailLinesPage, detailLinesPageSize]);
+
+  useEffect(() => {
+    const totalPages = Math.max(1, Math.ceil(invoices.length / invoiceListPageSize));
+    setInvoiceListPage((prev) => Math.min(prev, totalPages));
+  }, [invoices.length, invoiceListPageSize]);
+
+  useEffect(() => {
+    const totalPages = Math.max(1, Math.ceil(editLines.length / newLinesPageSize));
+    setNewLinesPage((prev) => Math.min(prev, totalPages));
+  }, [editLines.length, newLinesPageSize]);
+
+  useEffect(() => {
+    const totalPages = Math.max(1, Math.ceil(displayLines.length / detailLinesPageSize));
+    setDetailLinesPage((prev) => Math.min(prev, totalPages));
+  }, [displayLines.length, detailLinesPageSize]);
+
+  useEffect(() => {
+    setNewLinesPage(1);
+  }, [newMode, newLinesPageSize]);
+
+  useEffect(() => {
+    setDetailLinesPage(1);
+  }, [selectedInvoiceId, isEditing, detailLinesPageSize]);
   const canEdit = isEditing && statusLabel === "draft" && !isCreditNote;
 
   const taxBreakdown = useMemo(() => {
@@ -1806,7 +1859,7 @@ export default function InvoicesPage({
                             </td>
                           </tr>
                         )}
-                        {invoices.map((inv) => {
+                        {pagedInvoices.map((inv) => {
                           const cust = contactById.get(inv.customer_id ?? 0);
                           return (
                             <tr
@@ -1881,6 +1934,13 @@ export default function InvoicesPage({
                         </tr>
                       </tfoot>
                     </table>
+                    <TablePagination
+                      page={invoiceListPage}
+                      pageSize={invoiceListPageSize}
+                      totalItems={invoices.length}
+                      onPageChange={setInvoiceListPage}
+                      onPageSizeChange={setInvoiceListPageSize}
+                    />
                   </div>
                 </div>
               </div>
@@ -2258,7 +2318,7 @@ export default function InvoicesPage({
                       </tr>
                     </thead>
                     <tbody>
-                      {editLines.map((line, index) => {
+                      {pagedNewLines.map(({ line, index }) => {
                         const product = line.product_id
                           ? productById.get(line.product_id)
                           : null;
@@ -2393,6 +2453,13 @@ export default function InvoicesPage({
                       )}
                     </tbody>
                   </table>
+                  <TablePagination
+                    page={newLinesPage}
+                    pageSize={newLinesPageSize}
+                    totalItems={editLines.length}
+                    onPageChange={setNewLinesPage}
+                    onPageSizeChange={setNewLinesPageSize}
+                  />
                 </div>
               </div>
             </div>
@@ -3016,7 +3083,7 @@ export default function InvoicesPage({
                       </tr>
                     </thead>
                     <tbody>
-                      {displayLines.map((line, index) => {
+                      {pagedDisplayLines.map(({ line, index }) => {
                         const product = line.product_id
                           ? productById.get(line.product_id)
                           : null;
@@ -3189,6 +3256,13 @@ export default function InvoicesPage({
                       )}
                     </tbody>
                   </table>
+                  <TablePagination
+                    page={detailLinesPage}
+                    pageSize={detailLinesPageSize}
+                    totalItems={displayLines.length}
+                    onPageChange={setDetailLinesPage}
+                    onPageSizeChange={setDetailLinesPageSize}
+                  />
                 </div>
 
                 {/* Totals */}
