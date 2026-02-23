@@ -2461,23 +2461,23 @@ export default function ReportsPage() {
               </div>
 
               <div className="report-grid">
-                {/* By Vendor */}
+                {/* By Supplier */}
                 <div className="report-card">
-                  <h3>Purchases by Vendor</h3>
-                  {purchaseReport.by_vendor.length === 0 ? (
+                  <h3>Purchases by Supplier</h3>
+                  {purchaseReport.by_supplier.length === 0 ? (
                     <p className="empty-state">No purchases in this period.</p>
                   ) : (
                     <>
                       <table className="report-table">
                         <thead>
                           <tr>
-                            <th>Vendor</th>
+                            <th>Supplier</th>
                             <th className="text-right">Orders</th>
                             <th className="text-right">Amount</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {purchaseReport.by_vendor.map((v, i) => (
+                          {purchaseReport.by_supplier.map((v, i) => (
                             <tr key={i}>
                               <td>{v.name}</td>
                               <td className="text-right">{v.count}</td>
@@ -2486,10 +2486,10 @@ export default function ReportsPage() {
                           ))}
                         </tbody>
                       </table>
-                      {/* Bar chart for vendors */}
+                      {/* Bar chart for suppliers */}
                       <div style={{ marginTop: 16 }}>
-                        {purchaseReport.by_vendor.slice(0, 8).map((v, i) => {
-                          const maxAmt = Math.max(...purchaseReport.by_vendor.map((x) => x.amount), 1);
+                        {purchaseReport.by_supplier.slice(0, 8).map((v, i) => {
+                          const maxAmt = Math.max(...purchaseReport.by_supplier.map((x) => x.amount), 1);
                           const pct = (v.amount / maxAmt) * 100;
                           return (
                             <div key={i} style={{ marginBottom: 8 }}>
@@ -2570,7 +2570,7 @@ export default function ReportsPage() {
                     <thead>
                       <tr>
                         <th>Reference</th>
-                        <th>Vendor</th>
+                        <th>Supplier</th>
                         <th className="text-right">Amount</th>
                         <th>Date</th>
                         <th>Status</th>
@@ -2580,7 +2580,7 @@ export default function ReportsPage() {
                       {purchaseReport.recent_orders.map((o, i) => (
                         <tr key={i}>
                           <td style={{ fontFamily: "monospace", fontSize: 12 }}>{o.reference}</td>
-                          <td>{o.vendor}</td>
+                          <td>{o.supplier}</td>
                           <td className="text-right">{formatCurrency(o.amount)}</td>
                           <td>{o.date}</td>
                           <td>
