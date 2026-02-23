@@ -1906,7 +1906,7 @@ export default function SettingsPage() {
                     </button>
                   </div>
                   <p className="settings-section-desc">
-                    Manage your company currencies and set daily exchange rates. The default currency is used as the base for all exchange rate calculations.
+                    Manage Currencies
                   </p>
 
                   {currencyError && (
@@ -2040,7 +2040,7 @@ export default function SettingsPage() {
                             Exchange Rates — {selectedCurrency.code} ({selectedCurrency.name})
                           </h5>
                           <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 12px" }}>
-                            Rate relative to the default currency. 1 {currencyList.find(c => c.is_default)?.code || "BASE"} = ? {selectedCurrency.code}
+                            Relavent rates. 1 {currencyList.find(c => c.is_default)?.code || "BASE"} = ? {selectedCurrency.code}
                           </p>
 
                           {/* Add/Edit Rate Form */}
@@ -2099,7 +2099,7 @@ export default function SettingsPage() {
                         </div>
                       ) : (
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 200, color: "var(--muted)", fontSize: 13 }}>
-                          Select a currency from the list to view and manage its exchange rates.
+                          Select a Currency!
                         </div>
                       )}
                     </div>
