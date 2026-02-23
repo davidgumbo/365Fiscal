@@ -7,6 +7,7 @@ from app.api.routes import roles, audit_logs, payments, purchases, subscriptions
 from app.api.routes import pos
 from app.api.routes import expenses
 from app.api.routes import expense_categories
+from app.api.routes import currencies
 
 api_router = APIRouter()
 api_router.include_router(auth.router)
@@ -34,3 +35,4 @@ api_router.include_router(subscriptions.router)
 api_router.include_router(pos.router)
 api_router.include_router(expenses.router)
 api_router.include_router(expense_categories.router)
+api_router.include_router(currencies.router)
