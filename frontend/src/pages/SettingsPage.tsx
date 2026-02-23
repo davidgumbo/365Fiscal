@@ -314,11 +314,23 @@ export default function SettingsPage() {
   // Currency management state
   const [currencyList, setCurrencyList] = useState<CurrencyItem[]>([]);
   const [currencyRates, setCurrencyRates] = useState<CurrencyRateItem[]>([]);
-  const [selectedCurrency, setSelectedCurrency] = useState<CurrencyItem | null>(null);
-  const [currencyForm, setCurrencyForm] = useState({ code: "", name: "", symbol: "", position: "before", decimal_places: 2, is_default: false });
+  const [selectedCurrency, setSelectedCurrency] = useState<CurrencyItem | null>(
+    null,
+  );
+  const [currencyForm, setCurrencyForm] = useState({
+    code: "",
+    name: "",
+    symbol: "",
+    position: "before",
+    decimal_places: 2,
+    is_default: false,
+  });
   const [currencyEditing, setCurrencyEditing] = useState<number | null>(null);
   const [currencyError, setCurrencyError] = useState<string | null>(null);
-  const [rateForm, setRateForm] = useState({ rate: "", date: new Date().toISOString().slice(0, 10) });
+  const [rateForm, setRateForm] = useState({
+    rate: "",
+    date: new Date().toISOString().slice(0, 10),
+  });
   const [rateEditing, setRateEditing] = useState<number | null>(null);
   const [showCurrencyForm, setShowCurrencyForm] = useState(false);
 
@@ -508,7 +520,9 @@ export default function SettingsPage() {
   // ─── Currency Management Functions ───
   const loadCurrencies = async (cid: number) => {
     try {
-      const data = await apiFetch<CurrencyItem[]>(`/currencies?company_id=${cid}&active_only=false`);
+      const data = await apiFetch<CurrencyItem[]>(
+        `/currencies?company_id=${cid}&active_only=false`,
+      );
       setCurrencyList(data);
     } catch {
       setCurrencyList([]);
@@ -517,7 +531,9 @@ export default function SettingsPage() {
 
   const loadCurrencyRates = async (currId: number) => {
     try {
-      const data = await apiFetch<CurrencyRateItem[]>(`/currencies/${currId}/rates?limit=60`);
+      const data = await apiFetch<CurrencyRateItem[]>(
+        `/currencies/${currId}/rates?limit=60`,
+      );
       setCurrencyRates(data);
     } catch {
       setCurrencyRates([]);
@@ -525,7 +541,13 @@ export default function SettingsPage() {
   };
 
   const saveCurrency = async () => {
-    if (!companyId || !currencyForm.code || !currencyForm.name || !currencyForm.symbol) return;
+    if (
+      !companyId ||
+      !currencyForm.code ||
+      !currencyForm.name ||
+      !currencyForm.symbol
+    )
+      return;
     setCurrencyError(null);
     try {
       if (currencyEditing) {
@@ -541,7 +563,14 @@ export default function SettingsPage() {
         });
         setStatus("Currency added");
       }
-      setCurrencyForm({ code: "", name: "", symbol: "", position: "before", decimal_places: 2, is_default: false });
+      setCurrencyForm({
+        code: "",
+        name: "",
+        symbol: "",
+        position: "before",
+        decimal_places: 2,
+        is_default: false,
+      });
       setCurrencyEditing(null);
       setShowCurrencyForm(false);
       loadCurrencies(companyId);
@@ -553,7 +582,12 @@ export default function SettingsPage() {
 
   const deleteCurrency = async (id: number) => {
     if (!companyId) return;
-    if (!confirm("Are you sure you want to delete this currency and all its rates?")) return;
+    if (
+      !confirm(
+        "Are you sure you want to delete this currency and all its rates?",
+      )
+    )
+      return;
     try {
       await apiFetch(`/currencies/${id}`, { method: "DELETE" });
       setStatus("Currency deleted");
@@ -589,7 +623,10 @@ export default function SettingsPage() {
       if (rateEditing) {
         await apiFetch(`/currencies/rates/${rateEditing}`, {
           method: "PATCH",
-          body: JSON.stringify({ rate: parseFloat(rateForm.rate), rate_date: rateForm.date }),
+          body: JSON.stringify({
+            rate: parseFloat(rateForm.rate),
+            rate_date: rateForm.date,
+          }),
         });
         setStatus("Rate updated");
       } else {
@@ -1901,51 +1938,166 @@ export default function SettingsPage() {
                 <section id="currencies" className="settings-section">
                   <div className="settings-section-header">
                     <h4>Currency Configuration</h4>
-                    <button className="settings-btn-sm" onClick={() => { setShowCurrencyForm(true); setCurrencyEditing(null); setCurrencyForm({ code: "", name: "", symbol: "", position: "before", decimal_places: 2, is_default: false }); }}>
+                    <button
+                      className="settings-btn-sm"
+                      onClick={() => {
+                        setShowCurrencyForm(true);
+                        setCurrencyEditing(null);
+                        setCurrencyForm({
+                          code: "",
+                          name: "",
+                          symbol: "",
+                          position: "before",
+                          decimal_places: 2,
+                          is_default: false,
+                        });
+                      }}
+                    >
                       <PlusIcon /> Add Currency
                     </button>
                   </div>
-                  <p className="settings-section-desc">
-                    Manage Currencies
-                  </p>
+                  <p className="settings-section-desc">Manage Currencies</p>
 
                   {currencyError && (
-                    <div className="alert" style={{ marginBottom: 12, background: "var(--error-bg, #fff0f0)", color: "var(--error, #c00)", padding: "8px 12px", borderRadius: 6, fontSize: 13 }}>
+                    <div
+                      className="alert"
+                      style={{
+                        marginBottom: 12,
+                        background: "var(--error-bg, #fff0f0)",
+                        color: "var(--error, #c00)",
+                        padding: "8px 12px",
+                        borderRadius: 6,
+                        fontSize: 13,
+                      }}
+                    >
                       {currencyError}
-                      <button onClick={() => setCurrencyError(null)} style={{ float: "right", border: "none", background: "transparent", cursor: "pointer" }}>×</button>
+                      <button
+                        onClick={() => setCurrencyError(null)}
+                        style={{
+                          float: "right",
+                          border: "none",
+                          background: "transparent",
+                          cursor: "pointer",
+                        }}
+                      >
+                        ×
+                      </button>
                     </div>
                   )}
 
                   {/* Add/Edit Currency Form */}
                   {showCurrencyForm && (
-                    <div style={{ background: "var(--card-bg, #f9fafb)", border: "1px solid var(--border, #e5e7eb)", borderRadius: 8, padding: 16, marginBottom: 16 }}>
-                      <h5 style={{ margin: "0 0 12px" }}>{currencyEditing ? "Edit Currency" : "Add Currency"}</h5>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+                    <div
+                      style={{
+                        background: "var(--card-bg, #f9fafb)",
+                        border: "1px solid var(--border, #e5e7eb)",
+                        borderRadius: 8,
+                        padding: 16,
+                        marginBottom: 16,
+                      }}
+                    >
+                      <h5 style={{ margin: "0 0 12px" }}>
+                        {currencyEditing ? "Edit Currency" : "Add Currency"}
+                      </h5>
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1fr 1fr 1fr",
+                          gap: 12,
+                        }}
+                      >
                         <label className="input">
                           Code
-                          <input value={currencyForm.code} onChange={(e) => setCurrencyForm({ ...currencyForm, code: e.target.value.toUpperCase() })} placeholder="e.g. USD" maxLength={10} />
+                          <input
+                            value={currencyForm.code}
+                            onChange={(e) =>
+                              setCurrencyForm({
+                                ...currencyForm,
+                                code: e.target.value.toUpperCase(),
+                              })
+                            }
+                            placeholder="e.g. USD"
+                            maxLength={10}
+                          />
                         </label>
                         <label className="input">
                           Name
-                          <input value={currencyForm.name} onChange={(e) => setCurrencyForm({ ...currencyForm, name: e.target.value })} placeholder="e.g. US Dollar" />
+                          <input
+                            value={currencyForm.name}
+                            onChange={(e) =>
+                              setCurrencyForm({
+                                ...currencyForm,
+                                name: e.target.value,
+                              })
+                            }
+                            placeholder="e.g. US Dollar"
+                          />
                         </label>
                         <label className="input">
                           Symbol
-                          <input value={currencyForm.symbol} onChange={(e) => setCurrencyForm({ ...currencyForm, symbol: e.target.value })} placeholder="e.g. $" maxLength={10} />
+                          <input
+                            value={currencyForm.symbol}
+                            onChange={(e) =>
+                              setCurrencyForm({
+                                ...currencyForm,
+                                symbol: e.target.value,
+                              })
+                            }
+                            placeholder="e.g. $"
+                            maxLength={10}
+                          />
                         </label>
                         <label className="input">
                           Position
-                          <select value={currencyForm.position} onChange={(e) => setCurrencyForm({ ...currencyForm, position: e.target.value })}>
+                          <select
+                            value={currencyForm.position}
+                            onChange={(e) =>
+                              setCurrencyForm({
+                                ...currencyForm,
+                                position: e.target.value,
+                              })
+                            }
+                          >
                             <option value="before">Before amount ($100)</option>
                             <option value="after">After amount (100$)</option>
                           </select>
                         </label>
                         <label className="input">
                           Decimal Places
-                          <input type="number" min={0} max={6} value={currencyForm.decimal_places} onChange={(e) => setCurrencyForm({ ...currencyForm, decimal_places: parseInt(e.target.value) || 2 })} />
+                          <input
+                            type="number"
+                            min={0}
+                            max={6}
+                            value={currencyForm.decimal_places}
+                            onChange={(e) =>
+                              setCurrencyForm({
+                                ...currencyForm,
+                                decimal_places: parseInt(e.target.value) || 2,
+                              })
+                            }
+                          />
                         </label>
-                        <label className="input" style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 8, paddingTop: 24 }}>
-                          <input type="checkbox" checked={currencyForm.is_default} onChange={(e) => setCurrencyForm({ ...currencyForm, is_default: e.target.checked })} style={{ width: "auto" }} />
+                        <label
+                          className="input"
+                          style={{
+                            display: "flex",
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: 8,
+                            paddingTop: 24,
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={currencyForm.is_default}
+                            onChange={(e) =>
+                              setCurrencyForm({
+                                ...currencyForm,
+                                is_default: e.target.checked,
+                              })
+                            }
+                            style={{ width: "auto" }}
+                          />
                           Set as Default
                         </label>
                       </div>
@@ -1953,15 +2105,61 @@ export default function SettingsPage() {
                         <button className="primary" onClick={saveCurrency}>
                           {currencyEditing ? "Update" : "Add"} Currency
                         </button>
-                        <button className="outline" onClick={() => { setShowCurrencyForm(false); setCurrencyEditing(null); setCurrencyForm({ code: "", name: "", symbol: "", position: "before", decimal_places: 2, is_default: false }); }}>
+                        <button
+                          className="outline"
+                          onClick={() => {
+                            setShowCurrencyForm(false);
+                            setCurrencyEditing(null);
+                            setCurrencyForm({
+                              code: "",
+                              name: "",
+                              symbol: "",
+                              position: "before",
+                              decimal_places: 2,
+                              is_default: false,
+                            });
+                          }}
+                        >
                           Cancel
                         </button>
                       </div>
                       {/* Quick-fill from common currencies */}
-                      <div style={{ marginTop: 8, display: "flex", gap: 4, flexWrap: "wrap" }}>
-                        <span style={{ fontSize: 12, color: "var(--muted)", marginRight: 4, lineHeight: "28px" }}>Quick fill:</span>
+                      <div
+                        style={{
+                          marginTop: 8,
+                          display: "flex",
+                          gap: 4,
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: 12,
+                            color: "var(--muted)",
+                            marginRight: 4,
+                            lineHeight: "28px",
+                          }}
+                        >
+                          Quick fill:
+                        </span>
                         {CURRENCIES.map((c) => (
-                          <button key={c.code} className="outline" style={{ fontSize: 11, padding: "2px 8px", height: 28 }} onClick={() => setCurrencyForm({ ...currencyForm, code: c.code, name: c.name, symbol: c.symbol })}>
+                          <button
+                            key={c.code}
+                            className="outline"
+                            style={{
+                              fontSize: 11,
+                              padding: "2px 8px",
+                              height: 28,
+                            }}
+                            onClick={() =>
+                              setCurrencyForm({
+                                ...currencyForm,
+                                code: c.code,
+                                name: c.name,
+                                symbol: c.symbol,
+                              })
+                            }
+                          >
                             {c.code}
                           </button>
                         ))}
@@ -1970,9 +2168,15 @@ export default function SettingsPage() {
                   )}
 
                   {/* Currency List */}
-                  <div style={{ display: "flex", gap: 16 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 16,
+                      flexDirection: "column",
+                    }}
+                  >
                     {/* Left: Currency list */}
-                    <div style={{ flex: "0 0 380px" }}>
+                    <div style={{ flex: "0 0 100%" }}>
                       <table className="table" style={{ fontSize: 13 }}>
                         <thead>
                           <tr>
@@ -1989,7 +2193,10 @@ export default function SettingsPage() {
                               key={cur.id}
                               style={{
                                 cursor: "pointer",
-                                background: selectedCurrency?.id === cur.id ? "var(--primary-bg, #eef2ff)" : undefined,
+                                background:
+                                  selectedCurrency?.id === cur.id
+                                    ? "var(--primary-bg, #eef2ff)"
+                                    : undefined,
                                 opacity: cur.is_active ? 1 : 0.5,
                               }}
                               onClick={() => setSelectedCurrency(cur)}
@@ -1999,25 +2206,61 @@ export default function SettingsPage() {
                               <td>{cur.symbol}</td>
                               <td>
                                 {cur.is_default ? (
-                                  <span style={{ color: "var(--success, #16a34a)", fontWeight: 600 }}>✓</span>
+                                  <span
+                                    style={{
+                                      color: "var(--success, #16a34a)",
+                                      fontWeight: 600,
+                                    }}
+                                  >
+                                    ✓
+                                  </span>
                                 ) : (
-                                  <button className="outline" style={{ fontSize: 11, padding: "1px 6px" }} onClick={(e) => { e.stopPropagation(); setDefaultCurrency(cur.id); }}>
+                                  <button
+                                    className="outline"
+                                    style={{ fontSize: 11, padding: "1px 6px" }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setDefaultCurrency(cur.id);
+                                    }}
+                                  >
                                     Set
                                   </button>
                                 )}
                               </td>
                               <td>
                                 <div style={{ display: "flex", gap: 4 }}>
-                                  <button className="outline" style={{ fontSize: 11, padding: "1px 6px" }} onClick={(e) => {
-                                    e.stopPropagation();
-                                    setCurrencyEditing(cur.id);
-                                    setCurrencyForm({ code: cur.code, name: cur.name, symbol: cur.symbol, position: cur.position, decimal_places: cur.decimal_places, is_default: cur.is_default });
-                                    setShowCurrencyForm(true);
-                                  }}>
+                                  <button
+                                    className="outline"
+                                    style={{ fontSize: 11, padding: "1px 6px" }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setCurrencyEditing(cur.id);
+                                      setCurrencyForm({
+                                        code: cur.code,
+                                        name: cur.name,
+                                        symbol: cur.symbol,
+                                        position: cur.position,
+                                        decimal_places: cur.decimal_places,
+                                        is_default: cur.is_default,
+                                      });
+                                      setShowCurrencyForm(true);
+                                    }}
+                                  >
                                     Edit
                                   </button>
                                   {!cur.is_default && (
-                                    <button className="outline" style={{ fontSize: 11, padding: "1px 6px", color: "var(--error, #dc2626)" }} onClick={(e) => { e.stopPropagation(); deleteCurrency(cur.id); }}>
+                                    <button
+                                      className="outline"
+                                      style={{
+                                        fontSize: 11,
+                                        padding: "1px 6px",
+                                        color: "var(--error, #dc2626)",
+                                      }}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        deleteCurrency(cur.id);
+                                      }}
+                                    >
                                       Del
                                     </button>
                                   )}
@@ -2026,7 +2269,19 @@ export default function SettingsPage() {
                             </tr>
                           ))}
                           {!currencyList.length && (
-                            <tr><td colSpan={5} style={{ textAlign: "center", color: "var(--muted)", padding: 24 }}>No currencies configured. Add one to get started.</td></tr>
+                            <tr>
+                              <td
+                                colSpan={5}
+                                style={{
+                                  textAlign: "center",
+                                  color: "var(--muted)",
+                                  padding: 24,
+                                }}
+                              >
+                                No currencies configured. Add one to get
+                                started.
+                              </td>
+                            </tr>
                           )}
                         </tbody>
                       </table>
@@ -2037,27 +2292,86 @@ export default function SettingsPage() {
                       {selectedCurrency ? (
                         <div>
                           <h5 style={{ margin: "0 0 8px" }}>
-                            Exchange Rates — {selectedCurrency.code} ({selectedCurrency.name})
+                            Exchange Rates — {selectedCurrency.code} (
+                            {selectedCurrency.name})
                           </h5>
-                          <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 12px" }}>
-                            Relavent rates. 1 {currencyList.find(c => c.is_default)?.code || "BASE"} = ? {selectedCurrency.code}
+                          <p
+                            style={{
+                              fontSize: 12,
+                              color: "var(--muted)",
+                              margin: "0 0 12px",
+                            }}
+                          >
+                            Relavent rates. 1{" "}
+                            {currencyList.find((c) => c.is_default)?.code ||
+                              "BASE"}{" "}
+                            = ? {selectedCurrency.code}
                           </p>
 
                           {/* Add/Edit Rate Form */}
-                          <div style={{ display: "flex", gap: 8, alignItems: "flex-end", marginBottom: 12 }}>
-                            <label className="input" style={{ flex: "0 0 140px" }}>
+                          <div
+                            style={{
+                              display: "flex",
+                              gap: 8,
+                              alignItems: "flex-end",
+                              marginBottom: 12,
+                            }}
+                          >
+                            <label
+                              className="input"
+                              style={{ flex: "0 0 140px" }}
+                            >
                               Date
-                              <input type="date" value={rateForm.date} onChange={(e) => setRateForm({ ...rateForm, date: e.target.value })} />
+                              <input
+                                type="date"
+                                value={rateForm.date}
+                                onChange={(e) =>
+                                  setRateForm({
+                                    ...rateForm,
+                                    date: e.target.value,
+                                  })
+                                }
+                              />
                             </label>
-                            <label className="input" style={{ flex: "0 0 140px" }}>
+                            <label
+                              className="input"
+                              style={{ flex: "0 0 140px" }}
+                            >
                               Rate
-                              <input type="number" step="0.0001" min="0" value={rateForm.rate} onChange={(e) => setRateForm({ ...rateForm, rate: e.target.value })} placeholder="e.g. 1.0" />
+                              <input
+                                type="number"
+                                step="0.0001"
+                                min="0"
+                                value={rateForm.rate}
+                                onChange={(e) =>
+                                  setRateForm({
+                                    ...rateForm,
+                                    rate: e.target.value,
+                                  })
+                                }
+                                placeholder="e.g. 1.0"
+                              />
                             </label>
-                            <button className="primary" style={{ height: 38 }} onClick={saveCurrencyRate} disabled={!rateForm.rate || !rateForm.date}>
+                            <button
+                              className="primary"
+                              style={{ height: 38 }}
+                              onClick={saveCurrencyRate}
+                              disabled={!rateForm.rate || !rateForm.date}
+                            >
                               {rateEditing ? "Update" : "Set"} Rate
                             </button>
                             {rateEditing && (
-                              <button className="outline" style={{ height: 38 }} onClick={() => { setRateEditing(null); setRateForm({ rate: "", date: new Date().toISOString().slice(0, 10) }); }}>
+                              <button
+                                className="outline"
+                                style={{ height: 38 }}
+                                onClick={() => {
+                                  setRateEditing(null);
+                                  setRateForm({
+                                    rate: "",
+                                    date: new Date().toISOString().slice(0, 10),
+                                  });
+                                }}
+                              >
                                 Cancel
                               </button>
                             )}
@@ -2080,10 +2394,33 @@ export default function SettingsPage() {
                                     <td>{r.rate}</td>
                                     <td>
                                       <div style={{ display: "flex", gap: 4 }}>
-                                        <button className="outline" style={{ fontSize: 11, padding: "1px 6px" }} onClick={() => { setRateEditing(r.id); setRateForm({ rate: String(r.rate), date: r.rate_date }); }}>
+                                        <button
+                                          className="outline"
+                                          style={{
+                                            fontSize: 11,
+                                            padding: "1px 6px",
+                                          }}
+                                          onClick={() => {
+                                            setRateEditing(r.id);
+                                            setRateForm({
+                                              rate: String(r.rate),
+                                              date: r.rate_date,
+                                            });
+                                          }}
+                                        >
                                           Edit
                                         </button>
-                                        <button className="outline" style={{ fontSize: 11, padding: "1px 6px", color: "var(--error, #dc2626)" }} onClick={() => deleteCurrencyRate(r.id)}>
+                                        <button
+                                          className="outline"
+                                          style={{
+                                            fontSize: 11,
+                                            padding: "1px 6px",
+                                            color: "var(--error, #dc2626)",
+                                          }}
+                                          onClick={() =>
+                                            deleteCurrencyRate(r.id)
+                                          }
+                                        >
                                           Del
                                         </button>
                                       </div>
@@ -2091,14 +2428,34 @@ export default function SettingsPage() {
                                   </tr>
                                 ))}
                                 {!currencyRates.length && (
-                                  <tr><td colSpan={3} style={{ textAlign: "center", color: "var(--muted)", padding: 24 }}>No rates set. Add a rate above.</td></tr>
+                                  <tr>
+                                    <td
+                                      colSpan={3}
+                                      style={{
+                                        textAlign: "center",
+                                        color: "var(--muted)",
+                                        padding: 24,
+                                      }}
+                                    >
+                                      No rates set. Add a rate above.
+                                    </td>
+                                  </tr>
                                 )}
                               </tbody>
                             </table>
                           </div>
                         </div>
                       ) : (
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 200, color: "var(--muted)", fontSize: 13 }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            height: 200,
+                            color: "var(--muted)",
+                            fontSize: 13,
+                          }}
+                        >
                           Select a Currency!
                         </div>
                       )}
