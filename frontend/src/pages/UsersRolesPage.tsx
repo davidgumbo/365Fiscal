@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../api";
+import { TablePagination } from "../components/TablePagination";
 import { useMe } from "../hooks/useMe";
 
 interface Role {
@@ -101,6 +102,8 @@ export default function UsersRolesPage() {
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserPassword, setNewUserPassword] = useState("");
   const [newUserRole, setNewUserRole] = useState("sales_user");
+  const [usersPage, setUsersPage] = useState(1);
+  const [usersPageSize, setUsersPageSize] = useState(10);
 
   // Selected role for viewing
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
@@ -213,6 +216,23 @@ export default function UsersRolesPage() {
     return colors[roleName] || "var(--slate-500)";
   };
 
+  const usersTotalPages = Math.max(
+    1,
+    Math.ceil(companyUsers.length / usersPageSize),
+  );
+  const pagedCompanyUsers = useMemo(() => {
+    const start = (usersPage - 1) * usersPageSize;
+    return companyUsers.slice(start, start + usersPageSize);
+  }, [companyUsers, usersPage, usersPageSize]);
+
+  useEffect(() => {
+    setUsersPage((prev) => Math.min(prev, usersTotalPages));
+  }, [usersTotalPages]);
+
+  useEffect(() => {
+    setUsersPage(1);
+  }, [activeTab, companyId, usersPageSize]);
+
   if (loading) {
     return (
       <div className="content-area">
@@ -321,7 +341,7 @@ export default function UsersRolesPage() {
                 </tr>
               </thead>
               <tbody>
-                {companyUsers.map((cu) => (
+                {pagedCompanyUsers.map((cu) => (
                   <tr key={cu.id}>
                     <td>
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -400,6 +420,13 @@ export default function UsersRolesPage() {
                 ))}
               </tbody>
             </table>
+            <TablePagination
+              page={usersPage}
+              pageSize={usersPageSize}
+              totalItems={companyUsers.length}
+              onPageChange={setUsersPage}
+              onPageSizeChange={setUsersPageSize}
+            />
           </div>
         </div>
       )}

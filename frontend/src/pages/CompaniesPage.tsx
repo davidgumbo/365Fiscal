@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../api";
+import { TablePagination } from "../components/TablePagination";
 import { useMe } from "../hooks/useMe";
 import { useListView } from "../context/ListViewContext";
 
@@ -141,6 +142,8 @@ export default function CompaniesPage() {
   const [portalEmail, setPortalEmail] = useState("");
   const [portalPassword, setPortalPassword] = useState("");
   const [saving, setSaving] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const loadCompanies = async () => {
     const params = new URLSearchParams();
@@ -340,20 +343,35 @@ export default function CompaniesPage() {
     }
   };
 
+  const pagedCompanies = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return companies.slice(start, start + pageSize);
+  }, [companies, page, pageSize]);
+
   const groupedCompanies = useMemo<GroupedCompanies[]>(() => {
     if (!state.groupBy || state.groupBy === "") {
-      return [{ label: "", items: companies }];
+      return [{ label: "", items: pagedCompanies }];
     }
     if (state.groupBy === "vat") {
-      const hasVat = companies.filter((company) => Boolean(company.vat));
-      const noVat = companies.filter((company) => !company.vat);
+      const hasVat = pagedCompanies.filter((company) => Boolean(company.vat));
+      const noVat = pagedCompanies.filter((company) => !company.vat);
       return [
         { label: "Has VAT", items: hasVat },
         { label: "No VAT", items: noVat },
       ];
     }
-    return [{ label: "", items: companies }];
-  }, [companies, state.groupBy]);
+    return [{ label: "", items: pagedCompanies }];
+  }, [pagedCompanies, state.groupBy]);
+
+  const totalPages = Math.max(1, Math.ceil(companies.length / pageSize));
+
+  useEffect(() => {
+    setPage((prev) => Math.min(prev, totalPages));
+  }, [totalPages]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [state.groupBy, state.filters, pageSize]);
 
   // Clear status message after 5 seconds
   useEffect(() => {
@@ -766,6 +784,13 @@ export default function CompaniesPage() {
             )}
           </tbody>
         </table>
+        <TablePagination
+          page={page}
+          pageSize={pageSize}
+          totalItems={companies.length}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
+        />
       </div>
     </div>
   );

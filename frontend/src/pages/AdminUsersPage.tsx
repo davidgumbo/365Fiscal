@@ -1,5 +1,6 @@
-﻿import { useEffect, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../api";
+import { TablePagination } from "../components/TablePagination";
 
 type User = {
   id: number;
@@ -66,6 +67,8 @@ export default function AdminUsersPage() {
   const [status, setStatus] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState({ email: "", password: "" });
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const loadUsers = async () => {
     try {
@@ -162,6 +165,16 @@ export default function AdminUsersPage() {
     }
   };
 
+  const totalPages = Math.max(1, Math.ceil(admins.length / pageSize));
+  const pagedAdmins = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return admins.slice(start, start + pageSize);
+  }, [admins, page, pageSize]);
+
+  useEffect(() => {
+    setPage((prev) => Math.min(prev, totalPages));
+  }, [totalPages]);
+
   return (
     <div className="content">
       <div className="card">
@@ -221,7 +234,7 @@ export default function AdminUsersPage() {
                   </td>
                 </tr>
               ) : (
-                admins.map((user) => (
+                pagedAdmins.map((user) => (
                   <tr key={user.id} className={editingId === user.id ? "editing" : ""}>
                     <td>
                       {editingId === user.id ? (
@@ -289,6 +302,13 @@ export default function AdminUsersPage() {
               )}
             </tbody>
           </table>
+          <TablePagination
+            page={page}
+            pageSize={pageSize}
+            totalItems={admins.length}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+          />
         </div>
       </div>
     </div>

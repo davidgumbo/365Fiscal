@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../api";
+import { TablePagination } from "../components/TablePagination";
 import { useMe } from "../hooks/useMe";
 
 interface Payment {
@@ -83,6 +84,8 @@ export default function PaymentsPage() {
   const [methodFilter, setMethodFilter] = useState("");
   const [reconciledFilter, setReconciledFilter] = useState("");
   const [searchFilter, setSearchFilter] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     loadData();
@@ -133,6 +136,20 @@ export default function PaymentsPage() {
     };
     return colors[method] || "var(--slate-500)";
   };
+
+  const totalPages = Math.max(1, Math.ceil(payments.length / pageSize));
+  const pagedPayments = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return payments.slice(start, start + pageSize);
+  }, [payments, page, pageSize]);
+
+  useEffect(() => {
+    setPage((prev) => Math.min(prev, totalPages));
+  }, [totalPages]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [methodFilter, reconciledFilter, searchFilter, companyId, pageSize]);
 
   return (
     <div className="content-area">
@@ -239,7 +256,7 @@ export default function PaymentsPage() {
                   </td>
                 </tr>
               ) : (
-                payments.map((payment) => (
+                pagedPayments.map((payment) => (
                   <tr key={payment.id}>
                     <td style={{ fontSize: 13 }}>{formatDate(payment.payment_date)}</td>
                     <td>
@@ -293,6 +310,13 @@ export default function PaymentsPage() {
               )}
             </tbody>
           </table>
+          <TablePagination
+            page={page}
+            pageSize={pageSize}
+            totalItems={payments.length}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+          />
         </div>
       )}
 

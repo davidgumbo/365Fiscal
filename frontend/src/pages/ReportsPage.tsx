@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../api";
+import { TablePagination } from "../components/TablePagination";
 import { useMe } from "../hooks/useMe";
 import { useCompanies, Company } from "../hooks/useCompanies";
 
@@ -349,6 +350,10 @@ export default function ReportsPage() {
   const [activeIncomeTab, setActiveIncomeTab] =
     useState<IncomeSectionTab>("summary");
   const [activeVatTab, setActiveVatTab] = useState<VatSectionTab>("sales_vat");
+  const [tablePages, setTablePages] = useState<Record<string, number>>({});
+  const [tablePageSizes, setTablePageSizes] = useState<Record<string, number>>(
+    {},
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [dateRange, setDateRange] = useState({ from: "", to: "" });
@@ -1193,6 +1198,10 @@ export default function ReportsPage() {
     }
   }, [vatReport, activeVatTab]);
 
+  useEffect(() => {
+    setTablePages({});
+  }, [companyId, activeReport, activeIncomeTab, activeVatTab, dateRange.from, dateRange.to]);
+
   /* ── Export functions ──────────────────────────── */
 
   const exportCSV = () => {
@@ -1716,6 +1725,83 @@ export default function ReportsPage() {
     ? Math.max(...salesReport.sales_by_month.map((m) => m.amount), 1)
     : 1;
 
+  const getPaginatedTable = <T,>(key: string, rows: T[]) => {
+    const pageSize = tablePageSizes[key] || 10;
+    const totalItems = rows.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+    const currentPage = Math.min(Math.max(tablePages[key] || 1, 1), totalPages);
+    const start = (currentPage - 1) * pageSize;
+    return {
+      rows: rows.slice(start, start + pageSize),
+      page: currentPage,
+      pageSize,
+      totalItems,
+      setPage: (page: number) =>
+        setTablePages((prev) => ({ ...prev, [key]: page })),
+      setPageSize: (size: number) => {
+        setTablePageSizes((prev) => ({ ...prev, [key]: size }));
+        setTablePages((prev) => ({ ...prev, [key]: 1 }));
+      },
+    };
+  };
+
+  const salesTopProductsTable = getPaginatedTable(
+    "sales_top_products",
+    salesReport?.top_products ?? [],
+  );
+  const incomeInvoicesTable = getPaginatedTable(
+    "income_invoices",
+    incomeStatementReport?.invoices ?? [],
+  );
+  const incomeExpensesTable = getPaginatedTable(
+    "income_expenses",
+    incomeStatementReport?.expenses ?? [],
+  );
+  const stockLowItemsTable = getPaginatedTable(
+    "stock_low_items",
+    stockReport?.low_stock_items ?? [],
+  );
+  const stockSummaryTable = getPaginatedTable(
+    "stock_summary",
+    stockReport?.stock_summary ?? [],
+  );
+  const stockMovementsTable = getPaginatedTable(
+    "stock_movements",
+    stockReport?.recent_movements ?? [],
+  );
+  const debtorsUnpaidTable = getPaginatedTable(
+    "debtors_unpaid",
+    debtorsReport?.recent_unpaid ?? [],
+  );
+  const creditorsBySupplierTable = getPaginatedTable(
+    "creditors_by_supplier",
+    creditorsReport?.by_supplier ?? [],
+  );
+  const creditorsRecentTable = getPaginatedTable(
+    "creditors_recent",
+    creditorsReport?.recent_orders ?? [],
+  );
+  const vatSalesByRateTable = getPaginatedTable(
+    "vat_sales_by_rate",
+    vatReport?.sales_by_rate ?? [],
+  );
+  const vatPurchasesByRateTable = getPaginatedTable(
+    "vat_purchases_by_rate",
+    vatReport?.purchases_by_rate ?? [],
+  );
+  const purchasesBySupplierTable = getPaginatedTable(
+    "purchases_by_supplier",
+    purchaseReport?.by_supplier ?? [],
+  );
+  const purchasesByStatusTable = getPaginatedTable(
+    "purchases_by_status",
+    purchaseReport?.by_status ?? [],
+  );
+  const purchasesRecentTable = getPaginatedTable(
+    "purchases_recent",
+    purchaseReport?.recent_orders ?? [],
+  );
+
   const goBackToCompanies = () => {
     setSelectedCompanyId(null);
     setSalesReport(null);
@@ -2225,26 +2311,35 @@ export default function ReportsPage() {
                       No product sales in this period.
                     </p>
                   ) : (
-                    <table className="report-table">
-                      <thead>
-                        <tr>
-                          <th>Product</th>
-                          <th className="text-right">Qty Sold</th>
-                          <th className="text-right">Revenue</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {salesReport.top_products.map((p, i) => (
-                          <tr key={i}>
-                            <td>{p.name}</td>
-                            <td className="text-right">{p.quantity}</td>
-                            <td className="text-right">
-                              {formatCurrency(p.revenue)}
-                            </td>
+                    <>
+                      <table className="report-table">
+                        <thead>
+                          <tr>
+                            <th>Product</th>
+                            <th className="text-right">Qty Sold</th>
+                            <th className="text-right">Revenue</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {salesTopProductsTable.rows.map((p, i) => (
+                            <tr key={i}>
+                              <td>{p.name}</td>
+                              <td className="text-right">{p.quantity}</td>
+                              <td className="text-right">
+                                {formatCurrency(p.revenue)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      <TablePagination
+                        page={salesTopProductsTable.page}
+                        pageSize={salesTopProductsTable.pageSize}
+                        totalItems={salesTopProductsTable.totalItems}
+                        onPageChange={salesTopProductsTable.setPage}
+                        onPageSizeChange={salesTopProductsTable.setPageSize}
+                      />
+                    </>
                   )}
                 </div>
 
@@ -2388,6 +2483,7 @@ export default function ReportsPage() {
                     {incomeStatementReport.invoices.length === 0 ? (
                       <p className="empty-state">No invoices in this period.</p>
                     ) : (
+                      <>
                       <table className="report-table">
                         <thead>
                           <tr>
@@ -2401,7 +2497,7 @@ export default function ReportsPage() {
                           </tr>
                         </thead>
                         <tbody>
-                          {incomeStatementReport.invoices.map((inv, i) => (
+                          {incomeInvoicesTable.rows.map((inv, i) => (
                             <tr key={i}>
                               <td
                                 style={{
@@ -2468,6 +2564,14 @@ export default function ReportsPage() {
                           </tr>
                         </tfoot>
                       </table>
+                      <TablePagination
+                        page={incomeInvoicesTable.page}
+                        pageSize={incomeInvoicesTable.pageSize}
+                        totalItems={incomeInvoicesTable.totalItems}
+                        onPageChange={incomeInvoicesTable.setPage}
+                        onPageSizeChange={incomeInvoicesTable.setPageSize}
+                      />
+                      </>
                     )}
                   </div>
                 )}
@@ -2478,6 +2582,7 @@ export default function ReportsPage() {
                     {incomeStatementReport.expenses.length === 0 ? (
                       <p className="empty-state">No expenses in this period.</p>
                     ) : (
+                      <>
                       <table className="report-table">
                         <thead>
                           <tr>
@@ -2491,7 +2596,7 @@ export default function ReportsPage() {
                           </tr>
                         </thead>
                         <tbody>
-                          {incomeStatementReport.expenses.map((ex, i) => (
+                          {incomeExpensesTable.rows.map((ex, i) => (
                             <tr key={i}>
                               <td
                                 style={{
@@ -2550,6 +2655,14 @@ export default function ReportsPage() {
                           </tr>
                         </tfoot>
                       </table>
+                      <TablePagination
+                        page={incomeExpensesTable.page}
+                        pageSize={incomeExpensesTable.pageSize}
+                        totalItems={incomeExpensesTable.totalItems}
+                        onPageChange={incomeExpensesTable.setPage}
+                        onPageSizeChange={incomeExpensesTable.setPageSize}
+                      />
+                      </>
                     )}
                   </div>
                 )}
@@ -2597,7 +2710,7 @@ export default function ReportsPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {stockReport.low_stock_items.map((item, i) => (
+                        {stockLowItemsTable.rows.map((item, i) => (
                           <tr key={i}>
                             <td>{item.name}</td>
                             <td className="text-right">{item.on_hand}</td>
@@ -2607,6 +2720,13 @@ export default function ReportsPage() {
                         ))}
                       </tbody>
                     </table>
+                    <TablePagination
+                      page={stockLowItemsTable.page}
+                      pageSize={stockLowItemsTable.pageSize}
+                      totalItems={stockLowItemsTable.totalItems}
+                      onPageChange={stockLowItemsTable.setPage}
+                      onPageSizeChange={stockLowItemsTable.setPageSize}
+                    />
                   </div>
                 )}
 
@@ -2615,6 +2735,7 @@ export default function ReportsPage() {
                   {stockReport.stock_summary.length === 0 ? (
                     <p className="empty-state">No stock data available.</p>
                   ) : (
+                    <>
                     <table className="report-table">
                       <thead>
                         <tr>
@@ -2626,7 +2747,7 @@ export default function ReportsPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {stockReport.stock_summary.map((s, i) => (
+                        {stockSummaryTable.rows.map((s, i) => (
                           <tr key={i}>
                             <td>{s.name}</td>
                             <td className="text-right">{s.on_hand}</td>
@@ -2639,6 +2760,14 @@ export default function ReportsPage() {
                         ))}
                       </tbody>
                     </table>
+                    <TablePagination
+                      page={stockSummaryTable.page}
+                      pageSize={stockSummaryTable.pageSize}
+                      totalItems={stockSummaryTable.totalItems}
+                      onPageChange={stockSummaryTable.setPage}
+                      onPageSizeChange={stockSummaryTable.setPageSize}
+                    />
+                    </>
                   )}
                 </div>
               </div>
@@ -2658,7 +2787,7 @@ export default function ReportsPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {stockReport.recent_movements.map((m, i) => (
+                      {stockMovementsTable.rows.map((m, i) => (
                         <tr key={i}>
                           <td>{m.product}</td>
                           <td>
@@ -2682,6 +2811,13 @@ export default function ReportsPage() {
                       ))}
                     </tbody>
                   </table>
+                  <TablePagination
+                    page={stockMovementsTable.page}
+                    pageSize={stockMovementsTable.pageSize}
+                    totalItems={stockMovementsTable.totalItems}
+                    onPageChange={stockMovementsTable.setPage}
+                    onPageSizeChange={stockMovementsTable.setPageSize}
+                  />
                 </div>
               )}
             </div>
@@ -2718,6 +2854,7 @@ export default function ReportsPage() {
                       No unpaid invoices in this period.
                     </p>
                   ) : (
+                    <>
                     <table className="report-table">
                       <thead>
                         <tr>
@@ -2731,7 +2868,7 @@ export default function ReportsPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {debtorsReport.recent_unpaid.map((inv, i) => (
+                        {debtorsUnpaidTable.rows.map((inv, i) => (
                           <tr key={i}>
                             <td
                               style={{ fontFamily: "monospace", fontSize: 12 }}
@@ -2760,6 +2897,14 @@ export default function ReportsPage() {
                         ))}
                       </tbody>
                     </table>
+                    <TablePagination
+                      page={debtorsUnpaidTable.page}
+                      pageSize={debtorsUnpaidTable.pageSize}
+                      totalItems={debtorsUnpaidTable.totalItems}
+                      onPageChange={debtorsUnpaidTable.setPage}
+                      onPageSizeChange={debtorsUnpaidTable.setPageSize}
+                    />
+                    </>
                   )}
                 </div>
               </div>
@@ -2792,6 +2937,7 @@ export default function ReportsPage() {
                       No unpaid purchase orders in this period.
                     </p>
                   ) : (
+                    <>
                     <table className="report-table">
                       <thead>
                         <tr>
@@ -2801,7 +2947,7 @@ export default function ReportsPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {creditorsReport.by_supplier.map((v, i) => (
+                        {creditorsBySupplierTable.rows.map((v, i) => (
                           <tr key={i}>
                             <td>{v.name}</td>
                             <td className="text-right">{v.count}</td>
@@ -2812,6 +2958,14 @@ export default function ReportsPage() {
                         ))}
                       </tbody>
                     </table>
+                    <TablePagination
+                      page={creditorsBySupplierTable.page}
+                      pageSize={creditorsBySupplierTable.pageSize}
+                      totalItems={creditorsBySupplierTable.totalItems}
+                      onPageChange={creditorsBySupplierTable.setPage}
+                      onPageSizeChange={creditorsBySupplierTable.setPageSize}
+                    />
+                    </>
                   )}
                 </div>
 
@@ -2822,6 +2976,7 @@ export default function ReportsPage() {
                       No unpaid purchase orders in this period.
                     </p>
                   ) : (
+                    <>
                     <table className="report-table">
                       <thead>
                         <tr>
@@ -2834,7 +2989,7 @@ export default function ReportsPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {creditorsReport.recent_orders.map((o, i) => (
+                        {creditorsRecentTable.rows.map((o, i) => (
                           <tr key={i}>
                             <td
                               style={{ fontFamily: "monospace", fontSize: 12 }}
@@ -2866,6 +3021,14 @@ export default function ReportsPage() {
                         ))}
                       </tbody>
                     </table>
+                    <TablePagination
+                      page={creditorsRecentTable.page}
+                      pageSize={creditorsRecentTable.pageSize}
+                      totalItems={creditorsRecentTable.totalItems}
+                      onPageChange={creditorsRecentTable.setPage}
+                      onPageSizeChange={creditorsRecentTable.setPageSize}
+                    />
+                    </>
                   )}
                 </div>
               </div>
@@ -2987,6 +3150,7 @@ export default function ReportsPage() {
                   {vatReport.sales_by_rate.length === 0 ? (
                     <p className="empty-state">No sales in this period.</p>
                   ) : (
+                    <>
                     <table className="report-table">
                       <thead>
                         <tr>
@@ -2998,7 +3162,7 @@ export default function ReportsPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {vatReport.sales_by_rate.map((b, i) => (
+                        {vatSalesByRateTable.rows.map((b, i) => (
                           <tr key={i}>
                             <td>
                               <span className="badge badge-success">
@@ -3044,6 +3208,14 @@ export default function ReportsPage() {
                         </tr>
                       </tbody>
                     </table>
+                    <TablePagination
+                      page={vatSalesByRateTable.page}
+                      pageSize={vatSalesByRateTable.pageSize}
+                      totalItems={vatSalesByRateTable.totalItems}
+                      onPageChange={vatSalesByRateTable.setPage}
+                      onPageSizeChange={vatSalesByRateTable.setPageSize}
+                    />
+                    </>
                   )}
                 </div>
               )}
@@ -3068,6 +3240,7 @@ export default function ReportsPage() {
                   {vatReport.purchases_by_rate.length === 0 ? (
                     <p className="empty-state">No purchases in this period.</p>
                   ) : (
+                    <>
                     <table className="report-table">
                       <thead>
                         <tr>
@@ -3079,7 +3252,7 @@ export default function ReportsPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {vatReport.purchases_by_rate.map((b, i) => (
+                        {vatPurchasesByRateTable.rows.map((b, i) => (
                           <tr key={i}>
                             <td>
                               <span className="badge badge-info">
@@ -3125,6 +3298,14 @@ export default function ReportsPage() {
                         </tr>
                       </tbody>
                     </table>
+                    <TablePagination
+                      page={vatPurchasesByRateTable.page}
+                      pageSize={vatPurchasesByRateTable.pageSize}
+                      totalItems={vatPurchasesByRateTable.totalItems}
+                      onPageChange={vatPurchasesByRateTable.setPage}
+                      onPageSizeChange={vatPurchasesByRateTable.setPageSize}
+                    />
+                    </>
                   )}
                 </div>
               )}
@@ -3353,7 +3534,7 @@ export default function ReportsPage() {
                           </tr>
                         </thead>
                         <tbody>
-                          {purchaseReport.by_supplier.map((v, i) => (
+                          {purchasesBySupplierTable.rows.map((v, i) => (
                             <tr key={i}>
                               <td>{v.name}</td>
                               <td className="text-right">{v.count}</td>
@@ -3364,6 +3545,13 @@ export default function ReportsPage() {
                           ))}
                         </tbody>
                       </table>
+                      <TablePagination
+                        page={purchasesBySupplierTable.page}
+                        pageSize={purchasesBySupplierTable.pageSize}
+                        totalItems={purchasesBySupplierTable.totalItems}
+                        onPageChange={purchasesBySupplierTable.setPage}
+                        onPageSizeChange={purchasesBySupplierTable.setPageSize}
+                      />
                       {/* Bar chart for suppliers */}
                       <div style={{ marginTop: 16 }}>
                         {purchaseReport.by_supplier.slice(0, 8).map((v, i) => {
@@ -3419,6 +3607,7 @@ export default function ReportsPage() {
                   {purchaseReport.by_status.length === 0 ? (
                     <p className="empty-state">No data.</p>
                   ) : (
+                    <>
                     <table className="report-table">
                       <thead>
                         <tr>
@@ -3428,7 +3617,7 @@ export default function ReportsPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {purchaseReport.by_status.map((s, i) => (
+                        {purchasesByStatusTable.rows.map((s, i) => (
                           <tr key={i}>
                             <td>
                               <span
@@ -3446,6 +3635,14 @@ export default function ReportsPage() {
                         ))}
                       </tbody>
                     </table>
+                    <TablePagination
+                      page={purchasesByStatusTable.page}
+                      pageSize={purchasesByStatusTable.pageSize}
+                      totalItems={purchasesByStatusTable.totalItems}
+                      onPageChange={purchasesByStatusTable.setPage}
+                      onPageSizeChange={purchasesByStatusTable.setPageSize}
+                    />
+                    </>
                   )}
 
                   <h3 style={{ marginTop: 24 }}>Monthly Trend</h3>
@@ -3489,6 +3686,7 @@ export default function ReportsPage() {
                     No purchase orders in this period.
                   </p>
                 ) : (
+                  <>
                   <table className="report-table">
                     <thead>
                       <tr>
@@ -3500,7 +3698,7 @@ export default function ReportsPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {purchaseReport.recent_orders.map((o, i) => (
+                      {purchasesRecentTable.rows.map((o, i) => (
                         <tr key={i}>
                           <td style={{ fontFamily: "monospace", fontSize: 12 }}>
                             {o.reference}
@@ -3522,6 +3720,14 @@ export default function ReportsPage() {
                       ))}
                     </tbody>
                   </table>
+                  <TablePagination
+                    page={purchasesRecentTable.page}
+                    pageSize={purchasesRecentTable.pageSize}
+                    totalItems={purchasesRecentTable.totalItems}
+                    onPageChange={purchasesRecentTable.setPage}
+                    onPageSizeChange={purchasesRecentTable.setPageSize}
+                  />
+                  </>
                 )}
               </div>
             </div>

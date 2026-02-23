@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../api";
+import { TablePagination } from "../components/TablePagination";
 import { useMe } from "../hooks/useMe";
 
 interface AuditLog {
@@ -117,6 +118,8 @@ export default function AuditLogsPage() {
   const [searchFilter, setSearchFilter] = useState("");
   const [daysFilter, setDaysFilter] = useState(7);
   const [showFilters, setShowFilters] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // Available filter options
   const [actionTypes, setActionTypes] = useState<string[]>([]);
@@ -175,6 +178,28 @@ export default function AuditLogsPage() {
     setStatusFilter("");
     setSearchFilter("");
   };
+
+  const totalPages = Math.max(1, Math.ceil(logs.length / pageSize));
+  const pagedLogs = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return logs.slice(start, start + pageSize);
+  }, [logs, page, pageSize]);
+
+  useEffect(() => {
+    setPage((prev) => Math.min(prev, totalPages));
+  }, [totalPages]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [
+    actionFilter,
+    resourceFilter,
+    statusFilter,
+    searchFilter,
+    daysFilter,
+    companyId,
+    pageSize,
+  ]);
 
   return (
     <div className="content-area">
@@ -318,7 +343,7 @@ export default function AuditLogsPage() {
                   </td>
                 </tr>
               ) : (
-                logs.map((log) => (
+                pagedLogs.map((log) => (
                   <tr key={log.id}>
                     <td style={{ whiteSpace: "nowrap", fontSize: 12, color: "var(--slate-500)" }}>
                       {formatDate(log.action_at)}
@@ -403,6 +428,13 @@ export default function AuditLogsPage() {
               )}
             </tbody>
           </table>
+          <TablePagination
+            page={page}
+            pageSize={pageSize}
+            totalItems={logs.length}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+          />
         </div>
       )}
 

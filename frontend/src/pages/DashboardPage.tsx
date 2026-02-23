@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { apiFetch } from "../api";
+import { TablePagination } from "../components/TablePagination";
 import { useMe } from "../hooks/useMe";
 import { useCompanies } from "../hooks/useCompanies";
 
@@ -101,8 +102,6 @@ interface AuditLog {
   user_email: string;
   action_at: string;
 }
-
-const DASHBOARD_TABLE_PAGE_SIZE = 8;
 
 // SVG Icons
 const BuildingIcon = () => (
@@ -279,9 +278,13 @@ export default function DashboardPage() {
   const [error, setError] = useState("");
   const [dateRange, setDateRange] = useState({ from: "", to: "" });
   const [invoicePage, setInvoicePage] = useState(1);
+  const [invoicePageSize, setInvoicePageSize] = useState(8);
   const [quotationPage, setQuotationPage] = useState(1);
+  const [quotationPageSize, setQuotationPageSize] = useState(8);
   const [companyStatusPage, setCompanyStatusPage] = useState(1);
+  const [companyStatusPageSize, setCompanyStatusPageSize] = useState(8);
   const [auditPage, setAuditPage] = useState(1);
+  const [auditPageSize, setAuditPageSize] = useState(8);
 
   useEffect(() => {
     const now = new Date();
@@ -473,42 +476,42 @@ export default function DashboardPage() {
       );
   }, [recentAuditLogs]);
 
-  const invoiceTotalPages = getTotalPages(
-    sortedInvoicesForTable.length,
-    DASHBOARD_TABLE_PAGE_SIZE,
+  const invoiceTotalPages = Math.max(
+    1,
+    Math.ceil(sortedInvoicesForTable.length / invoicePageSize),
   );
-  const quotationTotalPages = getTotalPages(
-    sortedQuotationsForTable.length,
-    DASHBOARD_TABLE_PAGE_SIZE,
+  const quotationTotalPages = Math.max(
+    1,
+    Math.ceil(sortedQuotationsForTable.length / quotationPageSize),
   );
-  const companyStatusTotalPages = getTotalPages(
-    filteredCompanyStatus.length,
-    DASHBOARD_TABLE_PAGE_SIZE,
+  const companyStatusTotalPages = Math.max(
+    1,
+    Math.ceil(filteredCompanyStatus.length / companyStatusPageSize),
   );
-  const auditTotalPages = getTotalPages(
-    sortedAuditLogs.length,
-    DASHBOARD_TABLE_PAGE_SIZE,
+  const auditTotalPages = Math.max(
+    1,
+    Math.ceil(sortedAuditLogs.length / auditPageSize),
   );
 
   const pagedInvoices = paginateRows(
     sortedInvoicesForTable,
     invoicePage,
-    DASHBOARD_TABLE_PAGE_SIZE,
+    invoicePageSize,
   );
   const pagedQuotations = paginateRows(
     sortedQuotationsForTable,
     quotationPage,
-    DASHBOARD_TABLE_PAGE_SIZE,
+    quotationPageSize,
   );
   const pagedCompanyStatus = paginateRows(
     filteredCompanyStatus,
     companyStatusPage,
-    DASHBOARD_TABLE_PAGE_SIZE,
+    companyStatusPageSize,
   );
   const pagedAuditLogs = paginateRows(
     sortedAuditLogs,
     auditPage,
-    DASHBOARD_TABLE_PAGE_SIZE,
+    auditPageSize,
   );
 
   useEffect(() => {
@@ -1010,10 +1013,13 @@ export default function DashboardPage() {
           </table>
           <TablePagination
             page={invoicePage}
-            totalPages={invoiceTotalPages}
             totalItems={sortedInvoicesForTable.length}
-            pageSize={DASHBOARD_TABLE_PAGE_SIZE}
             onPageChange={setInvoicePage}
+            pageSize={invoicePageSize}
+            onPageSizeChange={(size) => {
+              setInvoicePageSize(size);
+              setInvoicePage(1);
+            }}
           />
         </div>
 
@@ -1055,10 +1061,13 @@ export default function DashboardPage() {
           </table>
           <TablePagination
             page={quotationPage}
-            totalPages={quotationTotalPages}
             totalItems={sortedQuotationsForTable.length}
-            pageSize={DASHBOARD_TABLE_PAGE_SIZE}
             onPageChange={setQuotationPage}
+            pageSize={quotationPageSize}
+            onPageSizeChange={(size) => {
+              setQuotationPageSize(size);
+              setQuotationPage(1);
+            }}
           />
         </div>
       </div>
@@ -1132,10 +1141,13 @@ export default function DashboardPage() {
           </table>
           <TablePagination
             page={companyStatusPage}
-            totalPages={companyStatusTotalPages}
             totalItems={filteredCompanyStatus.length}
-            pageSize={DASHBOARD_TABLE_PAGE_SIZE}
             onPageChange={setCompanyStatusPage}
+            pageSize={companyStatusPageSize}
+            onPageSizeChange={(size) => {
+              setCompanyStatusPageSize(size);
+              setCompanyStatusPage(1);
+            }}
           />
         </div>
       )}
@@ -1219,10 +1231,13 @@ export default function DashboardPage() {
           </table>
           <TablePagination
             page={auditPage}
-            totalPages={auditTotalPages}
             totalItems={sortedAuditLogs.length}
-            pageSize={DASHBOARD_TABLE_PAGE_SIZE}
             onPageChange={setAuditPage}
+            pageSize={auditPageSize}
+            onPageSizeChange={(size) => {
+              setAuditPageSize(size);
+              setAuditPage(1);
+            }}
           />
         </div>
       )}
@@ -1230,56 +1245,7 @@ export default function DashboardPage() {
   );
 }
 
-function getTotalPages(totalItems: number, pageSize: number) {
-  return Math.max(1, Math.ceil(totalItems / pageSize));
-}
-
 function paginateRows<T>(rows: T[], page: number, pageSize: number) {
   const start = (page - 1) * pageSize;
   return rows.slice(start, start + pageSize);
-}
-
-function TablePagination({
-  page,
-  totalPages,
-  totalItems,
-  pageSize,
-  onPageChange,
-}: {
-  page: number;
-  totalPages: number;
-  totalItems: number;
-  pageSize: number;
-  onPageChange: (nextPage: number) => void;
-}) {
-  if (totalItems <= pageSize) return null;
-  const fromItem = (page - 1) * pageSize + 1;
-  const toItem = Math.min(totalItems, page * pageSize);
-
-  return (
-    <div className="dashboard-pagination">
-      <span className="pager-info">
-        Showing {fromItem}-{toItem} of {totalItems}
-      </span>
-      <div className="pager-buttons">
-        <button
-          className="pager-btn"
-          onClick={() => onPageChange(page - 1)}
-          disabled={page <= 1}
-        >
-          Previous
-        </button>
-        <span className="pager-page">
-          Page {page} of {totalPages}
-        </span>
-        <button
-          className="pager-btn"
-          onClick={() => onPageChange(page + 1)}
-          disabled={page >= totalPages}
-        >
-          Next
-        </button>
-      </div>
-    </div>
-  );
 }

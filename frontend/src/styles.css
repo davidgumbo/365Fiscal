@@ -7401,6 +7401,7 @@ tr:hover .o-quick-actions {
   background: var(--surface);
 }
 
+.table-pagination,
 .dashboard-pagination {
   display: flex;
   align-items: center;
@@ -7409,6 +7410,28 @@ tr:hover .o-quick-actions {
   margin-top: 12px;
   padding-top: 10px;
   border-top: 1px solid var(--stroke-light);
+}
+
+.pager-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pager-size-label {
+  font-size: 12px;
+  color: var(--ink-light);
+}
+
+.pager-size-select {
+  border: 1px solid var(--stroke);
+  background: white;
+  color: var(--ink);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 7px 8px;
 }
 
 .pager-info {
@@ -7597,6 +7620,11 @@ tr:hover .o-quick-actions {
   }
 
   .dashboard-pagination {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .table-pagination {
     flex-direction: column;
     align-items: stretch;
   }
