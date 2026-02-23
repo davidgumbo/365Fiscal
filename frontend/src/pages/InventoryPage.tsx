@@ -2485,27 +2485,17 @@ export default function InventoryPage() {
                       </div>
 
                       <div
-                        style={{
-                          marginTop: 16,
-                          display: "flex",
-                          gap: 8,
-                          flexWrap: "wrap",
-                        }}
+                        className="tabs-nav"
+                        style={{ marginTop: 16, marginBottom: 20 }}
                       >
                         <button
-                          className={
-                            productInfoTab === "general" ? "tab active" : "tab"
-                          }
+                          className={`tab-btn ${productInfoTab === "general" ? "active" : ""}`}
                           onClick={() => setProductInfoTab("general")}
                         >
                           General
                         </button>
                         <button
-                          className={
-                            productInfoTab === "inventory"
-                              ? "tab active"
-                              : "tab"
-                          }
+                          className={`tab-btn ${productInfoTab === "inventory" ? "active" : ""}`}
                           onClick={() => setProductInfoTab("inventory")}
                           disabled={productForm.product_type !== "storable"}
                           style={
@@ -2522,11 +2512,7 @@ export default function InventoryPage() {
                           Inventory
                         </button>
                         <button
-                          className={
-                            productInfoTab === "description"
-                              ? "tab active"
-                              : "tab"
-                          }
+                          className={`tab-btn ${productInfoTab === "description" ? "active" : ""}`}
                           onClick={() => setProductInfoTab("description")}
                         >
                           Description
