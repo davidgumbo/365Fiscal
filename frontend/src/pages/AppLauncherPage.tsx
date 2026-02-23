@@ -474,6 +474,11 @@ export default function AppLauncherPage() {
   const [activateSuccess, setActivateSuccess] = useState("");
   const [activating, setActivating] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const companyName = !isAdmin
+    ? me?.companies?.[0]?.name ??
+      activationStatus?.find((s) => Boolean(s.company_name))?.company_name ??
+      ""
+    : "";
 
   const formatActivationCode = (raw: string) => {
     const cleaned = raw.toUpperCase().replace(/[^A-Z0-9]/g, "");
@@ -693,9 +698,11 @@ export default function AppLauncherPage() {
       {/* Header */}
       <header className="app-launcher-header">
         <div className="app-launcher-user">
-          <div className="bg-gray-50 rounded-md p-2 flex items-center gap-2">
-            <span>{companyName}</span>
-          </div>
+          {!isAdmin && companyName && (
+            <div className="bg-gray-50 rounded-md p-2 flex items-center gap-2">
+              <span>{companyName}</span>
+            </div>
+          )}
           <button
             type="button"
             className="user-menu"
