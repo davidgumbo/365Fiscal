@@ -693,6 +693,9 @@ export default function AppLauncherPage() {
       {/* Header */}
       <header className="app-launcher-header">
         <div className="app-launcher-user">
+          <div className="bg-gray-50 rounded-md p-2 flex items-center gap-2">
+            <span>{companyName}</span>
+          </div>
           <button
             type="button"
             className="user-menu"

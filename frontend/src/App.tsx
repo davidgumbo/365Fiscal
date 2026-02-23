@@ -145,6 +145,9 @@ function AppContent() {
 
   const navItems = isPortalMode ? portalNav : adminNav;
   const displayName = me?.email ?? (isPortalMode ? "Portal User" : "Admin");
+  const portalCompanyName = isPortalMode
+    ? me?.companies?.[0]?.name ?? null
+    : null;
   const initials = getInitials(displayName);
   const currentPath = location.pathname === "/" ? "/" : location.pathname;
   const isDashboard = currentPath === "/";
@@ -260,6 +263,11 @@ function AppContent() {
                 </div>
               </div>
               <div className="topbar-right">
+                {portalCompanyName && (
+                  <span className="topbar-company-name" title={portalCompanyName}>
+                    {portalCompanyName}
+                  </span>
+                )}
                 <button
                   className="user-menu"
                   onClick={() => setUserMenuOpen((v) => !v)}

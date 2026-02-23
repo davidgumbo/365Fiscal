@@ -690,6 +690,22 @@ textarea {
   gap: 12px;
 }
 
+.topbar-company-name {
+  display: inline-flex;
+  align-items: center;
+  max-width: 260px;
+  padding: 5px 10px;
+  border: 1px solid var(--stroke);
+  border-radius: 999px;
+  background: var(--surface, var(--slate-100));
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .app-switcher {
   display: inline-flex;
   align-items: center;
