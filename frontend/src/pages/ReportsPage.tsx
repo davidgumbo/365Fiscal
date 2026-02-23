@@ -200,7 +200,7 @@ interface StockReport {
   }[];
 }
 
-interface ReceivableReport {
+interface DebtorsReport {
   total_invoices: number;
   unpaid_invoices: number;
   partial_invoices: number;
@@ -273,7 +273,7 @@ interface PurchaseReportData {
 type ReportType =
   | "sales"
   | "stock"
-  | "receivable"
+  | "debtors"
   | "creditors"
   | "income_statement"
   | "vat"
@@ -337,8 +337,8 @@ export default function ReportsPage() {
 
   const [salesReport, setSalesReport] = useState<SalesReport | null>(null);
   const [stockReport, setStockReport] = useState<StockReport | null>(null);
-  const [receivableReport, setReceivableReport] =
-    useState<ReceivableReport | null>(null);
+  const [debtorsReport, setDebtorsReport] =
+    useState<DebtorsReport | null>(null);
   const [creditorsReport, setCreditorsReport] =
     useState<CreditorsReport | null>(null);
   const [incomeStatementReport, setIncomeStatementReport] =
@@ -646,9 +646,9 @@ export default function ReportsPage() {
     });
   }, [companyId]);
 
-  // Payments report replaced by Receivable + Creditors
+  // Payments report replaced by Debtors + Creditors
 
-  const loadReceivableReport = useCallback(async () => {
+  const loadDebtorsReport = useCallback(async () => {
     if (!companyId) return;
 
     const [invoices, contacts] = await Promise.all([
@@ -711,7 +711,7 @@ export default function ReportsPage() {
         status: inv.status,
       }));
 
-    setReceivableReport({
+    setDebtorsReport({
       total_invoices: filtered.length,
       unpaid_invoices: unpaid.length,
       partial_invoices: partial.length,
@@ -1020,7 +1020,7 @@ export default function ReportsPage() {
       else if (activeReport === "income_statement")
         await loadIncomeStatementReport();
       else if (activeReport === "stock") await loadStockReport();
-      else if (activeReport === "receivable") await loadReceivableReport();
+      else if (activeReport === "debtors") await loadDebtorsReport();
       else if (activeReport === "creditors") await loadCreditorsReport();
       else if (activeReport === "vat") await loadVatReport();
       else if (activeReport === "purchases") await loadPurchaseReport();
@@ -1035,7 +1035,7 @@ export default function ReportsPage() {
     loadSalesReport,
     loadIncomeStatementReport,
     loadStockReport,
-    loadReceivableReport,
+    loadDebtorsReport,
     loadCreditorsReport,
     loadVatReport,
     loadPurchaseReport,
@@ -1124,19 +1124,19 @@ export default function ReportsPage() {
           ]),
         );
       }
-    } else if (activeReport === "receivable" && receivableReport) {
-      filename = `receivable-${dateRange.from}-to-${dateRange.to}.csv`;
-      rows.push(["Receivable", `${dateRange.from} to ${dateRange.to}`]);
+    } else if (activeReport === "debtors" && debtorsReport) {
+      filename = `debtors-${dateRange.from}-to-${dateRange.to}.csv`;
+      rows.push(["Debtors", `${dateRange.from} to ${dateRange.to}`]);
       rows.push([]);
-      rows.push(["Total Invoices", String(receivableReport.total_invoices)]);
-      rows.push(["Unpaid Invoices", String(receivableReport.unpaid_invoices)]);
-      rows.push(["Partial Invoices", String(receivableReport.partial_invoices)]);
-      rows.push(["Total Invoiced", receivableReport.total_invoiced.toFixed(2)]);
-      rows.push(["Total Outstanding", receivableReport.total_due.toFixed(2)]);
+      rows.push(["Total Invoices", String(debtorsReport.total_invoices)]);
+      rows.push(["Unpaid Invoices", String(debtorsReport.unpaid_invoices)]);
+      rows.push(["Partial Invoices", String(debtorsReport.partial_invoices)]);
+      rows.push(["Total Invoiced", debtorsReport.total_invoiced.toFixed(2)]);
+      rows.push(["Total Outstanding", debtorsReport.total_due.toFixed(2)]);
       rows.push([]);
       rows.push(["Unpaid Invoices"]);
       rows.push(["Reference", "Customer", "Total", "Paid", "Due", "Date", "Status"]);
-      receivableReport.recent_unpaid.forEach((i) =>
+      debtorsReport.recent_unpaid.forEach((i) =>
         rows.push([
           i.reference,
           i.customer,
@@ -1237,8 +1237,8 @@ export default function ReportsPage() {
         ? "Revenue"
         : activeReport === "stock"
           ? "Stock Valuation"
-          : activeReport === "receivable"
-            ? "Receivable"
+          : activeReport === "debtors"
+            ? "Debtors"
             : activeReport === "creditors"
               ? "Creditors"
               : activeReport === "income_statement"
@@ -1312,17 +1312,17 @@ export default function ReportsPage() {
         </tbody></table>`
             : ""
         }`;
-    } else if (activeReport === "receivable" && receivableReport) {
+    } else if (activeReport === "debtors" && debtorsReport) {
       bodyHTML = `
         <div class="summary-grid">
-          <div class="summary-box"><div class="label">Unpaid Invoices</div><div class="val">${receivableReport.unpaid_invoices}</div></div>
-          <div class="summary-box"><div class="label">Partial Invoices</div><div class="val">${receivableReport.partial_invoices}</div></div>
-          <div class="summary-box"><div class="label">Total Outstanding</div><div class="val">${formatCurrency(receivableReport.total_due)}</div></div>
-          <div class="summary-box"><div class="label">Avg Due</div><div class="val">${formatCurrency(receivableReport.average_due)}</div></div>
+          <div class="summary-box"><div class="label">Unpaid Invoices</div><div class="val">${debtorsReport.unpaid_invoices}</div></div>
+          <div class="summary-box"><div class="label">Partial Invoices</div><div class="val">${debtorsReport.partial_invoices}</div></div>
+          <div class="summary-box"><div class="label">Total Outstanding</div><div class="val">${formatCurrency(debtorsReport.total_due)}</div></div>
+          <div class="summary-box"><div class="label">Avg Due</div><div class="val">${formatCurrency(debtorsReport.average_due)}</div></div>
         </div>
         <h3>Unpaid Invoices</h3>
         <table><thead><tr><th>Reference</th><th>Customer</th><th style="text-align:right">Total</th><th style="text-align:right">Paid</th><th style="text-align:right">Due</th><th>Date</th><th>Status</th></tr></thead><tbody>
-          ${receivableReport.recent_unpaid.map((i) => `<tr><td>${i.reference}</td><td>${i.customer}</td><td style="text-align:right">${formatCurrency(i.total)}</td><td style="text-align:right">${formatCurrency(i.paid)}</td><td style="text-align:right">${formatCurrency(i.due)}</td><td>${i.date}</td><td>${i.status}</td></tr>`).join("")}
+          ${debtorsReport.recent_unpaid.map((i) => `<tr><td>${i.reference}</td><td>${i.customer}</td><td style="text-align:right">${formatCurrency(i.total)}</td><td style="text-align:right">${formatCurrency(i.paid)}</td><td style="text-align:right">${formatCurrency(i.due)}</td><td>${i.date}</td><td>${i.status}</td></tr>`).join("")}
         </tbody></table>`;
     } else if (activeReport === "creditors" && creditorsReport) {
       bodyHTML = `
@@ -1446,7 +1446,7 @@ export default function ReportsPage() {
     setSelectedCompanyId(null);
     setSalesReport(null);
     setStockReport(null);
-    setReceivableReport(null);
+    setDebtorsReport(null);
     setCreditorsReport(null);
     setVatReport(null);
     setPurchaseReport(null);
@@ -1669,8 +1669,8 @@ export default function ReportsPage() {
                 ),
               },
               {
-                key: "receivable",
-                label: "RECEIVABLE",
+                key: "debtors",
+                label: "DEBTORS",
                 icon: (
                   <svg
                     width="18"
@@ -2275,33 +2275,33 @@ export default function ReportsPage() {
             </div>
           )}
 
-          {/* ─── Receivable (Unpaid Invoices) ─── */}
-          {!loading && activeReport === "receivable" && receivableReport && (
+          {/* ─── Debtors (Unpaid Invoices) ─── */}
+          {!loading && activeReport === "debtors" && debtorsReport && (
             <div className="report-content">
               <div className="metrics-row">
                 <MetricCard
                   label="Unpaid Invoices"
-                  value={String(receivableReport.unpaid_invoices)}
+                  value={String(debtorsReport.unpaid_invoices)}
                 />
                 <MetricCard
                   label="Total Outstanding"
-                  value={formatCurrency(receivableReport.total_due)}
+                  value={formatCurrency(debtorsReport.total_due)}
                 />
                 <MetricCard
                   label="Partial Invoices"
-                  value={String(receivableReport.partial_invoices)}
+                  value={String(debtorsReport.partial_invoices)}
                   variant="warning"
                 />
                 <MetricCard
                   label="Avg Due"
-                  value={formatCurrency(receivableReport.average_due)}
+                  value={formatCurrency(debtorsReport.average_due)}
                 />
               </div>
 
               <div className="report-grid">
                 <div className="report-card">
                   <h3>Unpaid Invoices</h3>
-                  {receivableReport.recent_unpaid.length === 0 ? (
+                  {debtorsReport.recent_unpaid.length === 0 ? (
                     <p className="empty-state">No unpaid invoices in this period.</p>
                   ) : (
                     <table className="report-table">
@@ -2317,7 +2317,7 @@ export default function ReportsPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {receivableReport.recent_unpaid.map((inv, i) => (
+                        {debtorsReport.recent_unpaid.map((inv, i) => (
                           <tr key={i}>
                             <td
                               style={{ fontFamily: "monospace", fontSize: 12 }}
@@ -2773,7 +2773,7 @@ export default function ReportsPage() {
             ((activeReport === "sales" && !salesReport) ||
               (activeReport === "income_statement" && !incomeStatementReport) ||
               (activeReport === "stock" && !stockReport) ||
-              (activeReport === "receivable" && !receivableReport) ||
+              (activeReport === "debtors" && !debtorsReport) ||
               (activeReport === "creditors" && !creditorsReport) ||
               (activeReport === "vat" && !vatReport) ||
               (activeReport === "purchases" && !purchaseReport)) && (
