@@ -292,6 +292,8 @@ type VatSectionTab =
   | "net_vat"
   | "profit_summary";
 
+type IncomeSectionTab = "summary" | "revenue" | "expenses";
+
 const MONTH_NAMES = [
   "Jan",
   "Feb",
@@ -344,6 +346,8 @@ export default function ReportsPage() {
   }, [allCompanies, companyQuery]);
 
   const [activeReport, setActiveReport] = useState<ReportType>("sales");
+  const [activeIncomeTab, setActiveIncomeTab] =
+    useState<IncomeSectionTab>("summary");
   const [activeVatTab, setActiveVatTab] = useState<VatSectionTab>("sales_vat");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -1173,6 +1177,10 @@ export default function ReportsPage() {
 
   useEffect(() => {
     if (activeReport !== "vat") setActiveVatTab("sales_vat");
+  }, [activeReport]);
+
+  useEffect(() => {
+    if (activeReport !== "income_statement") setActiveIncomeTab("summary");
   }, [activeReport]);
 
   useEffect(() => {
@@ -2305,214 +2313,246 @@ export default function ReportsPage() {
                   />
                 </div>
 
-                <div className="report-grid">
-                  <div className="report-card">
-                    <h3>Summary</h3>
-                    <table className="report-table">
-                      <tbody>
-                        <tr>
-                          <td style={{ fontWeight: 600 }}>
-                            Gross Revenue (VAT excl.)
-                          </td>
-                          <td className="text-right">
-                            {formatCurrency(
-                              incomeStatementReport.gross_revenue_ex_vat,
-                            )}
-                          </td>
-                        </tr>
-                        <tr>
-                          <td style={{ fontWeight: 600 }}>
-                            Expenses (VAT excl.)
-                          </td>
-                          <td className="text-right">
-                            {formatCurrency(
-                              incomeStatementReport.expenses_ex_vat,
-                            )}
-                          </td>
-                        </tr>
-                        <tr>
-                          <td style={{ fontWeight: 700 }}>
-                            Net Revenue (VAT excl.)
-                          </td>
-                          <td
-                            className="text-right"
-                            style={{ fontWeight: 700 }}
-                          >
-                            {formatCurrency(
-                              incomeStatementReport.net_revenue_ex_vat,
-                            )}
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
+                <div className="tabs-nav" style={{ marginBottom: 20 }}>
+                  <button
+                    className={`tab-btn ${activeIncomeTab === "summary" ? "active" : ""}`}
+                    onClick={() => setActiveIncomeTab("summary")}
+                  >
+                    Summary
+                  </button>
+                  <button
+                    className={`tab-btn ${activeIncomeTab === "revenue" ? "active" : ""}`}
+                    onClick={() => setActiveIncomeTab("revenue")}
+                  >
+                    Revenue
+                  </button>
+                  <button
+                    className={`tab-btn ${activeIncomeTab === "expenses" ? "active" : ""}`}
+                    onClick={() => setActiveIncomeTab("expenses")}
+                  >
+                    Expenses
+                  </button>
+                </div>
+
+                {activeIncomeTab === "summary" && (
+                  <div className="report-grid">
+                    <div className="report-card">
+                      <h3>Summary</h3>
+                      <table className="report-table">
+                        <tbody>
+                          <tr>
+                            <td style={{ fontWeight: 600 }}>
+                              Gross Revenue (VAT excl.)
+                            </td>
+                            <td className="text-right">
+                              {formatCurrency(
+                                incomeStatementReport.gross_revenue_ex_vat,
+                              )}
+                            </td>
+                          </tr>
+                          <tr>
+                            <td style={{ fontWeight: 600 }}>
+                              Expenses (VAT excl.)
+                            </td>
+                            <td className="text-right">
+                              {formatCurrency(
+                                incomeStatementReport.expenses_ex_vat,
+                              )}
+                            </td>
+                          </tr>
+                          <tr>
+                            <td style={{ fontWeight: 700 }}>
+                              Net Revenue (VAT excl.)
+                            </td>
+                            <td
+                              className="text-right"
+                              style={{ fontWeight: 700 }}
+                            >
+                              {formatCurrency(
+                                incomeStatementReport.net_revenue_ex_vat,
+                              )}
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
-                </div>
+                )}
 
-                {/* Revenue — Invoices */}
-                <div className="report-card" style={{ marginTop: 24 }}>
-                  <h3>
-                    Revenue — Invoices ({incomeStatementReport.invoices.length})
-                  </h3>
-                  {incomeStatementReport.invoices.length === 0 ? (
-                    <p className="empty-state">No invoices in this period.</p>
-                  ) : (
-                    <table className="report-table">
-                      <thead>
-                        <tr>
-                          <th>Reference</th>
-                          <th>Customer</th>
-                          <th>Date</th>
-                          <th className="text-right">Subtotal</th>
-                          <th className="text-right">Tax</th>
-                          <th className="text-right">Total</th>
-                          <th>Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {incomeStatementReport.invoices.map((inv, i) => (
-                          <tr key={i}>
-                            <td
-                              style={{ fontFamily: "monospace", fontSize: 12 }}
-                            >
-                              {inv.reference}
-                            </td>
-                            <td>{inv.customer}</td>
-                            <td>{inv.date}</td>
-                            <td className="text-right">
-                              {formatCurrency(inv.subtotal)}
-                            </td>
-                            <td className="text-right">
-                              {formatCurrency(inv.tax)}
-                            </td>
-                            <td className="text-right">
-                              {formatCurrency(inv.total)}
-                            </td>
-                            <td>
-                              <span
-                                className={`badge ${inv.status === "paid" ? "badge-success" : inv.status === "posted" ? "badge-info" : "badge-secondary"}`}
-                                style={{ textTransform: "capitalize" }}
+                {activeIncomeTab === "revenue" && (
+                  <div className="report-card">
+                    <h3>
+                      Revenue — Invoices (
+                      {incomeStatementReport.invoices.length})
+                    </h3>
+                    {incomeStatementReport.invoices.length === 0 ? (
+                      <p className="empty-state">No invoices in this period.</p>
+                    ) : (
+                      <table className="report-table">
+                        <thead>
+                          <tr>
+                            <th>Reference</th>
+                            <th>Customer</th>
+                            <th>Date</th>
+                            <th className="text-right">Subtotal</th>
+                            <th className="text-right">Tax</th>
+                            <th className="text-right">Total</th>
+                            <th>Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {incomeStatementReport.invoices.map((inv, i) => (
+                            <tr key={i}>
+                              <td
+                                style={{
+                                  fontFamily: "monospace",
+                                  fontSize: 12,
+                                }}
                               >
-                                {inv.status}
-                              </span>
+                                {inv.reference}
+                              </td>
+                              <td>{inv.customer}</td>
+                              <td>{inv.date}</td>
+                              <td className="text-right">
+                                {formatCurrency(inv.subtotal)}
+                              </td>
+                              <td className="text-right">
+                                {formatCurrency(inv.tax)}
+                              </td>
+                              <td className="text-right">
+                                {formatCurrency(inv.total)}
+                              </td>
+                              <td>
+                                <span
+                                  className={`badge ${inv.status === "paid" ? "badge-success" : inv.status === "posted" ? "badge-info" : "badge-secondary"}`}
+                                  style={{ textTransform: "capitalize" }}
+                                >
+                                  {inv.status}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                        <tfoot>
+                          <tr
+                            style={{
+                              fontWeight: 700,
+                              background: "var(--slate-50)",
+                            }}
+                          >
+                            <td colSpan={3} className="text-right">
+                              Total
                             </td>
+                            <td className="text-right">
+                              {formatCurrency(
+                                incomeStatementReport.gross_revenue_ex_vat,
+                              )}
+                            </td>
+                            <td className="text-right">
+                              {formatCurrency(
+                                incomeStatementReport.invoices.reduce(
+                                  (s, inv) => s + inv.tax,
+                                  0,
+                                ),
+                              )}
+                            </td>
+                            <td className="text-right">
+                              {formatCurrency(
+                                incomeStatementReport.invoices.reduce(
+                                  (s, inv) => s + inv.total,
+                                  0,
+                                ),
+                              )}
+                            </td>
+                            <td></td>
                           </tr>
-                        ))}
-                      </tbody>
-                      <tfoot>
-                        <tr
-                          style={{
-                            fontWeight: 700,
-                            background: "var(--slate-50)",
-                          }}
-                        >
-                          <td colSpan={3} className="text-right">
-                            Total
-                          </td>
-                          <td className="text-right">
-                            {formatCurrency(
-                              incomeStatementReport.gross_revenue_ex_vat,
-                            )}
-                          </td>
-                          <td className="text-right">
-                            {formatCurrency(
-                              incomeStatementReport.invoices.reduce(
-                                (s, inv) => s + inv.tax,
-                                0,
-                              ),
-                            )}
-                          </td>
-                          <td className="text-right">
-                            {formatCurrency(
-                              incomeStatementReport.invoices.reduce(
-                                (s, inv) => s + inv.total,
-                                0,
-                              ),
-                            )}
-                          </td>
-                          <td></td>
-                        </tr>
-                      </tfoot>
-                    </table>
-                  )}
-                </div>
+                        </tfoot>
+                      </table>
+                    )}
+                  </div>
+                )}
 
-                {/* Expenses */}
-                <div className="report-card" style={{ marginTop: 24 }}>
-                  <h3>Expenses ({incomeStatementReport.expenses.length})</h3>
-                  {incomeStatementReport.expenses.length === 0 ? (
-                    <p className="empty-state">No expenses in this period.</p>
-                  ) : (
-                    <table className="report-table">
-                      <thead>
-                        <tr>
-                          <th>Reference</th>
-                          <th>Supplier</th>
-                          <th>Category</th>
-                          <th>Date</th>
-                          <th className="text-right">Subtotal</th>
-                          <th className="text-right">Tax</th>
-                          <th className="text-right">Total</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {incomeStatementReport.expenses.map((ex, i) => (
-                          <tr key={i}>
-                            <td
-                              style={{ fontFamily: "monospace", fontSize: 12 }}
-                            >
-                              {ex.reference}
+                {activeIncomeTab === "expenses" && (
+                  <div className="report-card">
+                    <h3>Expenses ({incomeStatementReport.expenses.length})</h3>
+                    {incomeStatementReport.expenses.length === 0 ? (
+                      <p className="empty-state">No expenses in this period.</p>
+                    ) : (
+                      <table className="report-table">
+                        <thead>
+                          <tr>
+                            <th>Reference</th>
+                            <th>Supplier</th>
+                            <th>Category</th>
+                            <th>Date</th>
+                            <th className="text-right">Subtotal</th>
+                            <th className="text-right">Tax</th>
+                            <th className="text-right">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {incomeStatementReport.expenses.map((ex, i) => (
+                            <tr key={i}>
+                              <td
+                                style={{
+                                  fontFamily: "monospace",
+                                  fontSize: 12,
+                                }}
+                              >
+                                {ex.reference}
+                              </td>
+                              <td>{ex.supplier}</td>
+                              <td>{ex.category}</td>
+                              <td>{ex.date}</td>
+                              <td className="text-right">
+                                {formatCurrency(ex.subtotal)}
+                              </td>
+                              <td className="text-right">
+                                {formatCurrency(ex.tax)}
+                              </td>
+                              <td className="text-right">
+                                {formatCurrency(ex.total)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                        <tfoot>
+                          <tr
+                            style={{
+                              fontWeight: 700,
+                              background: "var(--slate-50)",
+                            }}
+                          >
+                            <td colSpan={4} className="text-right">
+                              Total
                             </td>
-                            <td>{ex.supplier}</td>
-                            <td>{ex.category}</td>
-                            <td>{ex.date}</td>
                             <td className="text-right">
-                              {formatCurrency(ex.subtotal)}
+                              {formatCurrency(
+                                incomeStatementReport.expenses_ex_vat,
+                              )}
                             </td>
                             <td className="text-right">
-                              {formatCurrency(ex.tax)}
+                              {formatCurrency(
+                                incomeStatementReport.expenses.reduce(
+                                  (s, ex) => s + ex.tax,
+                                  0,
+                                ),
+                              )}
                             </td>
                             <td className="text-right">
-                              {formatCurrency(ex.total)}
+                              {formatCurrency(
+                                incomeStatementReport.expenses.reduce(
+                                  (s, ex) => s + ex.total,
+                                  0,
+                                ),
+                              )}
                             </td>
                           </tr>
-                        ))}
-                      </tbody>
-                      <tfoot>
-                        <tr
-                          style={{
-                            fontWeight: 700,
-                            background: "var(--slate-50)",
-                          }}
-                        >
-                          <td colSpan={4} className="text-right">
-                            Total
-                          </td>
-                          <td className="text-right">
-                            {formatCurrency(
-                              incomeStatementReport.expenses_ex_vat,
-                            )}
-                          </td>
-                          <td className="text-right">
-                            {formatCurrency(
-                              incomeStatementReport.expenses.reduce(
-                                (s, ex) => s + ex.tax,
-                                0,
-                              ),
-                            )}
-                          </td>
-                          <td className="text-right">
-                            {formatCurrency(
-                              incomeStatementReport.expenses.reduce(
-                                (s, ex) => s + ex.total,
-                                0,
-                              ),
-                            )}
-                          </td>
-                        </tr>
-                      </tfoot>
-                    </table>
-                  )}
-                </div>
+                        </tfoot>
+                      </table>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
@@ -3089,41 +3129,44 @@ export default function ReportsPage() {
                 </div>
               )}
 
-              {activeVatTab === "credit_notes" && vatReport.credit_notes_count > 0 && (
-                <div className="report-card" style={{ marginBottom: 20 }}>
-                  <h3 style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span
-                      style={{
-                        background: "var(--amber-100)",
-                        color: "var(--amber-700)",
-                        borderRadius: 6,
-                        padding: "2px 10px",
-                        fontSize: 12,
-                        fontWeight: 700,
-                      }}
+              {activeVatTab === "credit_notes" &&
+                vatReport.credit_notes_count > 0 && (
+                  <div className="report-card" style={{ marginBottom: 20 }}>
+                    <h3
+                      style={{ display: "flex", alignItems: "center", gap: 8 }}
                     >
-                      3
-                    </span>
-                    Credit Notes
-                  </h3>
-                  <table className="report-table" style={{ maxWidth: 400 }}>
-                    <tbody>
-                      <tr>
-                        <td>Credit Notes Issued</td>
-                        <td className="text-right">
-                          {vatReport.credit_notes_count}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>Credit Notes VAT</td>
-                        <td className="text-right">
-                          {formatCurrency(vatReport.credit_notes_tax)}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                      <span
+                        style={{
+                          background: "var(--amber-100)",
+                          color: "var(--amber-700)",
+                          borderRadius: 6,
+                          padding: "2px 10px",
+                          fontSize: 12,
+                          fontWeight: 700,
+                        }}
+                      >
+                        3
+                      </span>
+                      Credit Notes
+                    </h3>
+                    <table className="report-table" style={{}}>
+                      <tbody>
+                        <tr>
+                          <td>Credit Notes Issued</td>
+                          <td className="text-right">
+                            {vatReport.credit_notes_count}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>Credit Notes VAT</td>
+                          <td className="text-right">
+                            {formatCurrency(vatReport.credit_notes_tax)}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                )}
 
               {activeVatTab === "net_vat" && (
                 <div
@@ -3227,7 +3270,7 @@ export default function ReportsPage() {
               {activeVatTab === "profit_summary" && (
                 <div className="report-card">
                   <h3>Profit Summary</h3>
-                  <table className="report-table" style={{ maxWidth: 400 }}>
+                  <table className="report-table" style={{}}>
                     <tbody>
                       <tr>
                         <td>Sales (excl. VAT)</td>
