@@ -33,7 +33,7 @@ type Expense = {
   updated_at: string;
 };
 
-type MainView = "expenses" | "categories";
+type MainView = "expenses" | "suppliers" | "categories";
 
 const toDateInputValue = (value: string | null) => {
   if (!value) return "";
@@ -202,6 +202,23 @@ export default function ExpensesPage() {
     const q = searchQuery.toLowerCase();
     return categories.filter((c) => c.name.toLowerCase().includes(q));
   }, [categories, searchQuery]);
+
+  const filteredSuppliers = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    const rows = contacts.map((contact) => {
+      const supplierExpenses = expenses.filter((e) => e.supplier_id === contact.id);
+      return {
+        id: contact.id,
+        name: contact.name,
+        expenseCount: supplierExpenses.length,
+        subtotal: supplierExpenses.reduce((sum, e) => sum + (e.subtotal || 0), 0),
+        tax: supplierExpenses.reduce((sum, e) => sum + (e.tax_amount || 0), 0),
+        total: supplierExpenses.reduce((sum, e) => sum + (e.total_amount || 0), 0),
+      };
+    });
+    if (!q) return rows;
+    return rows.filter((row) => row.name.toLowerCase().includes(q));
+  }, [contacts, expenses, searchQuery]);
 
   const categoryExpenseCount = useMemo(() => {
     const map = new Map<string, number>();
@@ -511,6 +528,16 @@ export default function ExpensesPage() {
                     </svg>
                   ),
                 },
+                {
+                  key: "suppliers" as MainView,
+                  label: "SUPPLIERS",
+                  icon: (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue-600)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                  ),
+                },
               ].map((tab) => (
                 <div
                   key={tab.key}
@@ -520,6 +547,9 @@ export default function ExpensesPage() {
                     setSubView("list");
                     setSearchQuery("");
                     setSearch("");
+                    setSupplierFilter("");
+                    setCategoryFilter("");
+                    setStatusFilter("");
                     setSelectedExpenseId(null);
                     setIsNew(false);
                     setIsEditing(false);
@@ -583,7 +613,13 @@ export default function ExpensesPage() {
                       <span className="o-searchbox-icon">Search</span>
                       <input
                         type="text"
-                        placeholder="Search..."
+                        placeholder={
+                          mainView === "suppliers"
+                            ? "Search suppliers..."
+                            : mainView === "categories"
+                              ? "Search categories..."
+                              : "Search expenses..."
+                        }
                         value={mainView === "expenses" ? search : searchQuery}
                         onChange={(e) => mainView === "expenses" ? setSearch(e.target.value) : setSearchQuery(e.target.value)}
                       />
@@ -661,26 +697,6 @@ export default function ExpensesPage() {
                       ))}
                     </div>
 
-                    <div className="o-sidebar-section">
-                      <div className="o-sidebar-title">Supplier</div>
-                      <div
-                        className={`o-sidebar-item ${supplierFilter === "" ? "active" : ""}`}
-                        onClick={() => setSupplierFilter("")}
-                      >
-                        <span>All Suppliers</span>
-                        <span className="o-sidebar-count">{expenses.length}</span>
-                      </div>
-                      {contacts.slice(0, 15).map((c) => (
-                        <div
-                          key={c.id}
-                          className={`o-sidebar-item ${supplierFilter === c.id ? "active" : ""}`}
-                          onClick={() => setSupplierFilter(c.id)}
-                        >
-                          <span>{c.name.slice(0, 20)}</span>
-                          <span className="o-sidebar-count">{expenses.filter((e) => e.supplier_id === c.id).length}</span>
-                        </div>
-                      ))}
-                    </div>
                   </div>
 
                   {/* Expenses table */}
@@ -746,6 +762,64 @@ export default function ExpensesPage() {
                     </div>
                   </div>
                 </>
+              )}
+
+              {/* ═══════════ SUPPLIERS TABLE VIEW ═══════════ */}
+              {mainView === "suppliers" && subView === "list" && (
+                <div className="o-main" style={{ width: "100%" }}>
+                  <div className="o-list-view">
+                    <table className="o-list-table">
+                      <thead>
+                        <tr>
+                          <th>Supplier</th>
+                          <th className="text-end">Expenses</th>
+                          <th className="text-end">Subtotal</th>
+                          <th className="text-end">VAT</th>
+                          <th className="text-end">Total</th>
+                          <th style={{ width: 140 }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredSuppliers.map((s) => (
+                          <tr key={s.id}>
+                            <td style={{ fontWeight: 500 }}>{s.name}</td>
+                            <td className="text-end">{s.expenseCount}</td>
+                            <td className="text-end">{formatCurrency(s.subtotal, "USD")}</td>
+                            <td className="text-end">{formatCurrency(s.tax, "USD")}</td>
+                            <td className="text-end" style={{ fontWeight: 600 }}>
+                              {formatCurrency(s.total, "USD")}
+                            </td>
+                            <td>
+                              <button
+                                className="o-btn o-btn-secondary"
+                                onClick={() => {
+                                  setSupplierFilter(s.id);
+                                  setMainView("expenses");
+                                  setSubView("list");
+                                  setSearch("");
+                                  setSearchQuery("");
+                                }}
+                              >
+                                View Expenses
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                        {filteredSuppliers.length === 0 && (
+                          <tr>
+                            <td colSpan={6} style={{ textAlign: "center", padding: 40 }}>
+                              {contacts.length === 0 ? (
+                                <span style={{ color: "var(--muted)" }}>No suppliers found.</span>
+                              ) : (
+                                <span style={{ color: "var(--muted)" }}>No suppliers match your search.</span>
+                              )}
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               )}
 
               {/* ═══════════ EXPENSE FORM VIEW ═══════════ */}
