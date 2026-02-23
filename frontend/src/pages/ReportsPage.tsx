@@ -1628,26 +1628,6 @@ export default function ReportsPage() {
                 ),
               },
               {
-                key: "income_statement",
-                label: "INCOME STATEMENT",
-                icon: (
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="var(--violet-500)"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M4 19V5" />
-                    <path d="M4 19h16" />
-                    <path d="M7 15l3-3 3 2 4-6" />
-                  </svg>
-                ),
-              },
-              {
                 key: "stock",
                 label: "STOCK VALUATION",
                 icon: (
@@ -1748,6 +1728,26 @@ export default function ReportsPage() {
                     <circle cx="9" cy="21" r="1" />
                     <circle cx="20" cy="21" r="1" />
                     <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                  </svg>
+                ),
+              },
+              {
+                key: "income_statement",
+                label: "INCOME STATEMENT",
+                icon: (
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="var(--violet-500)"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M4 19V5" />
+                    <path d="M4 19h16" />
+                    <path d="M7 15l3-3 3 2 4-6" />
                   </svg>
                 ),
               },
