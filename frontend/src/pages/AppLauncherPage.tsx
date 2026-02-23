@@ -475,9 +475,9 @@ export default function AppLauncherPage() {
   const [activating, setActivating] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const companyName = !isAdmin
-    ? me?.companies?.[0]?.name ??
+    ? (me?.companies?.[0]?.name ??
       activationStatus?.find((s) => Boolean(s.company_name))?.company_name ??
-      ""
+      "")
     : "";
 
   const formatActivationCode = (raw: string) => {
@@ -699,7 +699,7 @@ export default function AppLauncherPage() {
       <header className="app-launcher-header">
         <div className="app-launcher-user">
           {!isAdmin && companyName && (
-            <div className="bg-gray-50 rounded-md p-2 flex items-center gap-2">
+            <div className="bg-gray-500 rounded-md p-4 flex items-center gap-2 font-bold">
               <span>{companyName}</span>
             </div>
           )}
