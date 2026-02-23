@@ -56,7 +56,7 @@ type PurchaseOrderLine = {
 
 type PurchaseOrder = {
   id: number;
-  vendor_id: number | null;
+  supplier_id: number | null;
   reference: string;
   status: string;
   paid_state: string;
@@ -174,7 +174,7 @@ export default function PurchasesPage({
   const [listTo, setListTo] = useState("");
 
   const [form, setForm] = useState({
-    vendor_id: null as number | null,
+    supplier_id: null as number | null,
     order_date: "",
     expected_date: "",
     currency: "USD",
@@ -253,7 +253,7 @@ export default function PurchasesPage({
   useEffect(() => {
     if (!selectedOrder) return;
     setForm({
-      vendor_id: selectedOrder.vendor_id,
+      supplier_id: selectedOrder.supplier_id,
       order_date: toDateInputValue(selectedOrder.order_date),
       expected_date: toDateInputValue(selectedOrder.expected_date),
       currency: selectedOrder.currency || "USD",
@@ -282,7 +282,7 @@ export default function PurchasesPage({
   const startNew = () => {
     setSelectedOrderId(null);
     setForm({
-      vendor_id: contacts[0]?.id ?? null,
+      supplier_id: contacts[0]?.id ?? null,
       order_date: new Date().toISOString().split("T")[0],
       expected_date: "",
       currency: companySettings?.currency_code || "USD",
@@ -333,7 +333,7 @@ export default function PurchasesPage({
 
   const printOrder = () => {
     if (!selectedOrder) return;
-    const vendor = contacts.find((c) => c.id === selectedOrder.vendor_id);
+    const supplier = contacts.find((c) => c.id === selectedOrder.supplier_id);
     const formatAddressLines = (
       address?: string,
       city?: string,
@@ -351,10 +351,10 @@ export default function PurchasesPage({
         line3: (country || "").trim(),
       };
     };
-    const vendorAddress = formatAddressLines(
-      vendor?.address,
-      vendor?.city,
-      vendor?.country,
+    const supplierAddress = formatAddressLines(
+      supplier?.address,
+      supplier?.city,
+      supplier?.country,
     );
     const lineRows = (selectedOrder.lines || []).map((line) => {
       const product = products.find((p) => p.id === line.product_id);
@@ -412,15 +412,15 @@ export default function PurchasesPage({
             ${logo ? `<img class="logo" src="${logo}" alt="Company Logo" />` : `<div class="logo"></div>`}
             <div class="brand-details">
               <strong>${headerText || "Purchase Order"}</strong><br />
-              ${vendor?.name || "-"}
+              ${supplier?.name || "-"}
             </div>
           </div>
           <div class="company-details">
             <strong>${headerText || "Purchase Order"}</strong><br />
-            ${vendorAddress.line1 ? `${vendorAddress.line1}<br />` : ""}
-            ${vendorAddress.line2 ? `${vendorAddress.line2}<br />` : ""}
-            ${vendorAddress.line3 ? `${vendorAddress.line3}<br />` : ""}
-            ${vendor?.phone || ""}
+            ${supplierAddress.line1 ? `${supplierAddress.line1}<br />` : ""}
+            ${supplierAddress.line2 ? `${supplierAddress.line2}<br />` : ""}
+            ${supplierAddress.line3 ? `${supplierAddress.line3}<br />` : ""}
+            ${supplier?.phone || ""}
           </div>
         </div>
 
@@ -428,12 +428,12 @@ export default function PurchasesPage({
 
         <div class="addresses">
           <div class="block">
-            <h4>Vendor</h4>
-            <strong>${vendor?.name || "-"}</strong><br />
-            ${vendorAddress.line1 ? `${vendorAddress.line1}<br />` : ""}
-            ${vendorAddress.line2 ? `${vendorAddress.line2}<br />` : ""}
-            ${vendorAddress.line3 ? `${vendorAddress.line3}<br />` : ""}
-            ${vendor?.phone || ""}
+            <h4>Supplier</h4>
+            <strong>${supplier?.name || "-"}</strong><br />
+            ${supplierAddress.line1 ? `${supplierAddress.line1}<br />` : ""}
+            ${supplierAddress.line2 ? `${supplierAddress.line2}<br />` : ""}
+            ${supplierAddress.line3 ? `${supplierAddress.line3}<br />` : ""}
+            ${supplier?.phone || ""}
           </div>
           <div class="block title-block">
             <h1>PURCHASE ORDER</h1>
@@ -505,7 +505,7 @@ export default function PurchasesPage({
     if (!companyId) return;
     setSaving(true);
     const payload = {
-      vendor_id: form.vendor_id,
+      supplier_id: form.supplier_id,
       order_date: toIsoDate(form.order_date),
       expected_date: toIsoDate(form.expected_date),
       currency: form.currency,
@@ -632,10 +632,10 @@ export default function PurchasesPage({
       if (fromDate && dateValue && dateValue < fromDate) return false;
       if (toDate && dateValue && dateValue > toDate) return false;
       if (!term) return true;
-      const vendorName =
-        contacts.find((c) => c.id === o.vendor_id)?.name?.toLowerCase() || "";
+      const supplierName =
+        contacts.find((c) => c.id === o.supplier_id)?.name?.toLowerCase() || "";
       return (
-        o.reference.toLowerCase().includes(term) || vendorName.includes(term)
+        o.reference.toLowerCase().includes(term) || supplierName.includes(term)
       );
     });
   }, [orders, listSearch, listStatus, listPaidState, listFrom, listTo, contacts]);
@@ -989,7 +989,7 @@ export default function PurchasesPage({
                   onClick={() => {
                     const headers = [
                       "Reference",
-                      "Vendor",
+                      "Supplier",
                       "Status",
                       "Paid State",
                       "Order Date",
@@ -999,12 +999,12 @@ export default function PurchasesPage({
                       "Total",
                     ];
                     const rows = filteredOrders.map((order) => {
-                      const vendor = contacts.find(
-                        (c) => c.id === order.vendor_id,
+                      const supplier = contacts.find(
+                        (c) => c.id === order.supplier_id,
                       );
                       return [
                         order.reference,
-                        vendor?.name || "",
+                        supplier?.name || "",
                         order.status,
                         order.paid_state || "unpaid",
                         toDateInputValue(order.order_date),
@@ -1074,7 +1074,7 @@ export default function PurchasesPage({
                       <thead>
                         <tr>
                           <th>Reference</th>
-                          <th>Vendor</th>
+                          <th>Supplier</th>
                           <th>Status</th>
                           <th>Paid</th>
                           <th>Order Date</th>
@@ -1109,7 +1109,7 @@ export default function PurchasesPage({
                                 {order.reference}
                               </td>
                               <td>
-                                {contacts.find((c) => c.id === order.vendor_id)
+                                {contacts.find((c) => c.id === order.supplier_id)
                                   ?.name || "-"}
                               </td>
                               <td>
@@ -1272,19 +1272,19 @@ export default function PurchasesPage({
 
             <div className="row g-3 mb-4">
               <div className="col-md-6">
-                <label className="form-label fw-semibold">Vendor</label>
+                <label className="form-label fw-semibold">Supplier</label>
                 <select
                   className="form-select input-underline"
-                  value={form.vendor_id ?? ""}
+                  value={form.supplier_id ?? ""}
                   onChange={(e) =>
                     setForm((prev) => ({
                       ...prev,
-                      vendor_id: Number(e.target.value) || null,
+                      supplier_id: Number(e.target.value) || null,
                     }))
                   }
                   disabled={!canEdit}
                 >
-                  <option value="">Select vendor</option>
+                  <option value="">Select supplier</option>
                   {contacts.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name}

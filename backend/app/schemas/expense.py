@@ -7,7 +7,7 @@ from app.schemas.common import ORMBase
 
 class ExpenseCreate(BaseModel):
     company_id: int
-    vendor_id: int | None = None
+    supplier_id: int | None = None
     reference: str | None = None
     expense_date: datetime | None = None
     description: str = ""
@@ -20,7 +20,7 @@ class ExpenseCreate(BaseModel):
 
 
 class ExpenseUpdate(BaseModel):
-    vendor_id: int | None = None
+    supplier_id: int | None = None
     reference: str | None = None
     expense_date: datetime | None = None
     description: str | None = None
@@ -35,7 +35,7 @@ class ExpenseUpdate(BaseModel):
 class ExpenseRead(ORMBase):
     id: int
     company_id: int
-    vendor_id: int | None
+    supplier_id: int | None
     reference: str
     expense_date: datetime
     description: str

@@ -97,7 +97,7 @@ interface PurchaseOrder {
   status: string;
   paid_state?: string;
   order_date: string | null;
-  vendor_id: number | null;
+  supplier_id: number | null;
   subtotal?: number;
   discount_amount?: number;
   total_amount: number;
@@ -200,10 +200,10 @@ interface CreditorsReport {
   open_orders: number;
   total_amount: number;
   by_status: { status: string; count: number; amount: number }[];
-  by_vendor: { name: string; count: number; amount: number }[];
+  by_supplier: { name: string; count: number; amount: number }[];
   recent_orders: {
     reference: string;
-    vendor: string;
+    supplier: string;
     amount: number;
     date: string;
     status: string;
@@ -242,9 +242,9 @@ interface PurchaseReportData {
   total_tax: number;
   average_order: number;
   by_status: { status: string; count: number; amount: number }[];
-  by_vendor: { name: string; count: number; amount: number }[];
+  by_supplier: { name: string; count: number; amount: number }[];
   by_month: { month: string; amount: number; count: number }[];
-  recent_orders: { reference: string; vendor: string; amount: number; date: string; status: string }[];
+  recent_orders: { reference: string; supplier: string; amount: number; date: string; status: string }[];
 }
 
 type ReportType =
@@ -702,19 +702,19 @@ export default function ReportsPage() {
       statusMap.set(st, ex);
     }
 
-    const vendorMap = new Map<
+    const supplierMap = new Map<
       number,
       { name: string; count: number; amount: number }
     >();
     for (const po of open) {
-      const vid = po.vendor_id || 0;
-      const vname = po.vendor_id
-        ? contactLookup.get(po.vendor_id) || `Vendor #${po.vendor_id}`
-        : "No Vendor";
-      const ex = vendorMap.get(vid) || { name: vname, count: 0, amount: 0 };
+      const vid = po.supplier_id || 0;
+      const vname = po.supplier_id
+        ? contactLookup.get(po.supplier_id) || `Supplier #${po.supplier_id}`
+        : "No Supplier";
+      const ex = supplierMap.get(vid) || { name: vname, count: 0, amount: 0 };
       ex.count++;
       ex.amount += po.total_amount || 0;
-      vendorMap.set(vid, ex);
+      supplierMap.set(vid, ex);
     }
 
     const recentOrders = open
@@ -727,8 +727,8 @@ export default function ReportsPage() {
       .slice(0, 25)
       .map((po) => ({
         reference: po.reference,
-        vendor: po.vendor_id
-          ? contactLookup.get(po.vendor_id) || `Vendor #${po.vendor_id}`
+        supplier: po.supplier_id
+          ? contactLookup.get(po.supplier_id) || `Supplier #${po.supplier_id}`
           : "-",
         amount: po.total_amount || 0,
         date: po.order_date ? new Date(po.order_date).toLocaleDateString() : "-",
@@ -743,7 +743,7 @@ export default function ReportsPage() {
       by_status: Array.from(statusMap.entries())
         .sort(([, a], [, b]) => b.amount - a.amount)
         .map(([status, data]) => ({ status, count: data.count, amount: data.amount })),
-      by_vendor: Array.from(vendorMap.values())
+      by_supplier: Array.from(supplierMap.values())
         .sort((a, b) => b.amount - a.amount)
         .slice(0, 10),
       recent_orders: recentOrders,
@@ -903,15 +903,15 @@ export default function ReportsPage() {
       statusMap.set(st, ex);
     }
 
-    // By vendor
-    const vendorMap = new Map<number, { name: string; count: number; amount: number }>();
+    // By supplier
+    const supplierMap = new Map<number, { name: string; count: number; amount: number }>();
     for (const po of filtered) {
-      const vid = po.vendor_id || 0;
-      const vname = po.vendor_id ? (contactLookup.get(po.vendor_id) || `Vendor #${po.vendor_id}`) : "No Vendor";
-      const ex = vendorMap.get(vid) || { name: vname, count: 0, amount: 0 };
+      const vid = po.supplier_id || 0;
+      const vname = po.supplier_id ? (contactLookup.get(po.supplier_id) || `Supplier #${po.supplier_id}`) : "No Supplier";
+      const ex = supplierMap.get(vid) || { name: vname, count: 0, amount: 0 };
       ex.count++;
       ex.amount += po.total_amount || 0;
-      vendorMap.set(vid, ex);
+      supplierMap.set(vid, ex);
     }
 
     // By month
@@ -934,7 +934,7 @@ export default function ReportsPage() {
       by_status: Array.from(statusMap.entries())
         .sort(([, a], [, b]) => b.amount - a.amount)
         .map(([status, data]) => ({ status, count: data.count, amount: data.amount })),
-      by_vendor: Array.from(vendorMap.values())
+      by_supplier: Array.from(supplierMap.values())
         .sort((a, b) => b.amount - a.amount)
         .slice(0, 10),
       by_month: Array.from(monthMap.entries())
@@ -945,7 +945,7 @@ export default function ReportsPage() {
         }),
       recent_orders: filtered.slice(0, 15).map((po) => ({
         reference: po.reference,
-        vendor: po.vendor_id ? (contactLookup.get(po.vendor_id) || "-") : "-",
+        supplier: po.supplier_id ? (contactLookup.get(po.supplier_id) || "-") : "-",
         amount: po.total_amount || 0,
         date: po.order_date ? new Date(po.order_date).toLocaleDateString() : "-",
         status: po.status,
@@ -1084,9 +1084,9 @@ export default function ReportsPage() {
       rows.push(["Unpaid Purchase Orders", String(creditorsReport.open_orders)]);
       rows.push(["Total Outstanding", creditorsReport.total_amount.toFixed(2)]);
       rows.push([]);
-      rows.push(["By Vendor"]);
-      rows.push(["Vendor", "Orders", "Amount"]);
-      creditorsReport.by_vendor.forEach((v) =>
+      rows.push(["By Supplier"]);
+      rows.push(["Supplier", "Orders", "Amount"]);
+      creditorsReport.by_supplier.forEach((v) =>
         rows.push([v.name, String(v.count), v.amount.toFixed(2)]),
       );
       rows.push([]);
@@ -1097,9 +1097,9 @@ export default function ReportsPage() {
       );
       rows.push([]);
       rows.push(["Recent Open Orders"]);
-      rows.push(["Reference", "Vendor", "Amount", "Date", "Status", "Paid State"]);
+      rows.push(["Reference", "Supplier", "Amount", "Date", "Status", "Paid State"]);
       creditorsReport.recent_orders.forEach((o) =>
-        rows.push([o.reference, o.vendor, o.amount.toFixed(2), o.date, o.status, o.paid_state]),
+        rows.push([o.reference, o.supplier, o.amount.toFixed(2), o.date, o.status, o.paid_state]),
       );
     } else if (activeReport === "vat" && vatReport) {
       filename = `vat-return-${dateRange.from}-to-${dateRange.to}.csv`;
@@ -1135,9 +1135,9 @@ export default function ReportsPage() {
       rows.push(["Total Tax", purchaseReport.total_tax.toFixed(2)]);
       rows.push(["Average Order", purchaseReport.average_order.toFixed(2)]);
       rows.push([]);
-      rows.push(["By Vendor"]);
-      rows.push(["Vendor", "Orders", "Amount"]);
-      purchaseReport.by_vendor.forEach((v) =>
+      rows.push(["By Supplier"]);
+      rows.push(["Supplier", "Orders", "Amount"]);
+      purchaseReport.by_supplier.forEach((v) =>
         rows.push([v.name, String(v.count), v.amount.toFixed(2)]),
       );
       rows.push([]);
@@ -1250,15 +1250,15 @@ export default function ReportsPage() {
         <div class="summary-grid">
           <div class="summary-box"><div class="label">Open Orders</div><div class="val">${creditorsReport.open_orders}</div></div>
           <div class="summary-box"><div class="label">Total Outstanding</div><div class="val">${formatCurrency(creditorsReport.total_amount)}</div></div>
-          <div class="summary-box"><div class="label">Top Vendors</div><div class="val">${creditorsReport.by_vendor.length}</div></div>
+          <div class="summary-box"><div class="label">Top Suppliers</div><div class="val">${creditorsReport.by_supplier.length}</div></div>
         </div>
-        <h3>By Vendor</h3>
-        <table><thead><tr><th>Vendor</th><th style="text-align:right">Orders</th><th style="text-align:right">Amount</th></tr></thead><tbody>
-          ${creditorsReport.by_vendor.map((v) => `<tr><td>${v.name}</td><td style="text-align:right">${v.count}</td><td style="text-align:right">${formatCurrency(v.amount)}</td></tr>`).join("")}
+        <h3>By Supplier</h3>
+        <table><thead><tr><th>Supplier</th><th style="text-align:right">Orders</th><th style="text-align:right">Amount</th></tr></thead><tbody>
+          ${creditorsReport.by_supplier.map((v) => `<tr><td>${v.name}</td><td style="text-align:right">${v.count}</td><td style="text-align:right">${formatCurrency(v.amount)}</td></tr>`).join("")}
         </tbody></table>
         <h3>Recent Open Orders</h3>
-        <table><thead><tr><th>Reference</th><th>Vendor</th><th style="text-align:right">Amount</th><th>Date</th><th>Status</th><th>Paid State</th></tr></thead><tbody>
-          ${creditorsReport.recent_orders.map((o) => `<tr><td>${o.reference}</td><td>${o.vendor}</td><td style="text-align:right">${formatCurrency(o.amount)}</td><td>${o.date}</td><td>${o.status}</td><td>${o.paid_state}</td></tr>`).join("")}
+        <table><thead><tr><th>Reference</th><th>Supplier</th><th style="text-align:right">Amount</th><th>Date</th><th>Status</th><th>Paid State</th></tr></thead><tbody>
+          ${creditorsReport.recent_orders.map((o) => `<tr><td>${o.reference}</td><td>${o.supplier}</td><td style="text-align:right">${formatCurrency(o.amount)}</td><td>${o.date}</td><td>${o.status}</td><td>${o.paid_state}</td></tr>`).join("")}
         </tbody></table>`;
     } else if (activeReport === "purchases" && purchaseReport) {
       bodyHTML = `
@@ -1268,9 +1268,9 @@ export default function ReportsPage() {
           <div class="summary-box"><div class="label">Total Tax</div><div class="val">${formatCurrency(purchaseReport.total_tax)}</div></div>
           <div class="summary-box"><div class="label">Average Order</div><div class="val">${formatCurrency(purchaseReport.average_order)}</div></div>
         </div>
-        <h3>By Vendor</h3>
-        <table><thead><tr><th>Vendor</th><th style="text-align:right">Orders</th><th style="text-align:right">Amount</th></tr></thead><tbody>
-          ${purchaseReport.by_vendor.map((v) => `<tr><td>${v.name}</td><td style="text-align:right">${v.count}</td><td style="text-align:right">${formatCurrency(v.amount)}</td></tr>`).join("")}
+        <h3>By Supplier</h3>
+        <table><thead><tr><th>Supplier</th><th style="text-align:right">Orders</th><th style="text-align:right">Amount</th></tr></thead><tbody>
+          ${purchaseReport.by_supplier.map((v) => `<tr><td>${v.name}</td><td style="text-align:right">${v.count}</td><td style="text-align:right">${formatCurrency(v.amount)}</td></tr>`).join("")}
         </tbody></table>
         <h3>By Status</h3>
         <table><thead><tr><th>Status</th><th style="text-align:right">Count</th><th style="text-align:right">Amount</th></tr></thead><tbody>
@@ -2196,20 +2196,20 @@ export default function ReportsPage() {
 
               <div className="report-grid">
                 <div className="report-card">
-                  <h3>Unpaid Purchase Orders by Vendor</h3>
-                  {creditorsReport.by_vendor.length === 0 ? (
+                  <h3>Unpaid Purchase Orders by Supplier</h3>
+                  {creditorsReport.by_supplier.length === 0 ? (
                     <p className="empty-state">No unpaid purchase orders in this period.</p>
                   ) : (
                     <table className="report-table">
                       <thead>
                         <tr>
-                          <th>Vendor</th>
+                          <th>Supplier</th>
                           <th className="text-right">Orders</th>
                           <th className="text-right">Amount</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {creditorsReport.by_vendor.map((v, i) => (
+                        {creditorsReport.by_supplier.map((v, i) => (
                           <tr key={i}>
                             <td>{v.name}</td>
                             <td className="text-right">{v.count}</td>
@@ -2230,7 +2230,7 @@ export default function ReportsPage() {
                       <thead>
                         <tr>
                           <th>Reference</th>
-                          <th>Vendor</th>
+                          <th>Supplier</th>
                           <th className="text-right">Amount</th>
                           <th>Date</th>
                           <th>Status</th>
@@ -2241,7 +2241,7 @@ export default function ReportsPage() {
                         {creditorsReport.recent_orders.map((o, i) => (
                           <tr key={i}>
                             <td style={{ fontFamily: "monospace", fontSize: 12 }}>{o.reference}</td>
-                            <td>{o.vendor}</td>
+                            <td>{o.supplier}</td>
                             <td className="text-right">{formatCurrency(o.amount)}</td>
                             <td>{o.date}</td>
                             <td>

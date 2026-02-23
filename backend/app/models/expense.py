@@ -12,7 +12,7 @@ class Expense(Base, TimestampMixin):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"), index=True)
-    vendor_id: Mapped[int | None] = mapped_column(
+    supplier_id: Mapped[int | None] = mapped_column(
         ForeignKey("contacts.id"), nullable=True, index=True
     )
 
@@ -38,5 +38,5 @@ class Expense(Base, TimestampMixin):
     )
 
     company = relationship("Company", back_populates="expenses")
-    vendor = relationship("Contact")
+    supplier = relationship("Contact")
     created_by = relationship("User")

@@ -101,16 +101,16 @@ def create_purchase_order(
 ):
     ensure_company_access(db, user, payload.company_id)
 
-    if payload.vendor_id:
-        vendor = db.query(Contact).filter(Contact.id == payload.vendor_id).first()
-        if not vendor or vendor.company_id != payload.company_id:
-            raise HTTPException(status_code=400, detail="Invalid vendor")
+    if payload.supplier_id:
+        supplier = db.query(Contact).filter(Contact.id == payload.supplier_id).first()
+        if not supplier or supplier.company_id != payload.company_id:
+            raise HTTPException(status_code=400, detail="Invalid supplier")
 
     reference = payload.reference or next_purchase_reference(db)
 
     order = PurchaseOrder(
         company_id=payload.company_id,
-        vendor_id=payload.vendor_id,
+        supplier_id=payload.supplier_id,
         reference=reference,
         order_date=payload.order_date or datetime.utcnow(),
         expected_date=payload.expected_date,
@@ -175,7 +175,7 @@ def list_purchase_orders(
     _=Depends(require_company_access),
     search: str | None = None,
     status: str | None = None,
-    vendor_id: int | None = None,
+    supplier_id: int | None = None,
 ):
     query = db.query(PurchaseOrder).filter(PurchaseOrder.company_id == company_id)
     if search:
@@ -183,8 +183,8 @@ def list_purchase_orders(
         query = query.filter(PurchaseOrder.reference.ilike(like))
     if status:
         query = query.filter(PurchaseOrder.status == status)
-    if vendor_id:
-        query = query.filter(PurchaseOrder.vendor_id == vendor_id)
+    if supplier_id:
+        query = query.filter(PurchaseOrder.supplier_id == supplier_id)
     return query.order_by(PurchaseOrder.created_at.desc()).all()
 
 

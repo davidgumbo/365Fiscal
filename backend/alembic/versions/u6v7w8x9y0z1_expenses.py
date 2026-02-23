@@ -19,7 +19,7 @@ def upgrade() -> None:
         "expenses",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("company_id", sa.Integer(), nullable=False),
-        sa.Column("vendor_id", sa.Integer(), nullable=True),
+        sa.Column("supplier_id", sa.Integer(), nullable=True),
         sa.Column("reference", sa.String(length=100), nullable=False),
         sa.Column("expense_date", sa.DateTime(timezone=True), nullable=False),
         sa.Column("description", sa.Text(), nullable=False),
@@ -35,17 +35,17 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(["company_id"], ["companies.id"]),
-        sa.ForeignKeyConstraint(["vendor_id"], ["contacts.id"]),
+        sa.ForeignKeyConstraint(["supplier_id"], ["contacts.id"]),
         sa.ForeignKeyConstraint(["created_by_id"], ["users.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index("ix_expenses_company_id", "expenses", ["company_id"])
-    op.create_index("ix_expenses_vendor_id", "expenses", ["vendor_id"])
+    op.create_index("ix_expenses_supplier_id", "expenses", ["supplier_id"])
     op.create_index("ix_expenses_reference", "expenses", ["reference"], unique=True)
 
 
 def downgrade() -> None:
     op.drop_index("ix_expenses_reference", table_name="expenses")
-    op.drop_index("ix_expenses_vendor_id", table_name="expenses")
+    op.drop_index("ix_expenses_supplier_id", table_name="expenses")
     op.drop_index("ix_expenses_company_id", table_name="expenses")
     op.drop_table("expenses")

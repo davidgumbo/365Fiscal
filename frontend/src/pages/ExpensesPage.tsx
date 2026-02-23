@@ -17,7 +17,7 @@ type ExpenseCategory = {
 type Expense = {
   id: number;
   company_id: number;
-  vendor_id: number | null;
+  supplier_id: number | null;
   reference: string;
   expense_date: string;
   description: string;
@@ -111,7 +111,7 @@ export default function ExpensesPage() {
 
   /* ── List filters ── */
   const [search, setSearch] = useState("");
-  const [vendorFilter, setVendorFilter] = useState<number | "">("");
+  const [supplierFilter, setSupplierFilter] = useState<number | "">("");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [categoryFilter, setCategoryFilter] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -131,7 +131,7 @@ export default function ExpensesPage() {
     () => ({
       reference: "",
       expense_date: "",
-      vendor_id: "" as number | "",
+      supplier_id: "" as number | "",
       category: "",
       description: "",
       subtotal: 0,
@@ -183,19 +183,19 @@ export default function ExpensesPage() {
   const filteredExpenses = useMemo(() => {
     const term = search.trim().toLowerCase();
     return expenses.filter((e) => {
-      if (vendorFilter !== "" && e.vendor_id !== vendorFilter) return false;
+      if (supplierFilter !== "" && e.supplier_id !== supplierFilter) return false;
       if (statusFilter && (e.status || "") !== statusFilter) return false;
       if (categoryFilter && (e.category || "") !== categoryFilter) return false;
       if (!term) return true;
-      const vendor = contacts.find((c) => c.id === e.vendor_id)?.name?.toLowerCase() || "";
+      const supplier = contacts.find((c) => c.id === e.supplier_id)?.name?.toLowerCase() || "";
       return (
         (e.reference || "").toLowerCase().includes(term) ||
         (e.description || "").toLowerCase().includes(term) ||
         (e.category || "").toLowerCase().includes(term) ||
-        vendor.includes(term)
+        supplier.includes(term)
       );
     });
-  }, [expenses, search, vendorFilter, statusFilter, categoryFilter, contacts]);
+  }, [expenses, search, supplierFilter, statusFilter, categoryFilter, contacts]);
 
   const filteredCategories = useMemo(() => {
     if (!searchQuery.trim()) return categories;
@@ -234,7 +234,7 @@ export default function ExpensesPage() {
     setForm({
       reference: selectedExpense.reference,
       expense_date: toDateInputValue(selectedExpense.expense_date),
-      vendor_id: selectedExpense.vendor_id ?? "",
+      supplier_id: selectedExpense.supplier_id ?? "",
       category: selectedExpense.category || "",
       description: selectedExpense.description || "",
       subtotal: selectedExpense.subtotal || 0,
@@ -282,7 +282,7 @@ export default function ExpensesPage() {
     try {
       const payload = {
         company_id: companyId,
-        vendor_id: form.vendor_id === "" ? null : form.vendor_id,
+        supplier_id: form.supplier_id === "" ? null : form.supplier_id,
         reference: form.reference.trim() || null,
         expense_date: form.expense_date ? fromDateInputValue(form.expense_date) : null,
         category: form.category,
@@ -398,10 +398,10 @@ export default function ExpensesPage() {
 
   /* ── CSV Export ── */
   const exportCSV = () => {
-    const headers = ["Reference", "Date", "Vendor", "Category", "Description", "Subtotal", "VAT", "Total", "Status"];
+    const headers = ["Reference", "Date", "Supplier", "Category", "Description", "Subtotal", "VAT", "Total", "Status"];
     const rows = filteredExpenses.map((e) => {
-      const vendor = contacts.find((c) => c.id === e.vendor_id)?.name || "";
-      return [e.reference, toDateInputValue(e.expense_date), vendor, e.category, e.description, e.subtotal, e.tax_amount, e.total_amount, e.status];
+      const supplier = contacts.find((c) => c.id === e.supplier_id)?.name || "";
+      return [e.reference, toDateInputValue(e.expense_date), supplier, e.category, e.description, e.subtotal, e.tax_amount, e.total_amount, e.status];
     });
     const csvContent = [headers, ...rows].map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -662,22 +662,22 @@ export default function ExpensesPage() {
                     </div>
 
                     <div className="o-sidebar-section">
-                      <div className="o-sidebar-title">Vendor</div>
+                      <div className="o-sidebar-title">Supplier</div>
                       <div
-                        className={`o-sidebar-item ${vendorFilter === "" ? "active" : ""}`}
-                        onClick={() => setVendorFilter("")}
+                        className={`o-sidebar-item ${supplierFilter === "" ? "active" : ""}`}
+                        onClick={() => setSupplierFilter("")}
                       >
-                        <span>All Vendors</span>
+                        <span>All Suppliers</span>
                         <span className="o-sidebar-count">{expenses.length}</span>
                       </div>
                       {contacts.slice(0, 15).map((c) => (
                         <div
                           key={c.id}
-                          className={`o-sidebar-item ${vendorFilter === c.id ? "active" : ""}`}
-                          onClick={() => setVendorFilter(c.id)}
+                          className={`o-sidebar-item ${supplierFilter === c.id ? "active" : ""}`}
+                          onClick={() => setSupplierFilter(c.id)}
                         >
                           <span>{c.name.slice(0, 20)}</span>
-                          <span className="o-sidebar-count">{expenses.filter((e) => e.vendor_id === c.id).length}</span>
+                          <span className="o-sidebar-count">{expenses.filter((e) => e.supplier_id === c.id).length}</span>
                         </div>
                       ))}
                     </div>
@@ -690,7 +690,7 @@ export default function ExpensesPage() {
                         <thead>
                           <tr>
                             <th>Reference</th>
-                            <th>Vendor</th>
+                            <th>Supplier</th>
                             <th>Category</th>
                             <th>Date</th>
                             <th>Status</th>
@@ -715,11 +715,11 @@ export default function ExpensesPage() {
                             </tr>
                           )}
                           {filteredExpenses.map((e) => {
-                            const vendorName = contacts.find((c) => c.id === e.vendor_id)?.name || "\u2014";
+                            const supplierName = contacts.find((c) => c.id === e.supplier_id)?.name || "\u2014";
                             return (
                               <tr key={e.id} onClick={() => openExpense(e.id)} style={{ cursor: "pointer" }}>
                                 <td style={{ fontWeight: 500 }}>{e.reference || "\u2014"}</td>
-                                <td>{vendorName}</td>
+                                <td>{supplierName}</td>
                                 <td>{e.category || "\u2014"}</td>
                                 <td style={{ color: "var(--muted)" }}>{e.expense_date ? new Date(e.expense_date).toLocaleDateString() : "\u2014"}</td>
                                 <td>
@@ -763,9 +763,9 @@ export default function ExpensesPage() {
                           <input className="form-control input-underline bg-light" value={form.reference} onChange={(e) => setForm((p) => ({ ...p, reference: e.target.value }))} placeholder="(auto)" disabled={!isEditing} />
                         </div>
                         <div className="col-md-6">
-                          <label className="form-label fw-semibold">Vendor</label>
-                          <select className="form-select input-underline" value={form.vendor_id} onChange={(e) => setForm((p) => ({ ...p, vendor_id: e.target.value ? Number(e.target.value) : "" }))} disabled={!isEditing}>
-                            <option value="">— Select Vendor —</option>
+                          <label className="form-label fw-semibold">Supplier</label>
+                          <select className="form-select input-underline" value={form.supplier_id} onChange={(e) => setForm((p) => ({ ...p, supplier_id: e.target.value ? Number(e.target.value) : "" }))} disabled={!isEditing}>
+                            <option value="">— Select Supplier —</option>
                             {contacts.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
                           </select>
                         </div>

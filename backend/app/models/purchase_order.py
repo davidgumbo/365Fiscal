@@ -11,7 +11,7 @@ class PurchaseOrder(Base, TimestampMixin):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"), index=True)
-    vendor_id: Mapped[int | None] = mapped_column(ForeignKey("contacts.id"), nullable=True, index=True)
+    supplier_id: Mapped[int | None] = mapped_column(ForeignKey("contacts.id"), nullable=True, index=True)
     reference: Mapped[str] = mapped_column(String(50), unique=True, index=True)
     status: Mapped[str] = mapped_column(String(50), default="draft")
     paid_state: Mapped[str] = mapped_column(String(20), default="unpaid")
@@ -30,7 +30,7 @@ class PurchaseOrder(Base, TimestampMixin):
     location_id: Mapped[int | None] = mapped_column(ForeignKey("locations.id"), nullable=True)
 
     company = relationship("Company", back_populates="purchase_orders")
-    vendor = relationship("Contact")
+    supplier = relationship("Contact")
     lines = relationship("PurchaseOrderLine", back_populates="purchase_order", cascade="all, delete-orphan")
     warehouse = relationship("Warehouse")
     location = relationship("Location")

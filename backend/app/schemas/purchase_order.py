@@ -6,7 +6,7 @@ from app.schemas.purchase_order_line import PurchaseOrderLineCreate, PurchaseOrd
 
 class PurchaseOrderCreate(BaseModel):
     company_id: int
-    vendor_id: int | None = None
+    supplier_id: int | None = None
     reference: str | None = None
     order_date: datetime | None = None
     expected_date: datetime | None = None
@@ -18,7 +18,7 @@ class PurchaseOrderCreate(BaseModel):
 
 
 class PurchaseOrderUpdate(BaseModel):
-    vendor_id: int | None = None
+    supplier_id: int | None = None
     reference: str | None = None
     status: str | None = None
     paid_state: str | None = None
@@ -34,7 +34,7 @@ class PurchaseOrderUpdate(BaseModel):
 class PurchaseOrderRead(ORMBase):
     id: int
     company_id: int
-    vendor_id: int | None
+    supplier_id: int | None
     reference: str
     status: str
     paid_state: str

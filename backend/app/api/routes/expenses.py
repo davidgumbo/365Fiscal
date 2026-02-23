@@ -32,7 +32,7 @@ def list_expenses(
     db: Session = Depends(get_db),
     user=Depends(require_portal_user),
     _=Depends(require_company_access),
-    vendor_id: int | None = None,
+    supplier_id: int | None = None,
     search: str | None = None,
     start_date: datetime | None = None,
     end_date: datetime | None = None,
@@ -42,8 +42,8 @@ def list_expenses(
     ensure_company_access(db, user, company_id)
 
     q = db.query(Expense).filter(Expense.company_id == company_id)
-    if vendor_id:
-        q = q.filter(Expense.vendor_id == vendor_id)
+    if supplier_id:
+        q = q.filter(Expense.supplier_id == supplier_id)
     if search:
         like = f"%{search}%"
         q = q.filter(
@@ -72,16 +72,16 @@ def create_expense(
 ):
     ensure_company_access(db, user, payload.company_id)
 
-    if payload.vendor_id:
-        vendor = db.query(Contact).filter(Contact.id == payload.vendor_id).first()
-        if not vendor or vendor.company_id != payload.company_id:
-            raise HTTPException(status_code=400, detail="Invalid vendor")
+    if payload.supplier_id:
+        supplier = db.query(Contact).filter(Contact.id == payload.supplier_id).first()
+        if not supplier or supplier.company_id != payload.company_id:
+            raise HTTPException(status_code=400, detail="Invalid supplier")
 
     reference = payload.reference or next_expense_reference(db)
 
     exp = Expense(
         company_id=payload.company_id,
-        vendor_id=payload.vendor_id,
+        supplier_id=payload.supplier_id,
         reference=reference,
         expense_date=payload.expense_date or datetime.utcnow(),
         description=payload.description,
@@ -128,10 +128,10 @@ def update_expense(
 
     updates = payload.dict(exclude_unset=True)
 
-    if "vendor_id" in updates and updates["vendor_id"]:
-        vendor = db.query(Contact).filter(Contact.id == updates["vendor_id"]).first()
-        if not vendor or vendor.company_id != exp.company_id:
-            raise HTTPException(status_code=400, detail="Invalid vendor")
+    if "supplier_id" in updates and updates["supplier_id"]:
+        supplier = db.query(Contact).filter(Contact.id == updates["supplier_id"]).first()
+        if not supplier or supplier.company_id != exp.company_id:
+            raise HTTPException(status_code=400, detail="Invalid supplier")
 
     for field, value in updates.items():
         setattr(exp, field, value)

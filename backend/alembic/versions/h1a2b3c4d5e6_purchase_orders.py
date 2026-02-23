@@ -20,7 +20,7 @@ def upgrade() -> None:
         "purchase_orders",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("company_id", sa.Integer(), nullable=False),
-        sa.Column("vendor_id", sa.Integer(), nullable=True),
+        sa.Column("supplier_id", sa.Integer(), nullable=True),
         sa.Column("reference", sa.String(length=50), nullable=False),
         sa.Column("status", sa.String(length=50), nullable=False),
         sa.Column("order_date", sa.DateTime(timezone=True), nullable=True),
@@ -37,13 +37,13 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(["company_id"], ["companies.id"]),
-        sa.ForeignKeyConstraint(["vendor_id"], ["contacts.id"]),
+        sa.ForeignKeyConstraint(["supplier_id"], ["contacts.id"]),
         sa.ForeignKeyConstraint(["warehouse_id"], ["warehouses.id"]),
         sa.ForeignKeyConstraint(["location_id"], ["locations.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index("ix_purchase_orders_company_id", "purchase_orders", ["company_id"])
-    op.create_index("ix_purchase_orders_vendor_id", "purchase_orders", ["vendor_id"])
+    op.create_index("ix_purchase_orders_supplier_id", "purchase_orders", ["supplier_id"])
     op.create_index("ix_purchase_orders_reference", "purchase_orders", ["reference"], unique=True)
 
     op.create_table(
@@ -75,6 +75,6 @@ def downgrade() -> None:
     op.drop_index("ix_purchase_order_lines_purchase_order_id", table_name="purchase_order_lines")
     op.drop_table("purchase_order_lines")
     op.drop_index("ix_purchase_orders_reference", table_name="purchase_orders")
-    op.drop_index("ix_purchase_orders_vendor_id", table_name="purchase_orders")
+    op.drop_index("ix_purchase_orders_supplier_id", table_name="purchase_orders")
     op.drop_index("ix_purchase_orders_company_id", table_name="purchase_orders")
     op.drop_table("purchase_orders")
