@@ -267,7 +267,13 @@ interface PurchaseReportData {
   by_status: { status: string; count: number; amount: number }[];
   by_supplier: { name: string; count: number; amount: number }[];
   by_month: { month: string; amount: number; count: number }[];
-  recent_orders: { reference: string; supplier: string; amount: number; date: string; status: string }[];
+  recent_orders: {
+    reference: string;
+    supplier: string;
+    amount: number;
+    date: string;
+    status: string;
+  }[];
 }
 
 type ReportType =
@@ -337,14 +343,16 @@ export default function ReportsPage() {
 
   const [salesReport, setSalesReport] = useState<SalesReport | null>(null);
   const [stockReport, setStockReport] = useState<StockReport | null>(null);
-  const [debtorsReport, setDebtorsReport] =
-    useState<DebtorsReport | null>(null);
+  const [debtorsReport, setDebtorsReport] = useState<DebtorsReport | null>(
+    null,
+  );
   const [creditorsReport, setCreditorsReport] =
     useState<CreditorsReport | null>(null);
   const [incomeStatementReport, setIncomeStatementReport] =
     useState<IncomeStatementReport | null>(null);
   const [vatReport, setVatReport] = useState<VatReport | null>(null);
-  const [purchaseReport, setPurchaseReport] = useState<PurchaseReportData | null>(null);
+  const [purchaseReport, setPurchaseReport] =
+    useState<PurchaseReportData | null>(null);
   const [companySettings, setCompanySettings] =
     useState<CompanySettings | null>(null);
 
@@ -503,9 +511,9 @@ export default function ReportsPage() {
       apiFetch<Expense[]>(`/expenses?company_id=${companyId}`).catch(
         () => [] as Expense[],
       ),
-      apiFetch<{ id: number; name: string }[]>(`/contacts?company_id=${companyId}`).catch(
-        () => [] as { id: number; name: string }[],
-      ),
+      apiFetch<{ id: number; name: string }[]>(
+        `/contacts?company_id=${companyId}`,
+      ).catch(() => [] as { id: number; name: string }[]),
     ]);
 
     const contactLookup = new Map(contacts.map((c) => [c.id, c.name]));
@@ -533,10 +541,14 @@ export default function ReportsPage() {
     });
 
     const grossRevenueExVat = filteredInvoices.reduce(
-      (s, inv) => s + (inv.subtotal ?? (inv.total_amount || 0) - (inv.tax_amount || 0)),
+      (s, inv) =>
+        s + (inv.subtotal ?? (inv.total_amount || 0) - (inv.tax_amount || 0)),
       0,
     );
-    const expensesExVat = filteredExpenses.reduce((s, ex) => s + (ex.subtotal || 0), 0);
+    const expensesExVat = filteredExpenses.reduce(
+      (s, ex) => s + (ex.subtotal || 0),
+      0,
+    );
 
     setIncomeStatementReport({
       gross_revenue_ex_vat: grossRevenueExVat,
@@ -544,15 +556,24 @@ export default function ReportsPage() {
       net_revenue_ex_vat: grossRevenueExVat - expensesExVat,
       invoices: filteredInvoices
         .sort((a, b) => {
-          const da = a.invoice_date ? new Date(a.invoice_date).getTime() : new Date(a.created_at).getTime();
-          const db = b.invoice_date ? new Date(b.invoice_date).getTime() : new Date(b.created_at).getTime();
+          const da = a.invoice_date
+            ? new Date(a.invoice_date).getTime()
+            : new Date(a.created_at).getTime();
+          const db = b.invoice_date
+            ? new Date(b.invoice_date).getTime()
+            : new Date(b.created_at).getTime();
           return db - da;
         })
         .map((inv) => ({
           reference: inv.reference,
-          customer: inv.customer_id ? (contactLookup.get(inv.customer_id) || "-") : "-",
-          date: inv.invoice_date ? new Date(inv.invoice_date).toLocaleDateString() : new Date(inv.created_at).toLocaleDateString(),
-          subtotal: inv.subtotal ?? (inv.total_amount || 0) - (inv.tax_amount || 0),
+          customer: inv.customer_id
+            ? contactLookup.get(inv.customer_id) || "-"
+            : "-",
+          date: inv.invoice_date
+            ? new Date(inv.invoice_date).toLocaleDateString()
+            : new Date(inv.created_at).toLocaleDateString(),
+          subtotal:
+            inv.subtotal ?? (inv.total_amount || 0) - (inv.tax_amount || 0),
           tax: inv.tax_amount || 0,
           total: inv.total_amount || 0,
           status: inv.status,
@@ -565,10 +586,14 @@ export default function ReportsPage() {
         })
         .map((ex) => ({
           reference: ex.reference || "-",
-          supplier: ex.supplier_id ? (contactLookup.get(ex.supplier_id) || "-") : "-",
+          supplier: ex.supplier_id
+            ? contactLookup.get(ex.supplier_id) || "-"
+            : "-",
           category: ex.category || "-",
           description: ex.description || "-",
-          date: ex.expense_date ? new Date(ex.expense_date).toLocaleDateString() : "-",
+          date: ex.expense_date
+            ? new Date(ex.expense_date).toLocaleDateString()
+            : "-",
           subtotal: ex.subtotal || 0,
           tax: ex.tax_amount || 0,
           total: ex.total_amount || 0,
@@ -668,7 +693,9 @@ export default function ReportsPage() {
     const filtered = invoices.filter((inv) => {
       if (inv.invoice_type === "credit_note") return false;
       if (inv.status === "cancelled") return false;
-      const d = inv.invoice_date ? new Date(inv.invoice_date) : new Date(inv.created_at);
+      const d = inv.invoice_date
+        ? new Date(inv.invoice_date)
+        : new Date(inv.created_at);
       if (fromDate && d < fromDate) return false;
       if (toDate && d > toDate) return false;
       return true;
@@ -686,14 +713,21 @@ export default function ReportsPage() {
     const unpaid = withDue.filter(({ paid }) => (paid || 0) <= 0.00001);
     const partial = withDue.filter(({ paid }) => (paid || 0) > 0.00001);
 
-    const totalInvoiced = filtered.reduce((s, i) => s + (i.total_amount || 0), 0);
+    const totalInvoiced = filtered.reduce(
+      (s, i) => s + (i.total_amount || 0),
+      0,
+    );
     const totalDue = withDue.reduce((s, x) => s + x.due, 0);
 
     const recent = withDue
       .slice()
       .sort((a, b) => {
-        const da = a.inv.invoice_date ? new Date(a.inv.invoice_date) : new Date(a.inv.created_at);
-        const db = b.inv.invoice_date ? new Date(b.inv.invoice_date) : new Date(b.inv.created_at);
+        const da = a.inv.invoice_date
+          ? new Date(a.inv.invoice_date)
+          : new Date(a.inv.created_at);
+        const db = b.inv.invoice_date
+          ? new Date(b.inv.invoice_date)
+          : new Date(b.inv.created_at);
         return db.getTime() - da.getTime();
       })
       .slice(0, 25)
@@ -748,7 +782,9 @@ export default function ReportsPage() {
     });
 
     // Treat "unpaid" purchase orders as any PO that is not marked paid.
-    const open = filtered.filter((po) => (po.paid_state || "unpaid") !== "paid");
+    const open = filtered.filter(
+      (po) => (po.paid_state || "unpaid") !== "paid",
+    );
 
     const totalAmount = open.reduce((s, p) => s + (p.total_amount || 0), 0);
 
@@ -790,7 +826,9 @@ export default function ReportsPage() {
           ? contactLookup.get(po.supplier_id) || `Supplier #${po.supplier_id}`
           : "-",
         amount: po.total_amount || 0,
-        date: po.order_date ? new Date(po.order_date).toLocaleDateString() : "-",
+        date: po.order_date
+          ? new Date(po.order_date).toLocaleDateString()
+          : "-",
         status: po.status,
         paid_state: po.paid_state || "unpaid",
       }));
@@ -801,7 +839,11 @@ export default function ReportsPage() {
       total_amount: totalAmount,
       by_status: Array.from(statusMap.entries())
         .sort(([, a], [, b]) => b.amount - a.amount)
-        .map(([status, data]) => ({ status, count: data.count, amount: data.amount })),
+        .map(([status, data]) => ({
+          status,
+          count: data.count,
+          amount: data.amount,
+        })),
       by_supplier: Array.from(supplierMap.values())
         .sort((a, b) => b.amount - a.amount)
         .slice(0, 10),
@@ -827,7 +869,9 @@ export default function ReportsPage() {
     const creditNotes = invoices.filter((inv) => {
       if (inv.invoice_type !== "credit_note") return false;
       if (inv.status === "cancelled") return false;
-      const d = inv.invoice_date ? new Date(inv.invoice_date) : new Date(inv.created_at);
+      const d = inv.invoice_date
+        ? new Date(inv.invoice_date)
+        : new Date(inv.created_at);
       if (fromDate && d < fromDate) return false;
       if (toDate && d > toDate) return false;
       return true;
@@ -857,8 +901,17 @@ export default function ReportsPage() {
     for (const inv of filteredInvoices) {
       if (!inv.lines || inv.lines.length === 0) {
         // Invoice with no lines — use header totals, assume single rate
-        const rate = inv.tax_amount && inv.subtotal ? Math.round((inv.tax_amount / inv.subtotal) * 100) : 0;
-        const existing = salesRateMap.get(rate) || { rate, taxable_amount: 0, tax_amount: 0, total: 0, count: 0 };
+        const rate =
+          inv.tax_amount && inv.subtotal
+            ? Math.round((inv.tax_amount / inv.subtotal) * 100)
+            : 0;
+        const existing = salesRateMap.get(rate) || {
+          rate,
+          taxable_amount: 0,
+          tax_amount: 0,
+          total: 0,
+          count: 0,
+        };
         existing.taxable_amount += inv.subtotal || 0;
         existing.tax_amount += inv.tax_amount || 0;
         existing.total += inv.total_amount || 0;
@@ -867,7 +920,13 @@ export default function ReportsPage() {
       } else {
         for (const line of inv.lines) {
           const rate = line.vat_rate || 0;
-          const existing = salesRateMap.get(rate) || { rate, taxable_amount: 0, tax_amount: 0, total: 0, count: 0 };
+          const existing = salesRateMap.get(rate) || {
+            rate,
+            taxable_amount: 0,
+            tax_amount: 0,
+            total: 0,
+            count: 0,
+          };
           existing.taxable_amount += line.subtotal || 0;
           existing.tax_amount += line.tax_amount || 0;
           existing.total += line.total_price || 0;
@@ -881,10 +940,20 @@ export default function ReportsPage() {
     const purchaseRateMap = new Map<number, VatRateBucket>();
     for (const po of filteredPurchases) {
       if (!po.lines || po.lines.length === 0) {
-        const rate = po.tax_amount && (po.total_amount - po.tax_amount) > 0
-          ? Math.round((po.tax_amount / (po.total_amount - po.tax_amount)) * 100) : 0;
-        const existing = purchaseRateMap.get(rate) || { rate, taxable_amount: 0, tax_amount: 0, total: 0, count: 0 };
-        existing.taxable_amount += (po.total_amount - po.tax_amount) || 0;
+        const rate =
+          po.tax_amount && po.total_amount - po.tax_amount > 0
+            ? Math.round(
+                (po.tax_amount / (po.total_amount - po.tax_amount)) * 100,
+              )
+            : 0;
+        const existing = purchaseRateMap.get(rate) || {
+          rate,
+          taxable_amount: 0,
+          tax_amount: 0,
+          total: 0,
+          count: 0,
+        };
+        existing.taxable_amount += po.total_amount - po.tax_amount || 0;
         existing.tax_amount += po.tax_amount || 0;
         existing.total += po.total_amount || 0;
         existing.count++;
@@ -892,10 +961,18 @@ export default function ReportsPage() {
       } else {
         for (const line of po.lines) {
           const rate = line.vat_rate || 0;
-          const sub = line.subtotal || (line.quantity * line.unit_price * (1 - (line.discount || 0) / 100));
-          const tax = line.tax_amount || (sub * rate / 100);
-          const total = line.total_price || (sub + tax);
-          const existing = purchaseRateMap.get(rate) || { rate, taxable_amount: 0, tax_amount: 0, total: 0, count: 0 };
+          const sub =
+            line.subtotal ||
+            line.quantity * line.unit_price * (1 - (line.discount || 0) / 100);
+          const tax = line.tax_amount || (sub * rate) / 100;
+          const total = line.total_price || sub + tax;
+          const existing = purchaseRateMap.get(rate) || {
+            rate,
+            taxable_amount: 0,
+            tax_amount: 0,
+            total: 0,
+            count: 0,
+          };
           existing.taxable_amount += sub;
           existing.tax_amount += tax;
           existing.total += total;
@@ -905,11 +982,26 @@ export default function ReportsPage() {
       }
     }
 
-    const salesTotal = filteredInvoices.reduce((s, i) => s + (i.total_amount || 0), 0);
-    const outputTax = filteredInvoices.reduce((s, i) => s + (i.tax_amount || 0), 0);
-    const purchasesTotal = filteredPurchases.reduce((s, p) => s + (p.total_amount || 0), 0);
-    const inputTax = filteredPurchases.reduce((s, p) => s + (p.tax_amount || 0), 0);
-    const cnTax = creditNotes.reduce((s, cn) => s + Math.abs(cn.tax_amount || 0), 0);
+    const salesTotal = filteredInvoices.reduce(
+      (s, i) => s + (i.total_amount || 0),
+      0,
+    );
+    const outputTax = filteredInvoices.reduce(
+      (s, i) => s + (i.tax_amount || 0),
+      0,
+    );
+    const purchasesTotal = filteredPurchases.reduce(
+      (s, p) => s + (p.total_amount || 0),
+      0,
+    );
+    const inputTax = filteredPurchases.reduce(
+      (s, p) => s + (p.tax_amount || 0),
+      0,
+    );
+    const cnTax = creditNotes.reduce(
+      (s, cn) => s + Math.abs(cn.tax_amount || 0),
+      0,
+    );
 
     setVatReport({
       sales_total: salesTotal,
@@ -922,8 +1014,12 @@ export default function ReportsPage() {
       purchases_count: filteredPurchases.length,
       credit_notes_count: creditNotes.length,
       credit_notes_tax: cnTax,
-      sales_by_rate: Array.from(salesRateMap.values()).sort((a, b) => a.rate - b.rate),
-      purchases_by_rate: Array.from(purchaseRateMap.values()).sort((a, b) => a.rate - b.rate),
+      sales_by_rate: Array.from(salesRateMap.values()).sort(
+        (a, b) => a.rate - b.rate,
+      ),
+      purchases_by_rate: Array.from(purchaseRateMap.values()).sort(
+        (a, b) => a.rate - b.rate,
+      ),
       period_from: dateRange.from,
       period_to: dateRange.to,
     });
@@ -932,8 +1028,12 @@ export default function ReportsPage() {
   const loadPurchaseReport = useCallback(async () => {
     if (!companyId) return;
     const [purchases, contacts] = await Promise.all([
-      apiFetch<PurchaseOrder[]>(`/purchases?company_id=${companyId}`).catch(() => [] as PurchaseOrder[]),
-      apiFetch<{ id: number; name: string }[]>(`/contacts?company_id=${companyId}`).catch(() => [] as { id: number; name: string }[]),
+      apiFetch<PurchaseOrder[]>(`/purchases?company_id=${companyId}`).catch(
+        () => [] as PurchaseOrder[],
+      ),
+      apiFetch<{ id: number; name: string }[]>(
+        `/contacts?company_id=${companyId}`,
+      ).catch(() => [] as { id: number; name: string }[]),
     ]);
 
     const fromDate = dateRange.from ? new Date(dateRange.from) : null;
@@ -963,10 +1063,15 @@ export default function ReportsPage() {
     }
 
     // By supplier
-    const supplierMap = new Map<number, { name: string; count: number; amount: number }>();
+    const supplierMap = new Map<
+      number,
+      { name: string; count: number; amount: number }
+    >();
     for (const po of filtered) {
       const vid = po.supplier_id || 0;
-      const vname = po.supplier_id ? (contactLookup.get(po.supplier_id) || `Supplier #${po.supplier_id}`) : "No Supplier";
+      const vname = po.supplier_id
+        ? contactLookup.get(po.supplier_id) || `Supplier #${po.supplier_id}`
+        : "No Supplier";
       const ex = supplierMap.get(vid) || { name: vname, count: 0, amount: 0 };
       ex.count++;
       ex.amount += po.total_amount || 0;
@@ -992,7 +1097,11 @@ export default function ReportsPage() {
       average_order: filtered.length > 0 ? totalAmount / filtered.length : 0,
       by_status: Array.from(statusMap.entries())
         .sort(([, a], [, b]) => b.amount - a.amount)
-        .map(([status, data]) => ({ status, count: data.count, amount: data.amount })),
+        .map(([status, data]) => ({
+          status,
+          count: data.count,
+          amount: data.amount,
+        })),
       by_supplier: Array.from(supplierMap.values())
         .sort((a, b) => b.amount - a.amount)
         .slice(0, 10),
@@ -1000,13 +1109,21 @@ export default function ReportsPage() {
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([key, val]) => {
           const [, m] = key.split("-");
-          return { month: MONTH_NAMES[parseInt(m)], amount: val.amount, count: val.count };
+          return {
+            month: MONTH_NAMES[parseInt(m)],
+            amount: val.amount,
+            count: val.count,
+          };
         }),
       recent_orders: filtered.slice(0, 15).map((po) => ({
         reference: po.reference,
-        supplier: po.supplier_id ? (contactLookup.get(po.supplier_id) || "-") : "-",
+        supplier: po.supplier_id
+          ? contactLookup.get(po.supplier_id) || "-"
+          : "-",
         amount: po.total_amount || 0,
-        date: po.order_date ? new Date(po.order_date).toLocaleDateString() : "-",
+        date: po.order_date
+          ? new Date(po.order_date).toLocaleDateString()
+          : "-",
         status: po.status,
       })),
     });
@@ -1078,20 +1195,63 @@ export default function ReportsPage() {
       filename = `income-statement-${dateRange.from}-to-${dateRange.to}.csv`;
       rows.push(["Income Statement", `${dateRange.from} to ${dateRange.to}`]);
       rows.push([]);
-      rows.push(["Gross Revenue (VAT excl.)", incomeStatementReport.gross_revenue_ex_vat.toFixed(2)]);
-      rows.push(["Expenses (VAT excl.)", incomeStatementReport.expenses_ex_vat.toFixed(2)]);
-      rows.push(["Net Revenue (VAT excl.)", incomeStatementReport.net_revenue_ex_vat.toFixed(2)]);
+      rows.push([
+        "Gross Revenue (VAT excl.)",
+        incomeStatementReport.gross_revenue_ex_vat.toFixed(2),
+      ]);
+      rows.push([
+        "Expenses (VAT excl.)",
+        incomeStatementReport.expenses_ex_vat.toFixed(2),
+      ]);
+      rows.push([
+        "Net Revenue (VAT excl.)",
+        incomeStatementReport.net_revenue_ex_vat.toFixed(2),
+      ]);
       rows.push([]);
       rows.push(["REVENUE - Invoices"]);
-      rows.push(["Reference", "Customer", "Date", "Subtotal", "Tax", "Total", "Status"]);
+      rows.push([
+        "Reference",
+        "Customer",
+        "Date",
+        "Subtotal",
+        "Tax",
+        "Total",
+        "Status",
+      ]);
       incomeStatementReport.invoices.forEach((inv) =>
-        rows.push([inv.reference, inv.customer, inv.date, inv.subtotal.toFixed(2), inv.tax.toFixed(2), inv.total.toFixed(2), inv.status]),
+        rows.push([
+          inv.reference,
+          inv.customer,
+          inv.date,
+          inv.subtotal.toFixed(2),
+          inv.tax.toFixed(2),
+          inv.total.toFixed(2),
+          inv.status,
+        ]),
       );
       rows.push([]);
       rows.push(["EXPENSES"]);
-      rows.push(["Reference", "Supplier", "Category", "Description", "Date", "Subtotal", "Tax", "Total"]);
+      rows.push([
+        "Reference",
+        "Supplier",
+        "Category",
+        "Description",
+        "Date",
+        "Subtotal",
+        "Tax",
+        "Total",
+      ]);
       incomeStatementReport.expenses.forEach((ex) =>
-        rows.push([ex.reference, ex.supplier, ex.category, ex.description, ex.date, ex.subtotal.toFixed(2), ex.tax.toFixed(2), ex.total.toFixed(2)]),
+        rows.push([
+          ex.reference,
+          ex.supplier,
+          ex.category,
+          ex.description,
+          ex.date,
+          ex.subtotal.toFixed(2),
+          ex.tax.toFixed(2),
+          ex.total.toFixed(2),
+        ]),
       );
     } else if (activeReport === "stock" && stockReport) {
       filename = `stock-report-${new Date().toISOString().split("T")[0]}.csv`;
@@ -1135,7 +1295,15 @@ export default function ReportsPage() {
       rows.push(["Total Outstanding", debtorsReport.total_due.toFixed(2)]);
       rows.push([]);
       rows.push(["Unpaid Invoices"]);
-      rows.push(["Reference", "Customer", "Total", "Paid", "Due", "Date", "Status"]);
+      rows.push([
+        "Reference",
+        "Customer",
+        "Total",
+        "Paid",
+        "Due",
+        "Date",
+        "Status",
+      ]);
       debtorsReport.recent_unpaid.forEach((i) =>
         rows.push([
           i.reference,
@@ -1149,10 +1317,19 @@ export default function ReportsPage() {
       );
     } else if (activeReport === "creditors" && creditorsReport) {
       filename = `creditors-${dateRange.from}-to-${dateRange.to}.csv`;
-      rows.push(["Creditors - Unpaid Purchase Orders", `${dateRange.from} to ${dateRange.to}`]);
+      rows.push([
+        "Creditors - Unpaid Purchase Orders",
+        `${dateRange.from} to ${dateRange.to}`,
+      ]);
       rows.push([]);
-      rows.push(["Total Purchase Orders", String(creditorsReport.total_orders)]);
-      rows.push(["Unpaid Purchase Orders", String(creditorsReport.open_orders)]);
+      rows.push([
+        "Total Purchase Orders",
+        String(creditorsReport.total_orders),
+      ]);
+      rows.push([
+        "Unpaid Purchase Orders",
+        String(creditorsReport.open_orders),
+      ]);
       rows.push(["Total Outstanding", creditorsReport.total_amount.toFixed(2)]);
       rows.push([]);
       rows.push(["By Supplier"]);
@@ -1168,35 +1345,98 @@ export default function ReportsPage() {
       );
       rows.push([]);
       rows.push(["Recent Open Orders"]);
-      rows.push(["Reference", "Supplier", "Amount", "Date", "Status", "Paid State"]);
+      rows.push([
+        "Reference",
+        "Supplier",
+        "Amount",
+        "Date",
+        "Status",
+        "Paid State",
+      ]);
       creditorsReport.recent_orders.forEach((o) =>
-        rows.push([o.reference, o.supplier, o.amount.toFixed(2), o.date, o.status, o.paid_state]),
+        rows.push([
+          o.reference,
+          o.supplier,
+          o.amount.toFixed(2),
+          o.date,
+          o.status,
+          o.paid_state,
+        ]),
       );
     } else if (activeReport === "vat" && vatReport) {
       filename = `vat-return-${dateRange.from}-to-${dateRange.to}.csv`;
-      rows.push(["VAT RETURN", `Period: ${vatReport.period_from || dateRange.from} to ${vatReport.period_to || dateRange.to}`]);
+      rows.push([
+        "VAT RETURN",
+        `Period: ${vatReport.period_from || dateRange.from} to ${vatReport.period_to || dateRange.to}`,
+      ]);
       rows.push([]);
-      rows.push(["OUTPUT VAT (Sales)"]);
-      rows.push(["Rate", "Taxable Amount", "VAT Amount", "Total", "Transactions"]);
+      rows.push(["Sales VAT"]);
+      rows.push([
+        "Rate",
+        "Taxable Amount",
+        "VAT Amount",
+        "Total",
+        "Transactions",
+      ]);
       vatReport.sales_by_rate.forEach((b) =>
-        rows.push([`${b.rate}%`, b.taxable_amount.toFixed(2), b.tax_amount.toFixed(2), b.total.toFixed(2), String(b.count)]),
+        rows.push([
+          `${b.rate}%`,
+          b.taxable_amount.toFixed(2),
+          b.tax_amount.toFixed(2),
+          b.total.toFixed(2),
+          String(b.count),
+        ]),
       );
-      rows.push(["TOTAL OUTPUT VAT", "", vatReport.output_tax.toFixed(2), vatReport.sales_total.toFixed(2), String(vatReport.invoices_count)]);
+      rows.push([
+        "TOTAL OUTPUT VAT",
+        "",
+        vatReport.output_tax.toFixed(2),
+        vatReport.sales_total.toFixed(2),
+        String(vatReport.invoices_count),
+      ]);
       rows.push([]);
       rows.push(["INPUT VAT (Purchases)"]);
-      rows.push(["Rate", "Taxable Amount", "VAT Amount", "Total", "Transactions"]);
+      rows.push([
+        "Rate",
+        "Taxable Amount",
+        "VAT Amount",
+        "Total",
+        "Transactions",
+      ]);
       vatReport.purchases_by_rate.forEach((b) =>
-        rows.push([`${b.rate}%`, b.taxable_amount.toFixed(2), b.tax_amount.toFixed(2), b.total.toFixed(2), String(b.count)]),
+        rows.push([
+          `${b.rate}%`,
+          b.taxable_amount.toFixed(2),
+          b.tax_amount.toFixed(2),
+          b.total.toFixed(2),
+          String(b.count),
+        ]),
       );
-      rows.push(["TOTAL INPUT VAT", "", vatReport.input_tax.toFixed(2), vatReport.purchases_total.toFixed(2), String(vatReport.purchases_count)]);
+      rows.push([
+        "TOTAL INPUT VAT",
+        "",
+        vatReport.input_tax.toFixed(2),
+        vatReport.purchases_total.toFixed(2),
+        String(vatReport.purchases_count),
+      ]);
       rows.push([]);
-      rows.push(["Credit Notes", String(vatReport.credit_notes_count), vatReport.credit_notes_tax.toFixed(2)]);
+      rows.push([
+        "Credit Notes",
+        String(vatReport.credit_notes_count),
+        vatReport.credit_notes_tax.toFixed(2),
+      ]);
       rows.push([]);
       rows.push(["NET VAT SUMMARY"]);
       rows.push(["Output VAT", vatReport.output_tax.toFixed(2)]);
       rows.push(["Less: Input VAT", `(${vatReport.input_tax.toFixed(2)})`]);
-      rows.push(["Less: Credit Note VAT", `(${vatReport.credit_notes_tax.toFixed(2)})`]);
-      rows.push(["Net VAT " + (vatReport.net_tax >= 0 ? "Payable" : "Refundable"), vatReport.net_tax.toFixed(2)]);
+      rows.push([
+        "Less: Credit Note VAT",
+        `(${vatReport.credit_notes_tax.toFixed(2)})`,
+      ]);
+      rows.push([
+        "Net VAT " + (vatReport.net_tax >= 0 ? "Payable" : "Refundable"),
+        vatReport.net_tax.toFixed(2),
+      ]);
     } else if (activeReport === "purchases" && purchaseReport) {
       filename = `purchase-report-${dateRange.from}-to-${dateRange.to}.csv`;
       rows.push(["Purchase Report", `${dateRange.from} to ${dateRange.to}`]);
@@ -1243,9 +1483,9 @@ export default function ReportsPage() {
               ? "Creditors"
               : activeReport === "income_statement"
                 ? "Income Statement"
-            : activeReport === "purchases"
-              ? "Purchase Report"
-              : "VAT RETURN";
+                : activeReport === "purchases"
+                  ? "Purchase Report"
+                  : "VAT RETURN";
     const period =
       activeReport === "stock"
         ? new Date().toLocaleDateString()
@@ -1366,7 +1606,7 @@ export default function ReportsPage() {
           <h1 style="margin:0;font-size:24px;letter-spacing:2px">VAT RETURN</h1>
           <div style="color:#666;margin-top:4px">Tax Period: ${vatPeriod}</div>
         </div>
-        <h3>1. OUTPUT VAT (Tax on Sales)</h3>
+        <h3>1. Sales VAT</h3>
         <table><thead><tr><th>VAT Rate</th><th style="text-align:right">Taxable Amount</th><th style="text-align:right">VAT Amount</th><th style="text-align:right">Total Incl. VAT</th><th style="text-align:right">Transactions</th></tr></thead><tbody>
           ${vatReport.sales_by_rate.map((b) => `<tr><td>${b.rate}%</td><td style="text-align:right">${formatCurrency(b.taxable_amount)}</td><td style="text-align:right">${formatCurrency(b.tax_amount)}</td><td style="text-align:right">${formatCurrency(b.total)}</td><td style="text-align:right">${b.count}</td></tr>`).join("")}
           <tr style="font-weight:700;border-top:2px solid #333"><td>Total Output VAT</td><td style="text-align:right">${formatCurrency(vatReport.sales_total - vatReport.output_tax)}</td><td style="text-align:right">${formatCurrency(vatReport.output_tax)}</td><td style="text-align:right">${formatCurrency(vatReport.sales_total)}</td><td style="text-align:right">${vatReport.invoices_count}</td></tr>
@@ -1376,12 +1616,16 @@ export default function ReportsPage() {
           ${vatReport.purchases_by_rate.map((b) => `<tr><td>${b.rate}%</td><td style="text-align:right">${formatCurrency(b.taxable_amount)}</td><td style="text-align:right">${formatCurrency(b.tax_amount)}</td><td style="text-align:right">${formatCurrency(b.total)}</td><td style="text-align:right">${b.count}</td></tr>`).join("")}
           <tr style="font-weight:700;border-top:2px solid #333"><td>Total Input VAT</td><td style="text-align:right">${formatCurrency(vatReport.purchases_total - vatReport.input_tax)}</td><td style="text-align:right">${formatCurrency(vatReport.input_tax)}</td><td style="text-align:right">${formatCurrency(vatReport.purchases_total)}</td><td style="text-align:right">${vatReport.purchases_count}</td></tr>
         </tbody></table>
-        ${vatReport.credit_notes_count > 0 ? `
+        ${
+          vatReport.credit_notes_count > 0
+            ? `
         <h3>3. Credit Notes</h3>
         <table><tbody>
           <tr><td>Credit Notes Issued</td><td style="text-align:right">${vatReport.credit_notes_count}</td></tr>
           <tr><td>VAT on Credit Notes</td><td style="text-align:right">${formatCurrency(vatReport.credit_notes_tax)}</td></tr>
-        </tbody></table>` : ""}
+        </tbody></table>`
+            : ""
+        }
         <h3 style="margin-top:32px">${vatReport.credit_notes_count > 0 ? "4" : "3"}. NET VAT CALCULATION</h3>
         <table style="max-width:500px">
           <tbody>
@@ -1565,7 +1809,7 @@ export default function ReportsPage() {
   return (
     <div className="reports-page">
       {/* Company breadcrumb for admin */}
-      {isAdmin && companyId && (
+      {/* {isAdmin && companyId && (
         <div
           className="o-control-panel"
           style={{
@@ -1601,7 +1845,7 @@ export default function ReportsPage() {
             </span>
           </div>
         </div>
-      )}
+      )} */}
       <div className="two-panel two-panel-left">
         {/* Sidebar */}
         <div className="o-sidebar">
@@ -2008,141 +2252,247 @@ export default function ReportsPage() {
           )}
 
           {/* ─── Income Statement ─── */}
-          {!loading && activeReport === "income_statement" && incomeStatementReport && (
-            <div className="report-content">
-              <div className="metrics-row">
-                <MetricCard
-                  label="Gross Revenue (VAT excl.)"
-                  value={formatCurrency(incomeStatementReport.gross_revenue_ex_vat)}
-                />
-                <MetricCard
-                  label="Expenses (VAT excl.)"
-                  value={formatCurrency(incomeStatementReport.expenses_ex_vat)}
-                  variant="warning"
-                />
-                <MetricCard
-                  label="Net Revenue (VAT excl.)"
-                  value={formatCurrency(incomeStatementReport.net_revenue_ex_vat)}
-                  variant={incomeStatementReport.net_revenue_ex_vat >= 0 ? "success" : "danger"}
-                />
-              </div>
-
-              <div className="report-grid">
-                <div className="report-card">
-                  <h3>Summary</h3>
-                  <table className="report-table">
-                    <tbody>
-                      <tr>
-                        <td style={{ fontWeight: 600 }}>Gross Revenue (VAT excl.)</td>
-                        <td className="text-right">{formatCurrency(incomeStatementReport.gross_revenue_ex_vat)}</td>
-                      </tr>
-                      <tr>
-                        <td style={{ fontWeight: 600 }}>Expenses (VAT excl.)</td>
-                        <td className="text-right">{formatCurrency(incomeStatementReport.expenses_ex_vat)}</td>
-                      </tr>
-                      <tr>
-                        <td style={{ fontWeight: 700 }}>Net Revenue (VAT excl.)</td>
-                        <td className="text-right" style={{ fontWeight: 700 }}>
-                          {formatCurrency(incomeStatementReport.net_revenue_ex_vat)}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+          {!loading &&
+            activeReport === "income_statement" &&
+            incomeStatementReport && (
+              <div className="report-content">
+                <div className="metrics-row">
+                  <MetricCard
+                    label="Gross Revenue (VAT excl.)"
+                    value={formatCurrency(
+                      incomeStatementReport.gross_revenue_ex_vat,
+                    )}
+                  />
+                  <MetricCard
+                    label="Expenses (VAT excl.)"
+                    value={formatCurrency(
+                      incomeStatementReport.expenses_ex_vat,
+                    )}
+                    variant="warning"
+                  />
+                  <MetricCard
+                    label="Net Revenue (VAT excl.)"
+                    value={formatCurrency(
+                      incomeStatementReport.net_revenue_ex_vat,
+                    )}
+                    variant={
+                      incomeStatementReport.net_revenue_ex_vat >= 0
+                        ? "success"
+                        : "danger"
+                    }
+                  />
                 </div>
-              </div>
 
-              {/* Revenue — Invoices */}
-              <div className="report-card" style={{ marginTop: 24 }}>
-                <h3>Revenue — Invoices ({incomeStatementReport.invoices.length})</h3>
-                {incomeStatementReport.invoices.length === 0 ? (
-                  <p className="empty-state">No invoices in this period.</p>
-                ) : (
-                  <table className="report-table">
-                    <thead>
-                      <tr>
-                        <th>Reference</th>
-                        <th>Customer</th>
-                        <th>Date</th>
-                        <th className="text-right">Subtotal</th>
-                        <th className="text-right">Tax</th>
-                        <th className="text-right">Total</th>
-                        <th>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {incomeStatementReport.invoices.map((inv, i) => (
-                        <tr key={i}>
-                          <td style={{ fontFamily: "monospace", fontSize: 12 }}>{inv.reference}</td>
-                          <td>{inv.customer}</td>
-                          <td>{inv.date}</td>
-                          <td className="text-right">{formatCurrency(inv.subtotal)}</td>
-                          <td className="text-right">{formatCurrency(inv.tax)}</td>
-                          <td className="text-right">{formatCurrency(inv.total)}</td>
-                          <td>
-                            <span className={`badge ${inv.status === "paid" ? "badge-success" : inv.status === "posted" ? "badge-info" : "badge-secondary"}`} style={{ textTransform: "capitalize" }}>
-                              {inv.status}
-                            </span>
+                <div className="report-grid">
+                  <div className="report-card">
+                    <h3>Summary</h3>
+                    <table className="report-table">
+                      <tbody>
+                        <tr>
+                          <td style={{ fontWeight: 600 }}>
+                            Gross Revenue (VAT excl.)
+                          </td>
+                          <td className="text-right">
+                            {formatCurrency(
+                              incomeStatementReport.gross_revenue_ex_vat,
+                            )}
                           </td>
                         </tr>
-                      ))}
-                    </tbody>
-                    <tfoot>
-                      <tr style={{ fontWeight: 700, background: "var(--slate-50)" }}>
-                        <td colSpan={3} className="text-right">Total</td>
-                        <td className="text-right">{formatCurrency(incomeStatementReport.gross_revenue_ex_vat)}</td>
-                        <td className="text-right">{formatCurrency(incomeStatementReport.invoices.reduce((s, inv) => s + inv.tax, 0))}</td>
-                        <td className="text-right">{formatCurrency(incomeStatementReport.invoices.reduce((s, inv) => s + inv.total, 0))}</td>
-                        <td></td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                )}
-              </div>
-
-              {/* Expenses */}
-              <div className="report-card" style={{ marginTop: 24 }}>
-                <h3>Expenses ({incomeStatementReport.expenses.length})</h3>
-                {incomeStatementReport.expenses.length === 0 ? (
-                  <p className="empty-state">No expenses in this period.</p>
-                ) : (
-                  <table className="report-table">
-                    <thead>
-                      <tr>
-                        <th>Reference</th>
-                        <th>Supplier</th>
-                        <th>Category</th>
-                        <th>Date</th>
-                        <th className="text-right">Subtotal</th>
-                        <th className="text-right">Tax</th>
-                        <th className="text-right">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {incomeStatementReport.expenses.map((ex, i) => (
-                        <tr key={i}>
-                          <td style={{ fontFamily: "monospace", fontSize: 12 }}>{ex.reference}</td>
-                          <td>{ex.supplier}</td>
-                          <td>{ex.category}</td>
-                          <td>{ex.date}</td>
-                          <td className="text-right">{formatCurrency(ex.subtotal)}</td>
-                          <td className="text-right">{formatCurrency(ex.tax)}</td>
-                          <td className="text-right">{formatCurrency(ex.total)}</td>
+                        <tr>
+                          <td style={{ fontWeight: 600 }}>
+                            Expenses (VAT excl.)
+                          </td>
+                          <td className="text-right">
+                            {formatCurrency(
+                              incomeStatementReport.expenses_ex_vat,
+                            )}
+                          </td>
                         </tr>
-                      ))}
-                    </tbody>
-                    <tfoot>
-                      <tr style={{ fontWeight: 700, background: "var(--slate-50)" }}>
-                        <td colSpan={4} className="text-right">Total</td>
-                        <td className="text-right">{formatCurrency(incomeStatementReport.expenses_ex_vat)}</td>
-                        <td className="text-right">{formatCurrency(incomeStatementReport.expenses.reduce((s, ex) => s + ex.tax, 0))}</td>
-                        <td className="text-right">{formatCurrency(incomeStatementReport.expenses.reduce((s, ex) => s + ex.total, 0))}</td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                )}
+                        <tr>
+                          <td style={{ fontWeight: 700 }}>
+                            Net Revenue (VAT excl.)
+                          </td>
+                          <td
+                            className="text-right"
+                            style={{ fontWeight: 700 }}
+                          >
+                            {formatCurrency(
+                              incomeStatementReport.net_revenue_ex_vat,
+                            )}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Revenue — Invoices */}
+                <div className="report-card" style={{ marginTop: 24 }}>
+                  <h3>
+                    Revenue — Invoices ({incomeStatementReport.invoices.length})
+                  </h3>
+                  {incomeStatementReport.invoices.length === 0 ? (
+                    <p className="empty-state">No invoices in this period.</p>
+                  ) : (
+                    <table className="report-table">
+                      <thead>
+                        <tr>
+                          <th>Reference</th>
+                          <th>Customer</th>
+                          <th>Date</th>
+                          <th className="text-right">Subtotal</th>
+                          <th className="text-right">Tax</th>
+                          <th className="text-right">Total</th>
+                          <th>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {incomeStatementReport.invoices.map((inv, i) => (
+                          <tr key={i}>
+                            <td
+                              style={{ fontFamily: "monospace", fontSize: 12 }}
+                            >
+                              {inv.reference}
+                            </td>
+                            <td>{inv.customer}</td>
+                            <td>{inv.date}</td>
+                            <td className="text-right">
+                              {formatCurrency(inv.subtotal)}
+                            </td>
+                            <td className="text-right">
+                              {formatCurrency(inv.tax)}
+                            </td>
+                            <td className="text-right">
+                              {formatCurrency(inv.total)}
+                            </td>
+                            <td>
+                              <span
+                                className={`badge ${inv.status === "paid" ? "badge-success" : inv.status === "posted" ? "badge-info" : "badge-secondary"}`}
+                                style={{ textTransform: "capitalize" }}
+                              >
+                                {inv.status}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot>
+                        <tr
+                          style={{
+                            fontWeight: 700,
+                            background: "var(--slate-50)",
+                          }}
+                        >
+                          <td colSpan={3} className="text-right">
+                            Total
+                          </td>
+                          <td className="text-right">
+                            {formatCurrency(
+                              incomeStatementReport.gross_revenue_ex_vat,
+                            )}
+                          </td>
+                          <td className="text-right">
+                            {formatCurrency(
+                              incomeStatementReport.invoices.reduce(
+                                (s, inv) => s + inv.tax,
+                                0,
+                              ),
+                            )}
+                          </td>
+                          <td className="text-right">
+                            {formatCurrency(
+                              incomeStatementReport.invoices.reduce(
+                                (s, inv) => s + inv.total,
+                                0,
+                              ),
+                            )}
+                          </td>
+                          <td></td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  )}
+                </div>
+
+                {/* Expenses */}
+                <div className="report-card" style={{ marginTop: 24 }}>
+                  <h3>Expenses ({incomeStatementReport.expenses.length})</h3>
+                  {incomeStatementReport.expenses.length === 0 ? (
+                    <p className="empty-state">No expenses in this period.</p>
+                  ) : (
+                    <table className="report-table">
+                      <thead>
+                        <tr>
+                          <th>Reference</th>
+                          <th>Supplier</th>
+                          <th>Category</th>
+                          <th>Date</th>
+                          <th className="text-right">Subtotal</th>
+                          <th className="text-right">Tax</th>
+                          <th className="text-right">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {incomeStatementReport.expenses.map((ex, i) => (
+                          <tr key={i}>
+                            <td
+                              style={{ fontFamily: "monospace", fontSize: 12 }}
+                            >
+                              {ex.reference}
+                            </td>
+                            <td>{ex.supplier}</td>
+                            <td>{ex.category}</td>
+                            <td>{ex.date}</td>
+                            <td className="text-right">
+                              {formatCurrency(ex.subtotal)}
+                            </td>
+                            <td className="text-right">
+                              {formatCurrency(ex.tax)}
+                            </td>
+                            <td className="text-right">
+                              {formatCurrency(ex.total)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot>
+                        <tr
+                          style={{
+                            fontWeight: 700,
+                            background: "var(--slate-50)",
+                          }}
+                        >
+                          <td colSpan={4} className="text-right">
+                            Total
+                          </td>
+                          <td className="text-right">
+                            {formatCurrency(
+                              incomeStatementReport.expenses_ex_vat,
+                            )}
+                          </td>
+                          <td className="text-right">
+                            {formatCurrency(
+                              incomeStatementReport.expenses.reduce(
+                                (s, ex) => s + ex.tax,
+                                0,
+                              ),
+                            )}
+                          </td>
+                          <td className="text-right">
+                            {formatCurrency(
+                              incomeStatementReport.expenses.reduce(
+                                (s, ex) => s + ex.total,
+                                0,
+                              ),
+                            )}
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
           {/* ─── Stock Report ─── */}
           {!loading && activeReport === "stock" && stockReport && (
@@ -2302,7 +2652,9 @@ export default function ReportsPage() {
                 <div className="report-card">
                   <h3>Unpaid Invoices</h3>
                   {debtorsReport.recent_unpaid.length === 0 ? (
-                    <p className="empty-state">No unpaid invoices in this period.</p>
+                    <p className="empty-state">
+                      No unpaid invoices in this period.
+                    </p>
                   ) : (
                     <table className="report-table">
                       <thead>
@@ -2325,9 +2677,15 @@ export default function ReportsPage() {
                               {inv.reference}
                             </td>
                             <td>{inv.customer}</td>
-                            <td className="text-right">{formatCurrency(inv.total)}</td>
-                            <td className="text-right">{formatCurrency(inv.paid)}</td>
-                            <td className="text-right">{formatCurrency(inv.due)}</td>
+                            <td className="text-right">
+                              {formatCurrency(inv.total)}
+                            </td>
+                            <td className="text-right">
+                              {formatCurrency(inv.paid)}
+                            </td>
+                            <td className="text-right">
+                              {formatCurrency(inv.due)}
+                            </td>
                             <td>{inv.date}</td>
                             <td>
                               <span
@@ -2368,7 +2726,9 @@ export default function ReportsPage() {
                 <div className="report-card">
                   <h3>Unpaid Purchase Orders by Supplier</h3>
                   {creditorsReport.by_supplier.length === 0 ? (
-                    <p className="empty-state">No unpaid purchase orders in this period.</p>
+                    <p className="empty-state">
+                      No unpaid purchase orders in this period.
+                    </p>
                   ) : (
                     <table className="report-table">
                       <thead>
@@ -2383,7 +2743,9 @@ export default function ReportsPage() {
                           <tr key={i}>
                             <td>{v.name}</td>
                             <td className="text-right">{v.count}</td>
-                            <td className="text-right">{formatCurrency(v.amount)}</td>
+                            <td className="text-right">
+                              {formatCurrency(v.amount)}
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -2394,7 +2756,9 @@ export default function ReportsPage() {
                 <div className="report-card">
                   <h3>Recent Unpaid Purchase Orders</h3>
                   {creditorsReport.recent_orders.length === 0 ? (
-                    <p className="empty-state">No unpaid purchase orders in this period.</p>
+                    <p className="empty-state">
+                      No unpaid purchase orders in this period.
+                    </p>
                   ) : (
                     <table className="report-table">
                       <thead>
@@ -2410,9 +2774,15 @@ export default function ReportsPage() {
                       <tbody>
                         {creditorsReport.recent_orders.map((o, i) => (
                           <tr key={i}>
-                            <td style={{ fontFamily: "monospace", fontSize: 12 }}>{o.reference}</td>
+                            <td
+                              style={{ fontFamily: "monospace", fontSize: 12 }}
+                            >
+                              {o.reference}
+                            </td>
                             <td>{o.supplier}</td>
-                            <td className="text-right">{formatCurrency(o.amount)}</td>
+                            <td className="text-right">
+                              {formatCurrency(o.amount)}
+                            </td>
                             <td>{o.date}</td>
                             <td>
                               <span
@@ -2444,19 +2814,55 @@ export default function ReportsPage() {
           {!loading && activeReport === "vat" && vatReport && (
             <div className="report-content">
               {/* Header */}
-              <div style={{ textAlign: "center", marginBottom: 24, paddingBottom: 16, borderBottom: "3px double var(--gray-300)" }}>
-                <h2 style={{ margin: 0, fontSize: 22, letterSpacing: 2, textTransform: "uppercase" }}>VAT Return</h2>
-                <div style={{ color: "var(--gray-500)", marginTop: 4, fontSize: 13 }}>
-                  Tax Period: {vatReport.period_from || dateRange.from} to {vatReport.period_to || dateRange.to}
+              <div
+                style={{
+                  textAlign: "center",
+                  marginBottom: 24,
+                  paddingBottom: 16,
+                  borderBottom: "3px double var(--gray-300)",
+                }}
+              >
+                <h2
+                  style={{
+                    margin: 0,
+                    fontSize: 22,
+                    letterSpacing: 2,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  VAT Return
+                </h2>
+                <div
+                  style={{
+                    color: "var(--gray-500)",
+                    marginTop: 4,
+                    fontSize: 13,
+                  }}
+                >
+                  Tax Period: {vatReport.period_from || dateRange.from} to{" "}
+                  {vatReport.period_to || dateRange.to}
                 </div>
               </div>
 
               {/* Summary metrics */}
               <div className="metrics-row">
-                <MetricCard label="Sales Total" value={formatCurrency(vatReport.sales_total)} />
-                <MetricCard label="Output VAT" value={formatCurrency(vatReport.output_tax)} variant="success" />
-                <MetricCard label="Purchases Total" value={formatCurrency(vatReport.purchases_total)} />
-                <MetricCard label="Input VAT" value={formatCurrency(vatReport.input_tax)} />
+                <MetricCard
+                  label="Sales Total"
+                  value={formatCurrency(vatReport.sales_total)}
+                />
+                <MetricCard
+                  label="Sales VAT"
+                  value={formatCurrency(vatReport.output_tax)}
+                  variant="success"
+                />
+                <MetricCard
+                  label="Purchases Total"
+                  value={formatCurrency(vatReport.purchases_total)}
+                />
+                <MetricCard
+                  label="Input VAT"
+                  value={formatCurrency(vatReport.input_tax)}
+                />
                 <MetricCard
                   label={`Net VAT ${vatReport.net_tax >= 0 ? "Payable" : "Refundable"}`}
                   value={formatCurrency(Math.abs(vatReport.net_tax))}
@@ -2467,8 +2873,19 @@ export default function ReportsPage() {
               {/* Section 1: Output VAT */}
               <div className="report-card" style={{ marginBottom: 20 }}>
                 <h3 style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ background: "var(--emerald-100)", color: "var(--emerald-700)", borderRadius: 6, padding: "2px 10px", fontSize: 12, fontWeight: 700 }}>1</span>
-                  OUTPUT VAT — Tax Collected on Sales
+                  <span
+                    style={{
+                      background: "var(--emerald-100)",
+                      color: "var(--emerald-700)",
+                      borderRadius: 6,
+                      padding: "2px 10px",
+                      fontSize: 12,
+                      fontWeight: 700,
+                    }}
+                  >
+                    1
+                  </span>
+                  Sales VAT
                 </h3>
                 {vatReport.sales_by_rate.length === 0 ? (
                   <p className="empty-state">No sales in this period.</p>
@@ -2486,19 +2903,47 @@ export default function ReportsPage() {
                     <tbody>
                       {vatReport.sales_by_rate.map((b, i) => (
                         <tr key={i}>
-                          <td><span className="badge badge-success">{b.rate}%</span></td>
-                          <td className="text-right">{formatCurrency(b.taxable_amount)}</td>
-                          <td className="text-right">{formatCurrency(b.tax_amount)}</td>
-                          <td className="text-right">{formatCurrency(b.total)}</td>
+                          <td>
+                            <span className="badge badge-success">
+                              {b.rate}%
+                            </span>
+                          </td>
+                          <td className="text-right">
+                            {formatCurrency(b.taxable_amount)}
+                          </td>
+                          <td className="text-right">
+                            {formatCurrency(b.tax_amount)}
+                          </td>
+                          <td className="text-right">
+                            {formatCurrency(b.total)}
+                          </td>
                           <td className="text-right">{b.count}</td>
                         </tr>
                       ))}
-                      <tr style={{ fontWeight: 700, borderTop: "2px solid var(--gray-300)" }}>
+                      <tr
+                        style={{
+                          fontWeight: 700,
+                          borderTop: "2px solid var(--gray-300)",
+                        }}
+                      >
                         <td>Total Output VAT</td>
-                        <td className="text-right">{formatCurrency(vatReport.sales_total - vatReport.output_tax)}</td>
-                        <td className="text-right" style={{ color: "var(--emerald-600)" }}>{formatCurrency(vatReport.output_tax)}</td>
-                        <td className="text-right">{formatCurrency(vatReport.sales_total)}</td>
-                        <td className="text-right">{vatReport.invoices_count}</td>
+                        <td className="text-right">
+                          {formatCurrency(
+                            vatReport.sales_total - vatReport.output_tax,
+                          )}
+                        </td>
+                        <td
+                          className="text-right"
+                          style={{ color: "var(--emerald-600)" }}
+                        >
+                          {formatCurrency(vatReport.output_tax)}
+                        </td>
+                        <td className="text-right">
+                          {formatCurrency(vatReport.sales_total)}
+                        </td>
+                        <td className="text-right">
+                          {vatReport.invoices_count}
+                        </td>
                       </tr>
                     </tbody>
                   </table>
@@ -2508,8 +2953,19 @@ export default function ReportsPage() {
               {/* Section 2: Input VAT */}
               <div className="report-card" style={{ marginBottom: 20 }}>
                 <h3 style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ background: "var(--blue-100)", color: "var(--blue-700)", borderRadius: 6, padding: "2px 10px", fontSize: 12, fontWeight: 700 }}>2</span>
-                  INPUT VAT — Tax Paid on Purchases
+                  <span
+                    style={{
+                      background: "var(--blue-100)",
+                      color: "var(--blue-700)",
+                      borderRadius: 6,
+                      padding: "2px 10px",
+                      fontSize: 12,
+                      fontWeight: 700,
+                    }}
+                  >
+                    2
+                  </span>
+                  Purchases VAT
                 </h3>
                 {vatReport.purchases_by_rate.length === 0 ? (
                   <p className="empty-state">No purchases in this period.</p>
@@ -2527,19 +2983,45 @@ export default function ReportsPage() {
                     <tbody>
                       {vatReport.purchases_by_rate.map((b, i) => (
                         <tr key={i}>
-                          <td><span className="badge badge-info">{b.rate}%</span></td>
-                          <td className="text-right">{formatCurrency(b.taxable_amount)}</td>
-                          <td className="text-right">{formatCurrency(b.tax_amount)}</td>
-                          <td className="text-right">{formatCurrency(b.total)}</td>
+                          <td>
+                            <span className="badge badge-info">{b.rate}%</span>
+                          </td>
+                          <td className="text-right">
+                            {formatCurrency(b.taxable_amount)}
+                          </td>
+                          <td className="text-right">
+                            {formatCurrency(b.tax_amount)}
+                          </td>
+                          <td className="text-right">
+                            {formatCurrency(b.total)}
+                          </td>
                           <td className="text-right">{b.count}</td>
                         </tr>
                       ))}
-                      <tr style={{ fontWeight: 700, borderTop: "2px solid var(--gray-300)" }}>
+                      <tr
+                        style={{
+                          fontWeight: 700,
+                          borderTop: "2px solid var(--gray-300)",
+                        }}
+                      >
                         <td>Total Input VAT</td>
-                        <td className="text-right">{formatCurrency(vatReport.purchases_total - vatReport.input_tax)}</td>
-                        <td className="text-right" style={{ color: "var(--blue-600)" }}>{formatCurrency(vatReport.input_tax)}</td>
-                        <td className="text-right">{formatCurrency(vatReport.purchases_total)}</td>
-                        <td className="text-right">{vatReport.purchases_count}</td>
+                        <td className="text-right">
+                          {formatCurrency(
+                            vatReport.purchases_total - vatReport.input_tax,
+                          )}
+                        </td>
+                        <td
+                          className="text-right"
+                          style={{ color: "var(--blue-600)" }}
+                        >
+                          {formatCurrency(vatReport.input_tax)}
+                        </td>
+                        <td className="text-right">
+                          {formatCurrency(vatReport.purchases_total)}
+                        </td>
+                        <td className="text-right">
+                          {vatReport.purchases_count}
+                        </td>
                       </tr>
                     </tbody>
                   </table>
@@ -2550,53 +3032,133 @@ export default function ReportsPage() {
               {vatReport.credit_notes_count > 0 && (
                 <div className="report-card" style={{ marginBottom: 20 }}>
                   <h3 style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ background: "var(--amber-100)", color: "var(--amber-700)", borderRadius: 6, padding: "2px 10px", fontSize: 12, fontWeight: 700 }}>3</span>
+                    <span
+                      style={{
+                        background: "var(--amber-100)",
+                        color: "var(--amber-700)",
+                        borderRadius: 6,
+                        padding: "2px 10px",
+                        fontSize: 12,
+                        fontWeight: 700,
+                      }}
+                    >
+                      3
+                    </span>
                     Credit Notes
                   </h3>
                   <table className="report-table" style={{ maxWidth: 400 }}>
                     <tbody>
-                      <tr><td>Credit Notes Issued</td><td className="text-right">{vatReport.credit_notes_count}</td></tr>
-                      <tr><td>VAT on Credit Notes</td><td className="text-right">{formatCurrency(vatReport.credit_notes_tax)}</td></tr>
+                      <tr>
+                        <td>Credit Notes Issued</td>
+                        <td className="text-right">
+                          {vatReport.credit_notes_count}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Credit Notes VAT</td>
+                        <td className="text-right">
+                          {formatCurrency(vatReport.credit_notes_tax)}
+                        </td>
+                      </tr>
                     </tbody>
                   </table>
                 </div>
               )}
 
               {/* Section N: Net VAT Calculation */}
-              <div className="report-card" style={{ marginBottom: 20, border: "2px solid var(--gray-300)" }}>
+              <div
+                className="report-card"
+                style={{
+                  marginBottom: 20,
+                  border: "2px solid var(--gray-300)",
+                }}
+              >
                 <h3 style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ background: "var(--violet-100)", color: "var(--violet-700)", borderRadius: 6, padding: "2px 10px", fontSize: 12, fontWeight: 700 }}>
+                  <span
+                    style={{
+                      background: "var(--violet-100)",
+                      color: "var(--violet-700)",
+                      borderRadius: 6,
+                      padding: "2px 10px",
+                      fontSize: 12,
+                      fontWeight: 700,
+                    }}
+                  >
                     {vatReport.credit_notes_count > 0 ? "4" : "3"}
                   </span>
-                  NET VAT CALCULATION
+                  Net VAT Calculation
                 </h3>
                 <table className="report-table" style={{ maxWidth: 500 }}>
                   <tbody>
                     <tr>
-                      <td>Output VAT (Sales)</td>
-                      <td className="text-right" style={{ fontWeight: 600 }}>{formatCurrency(vatReport.output_tax)}</td>
+                      <td>Sales VAT</td>
+                      <td className="text-right" style={{ fontWeight: 600 }}>
+                        {formatCurrency(vatReport.output_tax)}
+                      </td>
                     </tr>
                     <tr>
-                      <td>Less: Input VAT (Purchases)</td>
-                      <td className="text-right" style={{ fontWeight: 600, color: "var(--red-600)" }}>({formatCurrency(vatReport.input_tax)})</td>
+                      <td>Less: Purchases VAT</td>
+                      <td
+                        className="text-right"
+                        style={{ fontWeight: 600, color: "var(--red-600)" }}
+                      >
+                        ({formatCurrency(vatReport.input_tax)})
+                      </td>
                     </tr>
                     {vatReport.credit_notes_tax > 0 && (
                       <tr>
-                        <td>Less: Credit Note VAT</td>
-                        <td className="text-right" style={{ fontWeight: 600, color: "var(--red-600)" }}>({formatCurrency(vatReport.credit_notes_tax)})</td>
+                        <td>Less: Credit Notes VAT</td>
+                        <td
+                          className="text-right"
+                          style={{ fontWeight: 600, color: "var(--red-600)" }}
+                        >
+                          ({formatCurrency(vatReport.credit_notes_tax)})
+                        </td>
                       </tr>
                     )}
-                    <tr style={{ borderTop: "3px double var(--gray-400)", fontSize: 16, fontWeight: 700 }}>
-                      <td>Net VAT {vatReport.net_tax >= 0 ? "Payable" : "Refundable"}</td>
-                      <td className="text-right" style={{ color: vatReport.net_tax >= 0 ? "var(--red-600)" : "var(--emerald-600)" }}>
+                    <tr
+                      style={{
+                        borderTop: "3px double var(--gray-400)",
+                        fontSize: 16,
+                        fontWeight: 700,
+                      }}
+                    >
+                      <td>
+                        Net VAT{" "}
+                        {vatReport.net_tax >= 0 ? "Payable" : "Refundable"}
+                      </td>
+                      <td
+                        className="text-right"
+                        style={{
+                          color:
+                            vatReport.net_tax >= 0
+                              ? "var(--red-600)"
+                              : "var(--emerald-600)",
+                        }}
+                      >
                         {formatCurrency(Math.abs(vatReport.net_tax))}
                       </td>
                     </tr>
                   </tbody>
                 </table>
-                <div style={{ marginTop: 16, padding: "10px 14px", borderRadius: 8, fontSize: 12, background: vatReport.net_tax >= 0 ? "var(--red-50, #fef2f2)" : "var(--emerald-50, #ecfdf5)", color: vatReport.net_tax >= 0 ? "var(--red-700, #b91c1c)" : "var(--emerald-700, #047857)" }}>
+                <div
+                  style={{
+                    marginTop: 16,
+                    padding: "10px 14px",
+                    borderRadius: 8,
+                    fontSize: 12,
+                    background:
+                      vatReport.net_tax >= 0
+                        ? "var(--red-50, #fef2f2)"
+                        : "var(--emerald-50, #ecfdf5)",
+                    color:
+                      vatReport.net_tax >= 0
+                        ? "var(--red-700, #b91c1c)"
+                        : "var(--emerald-700, #047857)",
+                  }}
+                >
                   {vatReport.net_tax >= 0
-                    ? `You owe ${formatCurrency(vatReport.net_tax)} in VAT to the tax authority for this period.`
+                    ? `Amount payable to the tax authority: ${formatCurrency(vatReport.net_tax)}`
                     : `You are entitled to a VAT refund of ${formatCurrency(Math.abs(vatReport.net_tax))} for this period.`}
                 </div>
               </div>
@@ -2606,11 +3168,38 @@ export default function ReportsPage() {
                 <h3>Profit Summary</h3>
                 <table className="report-table" style={{ maxWidth: 400 }}>
                   <tbody>
-                    <tr><td>Sales (excl. VAT)</td><td className="text-right">{formatCurrency(vatReport.sales_total - vatReport.output_tax)}</td></tr>
-                    <tr><td>Purchases (excl. VAT)</td><td className="text-right">{formatCurrency(vatReport.purchases_total - vatReport.input_tax)}</td></tr>
-                    <tr style={{ fontWeight: 700, borderTop: "2px solid var(--gray-300)" }}>
+                    <tr>
+                      <td>Sales (excl. VAT)</td>
+                      <td className="text-right">
+                        {formatCurrency(
+                          vatReport.sales_total - vatReport.output_tax,
+                        )}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Purchases (excl. VAT)</td>
+                      <td className="text-right">
+                        {formatCurrency(
+                          vatReport.purchases_total - vatReport.input_tax,
+                        )}
+                      </td>
+                    </tr>
+                    <tr
+                      style={{
+                        fontWeight: 700,
+                        borderTop: "2px solid var(--gray-300)",
+                      }}
+                    >
                       <td>Gross Profit</td>
-                      <td className="text-right" style={{ color: vatReport.profit >= 0 ? "var(--emerald-600)" : "var(--red-600)" }}>
+                      <td
+                        className="text-right"
+                        style={{
+                          color:
+                            vatReport.profit >= 0
+                              ? "var(--emerald-600)"
+                              : "var(--red-600)",
+                        }}
+                      >
                         {formatCurrency(vatReport.profit)}
                       </td>
                     </tr>
@@ -2624,10 +3213,22 @@ export default function ReportsPage() {
           {!loading && activeReport === "purchases" && purchaseReport && (
             <div className="report-content">
               <div className="metrics-row">
-                <MetricCard label="Total Orders" value={String(purchaseReport.total_orders)} />
-                <MetricCard label="Total Amount" value={formatCurrency(purchaseReport.total_amount)} />
-                <MetricCard label="Total Tax" value={formatCurrency(purchaseReport.total_tax)} />
-                <MetricCard label="Avg Order" value={formatCurrency(purchaseReport.average_order)} />
+                <MetricCard
+                  label="Total Orders"
+                  value={String(purchaseReport.total_orders)}
+                />
+                <MetricCard
+                  label="Total Amount"
+                  value={formatCurrency(purchaseReport.total_amount)}
+                />
+                <MetricCard
+                  label="Total Tax"
+                  value={formatCurrency(purchaseReport.total_tax)}
+                />
+                <MetricCard
+                  label="Avg Order"
+                  value={formatCurrency(purchaseReport.average_order)}
+                />
               </div>
 
               <div className="report-grid">
@@ -2651,7 +3252,9 @@ export default function ReportsPage() {
                             <tr key={i}>
                               <td>{v.name}</td>
                               <td className="text-right">{v.count}</td>
-                              <td className="text-right">{formatCurrency(v.amount)}</td>
+                              <td className="text-right">
+                                {formatCurrency(v.amount)}
+                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -2659,16 +3262,43 @@ export default function ReportsPage() {
                       {/* Bar chart for suppliers */}
                       <div style={{ marginTop: 16 }}>
                         {purchaseReport.by_supplier.slice(0, 8).map((v, i) => {
-                          const maxAmt = Math.max(...purchaseReport.by_supplier.map((x) => x.amount), 1);
+                          const maxAmt = Math.max(
+                            ...purchaseReport.by_supplier.map((x) => x.amount),
+                            1,
+                          );
                           const pct = (v.amount / maxAmt) * 100;
                           return (
                             <div key={i} style={{ marginBottom: 8 }}>
-                              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 3 }}>
+                              <div
+                                style={{
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  fontSize: 12,
+                                  marginBottom: 3,
+                                }}
+                              >
                                 <span>{v.name}</span>
-                                <span style={{ fontWeight: 600 }}>{formatCurrency(v.amount)}</span>
+                                <span style={{ fontWeight: 600 }}>
+                                  {formatCurrency(v.amount)}
+                                </span>
                               </div>
-                              <div style={{ height: 8, background: "var(--gray-100)", borderRadius: 4, overflow: "hidden" }}>
-                                <div style={{ width: `${pct}%`, height: "100%", background: "var(--rose-500)", borderRadius: 4, transition: "width 0.5s" }} />
+                              <div
+                                style={{
+                                  height: 8,
+                                  background: "var(--gray-100)",
+                                  borderRadius: 4,
+                                  overflow: "hidden",
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    width: `${pct}%`,
+                                    height: "100%",
+                                    background: "var(--rose-500)",
+                                    borderRadius: 4,
+                                    transition: "width 0.5s",
+                                  }}
+                                />
                               </div>
                             </div>
                           );
@@ -2696,12 +3326,17 @@ export default function ReportsPage() {
                         {purchaseReport.by_status.map((s, i) => (
                           <tr key={i}>
                             <td>
-                              <span className={`badge ${s.status === "received" ? "badge-success" : s.status === "draft" ? "badge-secondary" : s.status === "cancelled" ? "badge-danger" : "badge-info"}`} style={{ textTransform: "capitalize" }}>
+                              <span
+                                className={`badge ${s.status === "received" ? "badge-success" : s.status === "draft" ? "badge-secondary" : s.status === "cancelled" ? "badge-danger" : "badge-info"}`}
+                                style={{ textTransform: "capitalize" }}
+                              >
                                 {s.status}
                               </span>
                             </td>
                             <td className="text-right">{s.count}</td>
-                            <td className="text-right">{formatCurrency(s.amount)}</td>
+                            <td className="text-right">
+                              {formatCurrency(s.amount)}
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -2714,14 +3349,25 @@ export default function ReportsPage() {
                   ) : (
                     <div className="bar-chart">
                       {(() => {
-                        const maxAmt = Math.max(...purchaseReport.by_month.map((m) => m.amount), 1);
+                        const maxAmt = Math.max(
+                          ...purchaseReport.by_month.map((m) => m.amount),
+                          1,
+                        );
                         return purchaseReport.by_month.map((m, i) => (
                           <div key={i} className="bar-item">
                             <div className="bar-fill-wrap">
-                              <div className="bar-fill" style={{ height: `${(m.amount / maxAmt) * 100}%`, background: "var(--rose-500)" }} />
+                              <div
+                                className="bar-fill"
+                                style={{
+                                  height: `${(m.amount / maxAmt) * 100}%`,
+                                  background: "var(--rose-500)",
+                                }}
+                              />
                             </div>
                             <div className="bar-label">{m.month}</div>
-                            <div className="bar-value">{formatCurrency(m.amount)}</div>
+                            <div className="bar-value">
+                              {formatCurrency(m.amount)}
+                            </div>
                           </div>
                         ));
                       })()}
@@ -2734,7 +3380,9 @@ export default function ReportsPage() {
               <div className="report-card" style={{ marginTop: 20 }}>
                 <h3>Recent Purchase Orders</h3>
                 {purchaseReport.recent_orders.length === 0 ? (
-                  <p className="empty-state">No purchase orders in this period.</p>
+                  <p className="empty-state">
+                    No purchase orders in this period.
+                  </p>
                 ) : (
                   <table className="report-table">
                     <thead>
@@ -2749,12 +3397,19 @@ export default function ReportsPage() {
                     <tbody>
                       {purchaseReport.recent_orders.map((o, i) => (
                         <tr key={i}>
-                          <td style={{ fontFamily: "monospace", fontSize: 12 }}>{o.reference}</td>
+                          <td style={{ fontFamily: "monospace", fontSize: 12 }}>
+                            {o.reference}
+                          </td>
                           <td>{o.supplier}</td>
-                          <td className="text-right">{formatCurrency(o.amount)}</td>
+                          <td className="text-right">
+                            {formatCurrency(o.amount)}
+                          </td>
                           <td>{o.date}</td>
                           <td>
-                            <span className={`badge ${o.status === "received" ? "badge-success" : o.status === "draft" ? "badge-secondary" : o.status === "cancelled" ? "badge-danger" : "badge-info"}`} style={{ textTransform: "capitalize" }}>
+                            <span
+                              className={`badge ${o.status === "received" ? "badge-success" : o.status === "draft" ? "badge-secondary" : o.status === "cancelled" ? "badge-danger" : "badge-info"}`}
+                              style={{ textTransform: "capitalize" }}
+                            >
                               {o.status}
                             </span>
                           </td>
