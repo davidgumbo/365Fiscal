@@ -285,6 +285,13 @@ type ReportType =
   | "vat"
   | "purchases";
 
+type VatSectionTab =
+  | "sales_vat"
+  | "purchases_vat"
+  | "credit_notes"
+  | "net_vat"
+  | "profit_summary";
+
 const MONTH_NAMES = [
   "Jan",
   "Feb",
@@ -337,6 +344,7 @@ export default function ReportsPage() {
   }, [allCompanies, companyQuery]);
 
   const [activeReport, setActiveReport] = useState<ReportType>("sales");
+  const [activeVatTab, setActiveVatTab] = useState<VatSectionTab>("sales_vat");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [dateRange, setDateRange] = useState({ from: "", to: "" });
@@ -1162,6 +1170,20 @@ export default function ReportsPage() {
     if (!companyId || !dateRange.from || !dateRange.to) return;
     loadReport();
   }, [companyId, activeReport, dateRange.from, dateRange.to]);
+
+  useEffect(() => {
+    if (activeReport !== "vat") setActiveVatTab("sales_vat");
+  }, [activeReport]);
+
+  useEffect(() => {
+    if (
+      vatReport &&
+      vatReport.credit_notes_count === 0 &&
+      activeVatTab === "credit_notes"
+    ) {
+      setActiveVatTab("sales_vat");
+    }
+  }, [vatReport, activeVatTab]);
 
   /* ── Export functions ──────────────────────────── */
 
@@ -2870,166 +2892,204 @@ export default function ReportsPage() {
                 />
               </div>
 
-              {/* Section 1: Output VAT */}
-              <div className="report-card" style={{ marginBottom: 20 }}>
-                <h3 style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span
-                    style={{
-                      background: "var(--emerald-100)",
-                      color: "var(--emerald-700)",
-                      borderRadius: 6,
-                      padding: "2px 10px",
-                      fontSize: 12,
-                      fontWeight: 700,
-                    }}
-                  >
-                    1
-                  </span>
+              <div className="tabs-nav" style={{ marginBottom: 20 }}>
+                <button
+                  className={`tab-btn ${activeVatTab === "sales_vat" ? "active" : ""}`}
+                  onClick={() => setActiveVatTab("sales_vat")}
+                >
                   Sales VAT
-                </h3>
-                {vatReport.sales_by_rate.length === 0 ? (
-                  <p className="empty-state">No sales in this period.</p>
-                ) : (
-                  <table className="report-table">
-                    <thead>
-                      <tr>
-                        <th>VAT Rate</th>
-                        <th className="text-right">Taxable Amount</th>
-                        <th className="text-right">VAT Amount</th>
-                        <th className="text-right">Total Incl. VAT</th>
-                        <th className="text-right">Transactions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {vatReport.sales_by_rate.map((b, i) => (
-                        <tr key={i}>
-                          <td>
-                            <span className="badge badge-success">
-                              {b.rate}%
-                            </span>
-                          </td>
-                          <td className="text-right">
-                            {formatCurrency(b.taxable_amount)}
-                          </td>
-                          <td className="text-right">
-                            {formatCurrency(b.tax_amount)}
-                          </td>
-                          <td className="text-right">
-                            {formatCurrency(b.total)}
-                          </td>
-                          <td className="text-right">{b.count}</td>
-                        </tr>
-                      ))}
-                      <tr
-                        style={{
-                          fontWeight: 700,
-                          borderTop: "2px solid var(--gray-300)",
-                        }}
-                      >
-                        <td>Total Output VAT</td>
-                        <td className="text-right">
-                          {formatCurrency(
-                            vatReport.sales_total - vatReport.output_tax,
-                          )}
-                        </td>
-                        <td
-                          className="text-right"
-                          style={{ color: "var(--emerald-600)" }}
-                        >
-                          {formatCurrency(vatReport.output_tax)}
-                        </td>
-                        <td className="text-right">
-                          {formatCurrency(vatReport.sales_total)}
-                        </td>
-                        <td className="text-right">
-                          {vatReport.invoices_count}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                )}
-              </div>
-
-              {/* Section 2: Input VAT */}
-              <div className="report-card" style={{ marginBottom: 20 }}>
-                <h3 style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span
-                    style={{
-                      background: "var(--blue-100)",
-                      color: "var(--blue-700)",
-                      borderRadius: 6,
-                      padding: "2px 10px",
-                      fontSize: 12,
-                      fontWeight: 700,
-                    }}
-                  >
-                    2
-                  </span>
+                </button>
+                <button
+                  className={`tab-btn ${activeVatTab === "purchases_vat" ? "active" : ""}`}
+                  onClick={() => setActiveVatTab("purchases_vat")}
+                >
                   Purchases VAT
-                </h3>
-                {vatReport.purchases_by_rate.length === 0 ? (
-                  <p className="empty-state">No purchases in this period.</p>
-                ) : (
-                  <table className="report-table">
-                    <thead>
-                      <tr>
-                        <th>VAT Rate</th>
-                        <th className="text-right">Taxable Amount</th>
-                        <th className="text-right">VAT Amount</th>
-                        <th className="text-right">Total Incl. VAT</th>
-                        <th className="text-right">Transactions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {vatReport.purchases_by_rate.map((b, i) => (
-                        <tr key={i}>
-                          <td>
-                            <span className="badge badge-info">{b.rate}%</span>
-                          </td>
-                          <td className="text-right">
-                            {formatCurrency(b.taxable_amount)}
-                          </td>
-                          <td className="text-right">
-                            {formatCurrency(b.tax_amount)}
-                          </td>
-                          <td className="text-right">
-                            {formatCurrency(b.total)}
-                          </td>
-                          <td className="text-right">{b.count}</td>
-                        </tr>
-                      ))}
-                      <tr
-                        style={{
-                          fontWeight: 700,
-                          borderTop: "2px solid var(--gray-300)",
-                        }}
-                      >
-                        <td>Total Input VAT</td>
-                        <td className="text-right">
-                          {formatCurrency(
-                            vatReport.purchases_total - vatReport.input_tax,
-                          )}
-                        </td>
-                        <td
-                          className="text-right"
-                          style={{ color: "var(--blue-600)" }}
-                        >
-                          {formatCurrency(vatReport.input_tax)}
-                        </td>
-                        <td className="text-right">
-                          {formatCurrency(vatReport.purchases_total)}
-                        </td>
-                        <td className="text-right">
-                          {vatReport.purchases_count}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+                </button>
+                {vatReport.credit_notes_count > 0 && (
+                  <button
+                    className={`tab-btn ${activeVatTab === "credit_notes" ? "active" : ""}`}
+                    onClick={() => setActiveVatTab("credit_notes")}
+                  >
+                    Credit Notes
+                  </button>
                 )}
+                <button
+                  className={`tab-btn ${activeVatTab === "net_vat" ? "active" : ""}`}
+                  onClick={() => setActiveVatTab("net_vat")}
+                >
+                  Net VAT
+                </button>
+                <button
+                  className={`tab-btn ${activeVatTab === "profit_summary" ? "active" : ""}`}
+                  onClick={() => setActiveVatTab("profit_summary")}
+                >
+                  Profit Summary
+                </button>
               </div>
 
-              {/* Section 3: Credit Notes (if any) */}
-              {vatReport.credit_notes_count > 0 && (
+              {activeVatTab === "sales_vat" && (
+                <div className="report-card" style={{ marginBottom: 20 }}>
+                  <h3 style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span
+                      style={{
+                        background: "var(--emerald-100)",
+                        color: "var(--emerald-700)",
+                        borderRadius: 6,
+                        padding: "2px 10px",
+                        fontSize: 12,
+                        fontWeight: 700,
+                      }}
+                    >
+                      1
+                    </span>
+                    Sales VAT
+                  </h3>
+                  {vatReport.sales_by_rate.length === 0 ? (
+                    <p className="empty-state">No sales in this period.</p>
+                  ) : (
+                    <table className="report-table">
+                      <thead>
+                        <tr>
+                          <th>VAT Rate</th>
+                          <th className="text-right">Taxable Amount</th>
+                          <th className="text-right">VAT Amount</th>
+                          <th className="text-right">Total Incl. VAT</th>
+                          <th className="text-right">Transactions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {vatReport.sales_by_rate.map((b, i) => (
+                          <tr key={i}>
+                            <td>
+                              <span className="badge badge-success">
+                                {b.rate}%
+                              </span>
+                            </td>
+                            <td className="text-right">
+                              {formatCurrency(b.taxable_amount)}
+                            </td>
+                            <td className="text-right">
+                              {formatCurrency(b.tax_amount)}
+                            </td>
+                            <td className="text-right">
+                              {formatCurrency(b.total)}
+                            </td>
+                            <td className="text-right">{b.count}</td>
+                          </tr>
+                        ))}
+                        <tr
+                          style={{
+                            fontWeight: 700,
+                            borderTop: "2px solid var(--gray-300)",
+                          }}
+                        >
+                          <td>Total Output VAT</td>
+                          <td className="text-right">
+                            {formatCurrency(
+                              vatReport.sales_total - vatReport.output_tax,
+                            )}
+                          </td>
+                          <td
+                            className="text-right"
+                            style={{ color: "var(--emerald-600)" }}
+                          >
+                            {formatCurrency(vatReport.output_tax)}
+                          </td>
+                          <td className="text-right">
+                            {formatCurrency(vatReport.sales_total)}
+                          </td>
+                          <td className="text-right">
+                            {vatReport.invoices_count}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              )}
+
+              {activeVatTab === "purchases_vat" && (
+                <div className="report-card" style={{ marginBottom: 20 }}>
+                  <h3 style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span
+                      style={{
+                        background: "var(--blue-100)",
+                        color: "var(--blue-700)",
+                        borderRadius: 6,
+                        padding: "2px 10px",
+                        fontSize: 12,
+                        fontWeight: 700,
+                      }}
+                    >
+                      2
+                    </span>
+                    Purchases VAT
+                  </h3>
+                  {vatReport.purchases_by_rate.length === 0 ? (
+                    <p className="empty-state">No purchases in this period.</p>
+                  ) : (
+                    <table className="report-table">
+                      <thead>
+                        <tr>
+                          <th>VAT Rate</th>
+                          <th className="text-right">Taxable Amount</th>
+                          <th className="text-right">VAT Amount</th>
+                          <th className="text-right">Total Incl. VAT</th>
+                          <th className="text-right">Transactions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {vatReport.purchases_by_rate.map((b, i) => (
+                          <tr key={i}>
+                            <td>
+                              <span className="badge badge-info">
+                                {b.rate}%
+                              </span>
+                            </td>
+                            <td className="text-right">
+                              {formatCurrency(b.taxable_amount)}
+                            </td>
+                            <td className="text-right">
+                              {formatCurrency(b.tax_amount)}
+                            </td>
+                            <td className="text-right">
+                              {formatCurrency(b.total)}
+                            </td>
+                            <td className="text-right">{b.count}</td>
+                          </tr>
+                        ))}
+                        <tr
+                          style={{
+                            fontWeight: 700,
+                            borderTop: "2px solid var(--gray-300)",
+                          }}
+                        >
+                          <td>Total Input VAT</td>
+                          <td className="text-right">
+                            {formatCurrency(
+                              vatReport.purchases_total - vatReport.input_tax,
+                            )}
+                          </td>
+                          <td
+                            className="text-right"
+                            style={{ color: "var(--blue-600)" }}
+                          >
+                            {formatCurrency(vatReport.input_tax)}
+                          </td>
+                          <td className="text-right">
+                            {formatCurrency(vatReport.purchases_total)}
+                          </td>
+                          <td className="text-right">
+                            {vatReport.purchases_count}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              )}
+
+              {activeVatTab === "credit_notes" && vatReport.credit_notes_count > 0 && (
                 <div className="report-card" style={{ marginBottom: 20 }}>
                   <h3 style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <span
@@ -3065,147 +3125,149 @@ export default function ReportsPage() {
                 </div>
               )}
 
-              {/* Section N: Net VAT Calculation */}
-              <div
-                className="report-card"
-                style={{
-                  marginBottom: 20,
-                  border: "2px solid var(--gray-300)",
-                }}
-              >
-                <h3 style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span
-                    style={{
-                      background: "var(--violet-100)",
-                      color: "var(--violet-700)",
-                      borderRadius: 6,
-                      padding: "2px 10px",
-                      fontSize: 12,
-                      fontWeight: 700,
-                    }}
-                  >
-                    {vatReport.credit_notes_count > 0 ? "4" : "3"}
-                  </span>
-                  Net VAT Calculation
-                </h3>
-                <table className="report-table" style={{ maxWidth: 500 }}>
-                  <tbody>
-                    <tr>
-                      <td>Sales VAT</td>
-                      <td className="text-right" style={{ fontWeight: 600 }}>
-                        {formatCurrency(vatReport.output_tax)}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Less: Purchases VAT</td>
-                      <td
-                        className="text-right"
-                        style={{ fontWeight: 600, color: "var(--red-600)" }}
-                      >
-                        ({formatCurrency(vatReport.input_tax)})
-                      </td>
-                    </tr>
-                    {vatReport.credit_notes_tax > 0 && (
+              {activeVatTab === "net_vat" && (
+                <div
+                  className="report-card"
+                  style={{
+                    marginBottom: 20,
+                    border: "2px solid var(--gray-300)",
+                  }}
+                >
+                  <h3 style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span
+                      style={{
+                        background: "var(--violet-100)",
+                        color: "var(--violet-700)",
+                        borderRadius: 6,
+                        padding: "2px 10px",
+                        fontSize: 12,
+                        fontWeight: 700,
+                      }}
+                    >
+                      {vatReport.credit_notes_count > 0 ? "4" : "3"}
+                    </span>
+                    Net VAT Calculation
+                  </h3>
+                  <table className="report-table" style={{ maxWidth: 500 }}>
+                    <tbody>
                       <tr>
-                        <td>Less: Credit Notes VAT</td>
+                        <td>Sales VAT</td>
+                        <td className="text-right" style={{ fontWeight: 600 }}>
+                          {formatCurrency(vatReport.output_tax)}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Less: Purchases VAT</td>
                         <td
                           className="text-right"
                           style={{ fontWeight: 600, color: "var(--red-600)" }}
                         >
-                          ({formatCurrency(vatReport.credit_notes_tax)})
+                          ({formatCurrency(vatReport.input_tax)})
                         </td>
                       </tr>
-                    )}
-                    <tr
-                      style={{
-                        borderTop: "3px double var(--gray-400)",
-                        fontSize: 16,
-                        fontWeight: 700,
-                      }}
-                    >
-                      <td>
-                        Net VAT{" "}
-                        {vatReport.net_tax >= 0 ? "Payable" : "Refundable"}
-                      </td>
-                      <td
-                        className="text-right"
+                      {vatReport.credit_notes_tax > 0 && (
+                        <tr>
+                          <td>Less: Credit Notes VAT</td>
+                          <td
+                            className="text-right"
+                            style={{ fontWeight: 600, color: "var(--red-600)" }}
+                          >
+                            ({formatCurrency(vatReport.credit_notes_tax)})
+                          </td>
+                        </tr>
+                      )}
+                      <tr
                         style={{
-                          color:
-                            vatReport.net_tax >= 0
-                              ? "var(--red-600)"
-                              : "var(--emerald-600)",
+                          borderTop: "3px double var(--gray-400)",
+                          fontSize: 16,
+                          fontWeight: 700,
                         }}
                       >
-                        {formatCurrency(Math.abs(vatReport.net_tax))}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-                <div
-                  style={{
-                    marginTop: 16,
-                    padding: "10px 14px",
-                    borderRadius: 8,
-                    fontSize: 12,
-                    background:
-                      vatReport.net_tax >= 0
-                        ? "var(--red-50, #fef2f2)"
-                        : "var(--emerald-50, #ecfdf5)",
-                    color:
-                      vatReport.net_tax >= 0
-                        ? "var(--red-700, #b91c1c)"
-                        : "var(--emerald-700, #047857)",
-                  }}
-                >
-                  {vatReport.net_tax >= 0
-                    ? `Amount payable to the tax authority: ${formatCurrency(vatReport.net_tax)}`
-                    : `You are entitled to a VAT refund of ${formatCurrency(Math.abs(vatReport.net_tax))} for this period.`}
+                        <td>
+                          Net VAT{" "}
+                          {vatReport.net_tax >= 0 ? "Payable" : "Refundable"}
+                        </td>
+                        <td
+                          className="text-right"
+                          style={{
+                            color:
+                              vatReport.net_tax >= 0
+                                ? "var(--red-600)"
+                                : "var(--emerald-600)",
+                          }}
+                        >
+                          {formatCurrency(Math.abs(vatReport.net_tax))}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <div
+                    style={{
+                      marginTop: 16,
+                      padding: "10px 14px",
+                      borderRadius: 8,
+                      fontSize: 12,
+                      background:
+                        vatReport.net_tax >= 0
+                          ? "var(--red-50, #fef2f2)"
+                          : "var(--emerald-50, #ecfdf5)",
+                      color:
+                        vatReport.net_tax >= 0
+                          ? "var(--red-700, #b91c1c)"
+                          : "var(--emerald-700, #047857)",
+                    }}
+                  >
+                    {vatReport.net_tax >= 0
+                      ? `Amount payable to the tax authority: ${formatCurrency(vatReport.net_tax)}`
+                      : `You are entitled to a VAT refund of ${formatCurrency(Math.abs(vatReport.net_tax))} for this period.`}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Profit Summary */}
-              <div className="report-card">
-                <h3>Profit Summary</h3>
-                <table className="report-table" style={{ maxWidth: 400 }}>
-                  <tbody>
-                    <tr>
-                      <td>Sales (excl. VAT)</td>
-                      <td className="text-right">
-                        {formatCurrency(
-                          vatReport.sales_total - vatReport.output_tax,
-                        )}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Purchases (excl. VAT)</td>
-                      <td className="text-right">
-                        {formatCurrency(
-                          vatReport.purchases_total - vatReport.input_tax,
-                        )}
-                      </td>
-                    </tr>
-                    <tr
-                      style={{
-                        fontWeight: 700,
-                        borderTop: "2px solid var(--gray-300)",
-                      }}
-                    >
-                      <td>Gross Profit</td>
-                      <td
-                        className="text-right"
+              {activeVatTab === "profit_summary" && (
+                <div className="report-card">
+                  <h3>Profit Summary</h3>
+                  <table className="report-table" style={{ maxWidth: 400 }}>
+                    <tbody>
+                      <tr>
+                        <td>Sales (excl. VAT)</td>
+                        <td className="text-right">
+                          {formatCurrency(
+                            vatReport.sales_total - vatReport.output_tax,
+                          )}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Purchases (excl. VAT)</td>
+                        <td className="text-right">
+                          {formatCurrency(
+                            vatReport.purchases_total - vatReport.input_tax,
+                          )}
+                        </td>
+                      </tr>
+                      <tr
                         style={{
-                          color:
-                            vatReport.profit >= 0
-                              ? "var(--emerald-600)"
-                              : "var(--red-600)",
+                          fontWeight: 700,
+                          borderTop: "2px solid var(--gray-300)",
                         }}
                       >
-                        {formatCurrency(vatReport.profit)}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+                        <td>Gross Profit</td>
+                        <td
+                          className="text-right"
+                          style={{
+                            color:
+                              vatReport.profit >= 0
+                                ? "var(--emerald-600)"
+                                : "var(--red-600)",
+                          }}
+                        >
+                          {formatCurrency(vatReport.profit)}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
 
