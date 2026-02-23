@@ -39,8 +39,6 @@ import ListViewContext, {
 } from "./context/ListViewContext";
 import AuthGuard from "./components/AuthGuard";
 
-const POS_WINDOW_NAME = "pos-terminal";
-
 const adminNav = [
   { to: "/", label: "Home", icon: HomeIcon },
   { to: "/dashboard", label: "Dashboard", icon: DashboardIcon },
@@ -96,11 +94,7 @@ function POSWindowLauncher() {
   const [popupBlocked, setPopupBlocked] = useState(false);
 
   const openPOSWindow = useCallback(() => {
-    const posWindow = window.open(
-      "/pos/window",
-      POS_WINDOW_NAME,
-      "popup=yes,width=1440,height=900,menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=yes",
-    );
+    const posWindow = window.open("/pos/window", "_blank", "noopener,noreferrer");
     if (posWindow) {
       try {
         posWindow.focus();
@@ -121,11 +115,11 @@ function POSWindowLauncher() {
     <div className="content" style={{ padding: "2rem", textAlign: "center" }}>
       <h2 style={{ marginBottom: 12 }}>Opening POS</h2>
       <p style={{ color: "var(--muted)", marginBottom: 16 }}>
-        Point of Sale opens in a separate window.
+        Point of Sale opens in a new tab.
       </p>
       {popupBlocked && (
         <button className="btn btn-primary" onClick={openPOSWindow}>
-          Open POS Window
+          Open POS Tab
         </button>
       )}
     </div>
