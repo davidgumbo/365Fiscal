@@ -107,6 +107,10 @@ interface PurchaseOrder {
 
 interface Expense {
   id: number;
+  reference: string;
+  description: string;
+  category: string;
+  supplier_id: number | null;
   expense_date: string;
   subtotal: number;
   tax_amount: number;
@@ -149,6 +153,25 @@ interface IncomeStatementReport {
   gross_revenue_ex_vat: number;
   expenses_ex_vat: number;
   net_revenue_ex_vat: number;
+  invoices: {
+    reference: string;
+    customer: string;
+    date: string;
+    subtotal: number;
+    tax: number;
+    total: number;
+    status: string;
+  }[];
+  expenses: {
+    reference: string;
+    supplier: string;
+    category: string;
+    description: string;
+    date: string;
+    subtotal: number;
+    tax: number;
+    total: number;
+  }[];
 }
 
 interface StockReport {
@@ -473,14 +496,19 @@ export default function ReportsPage() {
   const loadIncomeStatementReport = useCallback(async () => {
     if (!companyId) return;
 
-    const [invoices, expenses] = await Promise.all([
+    const [invoices, expenses, contacts] = await Promise.all([
       apiFetch<Invoice[]>(`/invoices?company_id=${companyId}`).catch(
         () => [] as Invoice[],
       ),
       apiFetch<Expense[]>(`/expenses?company_id=${companyId}`).catch(
         () => [] as Expense[],
       ),
+      apiFetch<{ id: number; name: string }[]>(`/contacts?company_id=${companyId}`).catch(
+        () => [] as { id: number; name: string }[],
+      ),
     ]);
+
+    const contactLookup = new Map(contacts.map((c) => [c.id, c.name]));
 
     const fromDate = dateRange.from ? new Date(dateRange.from) : null;
     const toDate = dateRange.to ? new Date(dateRange.to + "T23:59:59") : null;
@@ -514,6 +542,37 @@ export default function ReportsPage() {
       gross_revenue_ex_vat: grossRevenueExVat,
       expenses_ex_vat: expensesExVat,
       net_revenue_ex_vat: grossRevenueExVat - expensesExVat,
+      invoices: filteredInvoices
+        .sort((a, b) => {
+          const da = a.invoice_date ? new Date(a.invoice_date).getTime() : new Date(a.created_at).getTime();
+          const db = b.invoice_date ? new Date(b.invoice_date).getTime() : new Date(b.created_at).getTime();
+          return db - da;
+        })
+        .map((inv) => ({
+          reference: inv.reference,
+          customer: inv.customer_id ? (contactLookup.get(inv.customer_id) || "-") : "-",
+          date: inv.invoice_date ? new Date(inv.invoice_date).toLocaleDateString() : new Date(inv.created_at).toLocaleDateString(),
+          subtotal: inv.subtotal ?? (inv.total_amount || 0) - (inv.tax_amount || 0),
+          tax: inv.tax_amount || 0,
+          total: inv.total_amount || 0,
+          status: inv.status,
+        })),
+      expenses: filteredExpenses
+        .sort((a, b) => {
+          const da = a.expense_date ? new Date(a.expense_date).getTime() : 0;
+          const db = b.expense_date ? new Date(b.expense_date).getTime() : 0;
+          return db - da;
+        })
+        .map((ex) => ({
+          reference: ex.reference || "-",
+          supplier: ex.supplier_id ? (contactLookup.get(ex.supplier_id) || "-") : "-",
+          category: ex.category || "-",
+          description: ex.description || "-",
+          date: ex.expense_date ? new Date(ex.expense_date).toLocaleDateString() : "-",
+          subtotal: ex.subtotal || 0,
+          tax: ex.tax_amount || 0,
+          total: ex.total_amount || 0,
+        })),
     });
   }, [companyId, dateRange]);
 
@@ -1022,6 +1081,18 @@ export default function ReportsPage() {
       rows.push(["Gross Revenue (VAT excl.)", incomeStatementReport.gross_revenue_ex_vat.toFixed(2)]);
       rows.push(["Expenses (VAT excl.)", incomeStatementReport.expenses_ex_vat.toFixed(2)]);
       rows.push(["Net Revenue (VAT excl.)", incomeStatementReport.net_revenue_ex_vat.toFixed(2)]);
+      rows.push([]);
+      rows.push(["REVENUE - Invoices"]);
+      rows.push(["Reference", "Customer", "Date", "Subtotal", "Tax", "Total", "Status"]);
+      incomeStatementReport.invoices.forEach((inv) =>
+        rows.push([inv.reference, inv.customer, inv.date, inv.subtotal.toFixed(2), inv.tax.toFixed(2), inv.total.toFixed(2), inv.status]),
+      );
+      rows.push([]);
+      rows.push(["EXPENSES"]);
+      rows.push(["Reference", "Supplier", "Category", "Description", "Date", "Subtotal", "Tax", "Total"]);
+      incomeStatementReport.expenses.forEach((ex) =>
+        rows.push([ex.reference, ex.supplier, ex.category, ex.description, ex.date, ex.subtotal.toFixed(2), ex.tax.toFixed(2), ex.total.toFixed(2)]),
+      );
     } else if (activeReport === "stock" && stockReport) {
       filename = `stock-report-${new Date().toISOString().split("T")[0]}.csv`;
       rows.push(["Stock Valuation"]);
@@ -1212,6 +1283,14 @@ export default function ReportsPage() {
           <tr><td>Gross Revenue (VAT excl.)</td><td style="text-align:right">${formatCurrency(incomeStatementReport.gross_revenue_ex_vat)}</td></tr>
           <tr><td>Expenses (VAT excl.)</td><td style="text-align:right">${formatCurrency(incomeStatementReport.expenses_ex_vat)}</td></tr>
           <tr style="font-weight:700;border-top:2px solid #333"><td>Net Revenue (VAT excl.)</td><td style="text-align:right">${formatCurrency(incomeStatementReport.net_revenue_ex_vat)}</td></tr>
+        </tbody></table>
+        <h3>Revenue — Invoices (${incomeStatementReport.invoices.length})</h3>
+        <table><thead><tr><th>Reference</th><th>Customer</th><th>Date</th><th style="text-align:right">Subtotal</th><th style="text-align:right">Tax</th><th style="text-align:right">Total</th><th>Status</th></tr></thead><tbody>
+          ${incomeStatementReport.invoices.map((inv) => `<tr><td>${inv.reference}</td><td>${inv.customer}</td><td>${inv.date}</td><td style="text-align:right">${formatCurrency(inv.subtotal)}</td><td style="text-align:right">${formatCurrency(inv.tax)}</td><td style="text-align:right">${formatCurrency(inv.total)}</td><td>${inv.status}</td></tr>`).join("")}
+        </tbody></table>
+        <h3>Expenses (${incomeStatementReport.expenses.length})</h3>
+        <table><thead><tr><th>Reference</th><th>Supplier</th><th>Category</th><th>Date</th><th style="text-align:right">Subtotal</th><th style="text-align:right">Tax</th><th style="text-align:right">Total</th></tr></thead><tbody>
+          ${incomeStatementReport.expenses.map((ex) => `<tr><td>${ex.reference}</td><td>${ex.supplier}</td><td>${ex.category}</td><td>${ex.date}</td><td style="text-align:right">${formatCurrency(ex.subtotal)}</td><td style="text-align:right">${formatCurrency(ex.tax)}</td><td style="text-align:right">${formatCurrency(ex.total)}</td></tr>`).join("")}
         </tbody></table>`;
     } else if (activeReport === "stock" && stockReport) {
       bodyHTML = `
@@ -1970,6 +2049,97 @@ export default function ReportsPage() {
                     </tbody>
                   </table>
                 </div>
+              </div>
+
+              {/* Revenue — Invoices */}
+              <div className="report-card" style={{ marginTop: 24 }}>
+                <h3>Revenue — Invoices ({incomeStatementReport.invoices.length})</h3>
+                {incomeStatementReport.invoices.length === 0 ? (
+                  <p className="empty-state">No invoices in this period.</p>
+                ) : (
+                  <table className="report-table">
+                    <thead>
+                      <tr>
+                        <th>Reference</th>
+                        <th>Customer</th>
+                        <th>Date</th>
+                        <th className="text-right">Subtotal</th>
+                        <th className="text-right">Tax</th>
+                        <th className="text-right">Total</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {incomeStatementReport.invoices.map((inv, i) => (
+                        <tr key={i}>
+                          <td style={{ fontFamily: "monospace", fontSize: 12 }}>{inv.reference}</td>
+                          <td>{inv.customer}</td>
+                          <td>{inv.date}</td>
+                          <td className="text-right">{formatCurrency(inv.subtotal)}</td>
+                          <td className="text-right">{formatCurrency(inv.tax)}</td>
+                          <td className="text-right">{formatCurrency(inv.total)}</td>
+                          <td>
+                            <span className={`badge ${inv.status === "paid" ? "badge-success" : inv.status === "posted" ? "badge-info" : "badge-secondary"}`} style={{ textTransform: "capitalize" }}>
+                              {inv.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr style={{ fontWeight: 700, background: "var(--slate-50)" }}>
+                        <td colSpan={3} className="text-right">Total</td>
+                        <td className="text-right">{formatCurrency(incomeStatementReport.gross_revenue_ex_vat)}</td>
+                        <td className="text-right">{formatCurrency(incomeStatementReport.invoices.reduce((s, inv) => s + inv.tax, 0))}</td>
+                        <td className="text-right">{formatCurrency(incomeStatementReport.invoices.reduce((s, inv) => s + inv.total, 0))}</td>
+                        <td></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                )}
+              </div>
+
+              {/* Expenses */}
+              <div className="report-card" style={{ marginTop: 24 }}>
+                <h3>Expenses ({incomeStatementReport.expenses.length})</h3>
+                {incomeStatementReport.expenses.length === 0 ? (
+                  <p className="empty-state">No expenses in this period.</p>
+                ) : (
+                  <table className="report-table">
+                    <thead>
+                      <tr>
+                        <th>Reference</th>
+                        <th>Supplier</th>
+                        <th>Category</th>
+                        <th>Date</th>
+                        <th className="text-right">Subtotal</th>
+                        <th className="text-right">Tax</th>
+                        <th className="text-right">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {incomeStatementReport.expenses.map((ex, i) => (
+                        <tr key={i}>
+                          <td style={{ fontFamily: "monospace", fontSize: 12 }}>{ex.reference}</td>
+                          <td>{ex.supplier}</td>
+                          <td>{ex.category}</td>
+                          <td>{ex.date}</td>
+                          <td className="text-right">{formatCurrency(ex.subtotal)}</td>
+                          <td className="text-right">{formatCurrency(ex.tax)}</td>
+                          <td className="text-right">{formatCurrency(ex.total)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr style={{ fontWeight: 700, background: "var(--slate-50)" }}>
+                        <td colSpan={4} className="text-right">Total</td>
+                        <td className="text-right">{formatCurrency(incomeStatementReport.expenses_ex_vat)}</td>
+                        <td className="text-right">{formatCurrency(incomeStatementReport.expenses.reduce((s, ex) => s + ex.tax, 0))}</td>
+                        <td className="text-right">{formatCurrency(incomeStatementReport.expenses.reduce((s, ex) => s + ex.total, 0))}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                )}
               </div>
             </div>
           )}
