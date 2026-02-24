@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import html2pdf from "html2pdf.js";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { apiFetch } from "../api";
 import { TablePagination } from "../components/TablePagination";
 import { useMe } from "../hooks/useMe";
@@ -319,6 +319,7 @@ export default function InvoicesPage({
 }) {
   const navigate = useNavigate();
   const { invoiceId } = useParams();
+  const [searchParams] = useSearchParams();
   const routeInvoiceId = invoiceId ? Number(invoiceId) : null;
   const { me } = useMe();
   const { companies: allCompanies, loading: companiesLoading } = useCompanies();
@@ -334,6 +335,23 @@ export default function InvoicesPage({
       setSelectedCompanyId(me.company_ids[0]);
     }
   }, [isAdmin, me?.company_ids, selectedCompanyId]);
+
+  useEffect(() => {
+    const rawCompanyId = searchParams.get("company_id");
+    if (!rawCompanyId) return;
+    const parsedCompanyId = Number(rawCompanyId);
+    if (!Number.isFinite(parsedCompanyId) || parsedCompanyId <= 0) return;
+    if (
+      !isAdmin &&
+      me?.company_ids?.length &&
+      !me.company_ids.includes(parsedCompanyId)
+    ) {
+      return;
+    }
+    setSelectedCompanyId((prev) =>
+      prev === parsedCompanyId ? prev : parsedCompanyId,
+    );
+  }, [isAdmin, me?.company_ids, searchParams]);
 
   const companyId = selectedCompanyId;
 
@@ -427,6 +445,16 @@ export default function InvoicesPage({
     () => buildInvoiceTheme(logoPrimaryColor),
     [logoPrimaryColor],
   );
+
+  useEffect(() => {
+    const rawStatus = (searchParams.get("status") || "").toLowerCase();
+    const nextStatus = ["draft", "posted", "paid", "fiscalized"].includes(
+      rawStatus,
+    )
+      ? rawStatus
+      : "";
+    setListStatus((prev) => (prev === nextStatus ? prev : nextStatus));
+  }, [searchParams]);
 
   useEffect(() => {
     let disposed = false;
