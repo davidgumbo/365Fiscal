@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { apiFetch, apiRequest } from "../api";
 import { useMe } from "../hooks/useMe";
 import { useCompanies, Company } from "../hooks/useCompanies";
@@ -69,6 +70,7 @@ const TrashIcon = () => (
 );
 
 export default function ExpensesPage() {
+  const navigate = useNavigate();
   const { me } = useMe();
   const { companies: allCompanies, loading: companiesLoading } = useCompanies();
   const isAdmin = Boolean(me?.is_admin);
@@ -639,6 +641,9 @@ export default function ExpensesPage() {
                     )}
                     {mainView === "categories" && (
                       <button className="o-btn o-btn-primary" onClick={() => openCategoryModal()}>+ New Category</button>
+                    )}
+                    {mainView === "suppliers" && (
+                      <button className="o-btn o-btn-primary" onClick={() => navigate("/contacts/new")}>+ Add Supplier</button>
                     )}
                   </div>
                 </div>
