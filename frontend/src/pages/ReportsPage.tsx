@@ -125,6 +125,25 @@ interface CompanySettings {
   currency_symbol?: string;
 }
 
+type CurrencyItem = {
+  id: number;
+  company_id: number;
+  code: string;
+  name: string;
+  symbol: string;
+  position: string;
+  decimal_places: number;
+  is_default: boolean;
+  is_active: boolean;
+};
+
+const normalizeCurrency = (value: string | null | undefined) => {
+  const code = (value || "").trim().toUpperCase();
+  if (!code) return "";
+  if (code === "ZWL") return "ZWG";
+  return code;
+};
+
 /* ── Report data shapes ──────────────────────────────── */
 
 interface TopProduct {
@@ -373,6 +392,7 @@ export default function ReportsPage() {
     useState<PurchaseReportData | null>(null);
   const [companySettings, setCompanySettings] =
     useState<CompanySettings | null>(null);
+  const [currencyList, setCurrencyList] = useState<CurrencyItem[]>([]);
 
   // Set default date range
   useEffect(() => {
@@ -393,7 +413,37 @@ export default function ReportsPage() {
       .catch(() => {});
   }, [companyId]);
 
-  const currencySymbol = companySettings?.currency_symbol || "$";
+  // Load configured currencies (to resolve symbols by code)
+  useEffect(() => {
+    if (!companyId) return;
+    apiFetch<CurrencyItem[]>(`/currencies?company_id=${companyId}&active_only=true`)
+      .then((list) => setCurrencyList(list || []))
+      .catch(() => setCurrencyList([]));
+  }, [companyId]);
+
+  const defaultCurrency =
+    currencyList.find((c) => c.is_default) || currencyList[0] || null;
+  const baseCurrencyCode = normalizeCurrency(companySettings?.currency_code) || "USD";
+  const baseCurrencySymbol = (companySettings?.currency_symbol || "$").trim() || "$";
+  const effectiveBaseCode =
+    normalizeCurrency(defaultCurrency?.code) || baseCurrencyCode || "USD";
+  const effectiveBaseSymbol =
+    (defaultCurrency?.symbol || baseCurrencySymbol || "$").trim() || "$";
+
+  const reportCurrencyCode = normalizeCurrency(reportCurrency);
+
+  const resolvedCurrencyPrefix = useMemo(() => {
+    if (reportCurrencyCode) {
+      const cur = currencyList.find(
+        (c) => normalizeCurrency(c.code) === reportCurrencyCode,
+      );
+      const symbol = (cur?.symbol || "").trim();
+      return symbol || reportCurrencyCode;
+    }
+
+    // When not filtering by currency, default to the company's base currency symbol
+    return effectiveBaseSymbol || "$";
+  }, [currencyList, effectiveBaseSymbol, reportCurrencyCode]);
 
   const formatCurrency = useCallback(
     (amount: number) => {
@@ -402,9 +452,13 @@ export default function ReportsPage() {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       });
-      return `${amount < 0 ? "-" : ""}${currencySymbol}${formatted}`;
+      const prefix = resolvedCurrencyPrefix || "$";
+      const prefixWithSpacing = /^[A-Z]{3,}$/.test(prefix)
+        ? `${prefix} `
+        : prefix;
+      return `${amount < 0 ? "-" : ""}${prefixWithSpacing}${formatted}`;
     },
-    [currencySymbol],
+    [resolvedCurrencyPrefix],
   );
 
   /* ── Data loaders ──────────────────────────────── */
