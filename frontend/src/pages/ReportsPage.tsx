@@ -2289,6 +2289,7 @@ export default function ReportsPage() {
                 <MetricCard
                   label="Total Invoices"
                   value={String(salesReport.total_invoices)}
+                  variant="primary"
                   onArrowClick={() =>
                     navigate(
                       `/invoices${selectedCompanyId ? `?company_id=${selectedCompanyId}` : ""}`,
