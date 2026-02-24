@@ -6182,6 +6182,10 @@ tr:hover .o-quick-actions {
   transition: box-shadow 0.2s ease;
 }
 
+.metric-card.default {
+  border-left: 3px solid var(--blue-500);
+}
+
 .metric-card:hover {
   box-shadow: var(--shadow);
 }
