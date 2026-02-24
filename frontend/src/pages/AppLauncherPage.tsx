@@ -699,7 +699,7 @@ export default function AppLauncherPage() {
       <header className="app-launcher-header">
         <div className="app-launcher-user">
           {!isAdmin && companyName && (
-            <div className="bg-blue-300 rounded-md p-2 flex items-center gap-2 font-bold">
+            <div className="text-decoration-line rounded-md p-2 flex items-center gap-2 font-bold">
               <span>{companyName}</span>
             </div>
           )}
