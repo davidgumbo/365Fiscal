@@ -1200,7 +1200,14 @@ export default function ReportsPage() {
 
   useEffect(() => {
     setTablePages({});
-  }, [companyId, activeReport, activeIncomeTab, activeVatTab, dateRange.from, dateRange.to]);
+  }, [
+    companyId,
+    activeReport,
+    activeIncomeTab,
+    activeVatTab,
+    dateRange.from,
+    dateRange.to,
+  ]);
 
   /* ── Export functions ──────────────────────────── */
 
@@ -2484,93 +2491,93 @@ export default function ReportsPage() {
                       <p className="empty-state">No invoices in this period.</p>
                     ) : (
                       <>
-                      <table className="report-table">
-                        <thead>
-                          <tr>
-                            <th>Reference</th>
-                            <th>Customer</th>
-                            <th>Date</th>
-                            <th className="text-right">Subtotal</th>
-                            <th className="text-right">Tax</th>
-                            <th className="text-right">Total</th>
-                            <th>Status</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {incomeInvoicesTable.rows.map((inv, i) => (
-                            <tr key={i}>
-                              <td
-                                style={{
-                                  fontFamily: "monospace",
-                                  fontSize: 12,
-                                }}
-                              >
-                                {inv.reference}
-                              </td>
-                              <td>{inv.customer}</td>
-                              <td>{inv.date}</td>
-                              <td className="text-right">
-                                {formatCurrency(inv.subtotal)}
-                              </td>
-                              <td className="text-right">
-                                {formatCurrency(inv.tax)}
-                              </td>
-                              <td className="text-right">
-                                {formatCurrency(inv.total)}
-                              </td>
-                              <td>
-                                <span
-                                  className={`badge ${inv.status === "paid" ? "badge-success" : inv.status === "posted" ? "badge-info" : "badge-secondary"}`}
-                                  style={{ textTransform: "capitalize" }}
-                                >
-                                  {inv.status}
-                                </span>
-                              </td>
+                        <table className="report-table">
+                          <thead>
+                            <tr>
+                              <th>Reference</th>
+                              <th>Customer</th>
+                              <th>Date</th>
+                              <th className="text-right">Subtotal</th>
+                              <th className="text-right">Tax</th>
+                              <th className="text-right">Total</th>
+                              <th>Status</th>
                             </tr>
-                          ))}
-                        </tbody>
-                        <tfoot>
-                          <tr
-                            style={{
-                              fontWeight: 700,
-                              background: "var(--slate-50)",
-                            }}
-                          >
-                            <td colSpan={3} className="text-right">
-                              Total
-                            </td>
-                            <td className="text-right">
-                              {formatCurrency(
-                                incomeStatementReport.gross_revenue_ex_vat,
-                              )}
-                            </td>
-                            <td className="text-right">
-                              {formatCurrency(
-                                incomeStatementReport.invoices.reduce(
-                                  (s, inv) => s + inv.tax,
-                                  0,
-                                ),
-                              )}
-                            </td>
-                            <td className="text-right">
-                              {formatCurrency(
-                                incomeStatementReport.invoices.reduce(
-                                  (s, inv) => s + inv.total,
-                                  0,
-                                ),
-                              )}
-                            </td>
-                            <td></td>
-                          </tr>
-                        </tfoot>
-                      </table>
-                      <TablePagination
-                        page={incomeInvoicesTable.page}
-                        pageSize={incomeInvoicesTable.pageSize}
-                        totalItems={incomeInvoicesTable.totalItems}
-                        onPageChange={incomeInvoicesTable.setPage}
-                        onPageSizeChange={incomeInvoicesTable.setPageSize}
-                      />
+                          </thead>
+                          <tbody>
+                            {incomeInvoicesTable.rows.map((inv, i) => (
+                              <tr key={i}>
+                                <td
+                                  style={{
+                                    fontFamily: "monospace",
+                                    fontSize: 12,
+                                  }}
+                                >
+                                  {inv.reference}
+                                </td>
+                                <td>{inv.customer}</td>
+                                <td>{inv.date}</td>
+                                <td className="text-right">
+                                  {formatCurrency(inv.subtotal)}
+                                </td>
+                                <td className="text-right">
+                                  {formatCurrency(inv.tax)}
+                                </td>
+                                <td className="text-right">
+                                  {formatCurrency(inv.total)}
+                                </td>
+                                <td>
+                                  <span
+                                    className={`badge ${inv.status === "paid" ? "badge-success" : inv.status === "posted" ? "badge-info" : "badge-secondary"}`}
+                                    style={{ textTransform: "capitalize" }}
+                                  >
+                                    {inv.status}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                          <tfoot>
+                            <tr
+                              style={{
+                                fontWeight: 700,
+                                background: "var(--slate-50)",
+                              }}
+                            >
+                              <td colSpan={3} className="text-right">
+                                Total
+                              </td>
+                              <td className="text-right">
+                                {formatCurrency(
+                                  incomeStatementReport.gross_revenue_ex_vat,
+                                )}
+                              </td>
+                              <td className="text-right">
+                                {formatCurrency(
+                                  incomeStatementReport.invoices.reduce(
+                                    (s, inv) => s + inv.tax,
+                                    0,
+                                  ),
+                                )}
+                              </td>
+                              <td className="text-right">
+                                {formatCurrency(
+                                  incomeStatementReport.invoices.reduce(
+                                    (s, inv) => s + inv.total,
+                                    0,
+                                  ),
+                                )}
+                              </td>
+                              <td></td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                        <TablePagination
+                          page={incomeInvoicesTable.page}
+                          pageSize={incomeInvoicesTable.pageSize}
+                          totalItems={incomeInvoicesTable.totalItems}
+                          onPageChange={incomeInvoicesTable.setPage}
+                          onPageSizeChange={incomeInvoicesTable.setPageSize}
+                        />
                       </>
                     )}
                   </div>
@@ -2583,85 +2590,85 @@ export default function ReportsPage() {
                       <p className="empty-state">No expenses in this period.</p>
                     ) : (
                       <>
-                      <table className="report-table">
-                        <thead>
-                          <tr>
-                            <th>Reference</th>
-                            <th>Supplier</th>
-                            <th>Category</th>
-                            <th>Date</th>
-                            <th className="text-right">Subtotal</th>
-                            <th className="text-right">Tax</th>
-                            <th className="text-right">Total</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {incomeExpensesTable.rows.map((ex, i) => (
-                            <tr key={i}>
-                              <td
-                                style={{
-                                  fontFamily: "monospace",
-                                  fontSize: 12,
-                                }}
-                              >
-                                {ex.reference}
+                        <table className="report-table">
+                          <thead>
+                            <tr>
+                              <th>Reference</th>
+                              <th>Supplier</th>
+                              <th>Category</th>
+                              <th>Date</th>
+                              <th className="text-right">Subtotal</th>
+                              <th className="text-right">Tax</th>
+                              <th className="text-right">Total</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {incomeExpensesTable.rows.map((ex, i) => (
+                              <tr key={i}>
+                                <td
+                                  style={{
+                                    fontFamily: "monospace",
+                                    fontSize: 12,
+                                  }}
+                                >
+                                  {ex.reference}
+                                </td>
+                                <td>{ex.supplier}</td>
+                                <td>{ex.category}</td>
+                                <td>{ex.date}</td>
+                                <td className="text-right">
+                                  {formatCurrency(ex.subtotal)}
+                                </td>
+                                <td className="text-right">
+                                  {formatCurrency(ex.tax)}
+                                </td>
+                                <td className="text-right">
+                                  {formatCurrency(ex.total)}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                          <tfoot>
+                            <tr
+                              style={{
+                                fontWeight: 700,
+                                background: "var(--slate-50)",
+                              }}
+                            >
+                              <td colSpan={4} className="text-right">
+                                Total
                               </td>
-                              <td>{ex.supplier}</td>
-                              <td>{ex.category}</td>
-                              <td>{ex.date}</td>
                               <td className="text-right">
-                                {formatCurrency(ex.subtotal)}
+                                {formatCurrency(
+                                  incomeStatementReport.expenses_ex_vat,
+                                )}
                               </td>
                               <td className="text-right">
-                                {formatCurrency(ex.tax)}
+                                {formatCurrency(
+                                  incomeStatementReport.expenses.reduce(
+                                    (s, ex) => s + ex.tax,
+                                    0,
+                                  ),
+                                )}
                               </td>
                               <td className="text-right">
-                                {formatCurrency(ex.total)}
+                                {formatCurrency(
+                                  incomeStatementReport.expenses.reduce(
+                                    (s, ex) => s + ex.total,
+                                    0,
+                                  ),
+                                )}
                               </td>
                             </tr>
-                          ))}
-                        </tbody>
-                        <tfoot>
-                          <tr
-                            style={{
-                              fontWeight: 700,
-                              background: "var(--slate-50)",
-                            }}
-                          >
-                            <td colSpan={4} className="text-right">
-                              Total
-                            </td>
-                            <td className="text-right">
-                              {formatCurrency(
-                                incomeStatementReport.expenses_ex_vat,
-                              )}
-                            </td>
-                            <td className="text-right">
-                              {formatCurrency(
-                                incomeStatementReport.expenses.reduce(
-                                  (s, ex) => s + ex.tax,
-                                  0,
-                                ),
-                              )}
-                            </td>
-                            <td className="text-right">
-                              {formatCurrency(
-                                incomeStatementReport.expenses.reduce(
-                                  (s, ex) => s + ex.total,
-                                  0,
-                                ),
-                              )}
-                            </td>
-                          </tr>
-                        </tfoot>
-                      </table>
-                      <TablePagination
-                        page={incomeExpensesTable.page}
-                        pageSize={incomeExpensesTable.pageSize}
-                        totalItems={incomeExpensesTable.totalItems}
-                        onPageChange={incomeExpensesTable.setPage}
-                        onPageSizeChange={incomeExpensesTable.setPageSize}
-                      />
+                          </tfoot>
+                        </table>
+                        <TablePagination
+                          page={incomeExpensesTable.page}
+                          pageSize={incomeExpensesTable.pageSize}
+                          totalItems={incomeExpensesTable.totalItems}
+                          onPageChange={incomeExpensesTable.setPage}
+                          onPageSizeChange={incomeExpensesTable.setPageSize}
+                        />
                       </>
                     )}
                   </div>
@@ -2736,37 +2743,37 @@ export default function ReportsPage() {
                     <p className="empty-state">No stock data available.</p>
                   ) : (
                     <>
-                    <table className="report-table">
-                      <thead>
-                        <tr>
-                          <th>Product</th>
-                          <th className="text-right">On Hand</th>
-                          <th className="text-right">Available</th>
-                          <th className="text-right">Reserved</th>
-                          <th className="text-right">Value</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {stockSummaryTable.rows.map((s, i) => (
-                          <tr key={i}>
-                            <td>{s.name}</td>
-                            <td className="text-right">{s.on_hand}</td>
-                            <td className="text-right">{s.available}</td>
-                            <td className="text-right">{s.reserved}</td>
-                            <td className="text-right">
-                              {formatCurrency(s.value)}
-                            </td>
+                      <table className="report-table">
+                        <thead>
+                          <tr>
+                            <th>Product</th>
+                            <th className="text-right">On Hand</th>
+                            <th className="text-right">Available</th>
+                            <th className="text-right">Reserved</th>
+                            <th className="text-right">Value</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    <TablePagination
-                      page={stockSummaryTable.page}
-                      pageSize={stockSummaryTable.pageSize}
-                      totalItems={stockSummaryTable.totalItems}
-                      onPageChange={stockSummaryTable.setPage}
-                      onPageSizeChange={stockSummaryTable.setPageSize}
-                    />
+                        </thead>
+                        <tbody>
+                          {stockSummaryTable.rows.map((s, i) => (
+                            <tr key={i}>
+                              <td>{s.name}</td>
+                              <td className="text-right">{s.on_hand}</td>
+                              <td className="text-right">{s.available}</td>
+                              <td className="text-right">{s.reserved}</td>
+                              <td className="text-right">
+                                {formatCurrency(s.value)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      <TablePagination
+                        page={stockSummaryTable.page}
+                        pageSize={stockSummaryTable.pageSize}
+                        totalItems={stockSummaryTable.totalItems}
+                        onPageChange={stockSummaryTable.setPage}
+                        onPageSizeChange={stockSummaryTable.setPageSize}
+                      />
                     </>
                   )}
                 </div>
@@ -2855,55 +2862,58 @@ export default function ReportsPage() {
                     </p>
                   ) : (
                     <>
-                    <table className="report-table">
-                      <thead>
-                        <tr>
-                          <th>Reference</th>
-                          <th>Customer</th>
-                          <th className="text-right">Total</th>
-                          <th className="text-right">Paid</th>
-                          <th className="text-right">Due</th>
-                          <th>Date</th>
-                          <th>Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {debtorsUnpaidTable.rows.map((inv, i) => (
-                          <tr key={i}>
-                            <td
-                              style={{ fontFamily: "monospace", fontSize: 12 }}
-                            >
-                              {inv.reference}
-                            </td>
-                            <td>{inv.customer}</td>
-                            <td className="text-right">
-                              {formatCurrency(inv.total)}
-                            </td>
-                            <td className="text-right">
-                              {formatCurrency(inv.paid)}
-                            </td>
-                            <td className="text-right">
-                              {formatCurrency(inv.due)}
-                            </td>
-                            <td>{inv.date}</td>
-                            <td>
-                              <span
-                                className={`badge ${inv.status === "paid" || inv.status === "fiscalized" ? "badge-success" : inv.status === "posted" ? "badge-info" : inv.status === "cancelled" ? "badge-danger" : "badge-secondary"}`}
-                              >
-                                {inv.status}
-                              </span>
-                            </td>
+                      <table className="report-table">
+                        <thead>
+                          <tr>
+                            <th>Reference</th>
+                            <th>Customer</th>
+                            <th className="text-right">Total</th>
+                            <th className="text-right">Paid</th>
+                            <th className="text-right">Due</th>
+                            <th>Date</th>
+                            <th>Status</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    <TablePagination
-                      page={debtorsUnpaidTable.page}
-                      pageSize={debtorsUnpaidTable.pageSize}
-                      totalItems={debtorsUnpaidTable.totalItems}
-                      onPageChange={debtorsUnpaidTable.setPage}
-                      onPageSizeChange={debtorsUnpaidTable.setPageSize}
-                    />
+                        </thead>
+                        <tbody>
+                          {debtorsUnpaidTable.rows.map((inv, i) => (
+                            <tr key={i}>
+                              <td
+                                style={{
+                                  fontFamily: "monospace",
+                                  fontSize: 12,
+                                }}
+                              >
+                                {inv.reference}
+                              </td>
+                              <td>{inv.customer}</td>
+                              <td className="text-right">
+                                {formatCurrency(inv.total)}
+                              </td>
+                              <td className="text-right">
+                                {formatCurrency(inv.paid)}
+                              </td>
+                              <td className="text-right">
+                                {formatCurrency(inv.due)}
+                              </td>
+                              <td>{inv.date}</td>
+                              <td>
+                                <span
+                                  className={`badge ${inv.status === "paid" || inv.status === "fiscalized" ? "badge-success" : inv.status === "posted" ? "badge-info" : inv.status === "cancelled" ? "badge-danger" : "badge-secondary"}`}
+                                >
+                                  {inv.status}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      <TablePagination
+                        page={debtorsUnpaidTable.page}
+                        pageSize={debtorsUnpaidTable.pageSize}
+                        totalItems={debtorsUnpaidTable.totalItems}
+                        onPageChange={debtorsUnpaidTable.setPage}
+                        onPageSizeChange={debtorsUnpaidTable.setPageSize}
+                      />
                     </>
                   )}
                 </div>
@@ -2938,33 +2948,33 @@ export default function ReportsPage() {
                     </p>
                   ) : (
                     <>
-                    <table className="report-table">
-                      <thead>
-                        <tr>
-                          <th>Supplier</th>
-                          <th className="text-right">Orders</th>
-                          <th className="text-right">Amount</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {creditorsBySupplierTable.rows.map((v, i) => (
-                          <tr key={i}>
-                            <td>{v.name}</td>
-                            <td className="text-right">{v.count}</td>
-                            <td className="text-right">
-                              {formatCurrency(v.amount)}
-                            </td>
+                      <table className="report-table">
+                        <thead>
+                          <tr>
+                            <th>Supplier</th>
+                            <th className="text-right">Orders</th>
+                            <th className="text-right">Amount</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    <TablePagination
-                      page={creditorsBySupplierTable.page}
-                      pageSize={creditorsBySupplierTable.pageSize}
-                      totalItems={creditorsBySupplierTable.totalItems}
-                      onPageChange={creditorsBySupplierTable.setPage}
-                      onPageSizeChange={creditorsBySupplierTable.setPageSize}
-                    />
+                        </thead>
+                        <tbody>
+                          {creditorsBySupplierTable.rows.map((v, i) => (
+                            <tr key={i}>
+                              <td>{v.name}</td>
+                              <td className="text-right">{v.count}</td>
+                              <td className="text-right">
+                                {formatCurrency(v.amount)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      <TablePagination
+                        page={creditorsBySupplierTable.page}
+                        pageSize={creditorsBySupplierTable.pageSize}
+                        totalItems={creditorsBySupplierTable.totalItems}
+                        onPageChange={creditorsBySupplierTable.setPage}
+                        onPageSizeChange={creditorsBySupplierTable.setPageSize}
+                      />
                     </>
                   )}
                 </div>
@@ -2977,57 +2987,60 @@ export default function ReportsPage() {
                     </p>
                   ) : (
                     <>
-                    <table className="report-table">
-                      <thead>
-                        <tr>
-                          <th>Reference</th>
-                          <th>Supplier</th>
-                          <th className="text-right">Amount</th>
-                          <th>Date</th>
-                          <th>Status</th>
-                          <th>Paid</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {creditorsRecentTable.rows.map((o, i) => (
-                          <tr key={i}>
-                            <td
-                              style={{ fontFamily: "monospace", fontSize: 12 }}
-                            >
-                              {o.reference}
-                            </td>
-                            <td>{o.supplier}</td>
-                            <td className="text-right">
-                              {formatCurrency(o.amount)}
-                            </td>
-                            <td>{o.date}</td>
-                            <td>
-                              <span
-                                className={`badge ${o.status === "received" ? "badge-success" : o.status === "confirmed" ? "badge-info" : o.status === "cancelled" ? "badge-danger" : "badge-secondary"}`}
-                                style={{ textTransform: "capitalize" }}
-                              >
-                                {o.status}
-                              </span>
-                            </td>
-                            <td>
-                              <span
-                                className={`badge ${o.paid_state === "paid" ? "badge-success" : o.paid_state === "partial" ? "badge-warning" : "badge-secondary"}`}
-                                style={{ textTransform: "capitalize" }}
-                              >
-                                {o.paid_state}
-                              </span>
-                            </td>
+                      <table className="report-table">
+                        <thead>
+                          <tr>
+                            <th>Reference</th>
+                            <th>Supplier</th>
+                            <th className="text-right">Amount</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Paid</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    <TablePagination
-                      page={creditorsRecentTable.page}
-                      pageSize={creditorsRecentTable.pageSize}
-                      totalItems={creditorsRecentTable.totalItems}
-                      onPageChange={creditorsRecentTable.setPage}
-                      onPageSizeChange={creditorsRecentTable.setPageSize}
-                    />
+                        </thead>
+                        <tbody>
+                          {creditorsRecentTable.rows.map((o, i) => (
+                            <tr key={i}>
+                              <td
+                                style={{
+                                  fontFamily: "monospace",
+                                  fontSize: 12,
+                                }}
+                              >
+                                {o.reference}
+                              </td>
+                              <td>{o.supplier}</td>
+                              <td className="text-right">
+                                {formatCurrency(o.amount)}
+                              </td>
+                              <td>{o.date}</td>
+                              <td>
+                                <span
+                                  className={`badge ${o.status === "received" ? "badge-success" : o.status === "confirmed" ? "badge-info" : o.status === "cancelled" ? "badge-danger" : "badge-secondary"}`}
+                                  style={{ textTransform: "capitalize" }}
+                                >
+                                  {o.status}
+                                </span>
+                              </td>
+                              <td>
+                                <span
+                                  className={`badge ${o.paid_state === "paid" ? "badge-success" : o.paid_state === "partial" ? "badge-warning" : "badge-secondary"}`}
+                                  style={{ textTransform: "capitalize" }}
+                                >
+                                  {o.paid_state}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      <TablePagination
+                        page={creditorsRecentTable.page}
+                        pageSize={creditorsRecentTable.pageSize}
+                        totalItems={creditorsRecentTable.totalItems}
+                        onPageChange={creditorsRecentTable.setPage}
+                        onPageSizeChange={creditorsRecentTable.setPageSize}
+                      />
                     </>
                   )}
                 </div>
@@ -3122,12 +3135,12 @@ export default function ReportsPage() {
                 >
                   Net VAT
                 </button>
-                <button
+                {/* <button
                   className={`tab-btn ${activeVatTab === "profit_summary" ? "active" : ""}`}
                   onClick={() => setActiveVatTab("profit_summary")}
                 >
                   Profit Summary
-                </button>
+                </button> */}
               </div>
 
               {activeVatTab === "sales_vat" && (
@@ -3151,70 +3164,70 @@ export default function ReportsPage() {
                     <p className="empty-state">No sales in this period.</p>
                   ) : (
                     <>
-                    <table className="report-table">
-                      <thead>
-                        <tr>
-                          <th>VAT Rate</th>
-                          <th className="text-right">Taxable Amount</th>
-                          <th className="text-right">VAT Amount</th>
-                          <th className="text-right">Total Incl. VAT</th>
-                          <th className="text-right">Transactions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {vatSalesByRateTable.rows.map((b, i) => (
-                          <tr key={i}>
-                            <td>
-                              <span className="badge badge-success">
-                                {b.rate}%
-                              </span>
-                            </td>
-                            <td className="text-right">
-                              {formatCurrency(b.taxable_amount)}
-                            </td>
-                            <td className="text-right">
-                              {formatCurrency(b.tax_amount)}
-                            </td>
-                            <td className="text-right">
-                              {formatCurrency(b.total)}
-                            </td>
-                            <td className="text-right">{b.count}</td>
+                      <table className="report-table">
+                        <thead>
+                          <tr>
+                            <th>VAT Rate</th>
+                            <th className="text-right">Taxable Amount</th>
+                            <th className="text-right">VAT Amount</th>
+                            <th className="text-right">Total Incl. VAT</th>
+                            <th className="text-right">Transactions</th>
                           </tr>
-                        ))}
-                        <tr
-                          style={{
-                            fontWeight: 700,
-                            borderTop: "2px solid var(--gray-300)",
-                          }}
-                        >
-                          <td>Total Output VAT</td>
-                          <td className="text-right">
-                            {formatCurrency(
-                              vatReport.sales_total - vatReport.output_tax,
-                            )}
-                          </td>
-                          <td
-                            className="text-right"
-                            style={{ color: "var(--emerald-600)" }}
+                        </thead>
+                        <tbody>
+                          {vatSalesByRateTable.rows.map((b, i) => (
+                            <tr key={i}>
+                              <td>
+                                <span className="badge badge-success">
+                                  {b.rate}%
+                                </span>
+                              </td>
+                              <td className="text-right">
+                                {formatCurrency(b.taxable_amount)}
+                              </td>
+                              <td className="text-right">
+                                {formatCurrency(b.tax_amount)}
+                              </td>
+                              <td className="text-right">
+                                {formatCurrency(b.total)}
+                              </td>
+                              <td className="text-right">{b.count}</td>
+                            </tr>
+                          ))}
+                          <tr
+                            style={{
+                              fontWeight: 700,
+                              borderTop: "2px solid var(--gray-300)",
+                            }}
                           >
-                            {formatCurrency(vatReport.output_tax)}
-                          </td>
-                          <td className="text-right">
-                            {formatCurrency(vatReport.sales_total)}
-                          </td>
-                          <td className="text-right">
-                            {vatReport.invoices_count}
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                    <TablePagination
-                      page={vatSalesByRateTable.page}
-                      pageSize={vatSalesByRateTable.pageSize}
-                      totalItems={vatSalesByRateTable.totalItems}
-                      onPageChange={vatSalesByRateTable.setPage}
-                      onPageSizeChange={vatSalesByRateTable.setPageSize}
-                    />
+                            <td>Total Output VAT</td>
+                            <td className="text-right">
+                              {formatCurrency(
+                                vatReport.sales_total - vatReport.output_tax,
+                              )}
+                            </td>
+                            <td
+                              className="text-right"
+                              style={{ color: "var(--emerald-600)" }}
+                            >
+                              {formatCurrency(vatReport.output_tax)}
+                            </td>
+                            <td className="text-right">
+                              {formatCurrency(vatReport.sales_total)}
+                            </td>
+                            <td className="text-right">
+                              {vatReport.invoices_count}
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                      <TablePagination
+                        page={vatSalesByRateTable.page}
+                        pageSize={vatSalesByRateTable.pageSize}
+                        totalItems={vatSalesByRateTable.totalItems}
+                        onPageChange={vatSalesByRateTable.setPage}
+                        onPageSizeChange={vatSalesByRateTable.setPageSize}
+                      />
                     </>
                   )}
                 </div>
@@ -3241,70 +3254,70 @@ export default function ReportsPage() {
                     <p className="empty-state">No purchases in this period.</p>
                   ) : (
                     <>
-                    <table className="report-table">
-                      <thead>
-                        <tr>
-                          <th>VAT Rate</th>
-                          <th className="text-right">Taxable Amount</th>
-                          <th className="text-right">VAT Amount</th>
-                          <th className="text-right">Total Incl. VAT</th>
-                          <th className="text-right">Transactions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {vatPurchasesByRateTable.rows.map((b, i) => (
-                          <tr key={i}>
-                            <td>
-                              <span className="badge badge-info">
-                                {b.rate}%
-                              </span>
-                            </td>
-                            <td className="text-right">
-                              {formatCurrency(b.taxable_amount)}
-                            </td>
-                            <td className="text-right">
-                              {formatCurrency(b.tax_amount)}
-                            </td>
-                            <td className="text-right">
-                              {formatCurrency(b.total)}
-                            </td>
-                            <td className="text-right">{b.count}</td>
+                      <table className="report-table">
+                        <thead>
+                          <tr>
+                            <th>VAT Rate</th>
+                            <th className="text-right">Taxable Amount</th>
+                            <th className="text-right">VAT Amount</th>
+                            <th className="text-right">Total Incl. VAT</th>
+                            <th className="text-right">Transactions</th>
                           </tr>
-                        ))}
-                        <tr
-                          style={{
-                            fontWeight: 700,
-                            borderTop: "2px solid var(--gray-300)",
-                          }}
-                        >
-                          <td>Total Input VAT</td>
-                          <td className="text-right">
-                            {formatCurrency(
-                              vatReport.purchases_total - vatReport.input_tax,
-                            )}
-                          </td>
-                          <td
-                            className="text-right"
-                            style={{ color: "var(--blue-600)" }}
+                        </thead>
+                        <tbody>
+                          {vatPurchasesByRateTable.rows.map((b, i) => (
+                            <tr key={i}>
+                              <td>
+                                <span className="badge badge-info">
+                                  {b.rate}%
+                                </span>
+                              </td>
+                              <td className="text-right">
+                                {formatCurrency(b.taxable_amount)}
+                              </td>
+                              <td className="text-right">
+                                {formatCurrency(b.tax_amount)}
+                              </td>
+                              <td className="text-right">
+                                {formatCurrency(b.total)}
+                              </td>
+                              <td className="text-right">{b.count}</td>
+                            </tr>
+                          ))}
+                          <tr
+                            style={{
+                              fontWeight: 700,
+                              borderTop: "2px solid var(--gray-300)",
+                            }}
                           >
-                            {formatCurrency(vatReport.input_tax)}
-                          </td>
-                          <td className="text-right">
-                            {formatCurrency(vatReport.purchases_total)}
-                          </td>
-                          <td className="text-right">
-                            {vatReport.purchases_count}
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                    <TablePagination
-                      page={vatPurchasesByRateTable.page}
-                      pageSize={vatPurchasesByRateTable.pageSize}
-                      totalItems={vatPurchasesByRateTable.totalItems}
-                      onPageChange={vatPurchasesByRateTable.setPage}
-                      onPageSizeChange={vatPurchasesByRateTable.setPageSize}
-                    />
+                            <td>Total Input VAT</td>
+                            <td className="text-right">
+                              {formatCurrency(
+                                vatReport.purchases_total - vatReport.input_tax,
+                              )}
+                            </td>
+                            <td
+                              className="text-right"
+                              style={{ color: "var(--blue-600)" }}
+                            >
+                              {formatCurrency(vatReport.input_tax)}
+                            </td>
+                            <td className="text-right">
+                              {formatCurrency(vatReport.purchases_total)}
+                            </td>
+                            <td className="text-right">
+                              {vatReport.purchases_count}
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                      <TablePagination
+                        page={vatPurchasesByRateTable.page}
+                        pageSize={vatPurchasesByRateTable.pageSize}
+                        totalItems={vatPurchasesByRateTable.totalItems}
+                        onPageChange={vatPurchasesByRateTable.setPage}
+                        onPageSizeChange={vatPurchasesByRateTable.setPageSize}
+                      />
                     </>
                   )}
                 </div>
@@ -3608,40 +3621,40 @@ export default function ReportsPage() {
                     <p className="empty-state">No data.</p>
                   ) : (
                     <>
-                    <table className="report-table">
-                      <thead>
-                        <tr>
-                          <th>Status</th>
-                          <th className="text-right">Count</th>
-                          <th className="text-right">Amount</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {purchasesByStatusTable.rows.map((s, i) => (
-                          <tr key={i}>
-                            <td>
-                              <span
-                                className={`badge ${s.status === "received" ? "badge-success" : s.status === "draft" ? "badge-secondary" : s.status === "cancelled" ? "badge-danger" : "badge-info"}`}
-                                style={{ textTransform: "capitalize" }}
-                              >
-                                {s.status}
-                              </span>
-                            </td>
-                            <td className="text-right">{s.count}</td>
-                            <td className="text-right">
-                              {formatCurrency(s.amount)}
-                            </td>
+                      <table className="report-table">
+                        <thead>
+                          <tr>
+                            <th>Status</th>
+                            <th className="text-right">Count</th>
+                            <th className="text-right">Amount</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    <TablePagination
-                      page={purchasesByStatusTable.page}
-                      pageSize={purchasesByStatusTable.pageSize}
-                      totalItems={purchasesByStatusTable.totalItems}
-                      onPageChange={purchasesByStatusTable.setPage}
-                      onPageSizeChange={purchasesByStatusTable.setPageSize}
-                    />
+                        </thead>
+                        <tbody>
+                          {purchasesByStatusTable.rows.map((s, i) => (
+                            <tr key={i}>
+                              <td>
+                                <span
+                                  className={`badge ${s.status === "received" ? "badge-success" : s.status === "draft" ? "badge-secondary" : s.status === "cancelled" ? "badge-danger" : "badge-info"}`}
+                                  style={{ textTransform: "capitalize" }}
+                                >
+                                  {s.status}
+                                </span>
+                              </td>
+                              <td className="text-right">{s.count}</td>
+                              <td className="text-right">
+                                {formatCurrency(s.amount)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      <TablePagination
+                        page={purchasesByStatusTable.page}
+                        pageSize={purchasesByStatusTable.pageSize}
+                        totalItems={purchasesByStatusTable.totalItems}
+                        onPageChange={purchasesByStatusTable.setPage}
+                        onPageSizeChange={purchasesByStatusTable.setPageSize}
+                      />
                     </>
                   )}
 
@@ -3687,46 +3700,48 @@ export default function ReportsPage() {
                   </p>
                 ) : (
                   <>
-                  <table className="report-table">
-                    <thead>
-                      <tr>
-                        <th>Reference</th>
-                        <th>Supplier</th>
-                        <th className="text-right">Amount</th>
-                        <th>Date</th>
-                        <th>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {purchasesRecentTable.rows.map((o, i) => (
-                        <tr key={i}>
-                          <td style={{ fontFamily: "monospace", fontSize: 12 }}>
-                            {o.reference}
-                          </td>
-                          <td>{o.supplier}</td>
-                          <td className="text-right">
-                            {formatCurrency(o.amount)}
-                          </td>
-                          <td>{o.date}</td>
-                          <td>
-                            <span
-                              className={`badge ${o.status === "received" ? "badge-success" : o.status === "draft" ? "badge-secondary" : o.status === "cancelled" ? "badge-danger" : "badge-info"}`}
-                              style={{ textTransform: "capitalize" }}
-                            >
-                              {o.status}
-                            </span>
-                          </td>
+                    <table className="report-table">
+                      <thead>
+                        <tr>
+                          <th>Reference</th>
+                          <th>Supplier</th>
+                          <th className="text-right">Amount</th>
+                          <th>Date</th>
+                          <th>Status</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  <TablePagination
-                    page={purchasesRecentTable.page}
-                    pageSize={purchasesRecentTable.pageSize}
-                    totalItems={purchasesRecentTable.totalItems}
-                    onPageChange={purchasesRecentTable.setPage}
-                    onPageSizeChange={purchasesRecentTable.setPageSize}
-                  />
+                      </thead>
+                      <tbody>
+                        {purchasesRecentTable.rows.map((o, i) => (
+                          <tr key={i}>
+                            <td
+                              style={{ fontFamily: "monospace", fontSize: 12 }}
+                            >
+                              {o.reference}
+                            </td>
+                            <td>{o.supplier}</td>
+                            <td className="text-right">
+                              {formatCurrency(o.amount)}
+                            </td>
+                            <td>{o.date}</td>
+                            <td>
+                              <span
+                                className={`badge ${o.status === "received" ? "badge-success" : o.status === "draft" ? "badge-secondary" : o.status === "cancelled" ? "badge-danger" : "badge-info"}`}
+                                style={{ textTransform: "capitalize" }}
+                              >
+                                {o.status}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <TablePagination
+                      page={purchasesRecentTable.page}
+                      pageSize={purchasesRecentTable.pageSize}
+                      totalItems={purchasesRecentTable.totalItems}
+                      onPageChange={purchasesRecentTable.setPage}
+                      onPageSizeChange={purchasesRecentTable.setPageSize}
+                    />
                   </>
                 )}
               </div>
