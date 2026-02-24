@@ -1,5 +1,6 @@
 from datetime import date
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import inspect
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db, ensure_company_access, require_company_access, get_current_user
@@ -10,6 +11,18 @@ from app.schemas.currency import (
 )
 
 router = APIRouter(prefix="/currencies", tags=["currencies"])
+
+
+def ensure_currency_tables(db: Session) -> None:
+    """Create currency tables when missing to avoid runtime UndefinedTable errors."""
+    bind = db.get_bind()
+    inspector = inspect(bind)
+    existing_tables = set(inspector.get_table_names())
+
+    if "currencies" not in existing_tables:
+        Currency.__table__.create(bind=bind, checkfirst=True)
+    if "currency_rates" not in existing_tables:
+        CurrencyRate.__table__.create(bind=bind, checkfirst=True)
 
 
 # ─── Currency CRUD ───
@@ -23,6 +36,7 @@ def list_currencies(
     _=Depends(require_company_access),
 ):
     """List all currencies for a company."""
+    ensure_currency_tables(db)
     q = db.query(Currency).filter(Currency.company_id == company_id)
     if active_only:
         q = q.filter(Currency.is_active == True)
@@ -36,6 +50,7 @@ def get_currency(
     user=Depends(get_current_user),
 ):
     """Get a single currency with its rates."""
+    ensure_currency_tables(db)
     currency = db.query(Currency).filter(Currency.id == currency_id).first()
     if not currency:
         raise HTTPException(status_code=404, detail="Currency not found")
@@ -50,6 +65,7 @@ def create_currency(
     user=Depends(get_current_user),
 ):
     """Create a new currency for a company."""
+    ensure_currency_tables(db)
     ensure_company_access(db, user, payload.company_id)
 
     # Check for duplicate code
@@ -99,6 +115,7 @@ def update_currency(
     user=Depends(get_current_user),
 ):
     """Update a currency."""
+    ensure_currency_tables(db)
     currency = db.query(Currency).filter(Currency.id == currency_id).first()
     if not currency:
         raise HTTPException(status_code=404, detail="Currency not found")
@@ -133,6 +150,7 @@ def delete_currency(
     user=Depends(get_current_user),
 ):
     """Delete a currency (and all its rates)."""
+    ensure_currency_tables(db)
     currency = db.query(Currency).filter(Currency.id == currency_id).first()
     if not currency:
         raise HTTPException(status_code=404, detail="Currency not found")
@@ -156,6 +174,7 @@ def list_rates(
     user=Depends(get_current_user),
 ):
     """List recent rates for a currency (most recent first)."""
+    ensure_currency_tables(db)
     currency = db.query(Currency).filter(Currency.id == currency_id).first()
     if not currency:
         raise HTTPException(status_code=404, detail="Currency not found")
@@ -179,6 +198,7 @@ def get_rate_for_date(
     user=Depends(get_current_user),
 ):
     """Get the exchange rate for a specific date (or the most recent rate before that date)."""
+    ensure_currency_tables(db)
     currency = db.query(Currency).filter(Currency.id == currency_id).first()
     if not currency:
         raise HTTPException(status_code=404, detail="Currency not found")
@@ -207,6 +227,7 @@ def create_rate(
     user=Depends(get_current_user),
 ):
     """Set an exchange rate for a currency on a specific date."""
+    ensure_currency_tables(db)
     currency = db.query(Currency).filter(Currency.id == currency_id).first()
     if not currency:
         raise HTTPException(status_code=404, detail="Currency not found")
@@ -243,6 +264,7 @@ def update_rate(
     user=Depends(get_current_user),
 ):
     """Update an exchange rate."""
+    ensure_currency_tables(db)
     rate = db.query(CurrencyRate).filter(CurrencyRate.id == rate_id).first()
     if not rate:
         raise HTTPException(status_code=404, detail="Rate not found")
@@ -264,6 +286,7 @@ def delete_rate(
     user=Depends(get_current_user),
 ):
     """Delete an exchange rate."""
+    ensure_currency_tables(db)
     rate = db.query(CurrencyRate).filter(CurrencyRate.id == rate_id).first()
     if not rate:
         raise HTTPException(status_code=404, detail="Rate not found")

@@ -1,9 +1,12 @@
 ﻿from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import logging
 
 from app.api.routes import api_router
 from app.core.config import settings
-from app.db.session import SessionLocal
+from app.db.base import Base
+from app.db.session import SessionLocal, engine
+import app.models  # noqa: F401
 from app.models.user import User
 from app.models.company import Company
 from app.models.company_user import CompanyUser
@@ -28,6 +31,18 @@ if origins:
     )
 
 app.include_router(api_router, prefix="/api")
+
+_startup_logger = logging.getLogger("startup")
+
+
+@app.on_event("startup")
+def ensure_required_tables_exist():
+    """Create any missing mapped tables if migrations were not applied."""
+    try:
+        Base.metadata.create_all(bind=engine, checkfirst=True)
+    except Exception:
+        _startup_logger.exception("Failed ensuring required database tables")
+        raise
 
 
 @app.on_event("startup")
