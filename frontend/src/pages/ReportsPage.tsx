@@ -2289,6 +2289,12 @@ export default function ReportsPage() {
                 <MetricCard
                   label="Total Invoices"
                   value={String(salesReport.total_invoices)}
+                  onArrowClick={() =>
+                    navigate(
+                      `/invoices${selectedCompanyId ? `?company_id=${selectedCompanyId}` : ""}`,
+                    )
+                  }
+                  arrowLabel="Open all invoices in Invoices app"
                 />
                 <MetricCard
                   label="Paid Invoices"
@@ -2305,6 +2311,12 @@ export default function ReportsPage() {
                   label="Pending Invoices"
                   value={String(salesReport.pending_invoices)}
                   variant="warning"
+                  onArrowClick={() =>
+                    navigate(
+                      `/invoices?status=posted${selectedCompanyId ? `&company_id=${selectedCompanyId}` : ""}`,
+                    )
+                  }
+                  arrowLabel="Open pending invoices in Invoices app"
                 />
                 <MetricCard
                   label="Total Tax"
