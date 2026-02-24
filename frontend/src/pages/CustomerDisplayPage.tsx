@@ -17,6 +17,8 @@ type DisplayData = {
   subtotal: number;
   tax: number;
   total: number;
+  currency_code?: string;
+  currency_symbol?: string;
   companyName: string;
   companyLogo: string;
 };
@@ -58,6 +60,14 @@ export default function CustomerDisplayPage() {
   const tax = data?.tax || 0;
   const companyName = data?.companyName || "365 Fiscal";
   const companyLogo = data?.companyLogo || "";
+  const currencySymbol = data?.currency_symbol || "";
+  const currencyCode = data?.currency_code || "";
+
+  const money = (n: number) => {
+    if (currencySymbol) return `${currencySymbol}${fmt(n)}`;
+    if (currencyCode) return `${currencyCode} ${fmt(n)}`;
+    return fmt(n);
+  };
 
   return (
     <div className="cd-root">
@@ -266,11 +276,11 @@ export default function CustomerDisplayPage() {
                     <div className="cd-line-info">
                       <div className="cd-line-name">{l.name}</div>
                       <div className="cd-line-meta">
-                        {l.qty} × ${fmt(l.price)}
+                        {l.qty} × {money(l.price)}
                         {l.discount > 0 && ` (−${l.discount}%)`}
                       </div>
                     </div>
-                    <div className="cd-line-total">${fmt(l.total)}</div>
+                    <div className="cd-line-total">{money(l.total)}</div>
                   </div>
                 ))}
               </div>
@@ -278,15 +288,15 @@ export default function CustomerDisplayPage() {
             <div className="cd-totals-section">
               <div className="cd-total-row">
                 <span>Subtotal</span>
-                <span>${fmt(subtotal)}</span>
+                <span>{money(subtotal)}</span>
               </div>
               <div className="cd-total-row">
                 <span>Tax</span>
-                <span>${fmt(tax)}</span>
+                <span>{money(tax)}</span>
               </div>
               <div className="cd-grand-total">
                 <span>Total</span>
-                <span>${fmt(total)}</span>
+                <span>{money(total)}</span>
               </div>
               <div className="cd-item-count">
                 {cart.reduce((s, l) => s + l.qty, 0)} item

@@ -111,6 +111,26 @@ type CompanySettings = {
   currency_symbol?: string | null;
 };
 
+type CurrencyItem = {
+  id: number;
+  company_id: number;
+  code: string;
+  name: string;
+  symbol: string;
+  position: string;
+  decimal_places: number;
+  is_default: boolean;
+  is_active: boolean;
+};
+
+type CurrencyRateRead = {
+  id: number;
+  currency_id: number;
+  company_id: number;
+  rate: number;
+  rate_date: string;
+};
+
 /* ────────────────────────── helpers ────────────────────────── */
 const fmt = (n: number) => n.toFixed(2);
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -322,6 +342,15 @@ export default function POSPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [devices, setDevices] = useState<Device[]>([]);
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
+
+  // Currency: prices are stored in the company's base currency.
+  // The cashier can choose a sale currency for the current POS session.
+  const [baseCurrencyCode, setBaseCurrencyCode] = useState("USD");
+  const [baseCurrencySymbol, setBaseCurrencySymbol] = useState("$");
+  const [currencyList, setCurrencyList] = useState<CurrencyItem[]>([]);
+  const [fxRate, setFxRate] = useState(1);
+  const [posCurrencyInitialized, setPosCurrencyInitialized] = useState(false);
+
   const [posCurrencyCode, setPosCurrencyCode] = useState("USD");
   const [posCurrencySymbol, setPosCurrencySymbol] = useState("");
   const [session, setSession] = useState<POSSession | null>(null);
@@ -395,19 +424,90 @@ export default function POSPage() {
     navigate("/");
   }, [navigate]);
 
+  // Load base currency from company settings (fallback if currency list isn't configured)
   useEffect(() => {
     if (!companyId) return;
     apiFetch<CompanySettings>(`/company-settings?company_id=${companyId}`)
       .then((settings) => {
         const code = normalizeCurrency(settings?.currency_code) || "USD";
-        setPosCurrencyCode(code);
-        setPosCurrencySymbol((settings?.currency_symbol || "").trim());
+        setBaseCurrencyCode(code);
+        setBaseCurrencySymbol((settings?.currency_symbol || "$").trim() || "$");
       })
       .catch(() => {
-        setPosCurrencyCode("USD");
-        setPosCurrencySymbol("");
+        setBaseCurrencyCode("USD");
+        setBaseCurrencySymbol("$");
       });
   }, [companyId]);
+
+  // Load configured currencies (used for the POS sale-currency selector)
+  useEffect(() => {
+    if (!companyId) return;
+    apiFetch<CurrencyItem[]>(
+      `/currencies?company_id=${companyId}&active_only=true`,
+    )
+      .then((list) => setCurrencyList(list || []))
+      .catch(() => setCurrencyList([]));
+  }, [companyId]);
+
+  const defaultCurrency =
+    currencyList.find((c) => c.is_default) || currencyList[0] || null;
+
+  const effectiveBaseCode =
+    normalizeCurrency(defaultCurrency?.code) || baseCurrencyCode || "USD";
+  const effectiveBaseSymbol =
+    (defaultCurrency?.symbol || baseCurrencySymbol || "$").trim() || "$";
+
+  // Reset currency initialization when company changes
+  useEffect(() => {
+    setPosCurrencyInitialized(false);
+  }, [companyId]);
+
+  // Initialize POS sale currency to base currency (once)
+  useEffect(() => {
+    if (posCurrencyInitialized) return;
+    setPosCurrencyCode(effectiveBaseCode);
+    setPosCurrencySymbol(effectiveBaseSymbol);
+    setPosCurrencyInitialized(true);
+  }, [effectiveBaseCode, effectiveBaseSymbol, posCurrencyInitialized]);
+
+  // Keep currency symbol + FX rate synced with selected currency
+  useEffect(() => {
+    if (!companyId) return;
+    const code = normalizeCurrency(posCurrencyCode) || effectiveBaseCode;
+    if (code !== posCurrencyCode) {
+      setPosCurrencyCode(code);
+      return;
+    }
+
+    const cur = currencyList.find((c) => normalizeCurrency(c.code) === code);
+    const sym = (
+      cur?.symbol || (code === effectiveBaseCode ? effectiveBaseSymbol : "")
+    ).trim();
+    setPosCurrencySymbol(sym);
+
+    if (code === effectiveBaseCode) {
+      setFxRate(1);
+      return;
+    }
+
+    if (!cur) {
+      setFxRate(1);
+      return;
+    }
+
+    apiFetch<CurrencyRateRead | null>(`/currencies/${cur.id}/rate`)
+      .then((r) => setFxRate(r?.rate || 1))
+      .catch(() => setFxRate(1));
+  }, [companyId, posCurrencyCode, currencyList, effectiveBaseCode, effectiveBaseSymbol]);
+
+  const toSale = useCallback(
+    (amountBase: number) => amountBase * (fxRate || 1),
+    [fxRate],
+  );
+  const fromSale = useCallback(
+    (amountSale: number) => amountSale / (fxRate || 1),
+    [fxRate],
+  );
 
   const money = useCallback(
     (amount: number) => {
@@ -418,14 +518,29 @@ export default function POSPage() {
     [posCurrencyCode, posCurrencySymbol],
   );
 
+  const moneyFor = useCallback(
+    (amount: number, currency: string | null | undefined) => {
+      const code = normalizeCurrency(currency) || "";
+      if (!code || code === normalizeCurrency(posCurrencyCode)) return money(amount);
+      const gap = code.length === 1 ? "" : " ";
+      return `${code}${gap}${fmt(amount)}`;
+    },
+    [money, posCurrencyCode],
+  );
+
   // ── calculated ──
-  const cartSubtotal = cart.reduce((s, l) => s + lineSubtotal(l), 0);
-  const cartTax = cart.reduce((s, l) => s + lineTax(l), 0);
-  const cartTotal = cart.reduce((s, l) => s + lineTotal(l), 0);
-  const cartDiscount = cart.reduce(
+  const cartSubtotalBase = cart.reduce((s, l) => s + lineSubtotal(l), 0);
+  const cartTaxBase = cart.reduce((s, l) => s + lineTax(l), 0);
+  const cartTotalBase = cart.reduce((s, l) => s + lineTotal(l), 0);
+  const cartDiscountBase = cart.reduce(
     (s, l) => s + l.qty * l.price * (l.discount / 100),
     0,
   );
+
+  const cartSubtotal = toSale(cartSubtotalBase);
+  const cartTax = toSale(cartTaxBase);
+  const cartTotal = toSale(cartTotalBase);
+  const cartDiscount = toSale(cartDiscountBase);
   const itemCount = cart.reduce((s, l) => s + l.qty, 0);
 
   // ── data loading ──
@@ -534,16 +649,18 @@ export default function POSPage() {
       cart: cart.map((l) => ({
         name: l.product.name,
         qty: l.qty,
-        price: l.price,
+        price: toSale(l.price),
         discount: l.discount,
         vat_rate: l.vat_rate,
         image_url: l.product.image_url,
-        subtotal: lineSubtotal(l),
-        total: lineTotal(l),
+        subtotal: toSale(lineSubtotal(l)),
+        total: toSale(lineTotal(l)),
       })),
       subtotal: cartSubtotal,
       tax: cartTax,
       total: cartTotal,
+      currency_code: posCurrencyCode,
+      currency_symbol: posCurrencySymbol || posCurrencyCode,
       companyName: companyInfo?.name || "365 Fiscal",
       companyLogo: companyInfo?.logo_data || "",
     };
@@ -552,7 +669,7 @@ export default function POSPage() {
     } catch {
       /* window closed */
     }
-  }, [cart, cartSubtotal, cartTax, cartTotal, companyInfo]);
+  }, [cart, cartSubtotal, cartTax, cartTotal, companyInfo, posCurrencyCode, posCurrencySymbol, toSale]);
 
   useEffect(() => {
     syncCustomerDisplay();
@@ -686,7 +803,7 @@ export default function POSPage() {
             description: l.product.name,
             quantity: l.qty,
             uom: l.product.uom,
-            unit_price: l.price,
+            unit_price: parseFloat((toSale(l.price) || 0).toFixed(2)),
             discount: l.discount,
             vat_rate: l.vat_rate,
           })),
@@ -879,7 +996,10 @@ export default function POSPage() {
   });
 
   // ── quick cash buttons ──
-  const quickCash = [1, 2, 5, 10, 20, 50, 100];
+  const quickCashBase = [1, 2, 5, 10, 20, 50, 100];
+  const quickCash = quickCashBase.map((v) =>
+    parseFloat((toSale(v) || 0).toFixed(2)),
+  );
 
   /* ──────────── loading / no company ──────────── */
   if (!companyId) {
@@ -1078,6 +1198,66 @@ export default function POSPage() {
                     fontWeight: 600,
                   }}
                 >
+                  Sale Currency
+                </label>
+                <select
+                  value={posCurrencyCode}
+                  onChange={(e) => setPosCurrencyCode(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "12px 14px",
+                    fontSize: 16,
+                    fontWeight: 600,
+                    border: "1px solid var(--slate-200, #e2e8f0)",
+                    borderRadius: 8,
+                    background: "var(--white-500, #fff)",
+                    outline: "none",
+                    transition: "border-color 150ms",
+                  }}
+                  onFocus={(e) =>
+                    (e.currentTarget.style.borderColor =
+                      "var(--violet-400, #a78bfa)")
+                  }
+                  onBlur={(e) =>
+                    (e.currentTarget.style.borderColor =
+                      "var(--slate-200, #e2e8f0)")
+                  }
+                >
+                  {(currencyList.length ? currencyList : [{ code: baseCurrencyCode || "USD", name: baseCurrencyCode || "USD", symbol: baseCurrencySymbol || baseCurrencyCode || "USD" }]).map(
+                    (c) => {
+                      const code = normalizeCurrency(c.code);
+                      const label = c.name && c.name !== c.code ? `${code} — ${c.name}` : code;
+                      return (
+                        <option key={`${(c as any).id ?? code}-${c.code}`} value={code}>
+                          {label}
+                        </option>
+                      );
+                    }
+                  )}
+                </select>
+                <p
+                  style={{
+                    margin: "6px 0 0",
+                    fontSize: "0.78rem",
+                    color: "var(--slate-400)",
+                  }}
+                >
+                  Prices are converted from the company base currency using the
+                  latest configured rate.
+                </p>
+              </div>
+              <div style={{ marginBottom: 12 }}>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "0.78rem",
+                    color: "var(--slate-500)",
+                    marginBottom: 6,
+                    textTransform: "uppercase",
+                    letterSpacing: 1,
+                    fontWeight: 600,
+                  }}
+                >
                   Opening Balance
                 </label>
                 <div style={{ position: "relative" }}>
@@ -1175,6 +1355,9 @@ export default function POSPage() {
               <div className="pos-session-badge">
                 <span className="pos-session-dot" />
                 {session?.name}
+              </div>
+              <div className="pos-session-badge" style={{ marginLeft: 8 }}>
+                {posCurrencyCode}
               </div>
             </div>
           )}
@@ -1700,7 +1883,7 @@ export default function POSPage() {
                 <div className="pos-product-card-body">
                   <div className="pos-product-card-name">{p.name}</div>
                   <div className="pos-product-card-price">
-                    {money(p.sale_price)}
+                    {money(toSale(p.sale_price))}
                   </div>
                   {p.track_inventory && p.product_type === "storable" && (
                     <div
@@ -1862,7 +2045,7 @@ export default function POSPage() {
                 <div className="pos-cart-line-info">
                   <div className="pos-cart-line-name">{line.product.name}</div>
                   <div className="pos-cart-line-meta">
-                    {money(line.price)} × {line.qty}
+                    {money(toSale(line.price))} × {line.qty}
                     {line.discount > 0 && (
                       <span className="pos-discount-tag">
                         -{line.discount}%
@@ -1897,7 +2080,7 @@ export default function POSPage() {
                   </button>
                 </div>
                 <div className="pos-cart-line-total">
-                  {money(lineTotal(line))}
+                  {money(toSale(lineTotal(line)))}
                 </div>
                 <button
                   className="pos-cart-line-remove"
