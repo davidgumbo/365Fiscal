@@ -14,6 +14,7 @@ from app.models.invoice_line import InvoiceLine
 from app.models.audit_log import AuditAction, ResourceType
 from app.schemas.quotation import QuotationCreate, QuotationRead, QuotationUpdate
 from app.services.sequence import next_quotation_reference
+from app.models.company_settings import CompanySettings
 
 router = APIRouter(prefix="/quotations", tags=["quotations"])
 
@@ -67,6 +68,15 @@ def create_quotation(
     validity_days = getattr(payload, 'validity_days', 30) or 30
     expires_at = payload.expires_at or (datetime.now(timezone.utc) + timedelta(days=validity_days))
     
+    currency = (getattr(payload, "currency", None) or "").strip().upper()
+    if not currency:
+        settings = (
+            db.query(CompanySettings)
+            .filter(CompanySettings.company_id == payload.company_id)
+            .first()
+        )
+        currency = (getattr(settings, "currency_code", None) or "USD").strip().upper()
+
     quotation = Quotation(
         company_id=payload.company_id,
         customer_id=payload.customer_id,
@@ -76,7 +86,7 @@ def create_quotation(
         payment_terms=payload.payment_terms,
         validity_days=validity_days,
         notes=getattr(payload, 'notes', '') or '',
-        currency=getattr(payload, 'currency', 'USD') or 'USD',
+        currency=currency,
         status="draft",
         created_by_id=user.id,
     )
@@ -129,6 +139,7 @@ def list_quotations(
     status: str | None = None,
     customer_id: int | None = None,
     search: str | None = None,
+    currency: str | None = None,
 ):
     query = db.query(Quotation).filter(Quotation.company_id == company_id)
     if status:
@@ -138,6 +149,12 @@ def list_quotations(
     if search:
         like = f"%{search}%"
         query = query.filter(Quotation.reference.ilike(like))
+    if currency:
+        cur = currency.strip().upper()
+        codes = [cur]
+        if cur in {"ZWG", "ZWL"}:
+            codes = ["ZWG", "ZWL"]
+        query = query.filter(Quotation.currency.in_(codes))
     return query.order_by(Quotation.created_at.desc()).all()
 
 

@@ -28,7 +28,7 @@ const CURRENCIES = [
   { code: "USD", symbol: "$", name: "US Dollar" },
   { code: "EUR", symbol: "€", name: "Euro" },
   { code: "GBP", symbol: "£", name: "British Pound" },
-  { code: "ZWL", symbol: "ZWG", name: "Zimbabwe Dollar" },
+  { code: "ZWG", symbol: "ZWG", name: "Zimbabwe Dollar" },
   { code: "ZAR", symbol: "R", name: "South African Rand" },
 ];
 
@@ -2292,7 +2292,7 @@ export default function SettingsPage() {
                       {selectedCurrency ? (
                         <div>
                           <h5 style={{ margin: "0 0 8px" }}>
-                            Exchange Rates — {selectedCurrency.code} (
+                            Rate {selectedCurrency.code} (
                             {selectedCurrency.name})
                           </h5>
                           <p
@@ -2302,7 +2302,7 @@ export default function SettingsPage() {
                               margin: "0 0 12px",
                             }}
                           >
-                            Relavent rates. 1{" "}
+                            rate 1{" "}
                             {currencyList.find((c) => c.is_default)?.code ||
                               "BASE"}{" "}
                             = ? {selectedCurrency.code}

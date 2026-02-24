@@ -176,6 +176,7 @@ def list_purchase_orders(
     search: str | None = None,
     status: str | None = None,
     supplier_id: int | None = None,
+    currency: str | None = None,
 ):
     query = db.query(PurchaseOrder).filter(PurchaseOrder.company_id == company_id)
     if search:
@@ -185,6 +186,12 @@ def list_purchase_orders(
         query = query.filter(PurchaseOrder.status == status)
     if supplier_id:
         query = query.filter(PurchaseOrder.supplier_id == supplier_id)
+    if currency:
+        cur = currency.strip().upper()
+        codes = [cur]
+        if cur in {"ZWG", "ZWL"}:
+            codes = ["ZWG", "ZWL"]
+        query = query.filter(PurchaseOrder.currency.in_(codes))
     return query.order_by(PurchaseOrder.created_at.desc()).all()
 
 

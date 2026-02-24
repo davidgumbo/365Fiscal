@@ -458,6 +458,7 @@ def create_order(
 def list_orders(
     company_id: int,
     session_id: Optional[int] = None,
+    currency: Optional[str] = None,
     status: Optional[str] = None,
     limit: int = Query(100, le=500),
     offset: int = 0,
@@ -472,6 +473,12 @@ def list_orders(
     )
     if session_id:
         q = q.filter(POSOrder.session_id == session_id)
+    if currency:
+        cur = currency.strip().upper()
+        codes = [cur]
+        if cur in {"ZWG", "ZWL"}:
+            codes = ["ZWG", "ZWL"]
+        q = q.filter(POSOrder.currency.in_(codes))
     if status:
         q = q.filter(POSOrder.status == status)
     return q.order_by(POSOrder.order_date.desc()).offset(offset).limit(limit).all()

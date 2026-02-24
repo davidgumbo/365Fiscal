@@ -411,6 +411,7 @@ export default function InvoicesPage({
   const [listSearch, setListSearch] = useState("");
   const [listStatus, setListStatus] = useState("");
   const [listType, setListType] = useState("");
+  const [listCurrency, setListCurrency] = useState("");
   const [invoiceListPage, setInvoiceListPage] = useState(1);
   const [invoiceListPageSize, setInvoiceListPageSize] = useState(10);
   const [newLinesPage, setNewLinesPage] = useState(1);
@@ -555,6 +556,7 @@ export default function InvoicesPage({
         ...(listSearch ? { search: listSearch } : {}),
         ...(listStatus ? { status: listStatus } : {}),
         ...(listType ? { invoice_type: listType } : {}),
+        ...(listCurrency ? { currency: listCurrency } : {}),
       }).toString();
       const [
         invoiceData,
@@ -601,11 +603,18 @@ export default function InvoicesPage({
 
   useEffect(() => {
     loadAll();
-  }, [companyId, listSearch, listStatus, listType]);
+  }, [companyId, listSearch, listStatus, listType, listCurrency]);
 
   useEffect(() => {
     setInvoiceListPage(1);
-  }, [companyId, listSearch, listStatus, listType, invoiceListPageSize]);
+  }, [
+    companyId,
+    listSearch,
+    listStatus,
+    listType,
+    listCurrency,
+    invoiceListPageSize,
+  ]);
 
   useEffect(() => {
     if (mode === "list") {
@@ -1760,6 +1769,17 @@ export default function InvoicesPage({
                     onChange={(e) => setListSearch(e.target.value)}
                   />
                 </div>
+                <select
+                  className="form-select"
+                  style={{ maxWidth: 160 }}
+                  value={listCurrency}
+                  onChange={(e) => setListCurrency(e.target.value)}
+                  aria-label="Filter by currency"
+                >
+                  <option value="">All currencies</option>
+                  <option value="USD">USD</option>
+                  <option value="ZWG">ZWG</option>
+                </select>
                 <button
                   className="o-btn o-btn-secondary"
                   style={{ display: "flex", alignItems: "center", gap: 6 }}

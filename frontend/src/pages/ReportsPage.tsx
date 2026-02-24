@@ -357,6 +357,7 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [dateRange, setDateRange] = useState({ from: "", to: "" });
+  const [reportCurrency, setReportCurrency] = useState("");
 
   const [salesReport, setSalesReport] = useState<SalesReport | null>(null);
   const [stockReport, setStockReport] = useState<StockReport | null>(null);
@@ -410,8 +411,11 @@ export default function ReportsPage() {
 
   const loadSalesReport = useCallback(async () => {
     if (!companyId) return;
+    const currencyParam = reportCurrency
+      ? `&currency=${encodeURIComponent(reportCurrency)}`
+      : "";
     const [invoices, products] = await Promise.all([
-      apiFetch<Invoice[]>(`/invoices?company_id=${companyId}`),
+      apiFetch<Invoice[]>(`/invoices?company_id=${companyId}${currencyParam}`),
       apiFetch<Product[]>(`/products?company_id=${companyId}`),
     ]);
 
@@ -516,18 +520,22 @@ export default function ReportsPage() {
       top_products: topProducts,
       sales_by_month: salesByMonth,
     });
-  }, [companyId, dateRange]);
+  }, [companyId, dateRange, reportCurrency]);
 
   const loadIncomeStatementReport = useCallback(async () => {
     if (!companyId) return;
 
+    const currencyParam = reportCurrency
+      ? `&currency=${encodeURIComponent(reportCurrency)}`
+      : "";
+
     const [invoices, expenses, contacts] = await Promise.all([
-      apiFetch<Invoice[]>(`/invoices?company_id=${companyId}`).catch(
-        () => [] as Invoice[],
-      ),
-      apiFetch<Expense[]>(`/expenses?company_id=${companyId}`).catch(
-        () => [] as Expense[],
-      ),
+      apiFetch<Invoice[]>(
+        `/invoices?company_id=${companyId}${currencyParam}`,
+      ).catch(() => [] as Invoice[]),
+      apiFetch<Expense[]>(
+        `/expenses?company_id=${companyId}${currencyParam}`,
+      ).catch(() => [] as Expense[]),
       apiFetch<{ id: number; name: string }[]>(
         `/contacts?company_id=${companyId}`,
       ).catch(() => [] as { id: number; name: string }[]),
@@ -616,7 +624,7 @@ export default function ReportsPage() {
           total: ex.total_amount || 0,
         })),
     });
-  }, [companyId, dateRange]);
+  }, [companyId, dateRange, reportCurrency]);
 
   const loadStockReport = useCallback(async () => {
     if (!companyId) return;
@@ -693,10 +701,14 @@ export default function ReportsPage() {
   const loadDebtorsReport = useCallback(async () => {
     if (!companyId) return;
 
+    const currencyParam = reportCurrency
+      ? `&currency=${encodeURIComponent(reportCurrency)}`
+      : "";
+
     const [invoices, contacts] = await Promise.all([
-      apiFetch<Invoice[]>(`/invoices?company_id=${companyId}`).catch(
-        () => [] as Invoice[],
-      ),
+      apiFetch<Invoice[]>(
+        `/invoices?company_id=${companyId}${currencyParam}`,
+      ).catch(() => [] as Invoice[]),
       apiFetch<{ id: number; name: string }[]>(
         `/contacts?company_id=${companyId}`,
       ).catch(() => [] as { id: number; name: string }[]),
@@ -771,15 +783,19 @@ export default function ReportsPage() {
       average_due: withDue.length > 0 ? totalDue / withDue.length : 0,
       recent_unpaid: recent,
     });
-  }, [companyId, dateRange]);
+  }, [companyId, dateRange, reportCurrency]);
 
   const loadCreditorsReport = useCallback(async () => {
     if (!companyId) return;
 
+    const currencyParam = reportCurrency
+      ? `&currency=${encodeURIComponent(reportCurrency)}`
+      : "";
+
     const [purchases, contacts] = await Promise.all([
-      apiFetch<PurchaseOrder[]>(`/purchases?company_id=${companyId}`).catch(
-        () => [] as PurchaseOrder[],
-      ),
+      apiFetch<PurchaseOrder[]>(
+        `/purchases?company_id=${companyId}${currencyParam}`,
+      ).catch(() => [] as PurchaseOrder[]),
       apiFetch<{ id: number; name: string }[]>(
         `/contacts?company_id=${companyId}`,
       ).catch(() => [] as { id: number; name: string }[]),
@@ -866,17 +882,22 @@ export default function ReportsPage() {
         .slice(0, 10),
       recent_orders: recentOrders,
     });
-  }, [companyId, dateRange]);
+  }, [companyId, dateRange, reportCurrency]);
 
   const loadVatReport = useCallback(async () => {
     if (!companyId) return;
+
+    const currencyParam = reportCurrency
+      ? `&currency=${encodeURIComponent(reportCurrency)}`
+      : "";
+
     const [invoices, purchases] = await Promise.all([
-      apiFetch<Invoice[]>(`/invoices?company_id=${companyId}`).catch(
-        () => [] as Invoice[],
-      ),
-      apiFetch<PurchaseOrder[]>(`/purchases?company_id=${companyId}`).catch(
-        () => [] as PurchaseOrder[],
-      ),
+      apiFetch<Invoice[]>(
+        `/invoices?company_id=${companyId}${currencyParam}`,
+      ).catch(() => [] as Invoice[]),
+      apiFetch<PurchaseOrder[]>(
+        `/purchases?company_id=${companyId}${currencyParam}`,
+      ).catch(() => [] as PurchaseOrder[]),
     ]);
 
     const fromDate = dateRange.from ? new Date(dateRange.from) : null;
@@ -1040,14 +1061,19 @@ export default function ReportsPage() {
       period_from: dateRange.from,
       period_to: dateRange.to,
     });
-  }, [companyId, dateRange]);
+  }, [companyId, dateRange, reportCurrency]);
 
   const loadPurchaseReport = useCallback(async () => {
     if (!companyId) return;
+
+    const currencyParam = reportCurrency
+      ? `&currency=${encodeURIComponent(reportCurrency)}`
+      : "";
+
     const [purchases, contacts] = await Promise.all([
-      apiFetch<PurchaseOrder[]>(`/purchases?company_id=${companyId}`).catch(
-        () => [] as PurchaseOrder[],
-      ),
+      apiFetch<PurchaseOrder[]>(
+        `/purchases?company_id=${companyId}${currencyParam}`,
+      ).catch(() => [] as PurchaseOrder[]),
       apiFetch<{ id: number; name: string }[]>(
         `/contacts?company_id=${companyId}`,
       ).catch(() => [] as { id: number; name: string }[]),
@@ -1144,7 +1170,7 @@ export default function ReportsPage() {
         status: po.status,
       })),
     });
-  }, [companyId, dateRange]);
+  }, [companyId, dateRange, reportCurrency]);
 
   const loadReport = useCallback(async () => {
     setLoading(true);
@@ -1178,7 +1204,7 @@ export default function ReportsPage() {
   useEffect(() => {
     if (!companyId || !dateRange.from || !dateRange.to) return;
     loadReport();
-  }, [companyId, activeReport, dateRange.from, dateRange.to]);
+  }, [companyId, activeReport, dateRange.from, dateRange.to, reportCurrency]);
 
   useEffect(() => {
     if (activeReport !== "vat") setActiveVatTab("sales_vat");
@@ -1853,6 +1879,18 @@ export default function ReportsPage() {
         <p style={{ color: "var(--muted)", marginBottom: 20, fontSize: 14 }}>
           Select a company to view its reports.
         </p>
+              <label style={{ fontSize: 13, fontWeight: 500 }}>Currency:</label>
+              <select
+                className="form-select form-select-sm"
+                style={{ width: 140 }}
+                value={reportCurrency}
+                onChange={(e) => setReportCurrency(e.target.value)}
+                aria-label="Filter reports by currency"
+              >
+                <option value="">All</option>
+                <option value="USD">USD</option>
+                <option value="ZWG">ZWG</option>
+              </select>
 
         <div className="device-company-grid">
           {filteredCompanies.map((c) => (
@@ -2173,6 +2211,20 @@ export default function ReportsPage() {
                   setDateRange((prev) => ({ ...prev, to: e.target.value }))
                 }
               />
+              <label style={{ fontSize: 13, fontWeight: 500 }}>
+                Currency:
+              </label>
+              <select
+                className="form-select form-select-sm"
+                style={{ width: 160 }}
+                value={reportCurrency}
+                onChange={(e) => setReportCurrency(e.target.value)}
+                aria-label="Filter reports by currency"
+              >
+                <option value="">All currencies</option>
+                <option value="USD">USD</option>
+                <option value="ZWG">ZWG</option>
+              </select>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <button

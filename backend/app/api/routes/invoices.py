@@ -249,6 +249,7 @@ def list_invoices(
     status: str | None = None,
     customer_id: int | None = None,
     invoice_type: str | None = None,
+    currency: str | None = None,
 ):
     query = db.query(Invoice).filter(Invoice.company_id == company_id)
     if search:
@@ -258,6 +259,12 @@ def list_invoices(
         query = query.filter(Invoice.status == status)
     if customer_id:
         query = query.filter(Invoice.customer_id == customer_id)
+    if currency:
+        cur = currency.strip().upper()
+        codes = [cur]
+        if cur in {"ZWG", "ZWL"}:
+            codes = ["ZWG", "ZWL"]
+        query = query.filter(Invoice.currency.in_(codes))
     if invoice_type:
         query = query.filter(Invoice.invoice_type == invoice_type)
     return query.order_by(Invoice.created_at.desc()).all()

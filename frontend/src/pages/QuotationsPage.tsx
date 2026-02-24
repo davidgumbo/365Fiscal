@@ -39,6 +39,8 @@ type CompanySettings = {
   document_footer?: string;
   document_watermark?: string;
   document_watermark_opacity?: string;
+  currency_code?: string | null;
+  currency_symbol?: string | null;
 };
 
 type QuotationLine = {
@@ -59,6 +61,7 @@ type Quotation = {
   status: string;
   payment_terms: string;
   expires_at: string | null;
+  currency: string;
   lines: QuotationLine[];
 };
 
@@ -72,6 +75,12 @@ const emptyLine = (): QuotationLine => ({
 });
 
 const normalizeUom = (value: string) => (value === "PCS" ? "Units" : value);
+
+const normalizeCurrency = (value: string | null | undefined) => {
+  const code = (value || "").trim().toUpperCase();
+  if (!code) return "";
+  return code === "ZWL" ? "ZWG" : code;
+};
 
 type QuotationsPageMode = "list" | "new" | "detail";
 
@@ -127,12 +136,14 @@ export default function QuotationsPage({
   const [isEditing, setIsEditing] = useState(false);
   const [listSearch, setListSearch] = useState("");
   const [listStatus, setListStatus] = useState("");
+  const [listCurrency, setListCurrency] = useState("");
   const [listFrom, setListFrom] = useState("");
   const [listTo, setListTo] = useState("");
   const [form, setForm] = useState({
     customer_id: null as number | null,
     payment_terms: "Cash",
     expires_at: "",
+    currency: "USD",
   });
   const [lines, setLines] = useState<QuotationLine[]>([emptyLine()]);
   const [saving, setSaving] = useState(false);
@@ -145,10 +156,13 @@ export default function QuotationsPage({
   }, [isAdmin, companies, companyId]);
 
   const loadData = async (cid: number) => {
+    const currencyParam = listCurrency
+      ? `&currency=${encodeURIComponent(listCurrency)}`
+      : "";
     const [c, p, q, w, settingsData] = await Promise.all([
       apiFetch<Contact[]>(`/contacts?company_id=${cid}`),
       apiFetch<Product[]>(`/products/with-stock?company_id=${cid}`),
-      apiFetch<Quotation[]>(`/quotations?company_id=${cid}`),
+      apiFetch<Quotation[]>(`/quotations?company_id=${cid}${currencyParam}`),
       apiFetch<Warehouse[]>(`/warehouses?company_id=${cid}`),
       apiFetch<CompanySettings>(`/company-settings?company_id=${cid}`),
     ]);
@@ -166,7 +180,7 @@ export default function QuotationsPage({
     if (companyId) {
       loadData(companyId);
     }
-  }, [companyId]);
+  }, [companyId, listCurrency]);
 
   useEffect(() => {
     if (!productWarehouseId) {
@@ -246,6 +260,7 @@ export default function QuotationsPage({
       expires_at: selectedQuotation.expires_at
         ? selectedQuotation.expires_at.split("T")[0]
         : "",
+      currency: normalizeCurrency(selectedQuotation.currency) || "USD",
     });
     setLines(
       selectedQuotation.lines?.length
@@ -267,6 +282,7 @@ export default function QuotationsPage({
       customer_id: contacts[0]?.id ?? null,
       payment_terms: "Cash",
       expires_at: "",
+      currency: normalizeCurrency(companySettings?.currency_code) || "USD",
     });
     setLines([emptyLine()]);
     setIsEditing(true);
@@ -281,6 +297,7 @@ export default function QuotationsPage({
       expires_at: form.expires_at
         ? new Date(form.expires_at).toISOString()
         : null,
+      currency: normalizeCurrency(form.currency) || "USD",
       lines,
     };
     if (selectedQuotationId) {
@@ -947,6 +964,17 @@ export default function QuotationsPage({
                     onChange={(e) => setListSearch(e.target.value)}
                   />
                 </div>
+                <select
+                  className="form-select"
+                  style={{ maxWidth: 160 }}
+                  value={listCurrency}
+                  onChange={(e) => setListCurrency(e.target.value)}
+                  aria-label="Filter by currency"
+                >
+                  <option value="">All currencies</option>
+                  <option value="USD">USD</option>
+                  <option value="ZWG">ZWG</option>
+                </select>
                 <button
                   className="o-btn o-btn-secondary"
                   style={{ display: "flex", alignItems: "center", gap: 6 }}
@@ -1261,6 +1289,23 @@ export default function QuotationsPage({
                     }
                     disabled={!canEdit}
                   />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label fw-semibold">Currency</label>
+                  <select
+                    className="form-select input-underline"
+                    value={form.currency}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        currency: e.target.value,
+                      }))
+                    }
+                    disabled={!canEdit}
+                  >
+                    <option value="USD">USD</option>
+                    <option value="ZWG">ZWG</option>
+                  </select>
                 </div>
                 <div className="col-md-6">
                   <label className="form-label fw-semibold">Expiration</label>

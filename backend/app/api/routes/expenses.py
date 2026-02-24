@@ -36,6 +36,7 @@ def list_expenses(
     search: str | None = None,
     start_date: datetime | None = None,
     end_date: datetime | None = None,
+    currency: str | None = None,
     limit: int = Query(200, le=500),
     offset: int = 0,
 ):
@@ -55,6 +56,12 @@ def list_expenses(
         q = q.filter(Expense.expense_date >= start_date)
     if end_date:
         q = q.filter(Expense.expense_date <= end_date)
+    if currency:
+        cur = currency.strip().upper()
+        codes = [cur]
+        if cur in {"ZWG", "ZWL"}:
+            codes = ["ZWG", "ZWL"]
+        q = q.filter(Expense.currency.in_(codes))
 
     return (
         q.order_by(Expense.expense_date.desc())

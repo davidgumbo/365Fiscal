@@ -106,9 +106,20 @@ type CompanyInfo = {
   logo_data: string;
 };
 
+type CompanySettings = {
+  currency_code?: string | null;
+  currency_symbol?: string | null;
+};
+
 /* ────────────────────────── helpers ────────────────────────── */
 const fmt = (n: number) => n.toFixed(2);
 const uid = () => Math.random().toString(36).slice(2, 10);
+
+const normalizeCurrency = (value: string | null | undefined) => {
+  const code = (value || "").trim().toUpperCase();
+  if (!code) return "";
+  return code === "ZWL" ? "ZWG" : code;
+};
 
 function lineSubtotal(l: CartLine) {
   return l.qty * l.price * (1 - l.discount / 100);
@@ -173,10 +184,10 @@ function buildReceiptHtml(
     ${company?.tin ? `<div class="company-info">TIN: ${company.tin}</div>` : ""}
     ${company?.vat ? `<div class="company-info">VAT No: ${company.vat}</div>` : ""}
     <div class="company-info">
-      ${company?.address ? company.address + "<br>" : ""}
+                    {money(p.sale_price)}
       ${company?.phone ? company.phone + "<br>" : ""}
       ${company?.email ? company.email : ""}
-    </div>
+                    {money(line.price)} × {line.qty}
   </div>
   <div class="divider"></div>
   <div class="title">FISCAL TAX INVOICE</div>
@@ -184,57 +195,57 @@ function buildReceiptHtml(
   <div class="line">Date: ${new Date(order.order_date).toLocaleString()}</div>
   <div class="divider"></div>
   <table>
-    <thead><tr><th>Description</th><th>Qty</th><th>Amount</th></tr></thead>
+              <div className="pos-payment-total">{money(cartTotal)}</div>
     <tbody>
       ${lines
-        .map(
+                  `Validate ${money(cartTotal)}`
           (l) => `
         <tr>
           <td class="line">${l.description}</td>
           <td class="line">${l.quantity}</td>
           <td class="line">${fmt(l.total_price)}</td>
-        </tr>
-      `,
+                      <span>{money(l.unit_price)}</span>
+                      <span>{money(l.total_price)}</span>
         )
         .join("")}
     </tbody>
   </table>
   <div class="two-col"><div>Total ${order.currency}</div><div>${fmt(order.total_amount)}</div></div>
   <div class="divider"></div>
-  <div class="summary">
+                    <span>{money(selectedOrder.subtotal)}</span>
     <div class="row "><span>Net Amount</span><span>${fmt(order.subtotal)}</span></div>
     <div class="row "><span>VAT</span><span>${fmt(order.tax_amount)}</span></div>
     <div class="row  "><span>Gross Amount</span><span>${fmt(order.total_amount)}</span></div>
   </div>
-  ${qrSrc ? `<div class="center" style="margin:6px 0"><img src="${qrSrc}" alt="QR" style="width:25mm;height:25mm"/></div>` : ""}
+                      <span>-{money(selectedOrder.discount_amount)}</span>
   ${order.zimra_verification_code ? `<div class="center" style="font-size:1rem;margin-top:2px">Verification code: <span class="bold receipt-code">${order.zimra_verification_code}</span></div>` : ""}
   <div class="footer">
     You can verify this receipt manually at<br>
     <span class="receipt-url">${order.zimra_verification_url || "https://fdms.zimra.co.zw/"}</span>
-  </div>
+                    <span>{money(selectedOrder.tax_amount)}</span>
 </body></html>`;
 }
 
-/* ── Reliable iframe-based print (avoids popup blockers) ── */
+                    <span>{money(selectedOrder.total_amount)}</span>
 function printReceipt(
   order: POSOrder,
   company: CompanyInfo | null,
   customer: Customer | null,
-  session: POSSession | null,
+                  <span>{money(lastOrder.subtotal)}</span>
   device: Device | null,
 ) {
   const html = buildReceiptHtml(order, company, customer, session, device);
 
-  // Remove any previous print iframe
+                    <span>-{money(lastOrder.discount_amount)}</span>
   const oldFrame = document.getElementById("pos-print-frame");
   if (oldFrame) oldFrame.remove();
 
   const iframe = document.createElement("iframe");
-  iframe.id = "pos-print-frame";
+                  <span>{money(lastOrder.tax_amount)}</span>
   iframe.style.cssText =
     "position:fixed;top:-10000px;left:-10000px;width:80mm;height:0;border:none;";
   document.body.appendChild(iframe);
-
+                  <span>{money(lastOrder.total_amount)}</span>
   const doc = iframe.contentDocument || iframe.contentWindow?.document;
   if (!doc) return;
 
@@ -301,6 +312,8 @@ export default function POSPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [devices, setDevices] = useState<Device[]>([]);
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
+  const [posCurrencyCode, setPosCurrencyCode] = useState("USD");
+  const [posCurrencySymbol, setPosCurrencySymbol] = useState("");
   const [session, setSession] = useState<POSSession | null>(null);
   const [cart, setCart] = useState<CartLine[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
@@ -371,6 +384,29 @@ export default function POSPage() {
     }
     navigate("/");
   }, [navigate]);
+
+  useEffect(() => {
+    if (!companyId) return;
+    apiFetch<CompanySettings>(`/company-settings?company_id=${companyId}`)
+      .then((settings) => {
+        const code = normalizeCurrency(settings?.currency_code) || "USD";
+        setPosCurrencyCode(code);
+        setPosCurrencySymbol((settings?.currency_symbol || "").trim());
+      })
+      .catch(() => {
+        setPosCurrencyCode("USD");
+        setPosCurrencySymbol("");
+      });
+  }, [companyId]);
+
+  const money = useCallback(
+    (amount: number) => {
+      const prefix = (posCurrencySymbol || posCurrencyCode || "USD").trim();
+      const gap = prefix.length === 1 ? "" : " ";
+      return `${prefix}${gap}${fmt(amount)}`;
+    },
+    [posCurrencyCode, posCurrencySymbol],
+  );
 
   // ── calculated ──
   const cartSubtotal = cart.reduce((s, l) => s + lineSubtotal(l), 0);
@@ -629,7 +665,7 @@ export default function POSPage() {
           session_id: session.id,
           company_id: session.company_id,
           customer_id: selectedCustomer?.id || null,
-          currency: "USD",
+          currency: posCurrencyCode,
           payment_method: payMethod,
           cash_amount: cash,
           card_amount: card,
@@ -784,7 +820,7 @@ export default function POSPage() {
       try {
         await navigator.share({
           title: `Receipt ${o.reference}`,
-          text: `Receipt ${o.reference} - Total: $${fmt(o.total_amount)}\n${o.zimra_verification_url || ""}`,
+          text: `Receipt ${o.reference} - Total: ${o.currency} ${fmt(o.total_amount)}\n${o.zimra_verification_url || ""}`,
         });
       } catch {
         /* user cancelled */
@@ -1851,7 +1887,7 @@ export default function POSPage() {
                   </button>
                 </div>
                 <div className="pos-cart-line-total">
-                  ${fmt(lineTotal(line))}
+                  {money(lineTotal(line))}
                 </div>
                 <button
                   className="pos-cart-line-remove"
@@ -1878,21 +1914,21 @@ export default function POSPage() {
           <div className="pos-cart-totals">
             <div className="pos-totals-row">
               <span>Subtotal</span>
-              <span>${fmt(cartSubtotal)}</span>
+              <span>{money(cartSubtotal)}</span>
             </div>
             {cartDiscount > 0 && (
               <div className="pos-totals-row pos-discount-row">
                 <span>Discount</span>
-                <span>-${fmt(cartDiscount)}</span>
+                <span>-{money(cartDiscount)}</span>
               </div>
             )}
             <div className="pos-totals-row">
               <span>Tax</span>
-              <span>${fmt(cartTax)}</span>
+              <span>{money(cartTax)}</span>
             </div>
             <div className="pos-totals-row pos-total-row">
               <span>TOTAL</span>
-              <span>${fmt(cartTotal)}</span>
+              <span>{money(cartTotal)}</span>
             </div>
           </div>
 
@@ -1917,7 +1953,7 @@ export default function POSPage() {
                 <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
                 <line x1="1" y1="10" x2="23" y2="10" />
               </svg>
-              Pay ${fmt(cartTotal)}
+              Pay {money(cartTotal)}
             </button>
           </div>
         </div>

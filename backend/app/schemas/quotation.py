@@ -17,6 +17,7 @@ class QuotationCreate(BaseModel):
     customer_id: int
     expires_at: datetime | None = None
     payment_terms: str = ""
+    currency: str = "USD"
     lines: list[QuotationLineCreate] = []
 
 
@@ -24,6 +25,7 @@ class QuotationUpdate(BaseModel):
     customer_id: int | None = None
     expires_at: datetime | None = None
     payment_terms: str | None = None
+    currency: str | None = None
     status: str | None = None
     lines: list[QuotationLineCreate] | None = None
 
@@ -46,5 +48,6 @@ class QuotationRead(ORMBase):
     reference: str
     expires_at: datetime | None
     payment_terms: str
+    currency: str
     status: str
     lines: list[QuotationLineRead]
