@@ -152,6 +152,10 @@ function buildReceiptHtml(
       ? `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(order.zimra_verification_url)}`
       : "");
 
+  const companyContacts = [company?.phone, company?.email]
+    .filter(Boolean)
+    .join("<br>");
+
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Receipt - ${order.reference}</title>
 <style>
   @page { size: 80mm auto; margin: 0; }
@@ -180,72 +184,78 @@ function buildReceiptHtml(
 </style></head><body>
   <div class="center">
     ${company?.logo_data ? `<img class="logo" src="${company.logo_data}" alt="Logo" />` : ""}
-    <div class="company-name">${company?.name}</div>
+    <div class="company-name">${company?.name || ""}</div>
     ${company?.tin ? `<div class="company-info">TIN: ${company.tin}</div>` : ""}
     ${company?.vat ? `<div class="company-info">VAT No: ${company.vat}</div>` : ""}
-    <div class="company-info">
-                    {money(p.sale_price)}
-      ${company?.phone ? company.phone + "<br>" : ""}
-      ${company?.email ? company.email : ""}
-                    {money(line.price)} × {line.qty}
+    ${companyContacts ? `<div class="company-info">${companyContacts}</div>` : ""}
   </div>
+
   <div class="divider"></div>
   <div class="title">FISCAL TAX INVOICE</div>
-  <div class="line"><div>Invoice No: ${order.reference}</div>
+  <div class="line">Invoice No: ${order.reference}</div>
   <div class="line">Date: ${new Date(order.order_date).toLocaleString()}</div>
+  ${customer?.name ? `<div class="line">Customer: ${customer.name}</div>` : ""}
+  ${device?.device_id ? `<div class="line">Device: ${device.device_id}</div>` : ""}
+  ${device?.serial_number ? `<div class="line">Serial: ${device.serial_number}</div>` : ""}
+  ${session?.name ? `<div class="line">Session: ${session.name}</div>` : ""}
   <div class="divider"></div>
+
   <table>
-              <div className="pos-payment-total">{money(cartTotal)}</div>
+    <thead>
+      <tr><th>Item</th><th>Qty</th><th>Total</th></tr>
+    </thead>
     <tbody>
       ${lines
-                  `Validate ${money(cartTotal)}`
+        .map(
           (l) => `
         <tr>
           <td class="line">${l.description}</td>
           <td class="line">${l.quantity}</td>
           <td class="line">${fmt(l.total_price)}</td>
-                      <span>{money(l.unit_price)}</span>
-                      <span>{money(l.total_price)}</span>
+        </tr>`,
         )
         .join("")}
     </tbody>
   </table>
-  <div class="two-col"><div>Total ${order.currency}</div><div>${fmt(order.total_amount)}</div></div>
-  <div class="divider"></div>
-                    <span>{money(selectedOrder.subtotal)}</span>
-    <div class="row "><span>Net Amount</span><span>${fmt(order.subtotal)}</span></div>
-    <div class="row "><span>VAT</span><span>${fmt(order.tax_amount)}</span></div>
-    <div class="row  "><span>Gross Amount</span><span>${fmt(order.total_amount)}</span></div>
+
+  <div class="summary">
+    <div class="row"><span>Net Amount</span><span>${fmt(order.subtotal)}</span></div>
+    <div class="row"><span>Discount</span><span>${fmt(order.discount_amount)}</span></div>
+    <div class="row"><span>VAT</span><span>${fmt(order.tax_amount)}</span></div>
   </div>
-                      <span>-{money(selectedOrder.discount_amount)}</span>
+  <div class="grand"><div>Total ${order.currency}</div><div>${fmt(order.total_amount)}</div></div>
+
+  <div class="line">Payment: ${payLabel}</div>
+  ${order.cash_amount ? `<div class="two-col"><div>Cash</div><div>${fmt(order.cash_amount)}</div></div>` : ""}
+  ${order.card_amount ? `<div class="two-col"><div>Card</div><div>${fmt(order.card_amount)}</div></div>` : ""}
+  ${order.mobile_amount ? `<div class="two-col"><div>Mobile</div><div>${fmt(order.mobile_amount)}</div></div>` : ""}
+  ${order.change_amount ? `<div class="two-col"><div>Change</div><div>${fmt(order.change_amount)}</div></div>` : ""}
+
+  ${qrSrc ? `<div class="center" style="margin-top:6px"><img src="${qrSrc}" alt="QR" /></div>` : ""}
   ${order.zimra_verification_code ? `<div class="center" style="font-size:1rem;margin-top:2px">Verification code: <span class="bold receipt-code">${order.zimra_verification_code}</span></div>` : ""}
+
   <div class="footer">
     You can verify this receipt manually at<br>
     <span class="receipt-url">${order.zimra_verification_url || "https://fdms.zimra.co.zw/"}</span>
-                    <span>{money(selectedOrder.tax_amount)}</span>
+  </div>
 </body></html>`;
 }
 
-                    <span>{money(selectedOrder.total_amount)}</span>
 function printReceipt(
   order: POSOrder,
   company: CompanyInfo | null,
   customer: Customer | null,
-                  <span>{money(lastOrder.subtotal)}</span>
+  session: POSSession | null,
   device: Device | null,
 ) {
   const html = buildReceiptHtml(order, company, customer, session, device);
-
-                    <span>-{money(lastOrder.discount_amount)}</span>
   const oldFrame = document.getElementById("pos-print-frame");
   if (oldFrame) oldFrame.remove();
 
   const iframe = document.createElement("iframe");
-                  <span>{money(lastOrder.tax_amount)}</span>
   iframe.style.cssText =
     "position:fixed;top:-10000px;left:-10000px;width:80mm;height:0;border:none;";
   document.body.appendChild(iframe);
-                  <span>{money(lastOrder.total_amount)}</span>
   const doc = iframe.contentDocument || iframe.contentWindow?.document;
   if (!doc) return;
 
@@ -1082,7 +1092,7 @@ export default function POSPage() {
                       fontWeight: 600,
                     }}
                   >
-                    $
+                    {posCurrencySymbol || posCurrencyCode}
                   </span>
                   <input
                     type="number"
@@ -1690,7 +1700,7 @@ export default function POSPage() {
                 <div className="pos-product-card-body">
                   <div className="pos-product-card-name">{p.name}</div>
                   <div className="pos-product-card-price">
-                    ${fmt(p.sale_price)}
+                    {money(p.sale_price)}
                   </div>
                   {p.track_inventory && p.product_type === "storable" && (
                     <div
@@ -1852,7 +1862,7 @@ export default function POSPage() {
                 <div className="pos-cart-line-info">
                   <div className="pos-cart-line-name">{line.product.name}</div>
                   <div className="pos-cart-line-meta">
-                    ${fmt(line.price)} × {line.qty}
+                    {money(line.price)} × {line.qty}
                     {line.discount > 0 && (
                       <span className="pos-discount-tag">
                         -{line.discount}%
@@ -2076,8 +2086,8 @@ export default function POSPage() {
                     <div key={i} className="pos-order-detail-line">
                       <span>{l.description}</span>
                       <span>{l.quantity}</span>
-                      <span>${fmt(l.unit_price)}</span>
-                      <span>${fmt(l.total_price)}</span>
+                      <span>{money(l.unit_price)}</span>
+                      <span>{money(l.total_price)}</span>
                     </div>
                   ))}
                 </div>
@@ -2085,21 +2095,21 @@ export default function POSPage() {
                 <div className="pos-order-detail-totals">
                   <div className="pos-order-detail-totals-row">
                     <span>Subtotal</span>
-                    <span>${fmt(selectedOrder.subtotal)}</span>
+                    <span>{money(selectedOrder.subtotal)}</span>
                   </div>
                   {selectedOrder.discount_amount > 0 && (
                     <div className="pos-order-detail-totals-row">
                       <span>Discount</span>
-                      <span>-${fmt(selectedOrder.discount_amount)}</span>
+                      <span>-{money(selectedOrder.discount_amount)}</span>
                     </div>
                   )}
                   <div className="pos-order-detail-totals-row">
                     <span>Tax</span>
-                    <span>${fmt(selectedOrder.tax_amount)}</span>
+                    <span>{money(selectedOrder.tax_amount)}</span>
                   </div>
                   <div className="pos-order-detail-totals-row pos-order-detail-grand">
                     <span>Total</span>
-                    <span>${fmt(selectedOrder.total_amount)}</span>
+                    <span>{money(selectedOrder.total_amount)}</span>
                   </div>
                   <div className="pos-order-detail-totals-row">
                     <span>Payment</span>
@@ -2276,7 +2286,7 @@ export default function POSPage() {
                         </div>
                       </div>
                       <div className="pos-orders-panel-row-amount">
-                        ${fmt(o.total_amount)}
+                        {money(o.total_amount)}
                       </div>
                       <div
                         className="pos-orders-panel-row-actions"
@@ -2332,7 +2342,7 @@ export default function POSPage() {
                     <div className="pos-orders-panel-summary">
                       <span>Total: {orders.length} orders</span>
                       <span className="pos-orders-panel-total">
-                        ${fmt(orders.reduce((s, o) => s + o.total_amount, 0))}
+                        {money(orders.reduce((s, o) => s + o.total_amount, 0))}
                       </span>
                     </div>
                   </div>
@@ -2424,7 +2434,7 @@ export default function POSPage() {
           >
             <div className="pos-dialog-header">
               <h2>Payment</h2>
-              <div className="pos-payment-total">${fmt(cartTotal)}</div>
+              <div className="pos-payment-total">{money(cartTotal)}</div>
             </div>
             <div className="pos-dialog-body">
               {/* Method tabs */}
@@ -2513,7 +2523,7 @@ export default function POSPage() {
                           className="pos-quick-cash-btn"
                           onClick={() => setCashTendered(String(v))}
                         >
-                          ${v}
+                          {money(v)}
                         </button>
                       ))}
                       <button
@@ -2528,8 +2538,7 @@ export default function POSPage() {
                     <div className="pos-change">
                       Change:{" "}
                       <strong>
-                        $
-                        {fmt(
+                        {money(
                           Math.max(
                             0,
                             (parseFloat(cashTendered) || 0) - cartTotal,
@@ -2581,8 +2590,8 @@ export default function POSPage() {
 
               {payMethod === "split" && (
                 <div className="pos-split-summary">
-                  Split total: $
-                  {fmt(
+                  Split total:{" "}
+                  {money(
                     (parseFloat(cashTendered) || 0) +
                       (parseFloat(cardAmount) || 0) +
                       (parseFloat(mobileAmount) || 0),
@@ -2644,7 +2653,7 @@ export default function POSPage() {
                     Processing…
                   </>
                 ) : (
-                  `Validate $${fmt(cartTotal)}`
+                  `Validate ${money(cartTotal)}`
                 )}
               </button>
             </div>
@@ -2745,21 +2754,21 @@ export default function POSPage() {
               <div className="pos-receipt-totals">
                 <div className="pos-receipt-totals-row">
                   <span>Subtotal</span>
-                  <span>${fmt(lastOrder.subtotal)}</span>
+                  <span>{money(lastOrder.subtotal)}</span>
                 </div>
                 {lastOrder.discount_amount > 0 && (
                   <div className="pos-receipt-totals-row">
                     <span>Discount</span>
-                    <span>-${fmt(lastOrder.discount_amount)}</span>
+                    <span>-{money(lastOrder.discount_amount)}</span>
                   </div>
                 )}
                 <div className="pos-receipt-totals-row">
                   <span>Tax</span>
-                  <span>${fmt(lastOrder.tax_amount)}</span>
+                  <span>{money(lastOrder.tax_amount)}</span>
                 </div>
                 <div className="pos-receipt-grand-total">
                   <span>TOTAL</span>
-                  <span>${fmt(lastOrder.total_amount)}</span>
+                  <span>{money(lastOrder.total_amount)}</span>
                 </div>
               </div>
 
@@ -2775,25 +2784,25 @@ export default function POSPage() {
                 {lastOrder.cash_amount > 0 && (
                   <div className="pos-receipt-totals-row">
                     <span>Cash</span>
-                    <span>${fmt(lastOrder.cash_amount)}</span>
+                    <span>{money(lastOrder.cash_amount)}</span>
                   </div>
                 )}
                 {lastOrder.card_amount > 0 && (
                   <div className="pos-receipt-totals-row">
                     <span>Card</span>
-                    <span>${fmt(lastOrder.card_amount)}</span>
+                    <span>{money(lastOrder.card_amount)}</span>
                   </div>
                 )}
                 {lastOrder.mobile_amount > 0 && (
                   <div className="pos-receipt-totals-row">
                     <span>Mobile</span>
-                    <span>${fmt(lastOrder.mobile_amount)}</span>
+                    <span>{money(lastOrder.mobile_amount)}</span>
                   </div>
                 )}
                 {lastOrder.change_amount > 0 && (
                   <div className="pos-receipt-totals-row pos-receipt-change-row">
                     <span>Change</span>
-                    <span>${fmt(lastOrder.change_amount)}</span>
+                    <span>{money(lastOrder.change_amount)}</span>
                   </div>
                 )}
               </div>
@@ -2928,23 +2937,23 @@ export default function POSPage() {
               <div className="pos-close-summary">
                 <div className="pos-close-row">
                   <span>Opening Balance</span>
-                  <span>${fmt(session?.opening_balance || 0)}</span>
+                  <span>{money(session?.opening_balance || 0)}</span>
                 </div>
                 <div className="pos-close-row">
                   <span>Total Sales</span>
-                  <span>${fmt(session?.total_sales || 0)}</span>
+                  <span>{money(session?.total_sales || 0)}</span>
                 </div>
                 <div className="pos-close-row">
                   <span>Cash Sales</span>
-                  <span>${fmt(session?.total_cash || 0)}</span>
+                  <span>{money(session?.total_cash || 0)}</span>
                 </div>
                 <div className="pos-close-row">
                   <span>Card Sales</span>
-                  <span>${fmt(session?.total_card || 0)}</span>
+                  <span>{money(session?.total_card || 0)}</span>
                 </div>
                 <div className="pos-close-row">
                   <span>Mobile Sales</span>
-                  <span>${fmt(session?.total_mobile || 0)}</span>
+                  <span>{money(session?.total_mobile || 0)}</span>
                 </div>
                 <div className="pos-close-row">
                   <span>Transactions</span>
@@ -2953,8 +2962,7 @@ export default function POSPage() {
                 <div className="pos-close-row pos-close-expected">
                   <span>Expected Cash</span>
                   <span>
-                    $
-                    {fmt(
+                    {money(
                       (session?.opening_balance || 0) +
                         (session?.total_cash || 0),
                     )}
@@ -2978,8 +2986,8 @@ export default function POSPage() {
                 <div
                   className={`pos-close-diff ${Math.abs(parseFloat(closingBalance) - ((session?.opening_balance || 0) + (session?.total_cash || 0))) > 0.01 ? "pos-diff-warn" : "pos-diff-ok"}`}
                 >
-                  Difference: $
-                  {fmt(
+                  Difference:{" "}
+                  {money(
                     parseFloat(closingBalance) -
                       ((session?.opening_balance || 0) +
                         (session?.total_cash || 0)),

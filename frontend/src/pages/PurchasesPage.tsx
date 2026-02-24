@@ -170,6 +170,7 @@ export default function PurchasesPage({
   const [listSearch, setListSearch] = useState("");
   const [listStatus, setListStatus] = useState("");
   const [listPaidState, setListPaidState] = useState("");
+  const [listCurrency, setListCurrency] = useState("");
   const [listFrom, setListFrom] = useState("");
   const [listTo, setListTo] = useState("");
 
@@ -190,10 +191,15 @@ export default function PurchasesPage({
     if (!companyId) return;
     const loadData = async () => {
       setLoadingData(true);
+      const currencyParam = listCurrency
+        ? `&currency=${encodeURIComponent(listCurrency)}`
+        : "";
       const [c, p, o, w, settingsData] = await Promise.all([
         apiFetch<Contact[]>(`/contacts?company_id=${companyId}`),
         apiFetch<Product[]>(`/products/with-stock?company_id=${companyId}`),
-        apiFetch<PurchaseOrder[]>(`/purchases?company_id=${companyId}`),
+        apiFetch<PurchaseOrder[]>(
+          `/purchases?company_id=${companyId}${currencyParam}`,
+        ),
         apiFetch<Warehouse[]>(`/warehouses?company_id=${companyId}`),
         apiFetch<CompanySettings>(`/company-settings?company_id=${companyId}`),
       ]);
@@ -210,7 +216,7 @@ export default function PurchasesPage({
       setLoadingData(false);
     };
     loadData();
-  }, [companyId]);
+  }, [companyId, listCurrency]);
 
   useEffect(() => {
     if (!form.warehouse_id) {
@@ -983,6 +989,17 @@ export default function PurchasesPage({
                     onChange={(e) => setListSearch(e.target.value)}
                   />
                 </div>
+                <select
+                  className="form-select"
+                  style={{ maxWidth: 160 }}
+                  value={listCurrency}
+                  onChange={(e) => setListCurrency(e.target.value)}
+                  aria-label="Filter by currency"
+                >
+                  <option value="">All currencies</option>
+                  <option value="USD">USD</option>
+                  <option value="ZWG">ZWG</option>
+                </select>
                 <button
                   className="o-btn o-btn-secondary"
                   style={{ display: "flex", alignItems: "center", gap: 6 }}
