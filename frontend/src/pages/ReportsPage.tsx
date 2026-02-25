@@ -2315,23 +2315,6 @@ export default function ReportsPage() {
                   setDateRange((prev) => ({ ...prev, to: e.target.value }))
                 }
               />
-              <label style={{ fontSize: 13, fontWeight: 500 }}>Currency:</label>
-              <select
-                className="form-select form-select-sm"
-                style={{ width: 160 }}
-                value={reportCurrency}
-                onChange={(e) =>
-                  setReportCurrency(normalizeCurrency(e.target.value))
-                }
-                aria-label="Filter reports by currency"
-              >
-                <option value="">All currencies</option>
-                {currencyOptions.map((currency) => (
-                  <option key={currency.code} value={currency.code}>
-                    {currency.label}
-                  </option>
-                ))}
-              </select>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <button
@@ -2402,6 +2385,25 @@ export default function ReportsPage() {
                 </svg>
                 Export PDF
               </button>
+            </div>
+            <div style={{}}>
+              <label style={{ fontSize: 13, fontWeight: 500 }}>Currency:</label>
+              <select
+                className="form-select form-select-sm"
+                style={{ width: 160 }}
+                value={reportCurrency}
+                onChange={(e) =>
+                  setReportCurrency(normalizeCurrency(e.target.value))
+                }
+                aria-label="Filter reports by currency"
+              >
+                {/* <option value="">All currencies</option> */}
+                {currencyOptions.map((currency) => (
+                  <option key={currency.code} value={currency.code}>
+                    {currency.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
