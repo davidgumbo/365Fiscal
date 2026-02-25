@@ -2246,7 +2246,7 @@ export default function SettingsPage() {
                                       setShowCurrencyForm(true);
                                     }}
                                   >
-                                    Edit
+                                    <EditIcon />
                                   </button>
                                   {!cur.is_default && (
                                     <button
@@ -2408,7 +2408,7 @@ export default function SettingsPage() {
                                             });
                                           }}
                                         >
-                                          Edit
+                                          <EditIcon />
                                         </button>
                                         <button
                                           className="outline"
