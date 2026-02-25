@@ -509,6 +509,90 @@ export default function POSPage() {
     [fxRate],
   );
 
+  const convertBetweenSaleCurrencies = useCallback(
+    (amountInOldSale: number, oldRate: number, newRate: number) => {
+      const safeOld = oldRate || 1;
+      const safeNew = newRate || 1;
+      const amountBase = amountInOldSale / safeOld;
+      return amountBase * safeNew;
+    },
+    [],
+  );
+
+  const parseAmount = useCallback((v: string) => {
+    const n = parseFloat(String(v || "").trim());
+    return Number.isFinite(n) ? n : 0;
+  }, []);
+
+  const changePosCurrency = useCallback(
+    async (nextCodeRaw: string) => {
+      if (!companyId) return;
+
+      const oldCode = normalizeCurrency(posCurrencyCode) || effectiveBaseCode;
+      const nextCode = normalizeCurrency(nextCodeRaw) || effectiveBaseCode;
+      if (!nextCode || nextCode === oldCode) return;
+
+      const oldRate = fxRate || 1;
+
+      const nextCur = currencyList.find(
+        (c) => normalizeCurrency(c.code) === nextCode,
+      );
+      const nextSymbol = (
+        nextCur?.symbol || (nextCode === effectiveBaseCode ? effectiveBaseSymbol : "")
+      ).trim();
+
+      let nextRate = 1;
+      if (nextCode !== effectiveBaseCode && nextCur?.id) {
+        try {
+          const r = await apiFetch<CurrencyRateRead | null>(
+            `/currencies/${nextCur.id}/rate`,
+          );
+          nextRate = r?.rate || 1;
+        } catch {
+          nextRate = 1;
+        }
+      }
+
+      // Convert any already-entered amounts to the new sale currency.
+      const cash = parseAmount(cashTendered);
+      const card = parseAmount(cardAmount);
+      const mobile = parseAmount(mobileAmount);
+
+      if (cashTendered.trim()) {
+        setCashTendered(
+          convertBetweenSaleCurrencies(cash, oldRate, nextRate).toFixed(2),
+        );
+      }
+      if (cardAmount.trim()) {
+        setCardAmount(
+          convertBetweenSaleCurrencies(card, oldRate, nextRate).toFixed(2),
+        );
+      }
+      if (mobileAmount.trim()) {
+        setMobileAmount(
+          convertBetweenSaleCurrencies(mobile, oldRate, nextRate).toFixed(2),
+        );
+      }
+
+      setPosCurrencyCode(nextCode);
+      setPosCurrencySymbol(nextSymbol);
+      setFxRate(nextRate);
+    },
+    [
+      cashTendered,
+      cardAmount,
+      companyId,
+      convertBetweenSaleCurrencies,
+      currencyList,
+      effectiveBaseCode,
+      effectiveBaseSymbol,
+      fxRate,
+      mobileAmount,
+      parseAmount,
+      posCurrencyCode,
+    ],
+  );
+
   const money = useCallback(
     (amount: number) => {
       const prefix = (posCurrencyCode || posCurrencySymbol || "USD").trim();
@@ -2617,7 +2701,46 @@ export default function POSPage() {
           >
             <div className="pos-dialog-header">
               <h2>Payment</h2>
-              <div className="pos-payment-total">{money(cartTotal)}</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <select
+                  value={posCurrencyCode}
+                  onChange={(e) => changePosCurrency(e.target.value)}
+                  style={{
+                    padding: "6px 10px",
+                    borderRadius: 10,
+                    border: "1px solid var(--slate-200)",
+                    background: "var(--white-500, #fff)",
+                    fontWeight: 700,
+                  }}
+                  aria-label="Payment currency"
+                  disabled={processing}
+                >
+                  {(currencyList.length
+                    ? currencyList
+                    : [
+                        {
+                          code: baseCurrencyCode || "USD",
+                          name: baseCurrencyCode || "USD",
+                          symbol:
+                            baseCurrencySymbol || baseCurrencyCode || "USD",
+                        },
+                      ]
+                  ).map((c) => {
+                    const code = normalizeCurrency(c.code);
+                    const label =
+                      c.name && c.name !== c.code ? `${code} — ${c.name}` : code;
+                    return (
+                      <option
+                        key={`${(c as any).id ?? code}-${c.code}`}
+                        value={code}
+                      >
+                        {label}
+                      </option>
+                    );
+                  })}
+                </select>
+                <div className="pos-payment-total">{money(cartTotal)}</div>
+              </div>
             </div>
             <div className="pos-dialog-body">
               {/* Method tabs */}
