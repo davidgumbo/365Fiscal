@@ -2391,7 +2391,7 @@ export default function ReportsPage() {
                 display: "flex",
                 alignItems: "center",
                 gap: 8,
-                marginLeft: auto,
+                marginLeft: "auto",
               }}
             >
               <label style={{ fontSize: 13, fontWeight: 500 }}>Currency:</label>
