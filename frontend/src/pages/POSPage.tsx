@@ -2829,7 +2829,7 @@ export default function POSPage() {
                           className="pos-quick-cash-btn"
                           onClick={() => setCashTendered(String(v))}
                         >
-                          {money(v)}
+                          {fmt(v)}
                         </button>
                       ))}
                       <button
