@@ -137,6 +137,11 @@ type CurrencyItem = {
   is_active: boolean;
 };
 
+type CurrencyOption = {
+  code: string;
+  label: string;
+};
+
 const normalizeCurrency = (value: string | null | undefined) => {
   const code = (value || "").trim().toUpperCase();
   if (!code) return "";
@@ -416,21 +421,46 @@ export default function ReportsPage() {
   // Load configured currencies (to resolve symbols by code)
   useEffect(() => {
     if (!companyId) return;
-    apiFetch<CurrencyItem[]>(`/currencies?company_id=${companyId}&active_only=true`)
+    apiFetch<CurrencyItem[]>(
+      `/currencies?company_id=${companyId}&active_only=true`,
+    )
       .then((list) => setCurrencyList(list || []))
       .catch(() => setCurrencyList([]));
   }, [companyId]);
 
   const defaultCurrency =
     currencyList.find((c) => c.is_default) || currencyList[0] || null;
-  const baseCurrencyCode = normalizeCurrency(companySettings?.currency_code) || "USD";
-  const baseCurrencySymbol = (companySettings?.currency_symbol || "$").trim() || "$";
+  const baseCurrencyCode =
+    normalizeCurrency(companySettings?.currency_code) || "USD";
+  const baseCurrencySymbol =
+    (companySettings?.currency_symbol || "$").trim() || "$";
   const effectiveBaseCode =
     normalizeCurrency(defaultCurrency?.code) || baseCurrencyCode || "USD";
   const effectiveBaseSymbol =
     (defaultCurrency?.symbol || baseCurrencySymbol || "$").trim() || "$";
 
   const reportCurrencyCode = normalizeCurrency(reportCurrency);
+  const currencyOptions = useMemo<CurrencyOption[]>(() => {
+    const byCode = new Map<string, CurrencyOption>();
+
+    const addOption = (
+      codeRaw: string | null | undefined,
+      symbolRaw?: string | null,
+    ) => {
+      const code = normalizeCurrency(codeRaw);
+      if (!code || byCode.has(code)) return;
+      const symbol = (symbolRaw || "").trim();
+      const label = symbol && symbol !== code ? `${code} (${symbol})` : code;
+      byCode.set(code, { code, label });
+    };
+
+    addOption(effectiveBaseCode, effectiveBaseSymbol);
+    for (const currency of currencyList) {
+      addOption(currency.code, currency.symbol);
+    }
+
+    return Array.from(byCode.values());
+  }, [currencyList, effectiveBaseCode, effectiveBaseSymbol]);
 
   const resolvedCurrencyPrefix = useMemo(() => {
     if (reportCurrencyCode) {
@@ -1932,31 +1962,39 @@ export default function ReportsPage() {
 
         <p style={{ color: "var(--muted)", marginBottom: 20, fontSize: 14 }}>
           Select a company to view its reports.
-              <label style={{ fontSize: 13, fontWeight: 500 }}>Currency:</label>
-              <select
-                className="form-select form-select-sm"
-                style={{ width: 160 }}
-                value={reportCurrency}
-                onChange={(e) => setReportCurrency(e.target.value)}
-                aria-label="Filter by currency"
-              >
-                <option value="">All</option>
-                <option value="USD">USD</option>
-                <option value="ZWG">ZWG</option>
-              </select>
+          <label style={{ fontSize: 13, fontWeight: 500 }}>Currency:</label>
+          <select
+            className="form-select form-select-sm"
+            style={{ width: 160 }}
+            value={reportCurrency}
+            onChange={(e) =>
+              setReportCurrency(normalizeCurrency(e.target.value))
+            }
+            aria-label="Filter by currency"
+          >
+            {/* <option value="">All</option> */}
+            {currencyOptions.map((currency) => (
+              <option key={currency.code} value={currency.code}>
+                {currency.label}
+              </option>
+            ))}
+          </select>
         </p>
-              <label style={{ fontSize: 13, fontWeight: 500 }}>Currency:</label>
-              <select
-                className="form-select form-select-sm"
-                style={{ width: 140 }}
-                value={reportCurrency}
-                onChange={(e) => setReportCurrency(e.target.value)}
-                aria-label="Filter reports by currency"
-              >
-                <option value="">All</option>
-                <option value="USD">USD</option>
-                <option value="ZWG">ZWG</option>
-              </select>
+        <label style={{ fontSize: 13, fontWeight: 500 }}>Currency:</label>
+        <select
+          className="form-select form-select-sm"
+          style={{ width: 140 }}
+          value={reportCurrency}
+          onChange={(e) => setReportCurrency(normalizeCurrency(e.target.value))}
+          aria-label="Filter reports by currency"
+        >
+          <option value="">All</option>
+          {currencyOptions.map((currency) => (
+            <option key={currency.code} value={currency.code}>
+              {currency.label}
+            </option>
+          ))}
+        </select>
 
         <div className="device-company-grid">
           {filteredCompanies.map((c) => (
@@ -2277,19 +2315,22 @@ export default function ReportsPage() {
                   setDateRange((prev) => ({ ...prev, to: e.target.value }))
                 }
               />
-              <label style={{ fontSize: 13, fontWeight: 500 }}>
-                Currency:
-              </label>
+              <label style={{ fontSize: 13, fontWeight: 500 }}>Currency:</label>
               <select
                 className="form-select form-select-sm"
                 style={{ width: 160 }}
                 value={reportCurrency}
-                onChange={(e) => setReportCurrency(e.target.value)}
+                onChange={(e) =>
+                  setReportCurrency(normalizeCurrency(e.target.value))
+                }
                 aria-label="Filter reports by currency"
               >
                 <option value="">All currencies</option>
-                <option value="USD">USD</option>
-                <option value="ZWG">ZWG</option>
+                {currencyOptions.map((currency) => (
+                  <option key={currency.code} value={currency.code}>
+                    {currency.label}
+                  </option>
+                ))}
               </select>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
