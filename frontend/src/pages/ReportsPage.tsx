@@ -2386,7 +2386,14 @@ export default function ReportsPage() {
                 Export PDF
               </button>
             </div>
-            <div style={{}}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                marginLeft: 24,
+              }}
+            >
               <label style={{ fontSize: 13, fontWeight: 500 }}>Currency:</label>
               <select
                 className="form-select form-select-sm"
