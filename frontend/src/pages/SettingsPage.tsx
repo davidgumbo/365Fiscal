@@ -2261,7 +2261,7 @@ export default function SettingsPage() {
                                         deleteCurrency(cur.id);
                                       }}
                                     >
-                                      Del
+                                      <TrashIcon />
                                     </button>
                                   )}
                                 </div>
@@ -2421,7 +2421,7 @@ export default function SettingsPage() {
                                             deleteCurrencyRate(r.id)
                                           }
                                         >
-                                          Del
+                                          <TrashIcon />
                                         </button>
                                       </div>
                                     </td>
