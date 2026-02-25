@@ -8,6 +8,40 @@ interface TablePaginationProps {
   className?: string;
 }
 
+const NextArrow = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke-width="1.5"
+    stroke="currentColor"
+    className="size-6"
+  >
+    <path
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      d="M17.25 8.25 21 12m0 0-3.75 3.75M21 12H3"
+    />
+  </svg>
+);
+
+const PrevArrow = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke-width="1.5"
+    stroke="currentColor"
+    className="size-6"
+  >
+    <path
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      d="M6.75 15.75 3 12m0 0 3.75-3.75M3 12h18"
+    />
+  </svg>
+);
+
 export function TablePagination({
   page,
   pageSize,
@@ -52,7 +86,7 @@ export function TablePagination({
           disabled={safePage <= 1}
           aria-label="Previous page"
         >
-          ←
+          <PrevArrow />
         </button>
         <span className="pager-page">
           Page {safePage} of {totalPages}
@@ -63,7 +97,7 @@ export function TablePagination({
           disabled={safePage >= totalPages}
           aria-label="Next page"
         >
-          →
+          <NextArrow />
         </button>
       </div>
     </div>
