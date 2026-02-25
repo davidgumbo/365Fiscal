@@ -511,7 +511,7 @@ export default function POSPage() {
 
   const money = useCallback(
     (amount: number) => {
-      const prefix = (posCurrencySymbol || posCurrencyCode || "USD").trim();
+      const prefix = (posCurrencyCode || posCurrencySymbol || "USD").trim();
       const gap = prefix.length === 1 ? "" : " ";
       return `${prefix}${gap}${fmt(amount)}`;
     },

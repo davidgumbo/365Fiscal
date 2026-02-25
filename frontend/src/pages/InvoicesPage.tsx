@@ -123,6 +123,8 @@ type Location = {
 type CompanySettings = {
   logo_data: string;
   document_layout: string;
+  currency_code?: string | null;
+  currency_symbol?: string | null;
   invoice_notes?: string;
   payment_terms_default?: string;
   document_header?: string;
@@ -131,7 +133,33 @@ type CompanySettings = {
   document_watermark_opacity?: string;
 };
 
+type CurrencyItem = {
+  id: number;
+  company_id: number;
+  code: string;
+  name: string;
+  symbol: string;
+  position: string;
+  decimal_places: number;
+  is_default: boolean;
+  is_active: boolean;
+};
+
+type CurrencyRateRead = {
+  id: number;
+  currency_id: number;
+  company_id: number;
+  rate: number;
+  rate_date: string;
+};
+
 const currencyOptions = ["USD", "ZWG", "ZAR", "EUR", "GBP"];
+
+const normalizeCurrency = (value: string | null | undefined) => {
+  const code = (value || "").trim().toUpperCase();
+  if (!code) return "";
+  return code === "ZWL" ? "ZWG" : code;
+};
 
 const formatCurrency = (value: number, currency: string) => {
   try {
@@ -379,6 +407,8 @@ export default function InvoicesPage({
   const [locations, setLocations] = useState<Location[]>([]);
   const [companySettings, setCompanySettings] =
     useState<CompanySettings | null>(null);
+  const [currencyList, setCurrencyList] = useState<CurrencyItem[]>([]);
+  const [invoiceFxRate, setInvoiceFxRate] = useState(1);
   const [logoPrimaryColor, setLogoPrimaryColor] = useState(
     DEFAULT_THEME_PRIMARY,
   );
@@ -566,6 +596,7 @@ export default function InvoicesPage({
         warehouseData,
         deviceData,
         settingsData,
+        currenciesData,
       ] = await Promise.all([
         apiFetch<Invoice[]>(`/invoices?${query}`),
         apiFetch<Quotation[]>(`/quotations?company_id=${companyId}`),
@@ -574,6 +605,9 @@ export default function InvoicesPage({
         apiFetch<Warehouse[]>(`/warehouses?company_id=${companyId}`),
         apiFetch<Device[]>(`/devices?company_id=${companyId}`),
         apiFetch<CompanySettings>(`/company-settings?company_id=${companyId}`),
+        apiFetch<CurrencyItem[]>(
+          `/currencies?company_id=${companyId}&active_only=true`,
+        ),
       ]);
       setInvoices(invoiceData);
       setQuotations(quotationData);
@@ -582,6 +616,7 @@ export default function InvoicesPage({
       setDevices(deviceData);
       setWarehouses(warehouseData);
       setCompanySettings(settingsData ?? null);
+      setCurrencyList(currenciesData || []);
       if (!productWarehouseId && warehouseData.length) {
         setProductWarehouseId(warehouseData[0].id);
       }
@@ -731,6 +766,41 @@ export default function InvoicesPage({
     ? newCurrency
     : selectedInvoice?.currency || editCurrency || "USD";
   const isCreditNote = selectedInvoice?.invoice_type === "credit_note";
+
+  const defaultCurrency =
+    currencyList.find((c) => c.is_default) || currencyList[0] || null;
+  const baseCurrencyCode =
+    normalizeCurrency(defaultCurrency?.code) ||
+    normalizeCurrency(companySettings?.currency_code) ||
+    "USD";
+  const normalizedInvoiceCurrency =
+    normalizeCurrency(invoiceCurrency) || baseCurrencyCode || "USD";
+  const rateDate = (newMode ? newInvoiceDate : editInvoiceDate) || "";
+
+  useEffect(() => {
+    if (!companyId) return;
+
+    if (normalizedInvoiceCurrency === baseCurrencyCode) {
+      setInvoiceFxRate(1);
+      return;
+    }
+
+    const cur = currencyList.find(
+      (c) => normalizeCurrency(c.code) === normalizedInvoiceCurrency,
+    );
+    if (!cur) {
+      setInvoiceFxRate(1);
+      return;
+    }
+
+    const qs = rateDate ? `?for_date=${encodeURIComponent(rateDate)}` : "";
+    apiFetch<CurrencyRateRead | null>(`/currencies/${cur.id}/rate${qs}`)
+      .then((r) => setInvoiceFxRate(r?.rate || 1))
+      .catch(() => setInvoiceFxRate(1));
+  }, [companyId, baseCurrencyCode, currencyList, normalizedInvoiceCurrency, rateDate]);
+
+  const toInvoiceCurrency = (amountBase: number) =>
+    Number(((amountBase || 0) * (invoiceFxRate || 1)).toFixed(2));
 
   const newTotal = newQuotation
     ? newQuotation.lines.reduce((sum, line) => sum + line.total_price, 0)
@@ -2393,7 +2463,9 @@ export default function InvoicesPage({
                                       ? Number(e.target.value)
                                       : null,
                                     description: prod?.name ?? "",
-                                    unit_price: prod?.sale_price ?? 0,
+                                    unit_price: prod
+                                      ? toInvoiceCurrency(prod.sale_price)
+                                      : 0,
                                     vat_rate: prod?.tax_rate ?? 0,
                                     uom: prod?.uom || "",
                                   });
@@ -3159,7 +3231,9 @@ export default function InvoicesPage({
                                         ? Number(e.target.value)
                                         : null,
                                       description: prod?.name ?? "",
-                                      unit_price: prod?.sale_price ?? 0,
+                                      unit_price: prod
+                                        ? toInvoiceCurrency(prod.sale_price)
+                                        : 0,
                                       vat_rate: prod?.tax_rate ?? 0,
                                       uom: prod?.uom || "Units",
                                     });
