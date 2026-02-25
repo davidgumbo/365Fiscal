@@ -50,8 +50,9 @@ export function TablePagination({
           className="pager-btn"
           onClick={() => onPageChange(safePage - 1)}
           disabled={safePage <= 1}
+          aria-label="Previous page"
         >
-          Previous
+          ←
         </button>
         <span className="pager-page">
           Page {safePage} of {totalPages}
@@ -60,8 +61,9 @@ export function TablePagination({
           className="pager-btn"
           onClick={() => onPageChange(safePage + 1)}
           disabled={safePage >= totalPages}
+          aria-label="Next page"
         >
-          Next
+          →
         </button>
       </div>
     </div>
