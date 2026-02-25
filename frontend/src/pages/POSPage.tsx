@@ -1079,12 +1079,6 @@ export default function POSPage() {
     return true;
   });
 
-  // ── quick cash buttons ──
-  const quickCashBase = [1, 2, 5, 10, 20, 50, 100];
-  const quickCash = quickCashBase.map((v) =>
-    parseFloat((toSale(v) || 0).toFixed(2)),
-  );
-
   /* ──────────── loading / no company ──────────── */
   if (!companyId) {
     return (
@@ -2821,25 +2815,6 @@ export default function POSPage() {
                     step={0.01}
                     autoFocus={payMethod === "cash"}
                   />
-                  {payMethod === "cash" && (
-                    <div className="pos-quick-cash">
-                      {quickCash.map((v) => (
-                        <button
-                          key={v}
-                          className="pos-quick-cash-btn"
-                          onClick={() => setCashTendered(String(v))}
-                        >
-                          {fmt(v)}
-                        </button>
-                      ))}
-                      <button
-                        className="pos-quick-cash-btn pos-quick-exact"
-                        onClick={() => setCashTendered(cartTotal.toFixed(2))}
-                      >
-                        Exact
-                      </button>
-                    </div>
-                  )}
                   {payMethod === "cash" && (
                     <div className="pos-change">
                       Change:{" "}
