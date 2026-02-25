@@ -1988,7 +1988,7 @@ export default function ReportsPage() {
           onChange={(e) => setReportCurrency(normalizeCurrency(e.target.value))}
           aria-label="Filter reports by currency"
         >
-          <option value="">All</option>
+          {/* <option value="">All</option> */}
           {currencyOptions.map((currency) => (
             <option key={currency.code} value={currency.code}>
               {currency.label}
