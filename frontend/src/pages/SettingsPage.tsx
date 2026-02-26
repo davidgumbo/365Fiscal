@@ -4048,6 +4048,7 @@ export default function SettingsPage() {
                   <h4>Administrators</h4>
                   <button
                     className="primary"
+                    style={{ display: "flex", alignItems: "center", gap: 6 }}
                     onClick={() => {
                       if (showAdminForm) {
                         setShowAdminForm(false);
@@ -4072,7 +4073,10 @@ export default function SettingsPage() {
                 )}
                 {showAdminForm && (
                   <div style={{ marginBottom: 16 }}>
-                    <div className="settings-user-grid" style={{ marginBottom: 12 }}>
+                    <div
+                      className="settings-user-grid"
+                      style={{ marginBottom: 12 }}
+                    >
                       <label className="input">
                         Email
                         <input
