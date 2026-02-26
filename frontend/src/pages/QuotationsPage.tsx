@@ -1143,24 +1143,62 @@ export default function QuotationsPage({
       {showForm && (
         <div>
           <div className="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-            <div className="d-flex align-items-center gap-2">
-              <button
-                className="btn btn-sm btn-light border"
-                onClick={() => navigate("/quotations")}
+            {isAdmin && companyId ? (
+              <div
+                className="o-control-panel"
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginBottom: 16,
+                }}
               >
-                ← Back
-              </button>
-              <h4 className="fw-bold mb-0">
-                {mode === "new"
-                  ? "New Quotation"
-                  : selectedQuotation?.reference || "Quotation"}
-              </h4>
-              <span
-                className={`badge ms-2 ${statusLabel === "accepted" ? "bg-success" : statusLabel === "sent" ? "bg-info" : statusLabel === "rejected" ? "bg-danger" : statusLabel === "converted" ? "bg-primary" : "bg-secondary"}`}
-              >
-                {statusLabel === "converted" ? "Sale Order" : statusLabel}
-              </span>
-            </div>
+                <div className="o-breadcrumb">
+                  <span
+                    className="o-breadcrumb-item"
+                    style={{ cursor: "pointer" }}
+                    onClick={goBackToCompanies}
+                  >
+                    Quotations
+                  </span>
+                  <span className="o-breadcrumb-separator">
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                  </span>
+                  <span className="o-breadcrumb-current">
+                    {company?.name || "Company"}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="d-flex align-items-center gap-2">
+                <button
+                  className="btn btn-sm btn-light border"
+                  onClick={() => navigate("/quotations")}
+                >
+                  ← Back
+                </button>
+                <h4 className="fw-bold mb-0">
+                  {mode === "new"
+                    ? "New Quotation"
+                    : selectedQuotation?.reference || "Quotation"}
+                </h4>
+                <span
+                  className={`badge ms-2 ${statusLabel === "accepted" ? "bg-success" : statusLabel === "sent" ? "bg-info" : statusLabel === "rejected" ? "bg-danger" : statusLabel === "converted" ? "bg-primary" : "bg-secondary"}`}
+                >
+                  {statusLabel === "converted" ? "Sale Order" : statusLabel}
+                </span>
+              </div>
+            )}
             <div className="d-flex flex-wrap gap-1">
               <button
                 className="btn btn-sm btn-light border"

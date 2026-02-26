@@ -1551,44 +1551,6 @@ export default function InvoicesPage({
       {/* ───────────── LIST VIEW ───────────── */}
       {!showForm && (
         <>
-          {/* Company breadcrumb for admin */}
-          {isAdmin && companyId && (
-            <div
-              className="o-control-panel"
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                marginBottom: 16,
-              }}
-            >
-              <div className="o-breadcrumb">
-                <span
-                  className="o-breadcrumb-item"
-                  style={{ cursor: "pointer" }}
-                  onClick={goBackToCompanies}
-                >
-                  Invoices
-                </span>
-                <span className="o-breadcrumb-separator">
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <polyline points="9 18 15 12 9 6" />
-                  </svg>
-                </span>
-                <span className="o-breadcrumb-current">
-                  {company?.name || "Company"}
-                </span>
-              </div>
-            </div>
-          )}
           <div className="two-panel two-panel-left">
             {/* Sidebar */}
             <div className="o-sidebar">
@@ -2087,26 +2049,64 @@ export default function InvoicesPage({
         <div>
           {/* Top toolbar */}
           <div className="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-            <div className="d-flex align-items-center gap-2">
-              <button
-                className="btn btn-sm btn-light border"
-                onClick={goBackToList}
+            {isAdmin && companyId ? (
+              <div
+                className="o-control-panel"
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginBottom: 16,
+                }}
               >
-                ← Back
-              </button>
-              <h4 className="fw-bold mb-0" style={invoiceHeadingStyle}>
-                {newMode
-                  ? "New Invoice"
-                  : selectedInvoice?.reference || "Invoice"}
-              </h4>
-              {!newMode && selectedInvoice && (
-                <span
-                  className={`badge ms-2 ${statusLabel === "paid" ? "bg-success" : statusLabel === "posted" ? "bg-info" : statusLabel === "fiscalized" ? "bg-primary" : "bg-secondary"}`}
+                <div className="o-breadcrumb">
+                  <span
+                    className="o-breadcrumb-item"
+                    style={{ cursor: "pointer" }}
+                    onClick={goBackToCompanies}
+                  >
+                    Invoices
+                  </span>
+                  <span className="o-breadcrumb-separator">
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                  </span>
+                  <span className="o-breadcrumb-current">
+                    {company?.name || "Company"}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="d-flex align-items-center gap-2">
+                <button
+                  className="btn btn-sm btn-light border"
+                  onClick={goBackToList}
                 >
-                  {statusLabel}
-                </span>
-              )}
-            </div>
+                  ← Back
+                </button>
+                <h4 className="fw-bold mb-0" style={invoiceHeadingStyle}>
+                  {newMode
+                    ? "New Invoice"
+                    : selectedInvoice?.reference || "Invoice"}
+                </h4>
+                {!newMode && selectedInvoice && (
+                  <span
+                    className={`badge ms-2 ${statusLabel === "paid" ? "bg-success" : statusLabel === "posted" ? "bg-info" : statusLabel === "fiscalized" ? "bg-primary" : "bg-secondary"}`}
+                  >
+                    {statusLabel}
+                  </span>
+                )}
+              </div>
+            )}
             <div className="d-flex flex-wrap gap-1">
               {newMode ? (
                 <>

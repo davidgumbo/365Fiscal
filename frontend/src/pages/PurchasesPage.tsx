@@ -1187,6 +1187,43 @@ export default function PurchasesPage({
       {mode !== "list" && (
         <div className="card shadow-sm">
           <div className="card-body invoice-form">
+            {isAdmin && companyId && (
+              <div
+                className="o-control-panel"
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginBottom: 16,
+                }}
+              >
+                <div className="o-breadcrumb">
+                  <span
+                    className="o-breadcrumb-item"
+                    style={{ cursor: "pointer" }}
+                    onClick={goBackToCompanies}
+                  >
+                    Purchases
+                  </span>
+                  <span className="o-breadcrumb-separator">
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                  </span>
+                  <span className="o-breadcrumb-current">
+                    {company?.name || "Company"}
+                  </span>
+                </div>
+              </div>
+            )}
             <div className="d-flex flex-wrap justify-content-between align-items-center mb-3">
               <div>
                 <h2 className="mb-1">
