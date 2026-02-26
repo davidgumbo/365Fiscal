@@ -1346,6 +1346,25 @@ export default function SettingsPage() {
     );
   }
 
+  const renderGeneralSaveActions = () => (
+    <>
+      <button
+        className="primary"
+        onClick={saveCompanySettings}
+        disabled={!hasUnsavedChanges || activeTopTab !== "general"}
+      >
+        Save
+      </button>
+      <button
+        className="outline"
+        onClick={discardChanges}
+        disabled={!hasUnsavedChanges || activeTopTab !== "general"}
+      >
+        Discard
+      </button>
+    </>
+  );
+
   return (
     <div className="settings-page">
       {hasUnsavedChanges && activeTopTab === "general" && (
@@ -1374,10 +1393,9 @@ export default function SettingsPage() {
         <div className="settings-top-left">
           <div className="settings-title">Settings</div>
         </div>
-        <div className="settings-top-actions">
+        {/* <div className="settings-top-actions">
           <div className="settings-company-select">
             <label className="input">
-              {/* Company */}
               <select
                 value={companyId ?? ""}
                 onChange={(e) => setCompanyId(Number(e.target.value))}
@@ -1390,21 +1408,7 @@ export default function SettingsPage() {
               </select>
             </label>
           </div>
-          <button
-            className="primary"
-            onClick={saveCompanySettings}
-            disabled={!hasUnsavedChanges || activeTopTab !== "general"}
-          >
-            Save
-          </button>
-          <button
-            className="outline"
-            onClick={discardChanges}
-            disabled={!hasUnsavedChanges || activeTopTab !== "general"}
-          >
-            Discard
-          </button>
-        </div>
+        </div> */}
       </div>
 
       <div className="two-panel-left" style={{ margin: "1rem" }}>
@@ -1504,12 +1508,17 @@ export default function SettingsPage() {
                 <section id="company" className="settings-section">
                   <div className="settings-section-header">
                     <h4>Companies</h4>
-                    <button
-                      className="settings-link"
-                      onClick={() => navigate("/companies")}
+                    <div
+                      style={{ display: "flex", gap: 8, alignItems: "center" }}
                     >
-                      Manage Companies
-                    </button>
+                      <button
+                        className="settings-link"
+                        onClick={() => navigate("/companies")}
+                      >
+                        Manage Companies
+                      </button>
+                      {renderGeneralSaveActions()}
+                    </div>
                   </div>
                   <div className="settings-company">
                     <div className="settings-company-logo">
@@ -1612,6 +1621,7 @@ export default function SettingsPage() {
                         </svg>
                         Preview
                       </button>
+                      {renderGeneralSaveActions()}
                     </div>
                   </div>
                   <p className="settings-section-desc">
@@ -1750,6 +1760,9 @@ export default function SettingsPage() {
                 <section id="zimra-tax" className="settings-section">
                   <div className="settings-section-header">
                     <h4>ZIMRA Tax Configuration</h4>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      {renderGeneralSaveActions()}
+                    </div>
                   </div>
                   <p className="settings-section-desc">
                     Pull applicable taxes from a registered FDMS device. These
@@ -1938,23 +1951,26 @@ export default function SettingsPage() {
                 <section id="currencies" className="settings-section">
                   <div className="settings-section-header">
                     <h4>Currency Configuration</h4>
-                    <button
-                      className="settings-btn-sm"
-                      onClick={() => {
-                        setShowCurrencyForm(true);
-                        setCurrencyEditing(null);
-                        setCurrencyForm({
-                          code: "",
-                          name: "",
-                          symbol: "",
-                          position: "before",
-                          decimal_places: 2,
-                          is_default: false,
-                        });
-                      }}
-                    >
-                      <PlusIcon /> Add Currency
-                    </button>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button
+                        className="settings-btn-sm"
+                        onClick={() => {
+                          setShowCurrencyForm(true);
+                          setCurrencyEditing(null);
+                          setCurrencyForm({
+                            code: "",
+                            name: "",
+                            symbol: "",
+                            position: "before",
+                            decimal_places: 2,
+                            is_default: false,
+                          });
+                        }}
+                      >
+                        <PlusIcon /> Add Currency
+                      </button>
+                      {renderGeneralSaveActions()}
+                    </div>
                   </div>
                   <p className="settings-section-desc">Manage Currencies</p>
 
@@ -2477,38 +2493,49 @@ export default function SettingsPage() {
                       style={{
                         display: "flex",
                         alignItems: "center",
-                        gap: 10,
+                        justifyContent: "space-between",
                         marginBottom: 4,
                       }}
                     >
-                      <svg
-                        width="22"
-                        height="22"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="var(--violet-600)"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <rect x="2" y="3" width="20" height="14" rx="2" />
-                        <path d="M8 21h8" />
-                        <path d="M12 17v4" />
-                        <path d="M7 8h2" />
-                        <path d="M7 12h2" />
-                        <path d="M15 8h2" />
-                        <path d="M15 12h2" />
-                      </svg>
-                      <h4
+                      <div
                         style={{
-                          margin: 0,
-                          fontSize: 18,
-                          fontWeight: 700,
-                          color: "var(--slate-800)",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 10,
                         }}
                       >
-                        Point of Sale Configuration
-                      </h4>
+                        <svg
+                          width="22"
+                          height="22"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="var(--violet-600)"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <rect x="2" y="3" width="20" height="14" rx="2" />
+                          <path d="M8 21h8" />
+                          <path d="M12 17v4" />
+                          <path d="M7 8h2" />
+                          <path d="M7 12h2" />
+                          <path d="M15 8h2" />
+                          <path d="M15 12h2" />
+                        </svg>
+                        <h4
+                          style={{
+                            margin: 0,
+                            fontSize: 18,
+                            fontWeight: 700,
+                            color: "var(--slate-800)",
+                          }}
+                        >
+                          Point of Sale Configuration
+                        </h4>
+                      </div>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        {renderGeneralSaveActions()}
+                      </div>
                     </div>
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                       <button
