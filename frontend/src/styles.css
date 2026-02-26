@@ -4181,7 +4181,6 @@ button.danger:hover {
 
 .settings-sidebar {
   position: sticky;
-  top: 96px;
   align-self: start;
   background: var(--white-500);
   border: 1px solid var(--gray-200);
