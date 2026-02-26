@@ -70,21 +70,26 @@ class POSOrderRead(ORMBase):
     mobile_amount: float
     change_amount: float
     payment_method: str
-    payment_reference: str
+    payment_reference: str | None = ""
     is_fiscalized: bool
-    zimra_receipt_id: str
-    zimra_verification_code: str
-    zimra_verification_url: str
-    fiscal_errors: str
-    notes: str
+    zimra_receipt_id: str | None = ""
+    zimra_verification_code: str | None = ""
+    zimra_verification_url: str | None = ""
+    fiscal_errors: str | None = ""
+    notes: str | None = ""
     cashier_name: str | None = ""
     till_id: int | None = None
     lines: List[POSOrderLineRead] = []
 
-    @field_validator("cashier_name", mode="before")
+    @field_validator(
+        "cashier_name", "payment_reference", "zimra_receipt_id",
+        "zimra_verification_code", "zimra_verification_url",
+        "fiscal_errors", "notes",
+        mode="before",
+    )
     @classmethod
-    def _default_cashier(cls, v):  # noqa: N805
-        return v or ""
+    def _none_to_empty(cls, v):  # noqa: N805
+        return v if v is not None else ""
 
 
 class POSOrderRefund(BaseModel):
@@ -122,7 +127,12 @@ class POSSessionRead(ORMBase):
     total_card: float
     total_mobile: float
     transaction_count: int
-    notes: str
+    notes: str | None = ""
+
+    @field_validator("notes", mode="before")
+    @classmethod
+    def _session_none_to_empty(cls, v):  # noqa: N805
+        return v if v is not None else ""
 
 
 class POSSessionSummary(BaseModel):

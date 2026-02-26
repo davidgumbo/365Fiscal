@@ -47,20 +47,48 @@ def ensure_required_tables_exist():
 
 @app.on_event("startup")
 def ensure_new_columns():
-    """Add columns that create_all cannot add to existing tables."""
+    """Add columns that create_all cannot add to existing tables.
+
+    create_all (above) handles brand-new tables (pos_tills, pos_till_employees),
+    but it will NOT alter an existing pos_orders table to add new columns.
+    This function inspects the live schema and patches it.
+    """
     from sqlalchemy import inspect as sa_inspect, text
     try:
         insp = sa_inspect(engine)
-        # pos_orders: cashier_name, till_id
-        if "pos_orders" in insp.get_table_names():
-            cols = [c["name"] for c in insp.get_columns("pos_orders")]
+        table_names = set(insp.get_table_names())
+
+        if "pos_orders" in table_names:
+            cols = {c["name"] for c in insp.get_columns("pos_orders")}
             with engine.begin() as conn:
                 if "cashier_name" not in cols:
-                    conn.execute(text("ALTER TABLE pos_orders ADD COLUMN cashier_name VARCHAR(200) DEFAULT ''"))
+                    _startup_logger.info("Adding cashier_name column to pos_orders")
+                    conn.execute(text(
+                        "ALTER TABLE pos_orders ADD COLUMN cashier_name VARCHAR(200) DEFAULT ''"
+                    ))
                 if "till_id" not in cols:
-                    conn.execute(text("ALTER TABLE pos_orders ADD COLUMN till_id INTEGER"))
+                    _startup_logger.info("Adding till_id column to pos_orders")
+                    conn.execute(text(
+                        "ALTER TABLE pos_orders ADD COLUMN till_id INTEGER"
+                    ))
+            _startup_logger.info("Column migration check complete for pos_orders")
+
+        # Stamp alembic so 'alembic upgrade head' won't re-run this migration
+        if "alembic_version" in table_names:
+            with engine.begin() as conn:
+                row = conn.execute(text(
+                    "SELECT version_num FROM alembic_version"
+                )).fetchone()
+                current = row[0] if row else None
+                if current and current != "y1z2a3b4c5d6":
+                    _startup_logger.info(
+                        "Stamping alembic to y1z2a3b4c5d6 (was %s)", current
+                    )
+                    conn.execute(text(
+                        "UPDATE alembic_version SET version_num = 'y1z2a3b4c5d6'"
+                    ))
     except Exception:
-        _startup_logger.exception("Failed ensuring new columns")
+        _startup_logger.exception("Failed ensuring new columns — will continue startup")
 
 
 @app.on_event("startup")

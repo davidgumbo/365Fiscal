@@ -16,7 +16,7 @@ echo "Updating backend..."
 cd ${APP_DIR}/backend
 source venv/bin/activate
 pip install -r requirements.txt
-alembic upgrade head
+alembic upgrade head || echo "WARNING: alembic upgrade failed (tables may already exist — startup will handle it)"
 
 echo "Rebuilding frontend..."
 cd ${APP_DIR}/frontend

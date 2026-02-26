@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'y1z2a3b4c5d6'
-down_revision = None
+down_revision = 'x1y2z3'
 branch_labels = None
 depends_on = None
 
@@ -36,8 +36,8 @@ def upgrade() -> None:
     )
 
     # Add cashier_name and till_id columns to pos_orders
-    op.add_column('pos_orders', sa.Column('cashier_name', sa.String(200), server_default='', nullable=False))
-    op.add_column('pos_orders', sa.Column('till_id', sa.Integer(), sa.ForeignKey('pos_tills.id'), nullable=True))
+    op.add_column('pos_orders', sa.Column('cashier_name', sa.String(200), server_default='', nullable=True))
+    op.add_column('pos_orders', sa.Column('till_id', sa.Integer(), nullable=True))
 
 
 def downgrade() -> None:
