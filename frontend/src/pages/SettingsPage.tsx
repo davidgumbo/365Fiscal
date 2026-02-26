@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../api";
 import { useCompanies, Company } from "../hooks/useCompanies";
@@ -335,6 +335,20 @@ export default function SettingsPage() {
   const [tillForm, setTillForm] = useState<{ name: string; employee_ids: number[] }>({ name: "", employee_ids: [] });
   const [tillEditing, setTillEditing] = useState<number | null>(null);
   const [tillSaving, setTillSaving] = useState(false);
+  const [tillDropdownOpen, setTillDropdownOpen] = useState(false);
+  const tillDropdownRef = useRef<HTMLLabelElement>(null);
+
+  // Close till dropdown on outside click
+  useEffect(() => {
+    if (!tillDropdownOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (tillDropdownRef.current && !tillDropdownRef.current.contains(e.target as Node)) {
+        setTillDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [tillDropdownOpen]);
 
   // Currency management state
   const [currencyList, setCurrencyList] = useState<CurrencyItem[]>([]);
@@ -505,6 +519,7 @@ export default function SettingsPage() {
       }
       setTillForm({ name: "", employee_ids: [] });
       setTillEditing(null);
+      setTillDropdownOpen(false);
       loadPosTills(companyId);
     } catch (err: any) {
       setPosError(err.message || "Failed to save till");
@@ -4189,56 +4204,153 @@ export default function SettingsPage() {
                               placeholder="e.g. Till 1, Register A"
                             />
                           </label>
-                          <label className="input" style={{ margin: 0 }}>
+                          <label ref={tillDropdownRef} className="input" style={{ margin: 0, position: "relative" }}>
                             <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-500)" }}>
                               Employees (select who can use this till)
                             </span>
-                            <div style={{
-                              display: "flex",
-                              flexWrap: "wrap",
-                              gap: 6,
-                              padding: "6px 8px",
-                              border: "1px solid var(--gray-200, #e5e7eb)",
-                              borderRadius: 6,
-                              background: "#fff",
-                              minHeight: 38,
-                              alignItems: "center",
-                            }}>
-                              {posEmployees.filter(emp => emp.is_active).map(emp => {
-                                const selected = tillForm.employee_ids.includes(emp.id);
-                                return (
-                                  <button
-                                    key={emp.id}
-                                    type="button"
-                                    onClick={() => {
-                                      if (selected) {
-                                        setTillForm({ ...tillForm, employee_ids: tillForm.employee_ids.filter(id => id !== emp.id) });
-                                      } else {
-                                        setTillForm({ ...tillForm, employee_ids: [...tillForm.employee_ids, emp.id] });
-                                      }
-                                    }}
-                                    style={{
-                                      padding: "3px 10px",
-                                      borderRadius: 16,
-                                      fontSize: 12,
-                                      fontWeight: 500,
-                                      border: selected ? "1px solid var(--violet-400)" : "1px solid var(--gray-300)",
-                                      background: selected ? "var(--violet-100, #ede9fe)" : "var(--gray-50, #f9fafb)",
-                                      color: selected ? "var(--violet-700)" : "var(--slate-600)",
-                                      cursor: "pointer",
-                                      transition: "all 150ms",
-                                    }}
-                                  >
-                                    {selected && "✓ "}{emp.name}
-                                  </button>
-                                );
-                              })}
-                              {posEmployees.filter(emp => emp.is_active).length === 0 && (
-                                <span style={{ fontSize: 12, color: "var(--slate-400)" }}>
-                                  No employees — add employees first in the "Employees & Login" tab
+                            {/* Selected tags + trigger */}
+                            <div
+                              onClick={() => setTillDropdownOpen(!tillDropdownOpen)}
+                              style={{
+                                display: "flex",
+                                flexWrap: "wrap",
+                                gap: 4,
+                                padding: "6px 32px 6px 8px",
+                                border: "1px solid var(--gray-200, #e5e7eb)",
+                                borderRadius: 6,
+                                background: "#fff",
+                                minHeight: 38,
+                                alignItems: "center",
+                                cursor: "pointer",
+                                position: "relative",
+                              }}
+                            >
+                              {tillForm.employee_ids.length === 0 && (
+                                <span style={{ fontSize: 13, color: "var(--slate-400)" }}>
+                                  Select employees…
                                 </span>
                               )}
+                              {tillForm.employee_ids.map(eid => {
+                                const emp = posEmployees.find(e => e.id === eid);
+                                if (!emp) return null;
+                                return (
+                                  <span
+                                    key={eid}
+                                    style={{
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      gap: 4,
+                                      padding: "2px 6px 2px 8px",
+                                      borderRadius: 12,
+                                      fontSize: 12,
+                                      fontWeight: 500,
+                                      background: "var(--violet-100, #ede9fe)",
+                                      color: "var(--violet-700)",
+                                      border: "1px solid var(--violet-200, #ddd6fe)",
+                                    }}
+                                  >
+                                    {emp.name}
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setTillForm({ ...tillForm, employee_ids: tillForm.employee_ids.filter(id => id !== eid) });
+                                      }}
+                                      style={{
+                                        border: "none",
+                                        background: "transparent",
+                                        cursor: "pointer",
+                                        padding: 0,
+                                        lineHeight: 1,
+                                        fontSize: 14,
+                                        color: "var(--violet-400)",
+                                        fontWeight: 700,
+                                      }}
+                                    >
+                                      ×
+                                    </button>
+                                  </span>
+                                );
+                              })}
+                              {/* Chevron */}
+                              <svg
+                                width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                stroke="var(--slate-400)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                                style={{ position: "absolute", right: 10, top: "50%", transform: `translateY(-50%) rotate(${tillDropdownOpen ? 180 : 0}deg)`, transition: "transform 150ms", pointerEvents: "none" }}
+                              >
+                                <polyline points="6 9 12 15 18 9" />
+                              </svg>
                             </div>
+                            {/* Dropdown list */}
+                            {tillDropdownOpen && (
+                              <div
+                                style={{
+                                  position: "absolute",
+                                  top: "100%",
+                                  left: 0,
+                                  right: 0,
+                                  zIndex: 50,
+                                  marginTop: 4,
+                                  background: "#fff",
+                                  border: "1px solid var(--gray-200, #e5e7eb)",
+                                  borderRadius: 8,
+                                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                                  maxHeight: 200,
+                                  overflowY: "auto",
+                                }}
+                              >
+                                {posEmployees.filter(emp => emp.is_active).length === 0 ? (
+                                  <div style={{ padding: "12px 16px", fontSize: 13, color: "var(--slate-400)" }}>
+                                    No employees — add employees first in the "Employees &amp; Login" tab
+                                  </div>
+                                ) : (
+                                  posEmployees.filter(emp => emp.is_active).map(emp => {
+                                    const checked = tillForm.employee_ids.includes(emp.id);
+                                    return (
+                                      <div
+                                        key={emp.id}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          if (checked) {
+                                            setTillForm({ ...tillForm, employee_ids: tillForm.employee_ids.filter(id => id !== emp.id) });
+                                          } else {
+                                            setTillForm({ ...tillForm, employee_ids: [...tillForm.employee_ids, emp.id] });
+                                          }
+                                        }}
+                                        style={{
+                                          display: "flex",
+                                          alignItems: "center",
+                                          gap: 10,
+                                          padding: "8px 16px",
+                                          cursor: "pointer",
+                                          transition: "background 100ms",
+                                          background: checked ? "var(--violet-50, #f5f3ff)" : "transparent",
+                                          borderBottom: "1px solid var(--gray-50, #f9fafb)",
+                                        }}
+                                        onMouseEnter={(e) => { if (!checked) e.currentTarget.style.background = "var(--gray-50)"; }}
+                                        onMouseLeave={(e) => { e.currentTarget.style.background = checked ? "var(--violet-50, #f5f3ff)" : "transparent"; }}
+                                      >
+                                        <input
+                                          type="checkbox"
+                                          checked={checked}
+                                          readOnly
+                                          style={{ accentColor: "var(--violet-600)", width: 16, height: 16, cursor: "pointer" }}
+                                        />
+                                        <div style={{ flex: 1 }}>
+                                          <div style={{ fontSize: 13, fontWeight: 500, color: "var(--slate-700)" }}>{emp.name}</div>
+                                          <div style={{ fontSize: 11, color: "var(--slate-400)" }}>{emp.role}{emp.email ? ` · ${emp.email}` : ""}</div>
+                                        </div>
+                                        {checked && (
+                                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--violet-500)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                            <polyline points="20 6 9 17 4 12" />
+                                          </svg>
+                                        )}
+                                      </div>
+                                    );
+                                  })
+                                )}
+                              </div>
+                            )}
                           </label>
                           <div style={{ display: "flex", gap: 6 }}>
                             <button
@@ -4264,6 +4376,7 @@ export default function SettingsPage() {
                                 onClick={() => {
                                   setTillEditing(null);
                                   setTillForm({ name: "", employee_ids: [] });
+                                  setTillDropdownOpen(false);
                                 }}
                                 style={{ height: 38, padding: "0 12px", borderRadius: 8, fontSize: 13 }}
                               >

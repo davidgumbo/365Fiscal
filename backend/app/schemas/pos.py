@@ -77,9 +77,14 @@ class POSOrderRead(ORMBase):
     zimra_verification_url: str
     fiscal_errors: str
     notes: str
-    cashier_name: str = ""
+    cashier_name: str | None = ""
     till_id: int | None = None
     lines: List[POSOrderLineRead] = []
+
+    @field_validator("cashier_name", mode="before")
+    @classmethod
+    def _default_cashier(cls, v):  # noqa: N805
+        return v or ""
 
 
 class POSOrderRefund(BaseModel):

@@ -1,4 +1,3 @@
-"""POS Till model for managing multiple tills/registers per company."""
 from sqlalchemy import Boolean, ForeignKey, Integer, String, Table, Column
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 

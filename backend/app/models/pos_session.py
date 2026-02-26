@@ -56,8 +56,8 @@ class POSOrder(Base, TimestampMixin):
     order_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
 
     # Cashier / till tracking
-    cashier_name: Mapped[str] = mapped_column(String(200), default="")
-    till_id: Mapped[int | None] = mapped_column(ForeignKey("pos_tills.id"), nullable=True)
+    cashier_name: Mapped[str | None] = mapped_column(String(200), nullable=True, default="")
+    till_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     
     # Amounts
     subtotal: Mapped[float] = mapped_column(Float, default=0)

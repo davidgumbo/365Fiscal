@@ -56,9 +56,9 @@ def ensure_new_columns():
             cols = [c["name"] for c in insp.get_columns("pos_orders")]
             with engine.begin() as conn:
                 if "cashier_name" not in cols:
-                    conn.execute(text("ALTER TABLE pos_orders ADD COLUMN cashier_name VARCHAR(200) DEFAULT '' NOT NULL"))
+                    conn.execute(text("ALTER TABLE pos_orders ADD COLUMN cashier_name VARCHAR(200) DEFAULT ''"))
                 if "till_id" not in cols:
-                    conn.execute(text("ALTER TABLE pos_orders ADD COLUMN till_id INTEGER REFERENCES pos_tills(id)"))
+                    conn.execute(text("ALTER TABLE pos_orders ADD COLUMN till_id INTEGER"))
     except Exception:
         _startup_logger.exception("Failed ensuring new columns")
 
