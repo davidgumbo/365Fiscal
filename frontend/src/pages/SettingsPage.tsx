@@ -1389,11 +1389,11 @@ export default function SettingsPage() {
         </div>
       )}
 
-      <div className="settings-topbar">
+      {/* <div className="settings-topbar">
         <div className="settings-top-left">
           <div className="settings-title">Settings</div>
         </div>
-        {/* <div className="settings-top-actions">
+        <div className="settings-top-actions">
           <div className="settings-company-select">
             <label className="input">
               <select
@@ -1408,8 +1408,8 @@ export default function SettingsPage() {
               </select>
             </label>
           </div>
-        </div> */}
-      </div>
+        </div>
+      </div> */}
 
       <div className="two-panel-left" style={{ margin: "1rem" }}>
         <aside className="settings-sidebar">
