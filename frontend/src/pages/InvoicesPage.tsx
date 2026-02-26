@@ -2400,7 +2400,7 @@ export default function InvoicesPage({
                     <label className="form-label">Notes</label>
                     <textarea
                       className="form-control input-underline"
-                      rows={1}
+                      rows={2}
                       value={newNotes}
                       onChange={(e) => setNewNotes(e.target.value)}
                     />
@@ -2430,18 +2430,18 @@ export default function InvoicesPage({
                     <thead className="table-light">
                       <tr>
                         <th style={{ minWidth: 160 }}>Product</th>
-                        <th>Description</th>
-                        <th className="text-end" style={{ width: 80 }}>
+                        <th style={{ minWidth: 120 }}>Description</th>
+                        <th className="text-end" style={{ width: 100 }}>
                           Qty
                         </th>
                         <th style={{ width: 80 }}>UoM</th>
                         <th className="text-end" style={{ width: 100 }}>
                           Price
                         </th>
-                        <th className="text-end" style={{ width: 80 }}>
+                        <th className="text-end" style={{ width: 100 }}>
                           Disc %
                         </th>
-                        <th className="text-end" style={{ width: 80 }}>
+                        <th className="text-end" style={{ width: 100 }}>
                           Tax %
                         </th>
                         <th className="text-end" style={{ width: 110 }}>
