@@ -1175,7 +1175,7 @@ export default function QuotationsPage({
                     </svg>
                   </span>
                   <span className="o-breadcrumb-current">
-                    {company?.name || "Company"}
+                    {selectedCompany?.name || "Company"}
                   </span>
                 </div>
               </div>
