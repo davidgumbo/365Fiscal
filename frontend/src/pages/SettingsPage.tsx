@@ -222,6 +222,7 @@ export default function SettingsPage() {
   const [showForm, setShowForm] = useState(false);
   const [adminEmail, setAdminEmail] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
+  const [showAdminForm, setShowAdminForm] = useState(false);
   const [passwordEdits, setPasswordEdits] = useState<Record<number, string>>(
     {},
   );
@@ -1193,6 +1194,7 @@ export default function SettingsPage() {
     });
     setAdminEmail("");
     setAdminPassword("");
+    setShowAdminForm(false);
     setStatus("Admin created");
     loadAdmins();
   };
@@ -1512,9 +1514,20 @@ export default function SettingsPage() {
                       style={{ display: "flex", gap: 8, alignItems: "center" }}
                     >
                       <button
-                        className="settings-link"
+                        className="settings-btn-sm"
                         onClick={() => navigate("/companies")}
                       >
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
                         Manage Companies
                       </button>
                       {renderGeneralSaveActions()}
@@ -4033,7 +4046,21 @@ export default function SettingsPage() {
               <section id="admins" className="settings-section">
                 <div className="settings-section-header">
                   <h4>Administrators</h4>
-                  <p className="page-sub">Manage system administrators.</p>
+                  <button
+                    className="primary"
+                    onClick={() => {
+                      if (showAdminForm) {
+                        setShowAdminForm(false);
+                        setAdminEmail("");
+                        setAdminPassword("");
+                        return;
+                      }
+                      setShowAdminForm(true);
+                    }}
+                  >
+                    {showAdminForm ? <XIcon /> : <PlusIcon />}
+                    {showAdminForm ? " Cancel" : " Add Admin"}
+                  </button>
                 </div>
                 {adminError && (
                   <div
@@ -4043,36 +4070,49 @@ export default function SettingsPage() {
                     {adminError}
                   </div>
                 )}
-                <div
-                  className="settings-user-grid"
-                  style={{ marginBottom: 16 }}
-                >
-                  <label className="input">
-                    Email
-                    <input
-                      type="email"
-                      value={adminEmail}
-                      onChange={(e) => setAdminEmail(e.target.value)}
-                      placeholder="admin@example.com"
-                    />
-                  </label>
-                  <label className="input">
-                    Password
-                    <input
-                      type="password"
-                      value={adminPassword}
-                      onChange={(e) => setAdminPassword(e.target.value)}
-                      placeholder="••••••••"
-                    />
-                  </label>
-                  <button
-                    className="primary"
-                    onClick={createAdmin}
-                    disabled={!adminEmail || !adminPassword}
-                  >
-                    <PlusIcon /> Add Admin
-                  </button>
-                </div>
+                {showAdminForm && (
+                  <div style={{ marginBottom: 16 }}>
+                    <div className="settings-user-grid" style={{ marginBottom: 12 }}>
+                      <label className="input">
+                        Email
+                        <input
+                          type="email"
+                          value={adminEmail}
+                          onChange={(e) => setAdminEmail(e.target.value)}
+                          placeholder="admin@example.com"
+                        />
+                      </label>
+                      <label className="input">
+                        Password
+                        <input
+                          type="password"
+                          value={adminPassword}
+                          onChange={(e) => setAdminPassword(e.target.value)}
+                          placeholder="••••••••"
+                        />
+                      </label>
+                    </div>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button
+                        className="primary"
+                        onClick={createAdmin}
+                        disabled={!adminEmail || !adminPassword}
+                      >
+                        <PlusIcon /> Create Admin
+                      </button>
+                      <button
+                        className="outline"
+                        onClick={() => {
+                          setShowAdminForm(false);
+                          setAdminEmail("");
+                          setAdminPassword("");
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
                 <table className="table">
                   <thead>
                     <tr>
