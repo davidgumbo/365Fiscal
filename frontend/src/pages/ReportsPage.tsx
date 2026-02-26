@@ -1960,42 +1960,6 @@ export default function ReportsPage() {
           </div>
         </div>
 
-        <p style={{ color: "var(--muted)", marginBottom: 20, fontSize: 14 }}>
-          Select a company to view its reports.
-          <label style={{ fontSize: 13, fontWeight: 500 }}>Currency:</label>
-          <select
-            className="form-select form-select-sm"
-            style={{ width: 160 }}
-            value={reportCurrency}
-            onChange={(e) =>
-              setReportCurrency(normalizeCurrency(e.target.value))
-            }
-            aria-label="Filter by currency"
-          >
-            {/* <option value="">All</option> */}
-            {currencyOptions.map((currency) => (
-              <option key={currency.code} value={currency.code}>
-                {currency.label}
-              </option>
-            ))}
-          </select>
-        </p>
-        <label style={{ fontSize: 13, fontWeight: 500 }}>Currency:</label>
-        <select
-          className="form-select form-select-sm"
-          style={{ width: 140 }}
-          value={reportCurrency}
-          onChange={(e) => setReportCurrency(normalizeCurrency(e.target.value))}
-          aria-label="Filter reports by currency"
-        >
-          {/* <option value="">All</option> */}
-          {currencyOptions.map((currency) => (
-            <option key={currency.code} value={currency.code}>
-              {currency.label}
-            </option>
-          ))}
-        </select>
-
         <div className="device-company-grid">
           {filteredCompanies.map((c) => (
             <button
