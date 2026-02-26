@@ -46,6 +46,24 @@ def ensure_required_tables_exist():
 
 
 @app.on_event("startup")
+def ensure_new_columns():
+    """Add columns that create_all cannot add to existing tables."""
+    from sqlalchemy import inspect as sa_inspect, text
+    try:
+        insp = sa_inspect(engine)
+        # pos_orders: cashier_name, till_id
+        if "pos_orders" in insp.get_table_names():
+            cols = [c["name"] for c in insp.get_columns("pos_orders")]
+            with engine.begin() as conn:
+                if "cashier_name" not in cols:
+                    conn.execute(text("ALTER TABLE pos_orders ADD COLUMN cashier_name VARCHAR(200) DEFAULT '' NOT NULL"))
+                if "till_id" not in cols:
+                    conn.execute(text("ALTER TABLE pos_orders ADD COLUMN till_id INTEGER REFERENCES pos_tills(id)"))
+    except Exception:
+        _startup_logger.exception("Failed ensuring new columns")
+
+
+@app.on_event("startup")
 def ensure_system_roles():
     """Initialize or update system roles on startup."""
     db = SessionLocal()
