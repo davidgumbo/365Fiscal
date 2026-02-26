@@ -797,7 +797,13 @@ export default function InvoicesPage({
     apiFetch<CurrencyRateRead | null>(`/currencies/${cur.id}/rate${qs}`)
       .then((r) => setInvoiceFxRate(r?.rate || 1))
       .catch(() => setInvoiceFxRate(1));
-  }, [companyId, baseCurrencyCode, currencyList, normalizedInvoiceCurrency, rateDate]);
+  }, [
+    companyId,
+    baseCurrencyCode,
+    currencyList,
+    normalizedInvoiceCurrency,
+    rateDate,
+  ]);
 
   const toInvoiceCurrency = (amountBase: number) =>
     Number(((amountBase || 0) * (invoiceFxRate || 1)).toFixed(2));
@@ -1118,17 +1124,26 @@ export default function InvoicesPage({
   }, [displayLines, detailLinesPage, detailLinesPageSize]);
 
   useEffect(() => {
-    const totalPages = Math.max(1, Math.ceil(invoices.length / invoiceListPageSize));
+    const totalPages = Math.max(
+      1,
+      Math.ceil(invoices.length / invoiceListPageSize),
+    );
     setInvoiceListPage((prev) => Math.min(prev, totalPages));
   }, [invoices.length, invoiceListPageSize]);
 
   useEffect(() => {
-    const totalPages = Math.max(1, Math.ceil(editLines.length / newLinesPageSize));
+    const totalPages = Math.max(
+      1,
+      Math.ceil(editLines.length / newLinesPageSize),
+    );
     setNewLinesPage((prev) => Math.min(prev, totalPages));
   }, [editLines.length, newLinesPageSize]);
 
   useEffect(() => {
-    const totalPages = Math.max(1, Math.ceil(displayLines.length / detailLinesPageSize));
+    const totalPages = Math.max(
+      1,
+      Math.ceil(displayLines.length / detailLinesPageSize),
+    );
     setDetailLinesPage((prev) => Math.min(prev, totalPages));
   }, [displayLines.length, detailLinesPageSize]);
 
@@ -2191,46 +2206,141 @@ export default function InvoicesPage({
               <div className="card-body invoice-form">
                 <div className="row g-3">
                   <div className="col-md-6">
-                    <label className="form-label">
+                    <label className="form-label fw-semibold">
                       Customer <span className="text-danger">*</span>
                     </label>
-                    <div className="position-relative">
+                    <div
+                      className="position-relative"
+                      ref={customerDropdownRef}
+                    >
                       <input
                         className="form-control input-underline"
                         placeholder="Search or select customer…"
-                        value=""
-                        data-sharkid="__0"
+                        value={customerSearch}
+                        onChange={(e) => {
+                          setCustomerSearch(e.target.value);
+                          setCustomerDropdownOpen(true);
+                          if (!e.target.value) setNewCustomerId(null);
+                        }}
+                        onFocus={() => setCustomerDropdownOpen(true)}
                       />
+                      {customerDropdownOpen && (
+                        <ul
+                          className="list-group position-absolute w-100 shadow-sm"
+                          style={{
+                            zIndex: 1050,
+                            maxHeight: 220,
+                            overflowY: "auto",
+                          }}
+                        >
+                          {displayContacts.map((c) => (
+                            <li
+                              key={c.id}
+                              className={`list-group-item list-group-item-action${newCustomerId === c.id ? " active" : ""}`}
+                              role="button"
+                              onClick={() =>
+                                selectCustomer(c.id, c.name, "new")
+                              }
+                            >
+                              {c.name}
+                            </li>
+                          ))}
+                          {customerSearch.trim() &&
+                            !filteredContacts.some(
+                              (c) =>
+                                c.name.toLowerCase() ===
+                                customerSearch.trim().toLowerCase(),
+                            ) && (
+                              <li
+                                className="list-group-item list-group-item-action text-primary"
+                                role="button"
+                                onClick={() => createCustomerFromSearch("new")}
+                              >
+                                {customerCreating
+                                  ? "Creating..."
+                                  : `Create "${customerSearch.trim()}"`}
+                              </li>
+                            )}
+                          {!displayContacts.length &&
+                            !customerSearch.trim() && (
+                              <li className="list-group-item text-muted">
+                                No customers
+                              </li>
+                            )}
+                        </ul>
+                      )}
                     </div>
                   </div>
                   <div className="col-md-6">
-                    <label className="form-label">Quotation</label>
-                    <div className="position-relative">
+                    <label className="form-label fw-semibold">Quotation</label>
+                    <div
+                      className="position-relative"
+                      ref={quotationDropdownRef}
+                    >
                       <input
                         className="form-control input-underline"
                         placeholder="Search or select quotation…"
-                        value=""
-                        data-sharkid="__1"
+                        value={quotationSearch}
+                        onChange={(e) => {
+                          setQuotationSearch(e.target.value);
+                          setQuotationDropdownOpen(true);
+                          if (!e.target.value) setNewQuotationId(null);
+                        }}
+                        onFocus={() => setQuotationDropdownOpen(true)}
                       />
+                      {quotationDropdownOpen && (
+                        <ul
+                          className="list-group position-absolute w-100 shadow-sm"
+                          style={{
+                            zIndex: 1050,
+                            maxHeight: 220,
+                            overflowY: "auto",
+                          }}
+                        >
+                          {displayQuotations.map((q) => (
+                            <li
+                              key={q.id}
+                              className={`list-group-item list-group-item-action${newQuotationId === q.id ? " active" : ""}`}
+                              role="button"
+                              onClick={() => {
+                                setNewQuotationId(q.id);
+                                setQuotationSearch(q.reference);
+                                setQuotationDropdownOpen(false);
+                              }}
+                            >
+                              {q.reference}
+                            </li>
+                          ))}
+                          {!displayQuotations.length &&
+                            !quotationSearch.trim() && (
+                              <li className="list-group-item text-muted">
+                                No quotations
+                              </li>
+                            )}
+                        </ul>
+                      )}
                     </div>
                   </div>
                   <div className="col-md-6">
                     <label className="form-label">Reference</label>
                     <input
                       className="form-control input-underline bg-light"
-                      readonly=""
                       value="Auto-generated"
-                      data-sharkid="__2"
+                      readOnly
                     />
                   </div>
                   <div className="col-md-6">
                     <label className="form-label">Currency</label>
-                    <select className="form-select input-underline" data-sharkid="__3">
-                      <option value="USD">USD</option>
-                      <option value="ZWG">ZWG</option>
-                      <option value="ZAR">ZAR</option>
-                      <option value="EUR">EUR</option>
-                      <option value="GBP">GBP</option>
+                    <select
+                      className="form-select input-underline"
+                      value={newCurrency}
+                      onChange={(e) => setNewCurrency(e.target.value)}
+                    >
+                      {currencyOptions.map((cur) => (
+                        <option key={cur} value={cur}>
+                          {cur}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div className="col-md-6">
@@ -2238,8 +2348,8 @@ export default function InvoicesPage({
                     <input
                       className="form-control input-underline"
                       type="date"
-                      value=""
-                      data-sharkid="__4"
+                      value={newInvoiceDate}
+                      onChange={(e) => setNewInvoiceDate(e.target.value)}
                     />
                   </div>
                   <div className="col-md-6">
@@ -2247,19 +2357,36 @@ export default function InvoicesPage({
                     <input
                       className="form-control input-underline"
                       type="date"
-                      value=""
-                      data-sharkid="__5"
+                      value={newDueDate}
+                      onChange={(e) => setNewDueDate(e.target.value)}
                     />
                   </div>
                   <div className="col-md-6">
                     <label className="form-label">Fiscal Device</label>
-                    <select className="form-select input-underline" data-sharkid="__6">
+                    <select
+                      className="form-select input-underline"
+                      value={newDeviceId ?? ""}
+                      onChange={(e) =>
+                        setNewDeviceId(
+                          e.target.value ? Number(e.target.value) : null,
+                        )
+                      }
+                    >
                       <option value="">— None —</option>
+                      {devices.map((d) => (
+                        <option key={d.id} value={d.id}>
+                          {d.device_id || d.serial_number || `Device ${d.id}`}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div className="col-md-6">
                     <label className="form-label">Payment Terms</label>
-                    <select className="form-select input-underline" data-sharkid="__7">
+                    <select
+                      className="form-select input-underline"
+                      value={newPaymentTerms}
+                      onChange={(e) => setNewPaymentTerms(e.target.value)}
+                    >
                       <option value="">Select terms</option>
                       <option value="7 Days">7 Days</option>
                       <option value="14 Days">14 Days</option>
@@ -2272,11 +2399,11 @@ export default function InvoicesPage({
                   <div className="col-md-12">
                     <label className="form-label">Notes</label>
                     <textarea
-                      className={"form-control input-underline"}
+                      className="form-control input-underline"
                       rows={1}
-                      style={{ height: "137px" }}
-                      data-sharkid="__8"
-                    ></textarea>
+                      value={newNotes}
+                      onChange={(e) => setNewNotes(e.target.value)}
+                    />
                   </div>
                 </div>
 
