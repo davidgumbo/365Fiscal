@@ -2272,7 +2272,7 @@ export default function InvoicesPage({
                     </div>
                   </div>
                   <div className="col-md-6">
-                    <label className="form-label ">Quotation</label>
+                    <label className="form-label">Quotation</label>
                     <div
                       className="position-relative"
                       ref={quotationDropdownRef}
@@ -3578,7 +3578,7 @@ export default function InvoicesPage({
                         onChange={(e) => setProductName(e.target.value)}
                       />
                     </div>
-                    <div className="col-md-3">
+                    <div className="col-md-6">
                       <label className="form-label">Sale Price</label>
                       <input
                         className="form-control"
@@ -3587,7 +3587,7 @@ export default function InvoicesPage({
                         onChange={(e) => setProductPrice(e.target.value)}
                       />
                     </div>
-                    <div className="col-md-3">
+                    <div className="col-md-6">
                       <label className="form-label">Tax Rate %</label>
                       <input
                         className="form-control"
@@ -3596,7 +3596,7 @@ export default function InvoicesPage({
                         onChange={(e) => setProductTaxRate(e.target.value)}
                       />
                     </div>
-                    <div className="col-md-3">
+                    <div className="col-md-6">
                       <label className="form-label">Reference / SKU</label>
                       <input
                         className="form-control"
@@ -3605,7 +3605,7 @@ export default function InvoicesPage({
                         placeholder="e.g., PROD-001"
                       />
                     </div>
-                    <div className="col-md-3">
+                    <div className="col-md-6">
                       <label className="form-label">HS Code</label>
                       <input
                         className="form-control"
@@ -3614,7 +3614,7 @@ export default function InvoicesPage({
                         placeholder="Harmonized code"
                       />
                     </div>
-                    <div className="col-md-3">
+                    <div className="col-md-6">
                       <label className="form-label">UoM</label>
                       <input
                         className="form-control"
@@ -3622,7 +3622,7 @@ export default function InvoicesPage({
                         onChange={(e) => setProductUom(e.target.value)}
                       />
                     </div>
-                    <div className="col-md-3">
+                    <div className="col-md-6">
                       <label className="form-label">Initial Stock</label>
                       <input
                         className="form-control"
@@ -3631,7 +3631,7 @@ export default function InvoicesPage({
                         onChange={(e) => setProductInitialStock(e.target.value)}
                       />
                     </div>
-                    <div className="col-md-3">
+                    <div className="col-md-6">
                       <label className="form-label">Warehouse</label>
                       <select
                         className="form-select"
@@ -3648,7 +3648,7 @@ export default function InvoicesPage({
                         ))}
                       </select>
                     </div>
-                    <div className="col-md-3">
+                    <div className="col-md-6">
                       <label className="form-label">Location</label>
                       <select
                         className="form-select"
