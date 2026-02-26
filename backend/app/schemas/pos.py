@@ -46,6 +46,8 @@ class POSOrderCreate(BaseModel):
     notes: str = ""
     lines: List[POSOrderLineCreate] = []
     auto_fiscalize: bool = False
+    cashier_name: str = ""
+    till_id: int | None = None
 
 
 class POSOrderRead(ORMBase):
@@ -75,6 +77,8 @@ class POSOrderRead(ORMBase):
     zimra_verification_url: str
     fiscal_errors: str
     notes: str
+    cashier_name: str = ""
+    till_id: int | None = None
     lines: List[POSOrderLineRead] = []
 
 
@@ -169,5 +173,39 @@ class POSEmployeeRead(ORMBase):
     role: str
     is_active: bool
     sort_order: int
+    created_at: datetime
+    updated_at: datetime
+
+
+# --- POS Till ---
+class POSTillCreate(BaseModel):
+    company_id: int
+    name: str
+    is_active: bool = True
+    sort_order: int = 0
+    employee_ids: List[int] = []
+
+
+class POSTillUpdate(BaseModel):
+    name: str | None = None
+    is_active: bool | None = None
+    sort_order: int | None = None
+    employee_ids: List[int] | None = None
+
+
+class POSTillEmployeeRead(ORMBase):
+    id: int
+    name: str
+    role: str
+    is_active: bool
+
+
+class POSTillRead(ORMBase):
+    id: int
+    company_id: int
+    name: str
+    is_active: bool
+    sort_order: int
+    employees: List[POSTillEmployeeRead] = []
     created_at: datetime
     updated_at: datetime

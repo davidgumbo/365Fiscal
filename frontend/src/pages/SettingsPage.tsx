@@ -130,6 +130,24 @@ type POSPaymentMethodItem = {
   sort_order: number;
 };
 
+type POSTillEmployee = {
+  id: number;
+  name: string;
+  role: string;
+  is_active: boolean;
+};
+
+type POSTillItem = {
+  id: number;
+  company_id: number;
+  name: string;
+  is_active: boolean;
+  sort_order: number;
+  employees: POSTillEmployee[];
+  created_at: string;
+  updated_at: string;
+};
+
 // Icon components for professional actions
 const PlusIcon = () => (
   <svg
@@ -305,12 +323,18 @@ export default function SettingsPage() {
   });
   const [posPmEditing, setPosPmEditing] = useState<number | null>(null);
   const [posError, setPosError] = useState<string | null>(null);
-  const [posConfigTab, setPosConfigTab] = useState<"employees" | "payments">(
+  const [posConfigTab, setPosConfigTab] = useState<"employees" | "payments" | "tills">(
     "employees",
   );
   const [showPinField, setShowPinField] = useState<number | null>(null);
   const [posEmpSaving, setPosEmpSaving] = useState(false);
   const [posPmSaving, setPosPmSaving] = useState(false);
+
+  // Till state
+  const [posTills, setPosTills] = useState<POSTillItem[]>([]);
+  const [tillForm, setTillForm] = useState<{ name: string; employee_ids: number[] }>({ name: "", employee_ids: [] });
+  const [tillEditing, setTillEditing] = useState<number | null>(null);
+  const [tillSaving, setTillSaving] = useState(false);
 
   // Currency management state
   const [currencyList, setCurrencyList] = useState<CurrencyItem[]>([]);
@@ -447,6 +471,57 @@ export default function SettingsPage() {
       setPosPaymentMethods(data);
     } catch {
       setPosPaymentMethods([]);
+    }
+  };
+
+  const loadPosTills = async (cid: number) => {
+    try {
+      const data = await apiFetch<POSTillItem[]>(
+        `/pos/tills?company_id=${cid}&include_inactive=true`,
+      );
+      setPosTills(data);
+    } catch {
+      setPosTills([]);
+    }
+  };
+
+  const savePosTill = async () => {
+    if (!companyId || !tillForm.name) return;
+    setPosError(null);
+    setTillSaving(true);
+    try {
+      if (tillEditing) {
+        await apiFetch(`/pos/tills/${tillEditing}`, {
+          method: "PUT",
+          body: JSON.stringify(tillForm),
+        });
+        setStatus("Till updated");
+      } else {
+        await apiFetch("/pos/tills", {
+          method: "POST",
+          body: JSON.stringify({ ...tillForm, company_id: companyId }),
+        });
+        setStatus("Till added");
+      }
+      setTillForm({ name: "", employee_ids: [] });
+      setTillEditing(null);
+      loadPosTills(companyId);
+    } catch (err: any) {
+      setPosError(err.message || "Failed to save till");
+    } finally {
+      setTillSaving(false);
+    }
+  };
+
+  const deletePosTill = async (id: number) => {
+    if (!companyId) return;
+    if (!confirm("Are you sure you want to remove this till?")) return;
+    try {
+      await apiFetch(`/pos/tills/${id}`, { method: "DELETE" });
+      setStatus("Till deleted");
+      loadPosTills(companyId);
+    } catch (err: any) {
+      setPosError(err.message || "Failed to delete till");
     }
   };
 
@@ -1130,6 +1205,7 @@ export default function SettingsPage() {
       loadDevices(companyId);
       loadPosEmployees(companyId);
       loadPosPaymentMethods(companyId);
+      loadPosTills(companyId);
     }
   }, [companyId]);
 
@@ -2566,6 +2642,14 @@ export default function SettingsPage() {
                         onClick={() => setPosConfigTab("payments")}
                       >
                         Payment Methods
+                      </button>
+                      <button
+                        className={
+                          posConfigTab === "tills" ? "tab active" : "tab"
+                        }
+                        onClick={() => setPosConfigTab("tills")}
+                      >
+                        Tills
                       </button>
                     </div>
                   </div>
@@ -4030,6 +4114,292 @@ export default function SettingsPage() {
                             style={{ color: "var(--slate-300)", fontSize: 12 }}
                           >
                             Add Cash, Card, or Mobile Money above to get started
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {posConfigTab === "tills" && (
+                    <div
+                      style={{
+                        border: "1px solid var(--gray-200, #e5e7eb)",
+                        borderRadius: 10,
+                        background: "var(--white-500, #fff)",
+                        marginBottom: 24,
+                        overflow: "hidden",
+                      }}
+                    >
+                      {/* Card header */}
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          padding: "16px 20px",
+                          borderBottom: "1px solid var(--gray-100, #f3f4f6)",
+                          background: "var(--gray-50, #f9fafb)",
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--slate-600)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="2" y="3" width="20" height="14" rx="2" />
+                            <path d="M8 21h8" />
+                            <path d="M12 17v4" />
+                          </svg>
+                          <h5 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "var(--slate-700)" }}>
+                            Tills / Registers
+                          </h5>
+                        </div>
+                        <span
+                          style={{
+                            padding: "3px 12px",
+                            borderRadius: 20,
+                            fontSize: 11,
+                            fontWeight: 700,
+                            color: "var(--violet-700, #6d28d9)",
+                            background: "var(--violet-50, #f5f3ff)",
+                          }}
+                        >
+                          {posTills.length} {posTills.length === 1 ? "till" : "tills"}
+                        </span>
+                      </div>
+
+                      {/* Add / Edit form */}
+                      <div
+                        style={{
+                          padding: "16px 20px",
+                          borderBottom: "1px solid var(--gray-100, #f3f4f6)",
+                          background: tillEditing ? "var(--violet-50, #f5f3ff)" : "transparent",
+                        }}
+                      >
+                        {tillEditing && (
+                          <div style={{ fontSize: 12, fontWeight: 600, color: "var(--violet-600)", marginBottom: 8 }}>
+                            <EditIcon /> Editing: {posTills.find((t) => t.id === tillEditing)?.name}
+                          </div>
+                        )}
+                        <div style={{ display: "grid", gridTemplateColumns: "2fr 3fr auto", gap: 10, alignItems: "end" }}>
+                          <label className="input" style={{ margin: 0 }}>
+                            <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-500)" }}>
+                              Till Name
+                            </span>
+                            <input
+                              value={tillForm.name}
+                              onChange={(e) => setTillForm({ ...tillForm, name: e.target.value })}
+                              placeholder="e.g. Till 1, Register A"
+                            />
+                          </label>
+                          <label className="input" style={{ margin: 0 }}>
+                            <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-500)" }}>
+                              Employees (select who can use this till)
+                            </span>
+                            <div style={{
+                              display: "flex",
+                              flexWrap: "wrap",
+                              gap: 6,
+                              padding: "6px 8px",
+                              border: "1px solid var(--gray-200, #e5e7eb)",
+                              borderRadius: 6,
+                              background: "#fff",
+                              minHeight: 38,
+                              alignItems: "center",
+                            }}>
+                              {posEmployees.filter(emp => emp.is_active).map(emp => {
+                                const selected = tillForm.employee_ids.includes(emp.id);
+                                return (
+                                  <button
+                                    key={emp.id}
+                                    type="button"
+                                    onClick={() => {
+                                      if (selected) {
+                                        setTillForm({ ...tillForm, employee_ids: tillForm.employee_ids.filter(id => id !== emp.id) });
+                                      } else {
+                                        setTillForm({ ...tillForm, employee_ids: [...tillForm.employee_ids, emp.id] });
+                                      }
+                                    }}
+                                    style={{
+                                      padding: "3px 10px",
+                                      borderRadius: 16,
+                                      fontSize: 12,
+                                      fontWeight: 500,
+                                      border: selected ? "1px solid var(--violet-400)" : "1px solid var(--gray-300)",
+                                      background: selected ? "var(--violet-100, #ede9fe)" : "var(--gray-50, #f9fafb)",
+                                      color: selected ? "var(--violet-700)" : "var(--slate-600)",
+                                      cursor: "pointer",
+                                      transition: "all 150ms",
+                                    }}
+                                  >
+                                    {selected && "✓ "}{emp.name}
+                                  </button>
+                                );
+                              })}
+                              {posEmployees.filter(emp => emp.is_active).length === 0 && (
+                                <span style={{ fontSize: 12, color: "var(--slate-400)" }}>
+                                  No employees — add employees first in the "Employees & Login" tab
+                                </span>
+                              )}
+                            </div>
+                          </label>
+                          <div style={{ display: "flex", gap: 6 }}>
+                            <button
+                              className="primary"
+                              onClick={savePosTill}
+                              disabled={tillSaving || !tillForm.name}
+                              style={{
+                                height: 38,
+                                padding: "0 16px",
+                                borderRadius: 8,
+                                fontWeight: 600,
+                                fontSize: 13,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 6,
+                              }}
+                            >
+                              {tillSaving ? "Saving…" : tillEditing ? "Update" : <><PlusIcon /> Add</>}
+                            </button>
+                            {tillEditing && (
+                              <button
+                                className="outline"
+                                onClick={() => {
+                                  setTillEditing(null);
+                                  setTillForm({ name: "", employee_ids: [] });
+                                }}
+                                style={{ height: 38, padding: "0 12px", borderRadius: 8, fontSize: 13 }}
+                              >
+                                Cancel
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Tills list */}
+                      {posTills.length > 0 ? (
+                        <div style={{ overflow: "auto" }}>
+                          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                            <thead>
+                              <tr>
+                                <th style={{ padding: "10px 20px", textAlign: "left", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-400)", borderBottom: "1px solid var(--gray-200)" }}>
+                                  Till Name
+                                </th>
+                                <th style={{ padding: "10px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-400)", borderBottom: "1px solid var(--gray-200)" }}>
+                                  Assigned Employees
+                                </th>
+                                <th style={{ padding: "10px 16px", textAlign: "center", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-400)", borderBottom: "1px solid var(--gray-200)" }}>
+                                  Status
+                                </th>
+                                <th style={{ padding: "10px 20px", textAlign: "right", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-400)", borderBottom: "1px solid var(--gray-200)" }}>
+                                  Actions
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {posTills.map((till) => (
+                                <tr key={till.id} style={{ transition: "background 150ms" }} onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gray-50)")} onMouseLeave={(e) => (e.currentTarget.style.background = "")}>
+                                  <td style={{ padding: "12px 20px", fontWeight: 600, fontSize: 14, color: "var(--slate-700)", borderBottom: "1px solid var(--gray-100)" }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                      <div style={{
+                                        width: 32,
+                                        height: 32,
+                                        borderRadius: 8,
+                                        background: "var(--violet-100, #ede9fe)",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                      }}>
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--violet-600)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                          <rect x="2" y="3" width="20" height="14" rx="2" />
+                                          <path d="M8 21h8" />
+                                          <path d="M12 17v4" />
+                                        </svg>
+                                      </div>
+                                      {till.name}
+                                    </div>
+                                  </td>
+                                  <td style={{ padding: "12px 16px", borderBottom: "1px solid var(--gray-100)" }}>
+                                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                                      {till.employees.length > 0 ? till.employees.map(emp => (
+                                        <span
+                                          key={emp.id}
+                                          style={{
+                                            padding: "2px 8px",
+                                            borderRadius: 12,
+                                            fontSize: 11,
+                                            fontWeight: 500,
+                                            background: emp.is_active ? "var(--green-50, #f0fdf4)" : "var(--gray-100)",
+                                            color: emp.is_active ? "var(--green-700, #15803d)" : "var(--slate-400)",
+                                            border: `1px solid ${emp.is_active ? "var(--green-200, #bbf7d0)" : "var(--gray-200)"}`,
+                                          }}
+                                        >
+                                          {emp.name} ({emp.role})
+                                        </span>
+                                      )) : (
+                                        <span style={{ fontSize: 12, color: "var(--slate-400)", fontStyle: "italic" }}>
+                                          No employees assigned
+                                        </span>
+                                      )}
+                                    </div>
+                                  </td>
+                                  <td style={{ padding: "12px 16px", textAlign: "center", borderBottom: "1px solid var(--gray-100)" }}>
+                                    <label className="switch" style={{ margin: "0 auto" }}>
+                                      <input
+                                        type="checkbox"
+                                        checked={till.is_active}
+                                        onChange={async (e) => {
+                                          await apiFetch(`/pos/tills/${till.id}`, {
+                                            method: "PUT",
+                                            body: JSON.stringify({ is_active: e.target.checked }),
+                                          });
+                                          if (companyId) loadPosTills(companyId);
+                                        }}
+                                      />
+                                      <span className="slider" />
+                                    </label>
+                                  </td>
+                                  <td style={{ padding: "12px 20px", textAlign: "right", borderBottom: "1px solid var(--gray-100)" }}>
+                                    <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                                      <button
+                                        className="icon-btn"
+                                        title="Edit till"
+                                        onClick={() => {
+                                          setTillEditing(till.id);
+                                          setTillForm({
+                                            name: till.name,
+                                            employee_ids: till.employees.map(e => e.id),
+                                          });
+                                        }}
+                                        style={{ width: 30, height: 30, borderRadius: 6 }}
+                                      >
+                                        <EditIcon />
+                                      </button>
+                                      <button
+                                        className="icon-btn danger"
+                                        title="Delete till"
+                                        onClick={() => deletePosTill(till.id)}
+                                        style={{ width: 30, height: 30, borderRadius: 6 }}
+                                      >
+                                        <TrashIcon />
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
+                        <div style={{ padding: "32px 20px", textAlign: "center" }}>
+                          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--slate-300)" strokeWidth="1.5" strokeLinecap="round" style={{ marginBottom: 8 }}>
+                            <rect x="2" y="3" width="20" height="14" rx="2" />
+                            <path d="M8 21h8" />
+                            <path d="M12 17v4" />
+                          </svg>
+                          <div style={{ color: "var(--slate-400)", fontSize: 13, marginBottom: 4 }}>
+                            No tills configured yet
+                          </div>
+                          <div style={{ color: "var(--slate-300)", fontSize: 12 }}>
+                            Add a till above and assign employees who can use it
                           </div>
                         </div>
                       )}

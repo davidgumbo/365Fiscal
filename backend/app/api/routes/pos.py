@@ -31,10 +31,12 @@ from app.models.stock_quant import StockQuant
 from app.models.stock_move import StockMove
 from app.models.audit_log import AuditAction, ResourceType
 from app.models.pos_employee import POSEmployee
+from app.models.pos_till import POSTill, pos_till_employees
 from app.schemas.pos import (
     POSSessionOpen, POSSessionClose, POSSessionRead, POSSessionSummary,
     POSOrderCreate, POSOrderRead, POSOrderRefund,
     POSEmployeeCreate, POSEmployeeUpdate, POSEmployeeRead,
+    POSTillCreate, POSTillUpdate, POSTillRead,
 )
 from app.services.fdms import submit_invoice
 
@@ -266,6 +268,8 @@ def create_order(
         mobile_amount=payload.mobile_amount,
         payment_reference=payload.payment_reference,
         notes=payload.notes,
+        cashier_name=payload.cashier_name,
+        till_id=payload.till_id,
         status="draft",
     )
     db.add(order)
@@ -953,3 +957,104 @@ def verify_pos_pin(
     if not emp:
         raise HTTPException(401, "Invalid PIN")
     return {"id": emp.id, "name": emp.name, "role": emp.role}
+
+
+# ── POS Till Management ────────────────────────────────────────────────────
+
+@router.get("/tills", response_model=List[POSTillRead])
+def list_tills(
+    company_id: int,
+    include_inactive: bool = False,
+    db: Session = Depends(get_db),
+    user=Depends(require_portal_user),
+):
+    """List POS tills for a company."""
+    ensure_company_access(db, user, company_id)
+    q = db.query(POSTill).filter(POSTill.company_id == company_id)
+    if not include_inactive:
+        q = q.filter(POSTill.is_active == True)
+    return q.order_by(POSTill.sort_order, POSTill.name).all()
+
+
+@router.post("/tills", response_model=POSTillRead)
+def create_till(
+    payload: POSTillCreate,
+    db: Session = Depends(get_db),
+    user=Depends(require_portal_user),
+):
+    """Create a new POS till and assign employees."""
+    ensure_company_access(db, user, payload.company_id)
+    till = POSTill(
+        company_id=payload.company_id,
+        name=payload.name,
+        is_active=payload.is_active,
+        sort_order=payload.sort_order,
+    )
+    # Assign employees
+    if payload.employee_ids:
+        employees = db.query(POSEmployee).filter(
+            POSEmployee.id.in_(payload.employee_ids),
+            POSEmployee.company_id == payload.company_id,
+        ).all()
+        till.employees = employees
+    db.add(till)
+    db.commit()
+    db.refresh(till)
+    return till
+
+
+@router.get("/tills/{till_id}", response_model=POSTillRead)
+def get_till(
+    till_id: int,
+    db: Session = Depends(get_db),
+    user=Depends(require_portal_user),
+):
+    """Get a POS till by ID."""
+    till = db.query(POSTill).filter(POSTill.id == till_id).first()
+    if not till:
+        raise HTTPException(404, "Till not found")
+    ensure_company_access(db, user, till.company_id)
+    return till
+
+
+@router.put("/tills/{till_id}", response_model=POSTillRead)
+def update_till(
+    till_id: int,
+    payload: POSTillUpdate,
+    db: Session = Depends(get_db),
+    user=Depends(require_portal_user),
+):
+    """Update a POS till."""
+    till = db.query(POSTill).filter(POSTill.id == till_id).first()
+    if not till:
+        raise HTTPException(404, "Till not found")
+    ensure_company_access(db, user, till.company_id)
+    update_data = payload.dict(exclude_unset=True)
+    employee_ids = update_data.pop("employee_ids", None)
+    for field, value in update_data.items():
+        setattr(till, field, value)
+    if employee_ids is not None:
+        employees = db.query(POSEmployee).filter(
+            POSEmployee.id.in_(employee_ids),
+            POSEmployee.company_id == till.company_id,
+        ).all()
+        till.employees = employees
+    db.commit()
+    db.refresh(till)
+    return till
+
+
+@router.delete("/tills/{till_id}")
+def delete_till(
+    till_id: int,
+    db: Session = Depends(get_db),
+    user=Depends(require_portal_user),
+):
+    """Delete a POS till."""
+    till = db.query(POSTill).filter(POSTill.id == till_id).first()
+    if not till:
+        raise HTTPException(404, "Till not found")
+    ensure_company_access(db, user, till.company_id)
+    db.delete(till)
+    db.commit()
+    return {"detail": "Till deleted"}

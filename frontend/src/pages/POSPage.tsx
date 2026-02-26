@@ -93,6 +93,8 @@ type POSOrder = {
   order_date: string;
   currency: string;
   notes: string;
+  cashier_name: string;
+  till_id: number | null;
   lines: OrderLine[];
 };
 type CompanyInfo = {
@@ -218,6 +220,7 @@ function buildReceiptHtml(
   ${device?.device_id ? `<div class="line">Device: ${device.device_id}</div>` : ""}
   ${device?.serial_number ? `<div class="line">Serial: ${device.serial_number}</div>` : ""}
   ${session?.name ? `<div class="line">Session: ${session.name}</div>` : ""}
+  ${order.cashier_name ? `<div class="line">Cashier: ${order.cashier_name}</div>` : ""}
   <div class="divider"></div>
 
   <table>
@@ -882,6 +885,7 @@ export default function POSPage() {
           card_amount: card,
           mobile_amount: mobile,
           auto_fiscalize: autoFiscalize,
+          cashier_name: currentCashier?.name || "",
           lines: cart.map((l) => ({
             product_id: l.product.id,
             description: l.product.name,
@@ -2334,6 +2338,11 @@ export default function POSPage() {
                       </span>
                     )}
                   </div>
+                  {selectedOrder.cashier_name && (
+                    <div style={{ fontSize: 12, color: "var(--slate-500)", marginTop: 4 }}>
+                      Cashier: <strong>{selectedOrder.cashier_name}</strong>
+                    </div>
+                  )}
                 </div>
 
                 <div className="pos-order-detail-lines">
@@ -2539,6 +2548,11 @@ export default function POSPage() {
                           <span className="pos-orders-panel-row-method">
                             {o.payment_method}
                           </span>
+                          {o.cashier_name && (
+                            <span style={{ fontSize: 11, color: "var(--slate-400)", fontStyle: "italic" }}>
+                              {o.cashier_name}
+                            </span>
+                          )}
                           {o.status === "refunded" && (
                             <span className="pos-orders-refund-tag">
                               Refunded
@@ -2995,6 +3009,11 @@ export default function POSPage() {
                 {session && (
                   <div className="pos-receipt-session">
                     Session: {session.name}
+                  </div>
+                )}
+                {lastOrder.cashier_name && (
+                  <div className="pos-receipt-session">
+                    Cashier: {lastOrder.cashier_name}
                   </div>
                 )}
                 {selectedCustomer && (
