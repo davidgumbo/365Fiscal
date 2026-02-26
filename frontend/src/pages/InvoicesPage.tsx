@@ -2434,7 +2434,7 @@ export default function InvoicesPage({
                         <th className="text-end" style={{ width: 100 }}>
                           Qty
                         </th>
-                        <th style={{ width: 80 }}>UoM</th>
+                        <th style={{ width: 100 }}>UoM</th>
                         <th className="text-end" style={{ width: 100 }}>
                           Price
                         </th>
@@ -2561,7 +2561,7 @@ export default function InvoicesPage({
                                 }
                               />
                             </td>
-                            <td className="text-end fw-semibold">
+                            <td className="text-end ">
                               {formatCurrency(lineTotal, newCurrency)}
                             </td>
                             <td className="text-center">
@@ -2921,7 +2921,7 @@ export default function InvoicesPage({
                 {/* Fields */}
                 <div className="row g-3 mb-4">
                   <div className="col-md-6">
-                    <label className="form-label fw-semibold">Customer</label>
+                    <label className="form-label ">Customer</label>
                     {canEdit ? (
                       <div
                         className="position-relative"
