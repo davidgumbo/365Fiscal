@@ -54,24 +54,40 @@ def ensure_new_columns():
     This function inspects the live schema and patches it.
     """
     from sqlalchemy import inspect as sa_inspect, text
+
+    _startup_logger.info(">>> ensure_new_columns: STARTING column migration check")
     try:
         insp = sa_inspect(engine)
         table_names = set(insp.get_table_names())
+        _startup_logger.info(">>> ensure_new_columns: found %d tables", len(table_names))
 
-        if "pos_orders" in table_names:
-            cols = {c["name"] for c in insp.get_columns("pos_orders")}
-            with engine.begin() as conn:
-                if "cashier_name" not in cols:
-                    _startup_logger.info("Adding cashier_name column to pos_orders")
-                    conn.execute(text(
-                        "ALTER TABLE pos_orders ADD COLUMN cashier_name VARCHAR(200) DEFAULT ''"
-                    ))
-                if "till_id" not in cols:
-                    _startup_logger.info("Adding till_id column to pos_orders")
-                    conn.execute(text(
-                        "ALTER TABLE pos_orders ADD COLUMN till_id INTEGER"
-                    ))
-            _startup_logger.info("Column migration check complete for pos_orders")
+        if "pos_orders" not in table_names:
+            _startup_logger.info(">>> ensure_new_columns: pos_orders table not found — skipping")
+            return
+
+        cols = {c["name"] for c in insp.get_columns("pos_orders")}
+        _startup_logger.info(">>> ensure_new_columns: pos_orders columns = %s", cols)
+
+        with engine.begin() as conn:
+            if "cashier_name" not in cols:
+                _startup_logger.info(">>> Adding cashier_name column to pos_orders")
+                conn.execute(text(
+                    "ALTER TABLE pos_orders ADD COLUMN cashier_name VARCHAR(200) DEFAULT ''"
+                ))
+                _startup_logger.info(">>> cashier_name column added successfully")
+            else:
+                _startup_logger.info(">>> cashier_name column already exists")
+
+            if "till_id" not in cols:
+                _startup_logger.info(">>> Adding till_id column to pos_orders")
+                conn.execute(text(
+                    "ALTER TABLE pos_orders ADD COLUMN till_id INTEGER"
+                ))
+                _startup_logger.info(">>> till_id column added successfully")
+            else:
+                _startup_logger.info(">>> till_id column already exists")
+
+        _startup_logger.info(">>> ensure_new_columns: COMPLETE")
 
         # Stamp alembic so 'alembic upgrade head' won't re-run this migration
         if "alembic_version" in table_names:
@@ -88,7 +104,7 @@ def ensure_new_columns():
                         "UPDATE alembic_version SET version_num = 'y1z2a3b4c5d6'"
                     ))
     except Exception:
-        _startup_logger.exception("Failed ensuring new columns — will continue startup")
+        _startup_logger.exception("!!! ensure_new_columns FAILED — will continue startup")
 
 
 @app.on_event("startup")
@@ -286,6 +302,28 @@ def start_ping_scheduler():
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/db-check")
+def db_check():
+    """Diagnostic: show pos_orders columns and table list."""
+    from sqlalchemy import inspect as sa_inspect
+    try:
+        insp = sa_inspect(engine)
+        tables = sorted(insp.get_table_names())
+        pos_cols = []
+        if "pos_orders" in tables:
+            pos_cols = [c["name"] for c in insp.get_columns("pos_orders")]
+        return {
+            "tables": tables,
+            "pos_orders_columns": pos_cols,
+            "has_cashier_name": "cashier_name" in pos_cols,
+            "has_till_id": "till_id" in pos_cols,
+            "has_pos_tills": "pos_tills" in tables,
+            "has_pos_till_employees": "pos_till_employees" in tables,
+        }
+    except Exception as e:
+        return {"error": str(e)}
 
 
 @app.get("/")
