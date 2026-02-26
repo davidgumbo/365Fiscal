@@ -525,20 +525,19 @@ textarea {
 
 /* Invoice form label alignment + ghost inputs */
 @media (min-width: 992px) {
-  .invoice-form .col-md-3,
-  .invoice-form .col-md-4,
-  .invoice-form .col-md-6,
-  .invoice-form .col-md-8,
-  .invoice-form .col-12 {
+  .invoice-form .row.g-3 > [class*="col-"] {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
+    min-height: 40px;
   }
 
   .invoice-form .form-label {
     margin: 0;
-    min-width: 140px;
+    width: 130px;
+    min-width: 130px;
     white-space: nowrap;
+    line-height: 1.2;
   }
 
   .invoice-form .form-control,
@@ -548,6 +547,18 @@ textarea {
   .invoice-form .position-relative {
     flex: 1 1 auto;
   }
+}
+
+.invoice-form .form-control.input-underline,
+.invoice-form .form-select.input-underline,
+.invoice-form textarea.input-underline {
+  min-height: 38px;
+}
+
+.invoice-form textarea.input-underline {
+  padding-top: 0.35rem;
+  padding-bottom: 0.35rem;
+  line-height: 1.35;
 }
 
 .input-ghost {
@@ -881,7 +892,7 @@ textarea {
   background: linear-gradient(135deg, var(--blue-600) 0%, var(--blue-700) 100%);
   color: var(--white-500);
   border: none;
-  padding: 8px 16px;
+  padding: 6px 12px;
   border-radius: var(--radius-md);
   cursor: pointer;
   font-weight: 600;
@@ -905,7 +916,7 @@ textarea {
   background: var(--white-500);
   border: 1px solid var(--stroke);
   color: var(--ink-light);
-  padding: 8px 14px;
+  padding: 6px 12px;
   border-radius: var(--radius-md);
   cursor: pointer;
   font-size: 13px;
@@ -4047,7 +4058,7 @@ button.danger:hover {
   gap: 0;
   padding: 0;
   min-height: 100vh;
-  background: var(--slate-100);
+  /* background: var(--slate-100); */
 }
 
 .settings-topbar {
