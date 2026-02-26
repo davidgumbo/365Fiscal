@@ -219,7 +219,7 @@ textarea {
   grid-template-columns: 240px 1fr;
   min-height: 100vh;
   height: 100vh;
-  margin: 1rem;
+  /* margin: 1rem; */
   overflow: hidden;
 }
 
@@ -242,7 +242,7 @@ textarea {
   /* padding: 36px; */
   flex: 1;
   min-height: 0;
-  overflow: auto;
+  overflow: hidden;
 }
 
 .sidebar {
@@ -492,11 +492,8 @@ textarea {
 }
 
 .main-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   gap: 16px;
-  margin-bottom: 16px;
+  margin: 1rem 1rem 0 1rem;  
   position: sticky;
   top: 0;
   z-index: 50;
