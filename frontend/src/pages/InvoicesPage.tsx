@@ -2206,7 +2206,7 @@ export default function InvoicesPage({
               <div className="card-body invoice-form">
                 <div className="row g-3">
                   <div className="col-md-6">
-                    <label className="form-label fw-semibold">
+                    <label className="form-label ">
                       Customer <span className="text-danger">*</span>
                     </label>
                     <div
@@ -2272,7 +2272,7 @@ export default function InvoicesPage({
                     </div>
                   </div>
                   <div className="col-md-6">
-                    <label className="form-label fw-semibold">Quotation</label>
+                    <label className="form-label ">Quotation</label>
                     <div
                       className="position-relative"
                       ref={quotationDropdownRef}
