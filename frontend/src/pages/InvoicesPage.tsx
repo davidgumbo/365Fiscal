@@ -451,6 +451,7 @@ export default function InvoicesPage({
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentReference, setPaymentReference] = useState("");
+  const [hideFiscalDetails, setHideFiscalDetails] = useState(false);
   const [createProductOpen, setCreateProductOpen] = useState(false);
   const [productName, setProductName] = useState("");
   const [productPrice, setProductPrice] = useState("");
@@ -699,6 +700,10 @@ export default function InvoicesPage({
   const selectedInvoice = useMemo(() => {
     return invoices.find((inv) => inv.id === selectedInvoiceId) ?? null;
   }, [invoices, selectedInvoiceId]);
+
+  useEffect(() => {
+    setHideFiscalDetails(false);
+  }, [selectedInvoiceId]);
 
   useEffect(() => {
     if (!selectedInvoice) return;
@@ -2202,7 +2207,10 @@ export default function InvoicesPage({
 
           {/* ── New Invoice Form ── */}
           {newMode && (
-            <div className="card shadow-sm">
+            <div
+              className="card shadow-sm"
+              style={{ maxHeight: "82vh", overflowY: "auto" }}
+            >
               <div className="card-body invoice-form">
                 <div className="row g-3">
                   <div className="col-md-6">
@@ -2602,7 +2610,10 @@ export default function InvoicesPage({
 
           {/* ── Existing Invoice Detail ── */}
           {selectedInvoice && !newMode && (
-            <div className="card shadow-sm">
+            <div
+              className="card shadow-sm"
+              style={{ maxHeight: "82vh", overflowY: "auto" }}
+            >
               <div className="card-body invoice-form">
                 {companySettings?.logo_data && (
                   <div className="mb-3">
@@ -2728,6 +2739,7 @@ export default function InvoicesPage({
 
                 {/* ZIMRA Fiscal Details Panel */}
                 {selectedInvoice.zimra_status === "submitted" &&
+                  !hideFiscalDetails &&
                   (() => {
                     const dev = devices.find(
                       (d) => d.id === selectedInvoice.device_id,
@@ -2743,8 +2755,34 @@ export default function InvoicesPage({
                       >
                         <div
                           className="card-body"
-                          style={{ padding: "14px 18px" }}
+                          style={{
+                            padding: "14px 18px",
+                            position: "relative",
+                          }}
                         >
+                          <button
+                            type="button"
+                            onClick={() => setHideFiscalDetails(true)}
+                            aria-label="Dismiss fiscal details"
+                            style={{
+                              position: "absolute",
+                              top: 8,
+                              left: 8,
+                              width: 24,
+                              height: 24,
+                              borderRadius: "50%",
+                              border: "1px solid var(--green-200)",
+                              background: "var(--white-500)",
+                              color: "var(--green-800)",
+                              fontSize: 14,
+                              fontWeight: 700,
+                              lineHeight: "22px",
+                              textAlign: "center",
+                              cursor: "pointer",
+                            }}
+                          >
+                            x
+                          </button>
                           <div
                             style={{
                               display: "flex",
@@ -2752,6 +2790,7 @@ export default function InvoicesPage({
                               alignItems: "flex-start",
                               gap: 16,
                               flexWrap: "wrap",
+                              paddingLeft: 24,
                             }}
                           >
                             <div style={{ flex: 1 }}>

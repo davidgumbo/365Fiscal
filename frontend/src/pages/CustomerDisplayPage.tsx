@@ -21,6 +21,45 @@ type DisplayData = {
   currency_symbol?: string;
   companyName: string;
   companyLogo: string;
+  company?: {
+    name: string;
+    address: string;
+    phone: string;
+    email: string;
+    tin: string;
+    vat: string;
+    logo_data: string;
+  } | null;
+  show_receipt?: boolean;
+  last_order?: {
+    reference: string;
+    order_date: string;
+    cashier_name: string;
+    subtotal: number;
+    discount_amount: number;
+    tax_amount: number;
+    total_amount: number;
+    payment_method: string;
+    cash_amount: number;
+    card_amount: number;
+    mobile_amount: number;
+    change_amount: number;
+    zimra_verification_code: string;
+    zimra_verification_url: string;
+    lines: Array<{
+      description: string;
+      quantity: number;
+      unit_price: number;
+      total_price: number;
+    }>;
+  } | null;
+  selected_customer?: { name: string; tin: string } | null;
+  session?: { name: string } | null;
+  active_device?: {
+    model: string;
+    serial_number: string;
+    device_id: string;
+  } | null;
 };
 
 const fmt = (n: number) => n.toFixed(2);
@@ -62,6 +101,9 @@ export default function CustomerDisplayPage() {
   const companyLogo = data?.companyLogo || "";
   const currencySymbol = data?.currency_symbol || "";
   const currencyCode = data?.currency_code || "";
+  const company = data?.company || null;
+  const receiptOrder = data?.last_order || null;
+  const showReceipt = Boolean(data?.show_receipt && receiptOrder);
 
   const money = (n: number) => {
     if (currencySymbol) return `${currencySymbol}${fmt(n)}`;
@@ -203,6 +245,99 @@ export default function CustomerDisplayPage() {
           color: #64748b;
           border-top: 1px solid rgba(15,23,42,0.06);
         }
+        .cd-receipt-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(2, 6, 23, 0.7);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 24px;
+          z-index: 2000;
+        }
+        .cd-receipt-dialog {
+          width: min(720px, 100%);
+          max-height: calc(100vh - 48px);
+          overflow: auto;
+          background: #ffffff;
+          border-radius: 14px;
+          padding: 22px;
+          box-shadow: 0 24px 70px rgba(15, 23, 42, 0.45);
+        }
+        .cd-receipt-header {
+          text-align: center;
+          margin-bottom: 12px;
+        }
+        .cd-receipt-header img {
+          max-height: 56px;
+          width: auto;
+          margin-bottom: 8px;
+        }
+        .cd-receipt-company-name {
+          font-size: 1.35rem;
+          font-weight: 700;
+        }
+        .cd-receipt-detail {
+          font-size: 0.92rem;
+          color: #475569;
+        }
+        .cd-receipt-divider {
+          border-top: 1px dashed #94a3b8;
+          margin: 12px 0;
+        }
+        .cd-receipt-meta {
+          font-size: 0.95rem;
+          color: #334155;
+          line-height: 1.45;
+        }
+        .cd-receipt-table-head,
+        .cd-receipt-table-row {
+          display: grid;
+          grid-template-columns: 1fr 64px 110px 110px;
+          gap: 10px;
+          font-size: 0.93rem;
+          align-items: center;
+        }
+        .cd-receipt-table-head {
+          font-weight: 700;
+          color: #334155;
+          margin-bottom: 8px;
+        }
+        .cd-receipt-table-row {
+          padding: 6px 0;
+          border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+        }
+        .cd-receipt-num {
+          text-align: right;
+        }
+        .cd-receipt-total-row {
+          display: flex;
+          justify-content: space-between;
+          font-size: 0.95rem;
+          padding: 3px 0;
+        }
+        .cd-receipt-grand {
+          display: flex;
+          justify-content: space-between;
+          font-size: 1.25rem;
+          font-weight: 800;
+          color: #16a34a;
+          margin-top: 6px;
+        }
+        .cd-receipt-fiscal {
+          margin-top: 10px;
+          font-size: 0.92rem;
+          color: #334155;
+        }
+        .cd-receipt-fiscal-code {
+          font-weight: 700;
+          font-size: 1.05rem;
+          margin-top: 4px;
+        }
+        .cd-receipt-fiscal a {
+          color: #0f766e;
+          font-weight: 600;
+        }
       `}</style>
 
       {/* Header */}
@@ -309,6 +444,143 @@ export default function CustomerDisplayPage() {
 
       {/* Footer */}
       <div className="cd-footer">Powered by GeeNet</div>
+
+      {showReceipt && receiptOrder && (
+        <div className="cd-receipt-overlay">
+          <div className="cd-receipt-dialog">
+            <div className="cd-receipt-header">
+              {(company?.logo_data || companyLogo) && (
+                <img src={company?.logo_data || companyLogo} alt="Logo" />
+              )}
+              <div className="cd-receipt-company-name">
+                {company?.name || companyName}
+              </div>
+              {company?.address && (
+                <div className="cd-receipt-detail">{company.address}</div>
+              )}
+              {company?.phone && (
+                <div className="cd-receipt-detail">Tel: {company.phone}</div>
+              )}
+              {company?.email && (
+                <div className="cd-receipt-detail">{company.email}</div>
+              )}
+              {company?.tin && (
+                <div className="cd-receipt-detail">
+                  TIN: {company.tin}
+                  {company?.vat ? ` | VAT: ${company.vat}` : ""}
+                </div>
+              )}
+            </div>
+
+            <div className="cd-receipt-divider" />
+            <div className="cd-receipt-meta">
+              <div><strong>{receiptOrder.reference}</strong></div>
+              <div>{new Date(receiptOrder.order_date).toLocaleString()}</div>
+              {data?.session?.name && <div>Session: {data.session.name}</div>}
+              {receiptOrder.cashier_name && (
+                <div>Cashier: {receiptOrder.cashier_name}</div>
+              )}
+              {data?.selected_customer && (
+                <div>
+                  Customer: {data.selected_customer.name}
+                  {data.selected_customer.tin
+                    ? ` | TIN: ${data.selected_customer.tin}`
+                    : ""}
+                </div>
+              )}
+            </div>
+
+            <div className="cd-receipt-divider" />
+            <div className="cd-receipt-table-head">
+              <span>Item</span>
+              <span className="cd-receipt-num">Qty</span>
+              <span className="cd-receipt-num">Price</span>
+              <span className="cd-receipt-num">Total</span>
+            </div>
+            {(receiptOrder.lines || []).map((line, idx) => (
+              <div className="cd-receipt-table-row" key={idx}>
+                <span>{line.description}</span>
+                <span className="cd-receipt-num">{line.quantity}</span>
+                <span className="cd-receipt-num">{money(line.unit_price)}</span>
+                <span className="cd-receipt-num">
+                  {money(line.total_price)}
+                </span>
+              </div>
+            ))}
+
+            <div className="cd-receipt-divider" />
+            <div className="cd-receipt-total-row">
+              <span>Subtotal</span>
+              <span>{money(receiptOrder.subtotal)}</span>
+            </div>
+            {receiptOrder.discount_amount > 0 && (
+              <div className="cd-receipt-total-row">
+                <span>Discount</span>
+                <span>-{money(receiptOrder.discount_amount)}</span>
+              </div>
+            )}
+            <div className="cd-receipt-total-row">
+              <span>Tax</span>
+              <span>{money(receiptOrder.tax_amount)}</span>
+            </div>
+            <div className="cd-receipt-grand">
+              <span>TOTAL</span>
+              <span>{money(receiptOrder.total_amount)}</span>
+            </div>
+
+            <div className="cd-receipt-divider" />
+            <div className="cd-receipt-total-row">
+              <span>Payment</span>
+              <span>
+                {receiptOrder.payment_method.charAt(0).toUpperCase() +
+                  receiptOrder.payment_method.slice(1)}
+              </span>
+            </div>
+            {receiptOrder.cash_amount > 0 && (
+              <div className="cd-receipt-total-row">
+                <span>Cash</span>
+                <span>{money(receiptOrder.cash_amount)}</span>
+              </div>
+            )}
+            {receiptOrder.card_amount > 0 && (
+              <div className="cd-receipt-total-row">
+                <span>Card</span>
+                <span>{money(receiptOrder.card_amount)}</span>
+              </div>
+            )}
+            {receiptOrder.mobile_amount > 0 && (
+              <div className="cd-receipt-total-row">
+                <span>Mobile</span>
+                <span>{money(receiptOrder.mobile_amount)}</span>
+              </div>
+            )}
+            {receiptOrder.change_amount > 0 && (
+              <div className="cd-receipt-total-row">
+                <span>Change</span>
+                <span>{money(receiptOrder.change_amount)}</span>
+              </div>
+            )}
+
+            {receiptOrder.zimra_verification_code && (
+              <div className="cd-receipt-fiscal">
+                <div>ZIMRA Verification</div>
+                <div className="cd-receipt-fiscal-code">
+                  {receiptOrder.zimra_verification_code}
+                </div>
+                {receiptOrder.zimra_verification_url && (
+                  <a
+                    href={receiptOrder.zimra_verification_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Verify Receipt
+                  </a>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
