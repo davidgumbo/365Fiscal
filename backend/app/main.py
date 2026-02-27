@@ -87,6 +87,21 @@ def ensure_new_columns():
             else:
                 _startup_logger.info(">>> till_id column already exists")
 
+        if "pos_tills" in table_names:
+            till_cols = {c["name"] for c in insp.get_columns("pos_tills")}
+            if "warehouse_id" not in till_cols:
+                _startup_logger.info(">>> Adding warehouse_id column to pos_tills")
+                conn.execute(text(
+                    "ALTER TABLE pos_tills ADD COLUMN warehouse_id INTEGER"
+                ))
+                _startup_logger.info(">>> Adding foreign key fk_pos_tills_warehouse_id")
+                conn.execute(text(
+                    "ALTER TABLE pos_tills ADD CONSTRAINT fk_pos_tills_warehouse_id FOREIGN KEY (warehouse_id) REFERENCES warehouses(id)"
+                ))
+                _startup_logger.info(">>> warehouse_id column added successfully")
+            else:
+                _startup_logger.info(">>> warehouse_id column already exists")
+
         _startup_logger.info(">>> ensure_new_columns: COMPLETE")
 
         # Stamp alembic so 'alembic upgrade head' won't re-run this migration
@@ -96,12 +111,12 @@ def ensure_new_columns():
                     "SELECT version_num FROM alembic_version"
                 )).fetchone()
                 current = row[0] if row else None
-                if current and current != "y1z2a3b4c5d6":
+                if current and current != "z2x3c4v5b6":
                     _startup_logger.info(
-                        "Stamping alembic to y1z2a3b4c5d6 (was %s)", current
+                        "Stamping alembic to z2x3c4v5b6 (was %s)", current
                     )
                     conn.execute(text(
-                        "UPDATE alembic_version SET version_num = 'y1z2a3b4c5d6'"
+                        "UPDATE alembic_version SET version_num = 'z2x3c4v5b6'"
                     ))
     except Exception:
         _startup_logger.exception("!!! ensure_new_columns FAILED — will continue startup")
