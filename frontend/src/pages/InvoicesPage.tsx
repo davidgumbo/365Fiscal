@@ -2729,6 +2729,7 @@ export default function InvoicesPage({
                             <div style={{ marginTop: 4 }}>
                               <button
                                 type="button"
+                                aria-label="View ZIMRA verification"
                                 onClick={() =>
                                   window.open(
                                     selectedInvoice.zimra_verification_url?.replace(
@@ -2748,7 +2749,19 @@ export default function InvoicesPage({
                                   cursor: "pointer",
                                 }}
                               >
-                                Verify on ZIMRA ↗
+                                <svg
+                                  width="14"
+                                  height="14"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <line x1="5" y1="12" x2="19" y2="12" />
+                                  <polyline points="12 5 19 12 12 19" />
+                                </svg>
                               </button>
                             </div>
                           )}
