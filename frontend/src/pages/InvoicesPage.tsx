@@ -2651,7 +2651,7 @@ export default function InvoicesPage({
                   <div className="col-md-3">
                     <div className="card h-100" style={invoicePanelStyle}>
                       <div className="card-body py-2">
-                        <div className="fw-bold">Total Amount</div>
+                        <div className="fw-bold text-muted">Total Amount</div>
                         <div className="fs-5 fw-bold">
                           {formatCurrency(
                             selectedInvoice.total_amount || 0,
@@ -2664,8 +2664,14 @@ export default function InvoicesPage({
                   <div className="col-md-3">
                     <div className="card h-100" style={invoicePanelStyle}>
                       <div className="card-body py-2">
-                        <div className="fw-bold">Amount Paid</div>
-                        <div>
+                        <div className="fw-bold text-muted">Amount Paid</div>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                          }}
+                        >
                           <div className="fs-5 fw-bold">
                             {formatCurrency(
                               selectedInvoice.amount_paid || 0,
@@ -2682,7 +2688,7 @@ export default function InvoicesPage({
                   <div className="col-md-3">
                     <div className="card h-100" style={invoicePanelStyle}>
                       <div className="card-body py-2">
-                        <div className="fw-bold">Amount Due</div>
+                        <div className="fw-bold text-muted">Amount Due</div>
                         <div className="fs-5 fw-bold">
                           {formatCurrency(
                             selectedInvoice.amount_due || 0,
@@ -2695,12 +2701,22 @@ export default function InvoicesPage({
                   <div className="col-md-3">
                     <div className="card h-100" style={invoicePanelStyle}>
                       <div className="card-body py-2">
-                        <div className="fw-bold">Fiscalization</div>
-                        <div style={{ marginTop: 2 }}>
-                          <span className={`badge bg-${fiscalBadge}`}>
-                            {fiscalLabel}
-                          </span>
+                        <div className="fw-bold text-muted">Fiscalization</div>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                          }}
+                        >
+                          <div className="fs-5 fw-bold">Status</div>
+                          <div style={{ marginTop: 2 }}>
+                            <span className={`badge bg-${fiscalBadge}`}>
+                              {fiscalLabel}
+                            </span>
+                          </div>
                         </div>
+
                         {selectedInvoice.zimra_verification_code && (
                           <small className="text-muted">
                             Code: {selectedInvoice.zimra_verification_code}
