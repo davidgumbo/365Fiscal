@@ -833,6 +833,21 @@ export default function InvoicesPage({
       : paymentStatus === "Partial"
         ? "warning"
         : "secondary";
+  const fiscalStatus = (selectedInvoice?.zimra_status || "not_submitted")
+    .toLowerCase()
+    .trim();
+  const fiscalBadge =
+    fiscalStatus === "submitted"
+      ? "success"
+      : fiscalStatus === "error"
+        ? "danger"
+        : "secondary";
+  const fiscalLabel =
+    fiscalStatus === "submitted"
+      ? "Submitted"
+      : fiscalStatus === "error"
+        ? "Failed"
+        : "Not Submitted";
   const invoiceHeadingStyle = { color: invoiceTheme.primary };
   const invoicePanelStyle = {
     backgroundColor: invoiceTheme.panel,
@@ -2636,7 +2651,7 @@ export default function InvoicesPage({
                   <div className="col-md-3">
                     <div className="card h-100" style={invoicePanelStyle}>
                       <div className="card-body py-2">
-                        <small className="text-muted">Total Amount</small>
+                        <div className="fw-bold">Total Amount</div>
                         <div className="fs-5 fw-bold">
                           {formatCurrency(
                             selectedInvoice.total_amount || 0,
@@ -2649,23 +2664,25 @@ export default function InvoicesPage({
                   <div className="col-md-3">
                     <div className="card h-100" style={invoicePanelStyle}>
                       <div className="card-body py-2">
-                        <small className="text-muted">Amount Paid</small>
-                        <div className="fs-5 fw-bold">
-                          {formatCurrency(
-                            selectedInvoice.amount_paid || 0,
-                            invoiceCurrency,
-                          )}
+                        <div className="fw-bold">Amount Paid</div>
+                        <div>
+                          <div className="fs-5 fw-bold">
+                            {formatCurrency(
+                              selectedInvoice.amount_paid || 0,
+                              invoiceCurrency,
+                            )}
+                          </div>
+                          <span className={`badge bg-${paymentBadge}`}>
+                            {paymentStatus}
+                          </span>
                         </div>
-                        <span className={`badge bg-${paymentBadge}`}>
-                          {paymentStatus}
-                        </span>
                       </div>
                     </div>
                   </div>
                   <div className="col-md-3">
                     <div className="card h-100" style={invoicePanelStyle}>
                       <div className="card-body py-2">
-                        <small className="text-muted">Amount Due</small>
+                        <div className="fw-bold">Amount Due</div>
                         <div className="fs-5 fw-bold">
                           {formatCurrency(
                             selectedInvoice.amount_due || 0,
@@ -2678,19 +2695,11 @@ export default function InvoicesPage({
                   <div className="col-md-3">
                     <div className="card h-100" style={invoicePanelStyle}>
                       <div className="card-body py-2">
-                        <small className="text-muted">Fiscalization</small>
-                        <div
-                          className="fw-bold text-uppercase"
-                          style={{
-                            color:
-                              selectedInvoice.zimra_status === "error"
-                                ? "var(--red-500)"
-                                : selectedInvoice.zimra_status === "submitted"
-                                  ? "var(--green-700)"
-                                  : undefined,
-                          }}
-                        >
-                          {selectedInvoice.zimra_status || "not_submitted"}
+                        <div className="fw-bold">Fiscalization</div>
+                        <div style={{ marginTop: 2 }}>
+                          <span className={`badge bg-${fiscalBadge}`}>
+                            {fiscalLabel}
+                          </span>
                         </div>
                         {selectedInvoice.zimra_verification_code && (
                           <small className="text-muted">
@@ -2765,9 +2774,6 @@ export default function InvoicesPage({
                             onClick={() => setHideFiscalDetails(true)}
                             aria-label="Dismiss fiscal details"
                             style={{
-                              position: "absolute",
-                              top: 8,
-                              left: 8,
                               width: 24,
                               height: 24,
                               borderRadius: "50%",
@@ -2779,6 +2785,7 @@ export default function InvoicesPage({
                               lineHeight: "22px",
                               textAlign: "center",
                               cursor: "pointer",
+                              margin: "0 0 1rem 87vw",
                             }}
                           >
                             x
@@ -3443,25 +3450,6 @@ export default function InvoicesPage({
 
                 {/* Totals */}
                 <div className="row g-3 mt-3">
-                  <div className="col-md-6">
-                    <div className="card" style={invoicePanelStyle}>
-                      <div className="card-body py-2">
-                        <div className="fw-semibold mb-1">Tax Breakdown</div>
-                        {taxBreakdown.length === 0 && (
-                          <small className="text-muted">No taxes applied</small>
-                        )}
-                        {taxBreakdown.map(([rate, amt]) => (
-                          <div
-                            key={rate}
-                            className="d-flex justify-content-between text-muted small"
-                          >
-                            <span>VAT {rate}%</span>
-                            <span>{formatCurrency(amt, invoiceCurrency)}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
                   <div className="col-md-6">
                     <div className="card" style={invoicePanelStyle}>
                       <div className="card-body py-2">
