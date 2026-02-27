@@ -2486,8 +2486,7 @@ export default function POSPage() {
                       <span>{money(l.unit_price)}</span>
                       <span>{money(l.total_price)}</span>
                     </div>
-                  );
-                })}
+                  ))}]
                 </div>
 
                 <div className="pos-order-detail-totals">
@@ -2748,7 +2747,8 @@ export default function POSPage() {
                         </button>
                       </div>
                     </div>
-                  ))}
+                  );
+                })}
                 </div>
                 {orders.length > 0 && (
                   <div className="pos-orders-panel-footer">

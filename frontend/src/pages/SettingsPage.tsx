@@ -137,6 +137,11 @@ type POSTillEmployee = {
   is_active: boolean;
 };
 
+type Warehouse = {
+  id: number;
+  name: string;
+};
+
 type POSTillItem = {
   id: number;
   company_id: number;
@@ -146,6 +151,8 @@ type POSTillItem = {
   employees: POSTillEmployee[];
   created_at: string;
   updated_at: string;
+  warehouse_id: number | null;
+  warehouse: Warehouse | null;
 };
 
 // Icon components for professional actions
@@ -332,7 +339,12 @@ export default function SettingsPage() {
 
   // Till state
   const [posTills, setPosTills] = useState<POSTillItem[]>([]);
-  const [tillForm, setTillForm] = useState<{ name: string; employee_ids: number[] }>({ name: "", employee_ids: [] });
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [tillForm, setTillForm] = useState<{ name: string; employee_ids: number[]; warehouse_id: number | null }>({
+    name: "",
+    employee_ids: [],
+    warehouse_id: null,
+  });
   const [tillEditing, setTillEditing] = useState<number | null>(null);
   const [tillSaving, setTillSaving] = useState(false);
   const [tillDropdownOpen, setTillDropdownOpen] = useState(false);
@@ -499,6 +511,24 @@ export default function SettingsPage() {
     }
   };
 
+  useEffect(() => {
+    if (!companyId) {
+      setWarehouses([]);
+      return;
+    }
+    let cancelled = false;
+    apiFetch<Warehouse[]>(`/warehouses?company_id=${companyId}`)
+      .then((list) => {
+        if (!cancelled) setWarehouses(list || []);
+      })
+      .catch(() => {
+        if (!cancelled) setWarehouses([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [companyId]);
+
   const savePosTill = async () => {
     if (!companyId || !tillForm.name) return;
     setPosError(null);
@@ -517,7 +547,7 @@ export default function SettingsPage() {
       });
       setStatus("Point Of Sales added");
     }
-      setTillForm({ name: "", employee_ids: [] });
+      setTillForm({ name: "", employee_ids: [], warehouse_id: null });
       setTillEditing(null);
       setTillDropdownOpen(false);
       loadPosTills(companyId);
@@ -4194,7 +4224,7 @@ export default function SettingsPage() {
                             <EditIcon /> Editing: {posTills.find((t) => t.id === tillEditing)?.name}
                           </div>
                         )}
-                        <div style={{ display: "grid", gridTemplateColumns: "2fr 3fr auto", gap: 10, alignItems: "end" }}>
+                        <div style={{ display: "grid", gridTemplateColumns: "2fr 2fr 2fr auto", gap: 10, alignItems: "end" }}>
                           <label className="input" style={{ margin: 0 }}>
                             <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-500)" }}>
                               Point Of Sales Name
@@ -4353,6 +4383,38 @@ export default function SettingsPage() {
                               </div>
                             )}
                           </label>
+                          <label className="input" style={{ margin: 0 }}>
+                            <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-500)" }}>
+                              Warehouse (optional)
+                            </span>
+                            <select
+                              value={tillForm.warehouse_id ?? ""}
+                              onChange={(e) =>
+                                setTillForm({
+                                  ...tillForm,
+                                  warehouse_id:
+                                    e.target.value === ""
+                                      ? null
+                                      : Number(e.target.value),
+                                })
+                              }
+                              style={{
+                                width: "100%",
+                                padding: "8px 10px",
+                                fontSize: 13,
+                                borderRadius: 6,
+                                border: "1px solid var(--gray-200, #e5e7eb)",
+                                background: "#fff",
+                              }}
+                            >
+                              <option value="">Unassigned</option>
+                              {warehouses.map((w) => (
+                                <option key={w.id} value={w.id}>
+                                  {w.name}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
                           <div style={{ display: "flex", gap: 6 }}>
                             <button
                               className="primary"
@@ -4376,7 +4438,7 @@ export default function SettingsPage() {
                                 className="outline"
                                 onClick={() => {
                                   setTillEditing(null);
-                                  setTillForm({ name: "", employee_ids: [] });
+                                  setTillForm({ name: "", employee_ids: [], warehouse_id: null });
                                   setTillDropdownOpen(false);
                                 }}
                                 style={{ height: 38, padding: "0 12px", borderRadius: 8, fontSize: 13 }}
@@ -4396,6 +4458,9 @@ export default function SettingsPage() {
                               <tr>
                                 <th style={{ padding: "10px 20px", textAlign: "left", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-400)", borderBottom: "1px solid var(--gray-200)" }}>
                                   Point Of Sales Name
+                                </th>
+                                <th style={{ padding: "10px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-400)", borderBottom: "1px solid var(--gray-200)" }}>
+                                  Warehouse
                                 </th>
                                 <th style={{ padding: "10px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-400)", borderBottom: "1px solid var(--gray-200)" }}>
                                   Assigned Employees
@@ -4430,8 +4495,15 @@ export default function SettingsPage() {
                                       </div>
                                       {till.name}
                                     </div>
-                                  </td>
-                                  <td style={{ padding: "12px 16px", borderBottom: "1px solid var(--gray-100)" }}>
+                                </td>
+                                <td style={{ padding: "12px 16px", fontSize: 13, color: "var(--slate-600)", borderBottom: "1px solid var(--gray-100)" }}>
+                                  {till.warehouse?.name || (
+                                    <span style={{ color: "var(--slate-400)" }}>
+                                      Unassigned
+                                    </span>
+                                  )}
+                                </td>
+                                <td style={{ padding: "12px 16px", borderBottom: "1px solid var(--gray-100)" }}>
                                     <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
                                       {till.employees.length > 0 ? till.employees.map(emp => (
                                         <span
@@ -4481,6 +4553,7 @@ export default function SettingsPage() {
                                           setTillForm({
                                             name: till.name,
                                             employee_ids: till.employees.map(e => e.id),
+                                            warehouse_id: till.warehouse_id ?? null,
                                           });
                                         }}
                                         style={{ width: 30, height: 30, borderRadius: 6 }}

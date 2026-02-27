@@ -4,6 +4,7 @@ from pydantic import BaseModel, field_validator
 from typing import Optional, List
 
 from app.schemas.common import ORMBase
+from app.schemas.warehouse import WarehouseRead
 
 
 # --- POS Order Line ---
@@ -199,6 +200,7 @@ class POSTillCreate(BaseModel):
     is_active: bool = True
     sort_order: int = 0
     employee_ids: List[int] = []
+    warehouse_id: int | None = None
 
 
 class POSTillUpdate(BaseModel):
@@ -206,6 +208,7 @@ class POSTillUpdate(BaseModel):
     is_active: bool | None = None
     sort_order: int | None = None
     employee_ids: List[int] | None = None
+    warehouse_id: int | None = None
 
 
 class POSTillEmployeeRead(ORMBase):
@@ -221,6 +224,8 @@ class POSTillRead(ORMBase):
     name: str
     is_active: bool
     sort_order: int
+    warehouse_id: int | None = None
+    warehouse: WarehouseRead | None = None
     employees: List[POSTillEmployeeRead] = []
     created_at: datetime
     updated_at: datetime

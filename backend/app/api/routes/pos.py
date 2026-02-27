@@ -989,6 +989,7 @@ def create_till(
         name=payload.name,
         is_active=payload.is_active,
         sort_order=payload.sort_order,
+        warehouse_id=payload.warehouse_id,
     )
     # Assign employees
     if payload.employee_ids:
