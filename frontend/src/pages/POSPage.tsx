@@ -171,7 +171,7 @@ function buildReceiptHtml(
   const qrSrc =
     (order as any).qr_url ||
     (order.zimra_verification_url
-      ? `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(order.zimra_verification_url)}`
+      ? `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(order.zimra_verification_url)}`
       : "");
 
   const companyContacts = [company?.phone, company?.email]
@@ -501,7 +501,13 @@ export default function POSPage() {
     apiFetch<CurrencyRateRead | null>(`/currencies/${cur.id}/rate`)
       .then((r) => setFxRate(r?.rate || 1))
       .catch(() => setFxRate(1));
-  }, [companyId, posCurrencyCode, currencyList, effectiveBaseCode, effectiveBaseSymbol]);
+  }, [
+    companyId,
+    posCurrencyCode,
+    currencyList,
+    effectiveBaseCode,
+    effectiveBaseSymbol,
+  ]);
 
   const toSale = useCallback(
     (amountBase: number) => amountBase * (fxRate || 1),
@@ -541,7 +547,8 @@ export default function POSPage() {
         (c) => normalizeCurrency(c.code) === nextCode,
       );
       const nextSymbol = (
-        nextCur?.symbol || (nextCode === effectiveBaseCode ? effectiveBaseSymbol : "")
+        nextCur?.symbol ||
+        (nextCode === effectiveBaseCode ? effectiveBaseSymbol : "")
       ).trim();
 
       let nextRate = 1;
@@ -608,7 +615,8 @@ export default function POSPage() {
   const moneyFor = useCallback(
     (amount: number, currency: string | null | undefined) => {
       const code = normalizeCurrency(currency) || "";
-      if (!code || code === normalizeCurrency(posCurrencyCode)) return money(amount);
+      if (!code || code === normalizeCurrency(posCurrencyCode))
+        return money(amount);
       const gap = code.length === 1 ? "" : " ";
       return `${code}${gap}${fmt(amount)}`;
     },
@@ -756,7 +764,16 @@ export default function POSPage() {
     } catch {
       /* window closed */
     }
-  }, [cart, cartSubtotal, cartTax, cartTotal, companyInfo, posCurrencyCode, posCurrencySymbol, toSale]);
+  }, [
+    cart,
+    cartSubtotal,
+    cartTax,
+    cartTotal,
+    companyInfo,
+    posCurrencyCode,
+    posCurrencySymbol,
+    toSale,
+  ]);
 
   useEffect(() => {
     syncCustomerDisplay();
@@ -1305,17 +1322,31 @@ export default function POSPage() {
                       "var(--slate-200, #e2e8f0)")
                   }
                 >
-                  {(currencyList.length ? currencyList : [{ code: baseCurrencyCode || "USD", name: baseCurrencyCode || "USD", symbol: baseCurrencySymbol || baseCurrencyCode || "USD" }]).map(
-                    (c) => {
-                      const code = normalizeCurrency(c.code);
-                      const label = c.name && c.name !== c.code ? `${code} — ${c.name}` : code;
-                      return (
-                        <option key={`${(c as any).id ?? code}-${c.code}`} value={code}>
-                          {label}
-                        </option>
-                      );
-                    }
-                  )}
+                  {(currencyList.length
+                    ? currencyList
+                    : [
+                        {
+                          code: baseCurrencyCode || "USD",
+                          name: baseCurrencyCode || "USD",
+                          symbol:
+                            baseCurrencySymbol || baseCurrencyCode || "USD",
+                        },
+                      ]
+                  ).map((c) => {
+                    const code = normalizeCurrency(c.code);
+                    const label =
+                      c.name && c.name !== c.code
+                        ? `${code} — ${c.name}`
+                        : code;
+                    return (
+                      <option
+                        key={`${(c as any).id ?? code}-${c.code}`}
+                        value={code}
+                      >
+                        {label}
+                      </option>
+                    );
+                  })}
                 </select>
                 <p
                   style={{
@@ -2339,7 +2370,13 @@ export default function POSPage() {
                     )}
                   </div>
                   {selectedOrder.cashier_name && (
-                    <div style={{ fontSize: 12, color: "var(--slate-500)", marginTop: 4 }}>
+                    <div
+                      style={{
+                        fontSize: 12,
+                        color: "var(--slate-500)",
+                        marginTop: 4,
+                      }}
+                    >
                       Cashier: <strong>{selectedOrder.cashier_name}</strong>
                     </div>
                   )}
@@ -2549,7 +2586,13 @@ export default function POSPage() {
                             {o.payment_method}
                           </span>
                           {o.cashier_name && (
-                            <span style={{ fontSize: 11, color: "var(--slate-400)", fontStyle: "italic" }}>
+                            <span
+                              style={{
+                                fontSize: 11,
+                                color: "var(--slate-400)",
+                                fontStyle: "italic",
+                              }}
+                            >
                               {o.cashier_name}
                             </span>
                           )}
@@ -2736,7 +2779,9 @@ export default function POSPage() {
                   ).map((c) => {
                     const code = normalizeCurrency(c.code);
                     const label =
-                      c.name && c.name !== c.code ? `${code} — ${c.name}` : code;
+                      c.name && c.name !== c.code
+                        ? `${code} — ${c.name}`
+                        : code;
                     return (
                       <option
                         key={`${(c as any).id ?? code}-${c.code}`}

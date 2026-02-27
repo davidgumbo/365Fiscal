@@ -9924,7 +9924,7 @@ button.danger:not(.icon-btn):not(.device-icon-btn):disabled {
 /* ── Receipt Dialog ── */
 .pos-receipt {
   padding: 0 24px 16px;
-  font-size: 2rem;
+  font-size: 1.2rem;
 }
 .pos-receipt-header {
   text-align: center;
