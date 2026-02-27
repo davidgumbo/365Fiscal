@@ -739,6 +739,8 @@ export default function POSPage() {
   const syncCustomerDisplay = useCallback(() => {
     if (!customerDisplayRef.current || customerDisplayRef.current.closed)
       return;
+    const displayDevice =
+      devices.find((d) => d.id === session?.device_id) || null;
     const data = {
       type: "pos-cart-update",
       cart: cart.map((l) => ({
@@ -758,6 +760,30 @@ export default function POSPage() {
       currency_symbol: posCurrencySymbol || posCurrencyCode,
       companyName: companyInfo?.name || "365 Fiscal",
       companyLogo: companyInfo?.logo_data || "",
+      company: companyInfo
+        ? {
+            name: companyInfo.name,
+            address: companyInfo.address,
+            phone: companyInfo.phone,
+            email: companyInfo.email,
+            tin: companyInfo.tin,
+            vat: companyInfo.vat,
+            logo_data: companyInfo.logo_data,
+          }
+        : null,
+      show_receipt: showReceipt,
+      last_order: lastOrder,
+      selected_customer: selectedCustomer
+        ? { name: selectedCustomer.name, tin: selectedCustomer.tin }
+        : null,
+      session: session ? { name: session.name } : null,
+      active_device: displayDevice
+        ? {
+            model: displayDevice.model,
+            serial_number: displayDevice.serial_number,
+            device_id: displayDevice.device_id,
+          }
+        : null,
     };
     try {
       customerDisplayRef.current.postMessage(data, "*");
@@ -769,9 +795,14 @@ export default function POSPage() {
     cartSubtotal,
     cartTax,
     cartTotal,
+    devices,
     companyInfo,
+    lastOrder,
     posCurrencyCode,
     posCurrencySymbol,
+    selectedCustomer,
+    session,
+    showReceipt,
     toSale,
   ]);
 
@@ -3000,7 +3031,6 @@ export default function POSPage() {
           </div>
         </div>
       )}
-
       {/* ─── RECEIPT DIALOG ─── */}
       {showReceipt && lastOrder && (
         <div className="pos-overlay" onClick={() => setShowReceipt(false)}>
