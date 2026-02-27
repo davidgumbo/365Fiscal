@@ -605,6 +605,7 @@ textarea {
 
 .invoice-form .card {
   border-radius: 12px;
+  width: 20vw
 }
 
 .invoice-form .card.bg-light,

@@ -2669,6 +2669,7 @@ export default function InvoicesPage({
                           style={{
                             display: "flex",
                             alignItems: "center",
+                            justifyContent: "space-between",
                             gap: 8,
                           }}
                         >
@@ -2706,6 +2707,7 @@ export default function InvoicesPage({
                           style={{
                             display: "flex",
                             alignItems: "center",
+                            justifyContent: "space-between",
                             gap: 8,
                           }}
                         >
