@@ -833,11 +833,22 @@ export default function InvoicesPage({
       : paymentStatus === "Partial"
         ? "warning"
         : "secondary";
+  const fiscalStatus = (selectedInvoice?.zimra_status || "not_submitted")
+    .toLowerCase()
+    .trim();
+  const fiscalBadge =
+    fiscalStatus === "submitted"
+      ? "success"
+      : fiscalStatus === "error"
+        ? "danger"
+        : "secondary";
+  const fiscalLabel =
+    fiscalStatus === "submitted"
+      ? "Submitted"
+      : fiscalStatus === "error"
+        ? "Failed"
+        : "Not Submitted";
   const invoiceHeadingStyle = { color: invoiceTheme.primary };
-  const invoicePanelStyle = {
-    backgroundColor: invoiceTheme.panel,
-    border: `1px solid ${invoiceTheme.line}`,
-  };
 
   const beginNew = () => {
     setNewMode(true);
@@ -2631,112 +2642,6 @@ export default function InvoicesPage({
                     />
                   </div>
                 )}
-                {/* Summary cards */}
-                <div className="row g-3 mb-4">
-                  <div className="col-md-3">
-                    <div className="card h-100" style={invoicePanelStyle}>
-                      <div className="card-body py-2">
-                        <small className="text-muted">Total Amount</small>
-                        <div className="fs-5 fw-bold">
-                          {formatCurrency(
-                            selectedInvoice.total_amount || 0,
-                            invoiceCurrency,
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-3">
-                    <div className="card h-100" style={invoicePanelStyle}>
-                      <div className="card-body py-2">
-                        <small className="text-muted">Amount Paid</small>
-                        <div className="fs-5 fw-bold">
-                          {formatCurrency(
-                            selectedInvoice.amount_paid || 0,
-                            invoiceCurrency,
-                          )}
-                        </div>
-                        <span className={`badge bg-${paymentBadge}`}>
-                          {paymentStatus}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-3">
-                    <div className="card h-100" style={invoicePanelStyle}>
-                      <div className="card-body py-2">
-                        <small className="text-muted">Amount Due</small>
-                        <div className="fs-5 fw-bold">
-                          {formatCurrency(
-                            selectedInvoice.amount_due || 0,
-                            invoiceCurrency,
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-3">
-                    <div className="card h-100" style={invoicePanelStyle}>
-                      <div className="card-body py-2">
-                        <small className="text-muted">Fiscalization</small>
-                        <div
-                          className="fw-bold text-uppercase"
-                          style={{
-                            color:
-                              selectedInvoice.zimra_status === "error"
-                                ? "var(--red-500)"
-                                : selectedInvoice.zimra_status === "submitted"
-                                  ? "var(--green-700)"
-                                  : undefined,
-                          }}
-                        >
-                          {selectedInvoice.zimra_status || "not_submitted"}
-                        </div>
-                        {selectedInvoice.zimra_verification_code && (
-                          <small className="text-muted">
-                            Code: {selectedInvoice.zimra_verification_code}
-                          </small>
-                        )}
-                        {selectedInvoice.zimra_status === "submitted" &&
-                          selectedInvoice.zimra_verification_url && (
-                            <div style={{ marginTop: 4 }}>
-                              <a
-                                href={selectedInvoice.zimra_verification_url.replace(
-                                  /\/Receipt\/?/i,
-                                  "/",
-                                )}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{ fontSize: 11, color: "var(--accent)" }}
-                              >
-                                Verify on ZIMRA ↗
-                              </a>
-                            </div>
-                          )}
-                        {selectedInvoice.zimra_status === "error" &&
-                          selectedInvoice.zimra_errors && (
-                            <div
-                              style={{
-                                marginTop: 6,
-                                padding: "6px 8px",
-                                background: "var(--red-50)",
-                                border: "1px solid var(--red-200)",
-                                borderRadius: 6,
-                                fontSize: 11,
-                                color: "var(--red-900)",
-                                maxHeight: 120,
-                                overflowY: "auto",
-                                wordBreak: "break-word",
-                              }}
-                            >
-                              {selectedInvoice.zimra_errors}
-                            </div>
-                          )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
                 {/* ZIMRA Fiscal Details Panel */}
                 {selectedInvoice.zimra_status === "submitted" &&
                   !hideFiscalDetails &&
@@ -2751,6 +2656,7 @@ export default function InvoicesPage({
                           background: "var(--green-50)",
                           border: "1px solid var(--green-200)",
                           borderRadius: 10,
+                          width: "100%",
                         }}
                       >
                         <div
@@ -2765,9 +2671,6 @@ export default function InvoicesPage({
                             onClick={() => setHideFiscalDetails(true)}
                             aria-label="Dismiss fiscal details"
                             style={{
-                              position: "absolute",
-                              top: 8,
-                              left: 8,
                               width: 24,
                               height: 24,
                               borderRadius: "50%",
@@ -2779,6 +2682,7 @@ export default function InvoicesPage({
                               lineHeight: "22px",
                               textAlign: "center",
                               cursor: "pointer",
+                              margin: "0 0 1rem 87vw",
                             }}
                           >
                             x
@@ -2874,24 +2778,34 @@ export default function InvoicesPage({
                               </div>
                               {selectedInvoice.zimra_verification_url && (
                                 <div style={{ marginTop: 8 }}>
-                                  <a
-                                    href={selectedInvoice.zimra_verification_url.replace(
-                                      /\/Receipt\/?/i,
-                                      "/",
-                                    )}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      window.open(
+                                        selectedInvoice.zimra_verification_url?.replace(
+                                          /\/Receipt\/?/i,
+                                          "/",
+                                        ),
+                                        "_blank",
+                                        "noopener,noreferrer",
+                                      )
+                                    }
                                     style={{
                                       fontSize: 11,
                                       color: "var(--green-800)",
                                       wordBreak: "break-all",
+                                      border: "none",
+                                      background: "transparent",
+                                      padding: 0,
+                                      textAlign: "left",
+                                      cursor: "pointer",
                                     }}
                                   >
                                     {selectedInvoice.zimra_verification_url.replace(
                                       /\/Receipt\/?/i,
                                       "/",
                                     )}
-                                  </a>
+                                  </button>
                                 </div>
                               )}
 
@@ -2959,7 +2873,7 @@ export default function InvoicesPage({
 
                 {/* Fields */}
                 <div className="row g-3 mb-4">
-                  <div className="col-md-6">
+                  <div className="col-md-4">
                     <label className="form-label ">Customer</label>
                     {canEdit ? (
                       <div
@@ -3031,10 +2945,8 @@ export default function InvoicesPage({
                       </div>
                     )}
                   </div>
-                  <div className="col-md-3">
-                    <label className="form-label fw-semibold">
-                      Invoice Date
-                    </label>
+                  <div className="col-md-4">
+                    <label className="form-label">Invoice Date</label>
                     {canEdit ? (
                       <input
                         className="form-control input-underline"
@@ -3048,8 +2960,8 @@ export default function InvoicesPage({
                       </div>
                     )}
                   </div>
-                  <div className="col-md-3">
-                    <label className="form-label fw-semibold">Due Date</label>
+                  <div className="col-md-4">
+                    <label className="form-label">Due Date</label>
                     {canEdit ? (
                       <input
                         className="form-control input-underline"
@@ -3431,6 +3343,124 @@ export default function InvoicesPage({
                         </tr>
                       )}
                     </tbody>
+                    <tfoot className="table-light">
+                      <tr>
+                        <td colSpan={7} className="text-end fw-semibold">
+                          Subtotal
+                        </td>
+                        <td className="text-end fw-semibold">
+                          {formatCurrency(
+                            selectedInvoice.subtotal || 0,
+                            invoiceCurrency,
+                          )}
+                        </td>
+                        {canEdit && <td></td>}
+                      </tr>
+                      <tr>
+                        <td colSpan={7} className="text-end fw-semibold">
+                          Discount
+                        </td>
+                        <td className="text-end fw-semibold">
+                          -{" "}
+                          {formatCurrency(
+                            selectedInvoice.discount_amount || 0,
+                            invoiceCurrency,
+                          )}
+                        </td>
+                        {canEdit && <td></td>}
+                      </tr>
+                      <tr>
+                        <td colSpan={7} className="text-end fw-semibold">
+                          Tax
+                        </td>
+                        <td className="text-end fw-semibold">
+                          {formatCurrency(
+                            selectedInvoice.tax_amount || 0,
+                            invoiceCurrency,
+                          )}
+                        </td>
+                        {canEdit && <td></td>}
+                      </tr>
+                      <tr>
+                        <td colSpan={7} className="text-end fw-bold">
+                          Total Amount
+                        </td>
+                        <td className="text-end fw-bold">
+                          {formatCurrency(
+                            selectedInvoice.total_amount || 0,
+                            invoiceCurrency,
+                          )}
+                        </td>
+                        {canEdit && <td></td>}
+                      </tr>
+                      <tr>
+                        <td colSpan={7} className="text-end fw-semibold">
+                          Amount Paid
+                        </td>
+                        <td className="text-end fw-semibold">
+                          {formatCurrency(
+                            selectedInvoice.amount_paid || 0,
+                            invoiceCurrency,
+                          )}
+                        </td>
+                        {canEdit && <td></td>}
+                      </tr>
+                      <tr>
+                        <td colSpan={7} className="text-end fw-semibold">
+                          Amount Due
+                        </td>
+                        <td className="text-end fw-semibold">
+                          {formatCurrency(
+                            selectedInvoice.amount_due || 0,
+                            invoiceCurrency,
+                          )}
+                        </td>
+                        {canEdit && <td></td>}
+                      </tr>
+                      <tr>
+                        <td colSpan={7} className="text-end fw-semibold">
+                          Payment Status
+                        </td>
+                        <td className="text-end">
+                          <span className={`badge bg-${paymentBadge}`}>
+                            {paymentStatus}
+                          </span>
+                        </td>
+                        {canEdit && <td></td>}
+                      </tr>
+                      <tr>
+                        <td colSpan={7} className="text-end fw-semibold">
+                          Fiscalization
+                        </td>
+                        <td className="text-end">
+                          <span className={`badge bg-${fiscalBadge}`}>
+                            {fiscalLabel}
+                          </span>
+                          {selectedInvoice.zimra_status === "submitted" &&
+                            selectedInvoice.zimra_verification_url && (
+                              <div style={{ marginTop: 4 }}>
+                                <button
+                                  type="button"
+                                  className="btn btn-link btn-sm p-0"
+                                  onClick={() =>
+                                    window.open(
+                                      selectedInvoice.zimra_verification_url?.replace(
+                                        /\/Receipt\/?/i,
+                                        "/",
+                                      ),
+                                      "_blank",
+                                      "noopener,noreferrer",
+                                    )
+                                  }
+                                >
+                                  Verify on ZIMRA
+                                </button>
+                              </div>
+                            )}
+                        </td>
+                        {canEdit && <td></td>}
+                      </tr>
+                    </tfoot>
                   </table>
                   <TablePagination
                     page={detailLinesPage}
@@ -3441,72 +3471,6 @@ export default function InvoicesPage({
                   />
                 </div>
 
-                {/* Totals */}
-                <div className="row g-3 mt-3">
-                  <div className="col-md-6">
-                    <div className="card" style={invoicePanelStyle}>
-                      <div className="card-body py-2">
-                        <div className="fw-semibold mb-1">Tax Breakdown</div>
-                        {taxBreakdown.length === 0 && (
-                          <small className="text-muted">No taxes applied</small>
-                        )}
-                        {taxBreakdown.map(([rate, amt]) => (
-                          <div
-                            key={rate}
-                            className="d-flex justify-content-between text-muted small"
-                          >
-                            <span>VAT {rate}%</span>
-                            <span>{formatCurrency(amt, invoiceCurrency)}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-6">
-                    <div className="card" style={invoicePanelStyle}>
-                      <div className="card-body py-2">
-                        <div className="d-flex justify-content-between">
-                          <span>Subtotal</span>
-                          <span>
-                            {formatCurrency(
-                              selectedInvoice.subtotal || 0,
-                              invoiceCurrency,
-                            )}
-                          </span>
-                        </div>
-                        <div className="d-flex justify-content-between">
-                          <span>Discount</span>
-                          <span>
-                            -
-                            {formatCurrency(
-                              selectedInvoice.discount_amount || 0,
-                              invoiceCurrency,
-                            )}
-                          </span>
-                        </div>
-                        <div className="d-flex justify-content-between">
-                          <span>Tax</span>
-                          <span>
-                            {formatCurrency(
-                              selectedInvoice.tax_amount || 0,
-                              invoiceCurrency,
-                            )}
-                          </span>
-                        </div>
-                        <hr className="my-1" />
-                        <div className="d-flex justify-content-between fw-bold">
-                          <span>Total</span>
-                          <span>
-                            {formatCurrency(
-                              selectedInvoice.total_amount || 0,
-                              invoiceCurrency,
-                            )}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           )}
