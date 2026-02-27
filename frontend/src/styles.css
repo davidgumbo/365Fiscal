@@ -628,6 +628,7 @@ textarea {
 .invoice-form .form-label {
   color: var(--ink-light);
   font-weight: 600;
+  text-wrap: auto;
 }
 
 .statusbar {

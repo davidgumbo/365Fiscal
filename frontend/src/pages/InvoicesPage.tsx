@@ -3093,9 +3093,7 @@ export default function InvoicesPage({
                     )}
                   </div>
                   <div className="col-md-4">
-                    <label className="form-label fw-semibold">
-                      Invoice Date
-                    </label>
+                    <label className="form-label">Invoice Date</label>
                     {canEdit ? (
                       <input
                         className="form-control input-underline"
@@ -3110,7 +3108,7 @@ export default function InvoicesPage({
                     )}
                   </div>
                   <div className="col-md-4">
-                    <label className="form-label fw-semibold">Due Date</label>
+                    <label className="form-label">Due Date</label>
                     {canEdit ? (
                       <input
                         className="form-control input-underline"
