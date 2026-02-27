@@ -2610,7 +2610,10 @@ export default function InvoicesPage({
 
           {/* ── Existing Invoice Detail ── */}
           {selectedInvoice && !newMode && (
-            <div className="card shadow-sm">
+            <div
+              className="card shadow-sm"
+              style={{ maxHeight: "82vh", overflowY: "auto" }}
+            >
               <div className="card-body invoice-form">
                 {companySettings?.logo_data && (
                   <div className="mb-3">
