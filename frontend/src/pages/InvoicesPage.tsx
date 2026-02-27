@@ -2719,25 +2719,37 @@ export default function InvoicesPage({
                           </div>
                         </div>
 
-                        {selectedInvoice.zimra_verification_code && (
+                        {/* {selectedInvoice.zimra_verification_code && (
                           <small className="text-muted">
                             Code: {selectedInvoice.zimra_verification_code}
                           </small>
-                        )}
+                        )} */}
                         {selectedInvoice.zimra_status === "submitted" &&
                           selectedInvoice.zimra_verification_url && (
                             <div style={{ marginTop: 4 }}>
-                              <a
-                                href={selectedInvoice.zimra_verification_url.replace(
-                                  /\/Receipt\/?/i,
-                                  "/",
-                                )}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{ fontSize: 11, color: "var(--accent)" }}
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  window.open(
+                                    selectedInvoice.zimra_verification_url?.replace(
+                                      /\/Receipt\/?/i,
+                                      "/",
+                                    ),
+                                    "_blank",
+                                    "noopener,noreferrer",
+                                  )
+                                }
+                                style={{
+                                  fontSize: 11,
+                                  color: "var(--accent)",
+                                  border: "none",
+                                  background: "transparent",
+                                  padding: 0,
+                                  cursor: "pointer",
+                                }}
                               >
                                 Verify on ZIMRA ↗
-                              </a>
+                              </button>
                             </div>
                           )}
                         {selectedInvoice.zimra_status === "error" &&
@@ -2778,6 +2790,7 @@ export default function InvoicesPage({
                           background: "var(--green-50)",
                           border: "1px solid var(--green-200)",
                           borderRadius: 10,
+                          width: "100%",
                         }}
                       >
                         <div
@@ -2899,24 +2912,34 @@ export default function InvoicesPage({
                               </div>
                               {selectedInvoice.zimra_verification_url && (
                                 <div style={{ marginTop: 8 }}>
-                                  <a
-                                    href={selectedInvoice.zimra_verification_url.replace(
-                                      /\/Receipt\/?/i,
-                                      "/",
-                                    )}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      window.open(
+                                        selectedInvoice.zimra_verification_url?.replace(
+                                          /\/Receipt\/?/i,
+                                          "/",
+                                        ),
+                                        "_blank",
+                                        "noopener,noreferrer",
+                                      )
+                                    }
                                     style={{
                                       fontSize: 11,
                                       color: "var(--green-800)",
                                       wordBreak: "break-all",
+                                      border: "none",
+                                      background: "transparent",
+                                      padding: 0,
+                                      textAlign: "left",
+                                      cursor: "pointer",
                                     }}
                                   >
                                     {selectedInvoice.zimra_verification_url.replace(
                                       /\/Receipt\/?/i,
                                       "/",
                                     )}
-                                  </a>
+                                  </button>
                                 </div>
                               )}
 
