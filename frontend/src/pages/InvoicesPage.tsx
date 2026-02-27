@@ -3411,10 +3411,7 @@ export default function InvoicesPage({
                     </tbody>
                     <tfoot className="table-light">
                       <tr>
-                        <td
-                          colSpan={canEdit ? 7 : 6}
-                          className="text-end fw-semibold"
-                        >
+                        <td colSpan={7} className="text-end fw-semibold">
                           Untaxed Amount:
                         </td>
                         <td className="text-end fw-semibold">
@@ -3426,10 +3423,7 @@ export default function InvoicesPage({
                         {canEdit && <td></td>}
                       </tr>
                       <tr>
-                        <td
-                          colSpan={canEdit ? 7 : 6}
-                          className="text-end fw-semibold"
-                        >
+                        <td colSpan={7} className="text-end fw-semibold">
                           {invoiceTaxLabel}
                         </td>
                         <td className="text-end fw-semibold">
@@ -3441,10 +3435,7 @@ export default function InvoicesPage({
                         {canEdit && <td></td>}
                       </tr>
                       <tr>
-                        <td
-                          colSpan={canEdit ? 7 : 6}
-                          className="text-end fw-bold fs-5"
-                        >
+                        <td colSpan={7} className="text-end fw-bold fs-5">
                           Total:
                         </td>
                         <td className="text-end fw-bold fs-5">
