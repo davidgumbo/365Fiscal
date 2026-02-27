@@ -9169,6 +9169,12 @@ button.danger:not(.icon-btn):not(.device-icon-btn):disabled {
   color: var(--indigo-600, #4f46e5);
   letter-spacing: -0.3px;
 }
+.pos-product-card-base-price {
+  display: block;
+  font-size: 0.68rem;
+  color: var(--slate-400, #94a3b8);
+  margin-top: 4px;
+}
 .pos-product-card-barcode {
   font-size: 0.68rem;
   color: var(--slate-400, #94a3b8);
@@ -10572,6 +10578,12 @@ button.danger:not(.icon-btn):not(.device-icon-btn):disabled {
   background: var(--slate-100, #f1f5f9);
   padding: 0 5px;
   border-radius: 3px;
+}
+.pos-orders-panel-row-cashier {
+  font-size: 0.65rem;
+  color: var(--slate-500, #94a3b8);
+  margin-left: 4px;
+  text-transform: none;
 }
 .pos-orders-panel-row-amount {
   font-size: 0.85rem;

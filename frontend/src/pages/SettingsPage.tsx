@@ -504,25 +504,25 @@ export default function SettingsPage() {
     setPosError(null);
     setTillSaving(true);
     try {
-      if (tillEditing) {
-        await apiFetch(`/pos/tills/${tillEditing}`, {
-          method: "PUT",
-          body: JSON.stringify(tillForm),
-        });
-        setStatus("Till updated");
-      } else {
-        await apiFetch("/pos/tills", {
-          method: "POST",
-          body: JSON.stringify({ ...tillForm, company_id: companyId }),
-        });
-        setStatus("Till added");
-      }
+    if (tillEditing) {
+      await apiFetch(`/pos/tills/${tillEditing}`, {
+        method: "PUT",
+        body: JSON.stringify(tillForm),
+      });
+      setStatus("Point Of Sales updated");
+    } else {
+      await apiFetch("/pos/tills", {
+        method: "POST",
+        body: JSON.stringify({ ...tillForm, company_id: companyId }),
+      });
+      setStatus("Point Of Sales added");
+    }
       setTillForm({ name: "", employee_ids: [] });
       setTillEditing(null);
       setTillDropdownOpen(false);
       loadPosTills(companyId);
     } catch (err: any) {
-      setPosError(err.message || "Failed to save till");
+      setPosError(err.message || "Failed to save Point Of Sales");
     } finally {
       setTillSaving(false);
     }
@@ -530,13 +530,13 @@ export default function SettingsPage() {
 
   const deletePosTill = async (id: number) => {
     if (!companyId) return;
-    if (!confirm("Are you sure you want to remove this till?")) return;
+    if (!confirm("Are you sure you want to remove this Point Of Sales?")) return;
     try {
       await apiFetch(`/pos/tills/${id}`, { method: "DELETE" });
-      setStatus("Till deleted");
+      setStatus("Point Of Sales deleted");
       loadPosTills(companyId);
     } catch (err: any) {
-      setPosError(err.message || "Failed to delete till");
+      setPosError(err.message || "Failed to delete Point Of Sales");
     }
   };
 
@@ -2664,7 +2664,7 @@ export default function SettingsPage() {
                         }
                         onClick={() => setPosConfigTab("tills")}
                       >
-                        Tills
+                        Point Of Sales
                       </button>
                     </div>
                   </div>
@@ -4163,7 +4163,7 @@ export default function SettingsPage() {
                             <path d="M12 17v4" />
                           </svg>
                           <h5 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "var(--slate-700)" }}>
-                            Tills / Registers
+                            Point Of Sales / Registers
                           </h5>
                         </div>
                         <span
@@ -4176,7 +4176,8 @@ export default function SettingsPage() {
                             background: "var(--violet-50, #f5f3ff)",
                           }}
                         >
-                          {posTills.length} {posTills.length === 1 ? "till" : "tills"}
+                          {posTills.length}{" "}
+                          {posTills.length === 1 ? "Point Of Sales" : "Points Of Sales"}
                         </span>
                       </div>
 
@@ -4196,17 +4197,17 @@ export default function SettingsPage() {
                         <div style={{ display: "grid", gridTemplateColumns: "2fr 3fr auto", gap: 10, alignItems: "end" }}>
                           <label className="input" style={{ margin: 0 }}>
                             <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-500)" }}>
-                              Till Name
+                              Point Of Sales Name
                             </span>
                             <input
                               value={tillForm.name}
                               onChange={(e) => setTillForm({ ...tillForm, name: e.target.value })}
-                              placeholder="e.g. Till 1, Register A"
+                              placeholder="e.g. Point Of Sales 1, Register A"
                             />
                           </label>
                           <label ref={tillDropdownRef} className="input" style={{ margin: 0, position: "relative" }}>
                             <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-500)" }}>
-                              Employees (select who can use this till)
+                              Employees (select who can use this Point Of Sales)
                             </span>
                             {/* Selected tags + trigger */}
                             <div
@@ -4394,7 +4395,7 @@ export default function SettingsPage() {
                             <thead>
                               <tr>
                                 <th style={{ padding: "10px 20px", textAlign: "left", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-400)", borderBottom: "1px solid var(--gray-200)" }}>
-                                  Till Name
+                                  Point Of Sales Name
                                 </th>
                                 <th style={{ padding: "10px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-400)", borderBottom: "1px solid var(--gray-200)" }}>
                                   Assigned Employees
@@ -4474,7 +4475,7 @@ export default function SettingsPage() {
                                     <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
                                       <button
                                         className="icon-btn"
-                                        title="Edit till"
+                                        title="Edit Point Of Sales"
                                         onClick={() => {
                                           setTillEditing(till.id);
                                           setTillForm({
@@ -4488,7 +4489,7 @@ export default function SettingsPage() {
                                       </button>
                                       <button
                                         className="icon-btn danger"
-                                        title="Delete till"
+                                        title="Delete Point Of Sales"
                                         onClick={() => deletePosTill(till.id)}
                                         style={{ width: 30, height: 30, borderRadius: 6 }}
                                       >
@@ -4509,10 +4510,10 @@ export default function SettingsPage() {
                             <path d="M12 17v4" />
                           </svg>
                           <div style={{ color: "var(--slate-400)", fontSize: 13, marginBottom: 4 }}>
-                            No tills configured yet
+                            No Point Of Sales configured yet
                           </div>
                           <div style={{ color: "var(--slate-300)", fontSize: 12 }}>
-                            Add a till above and assign employees who can use it
+                            Add a Point Of Sales above and assign employees who can use it
                           </div>
                         </div>
                       )}

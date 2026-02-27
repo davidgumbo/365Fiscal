@@ -356,6 +356,12 @@ export default function POSPage() {
 
   const [posCurrencyCode, setPosCurrencyCode] = useState("USD");
   const [posCurrencySymbol, setPosCurrencySymbol] = useState("");
+  const normalizedBaseCurrencyCode = normalizeCurrency(baseCurrencyCode);
+  const normalizedPosCurrencyCode = normalizeCurrency(posCurrencyCode);
+  const showBaseCurrencyOnProducts = Boolean(
+    normalizedBaseCurrencyCode &&
+      normalizedBaseCurrencyCode !== normalizedPosCurrencyCode,
+  );
   const [session, setSession] = useState<POSSession | null>(null);
   const [cart, setCart] = useState<CartLine[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
@@ -1996,7 +2002,12 @@ export default function POSPage() {
                 <div className="pos-product-card-body">
                   <div className="pos-product-card-name">{p.name}</div>
                   <div className="pos-product-card-price">
-                    {money(toSale(p.sale_price))}
+                    <span>{money(toSale(p.sale_price))}</span>
+                    {showBaseCurrencyOnProducts && (
+                      <span className="pos-product-card-base-price">
+                        {moneyFor(p.sale_price, baseCurrencyCode)}
+                      </span>
+                    )}
                   </div>
                   {p.track_inventory && p.product_type === "storable" && (
                     <div
@@ -2586,14 +2597,8 @@ export default function POSPage() {
                             {o.payment_method}
                           </span>
                           {o.cashier_name && (
-                            <span
-                              style={{
-                                fontSize: 11,
-                                color: "var(--slate-400)",
-                                fontStyle: "italic",
-                              }}
-                            >
-                              {o.cashier_name}
+                            <span className="pos-orders-panel-row-cashier">
+                              Cashier: {o.cashier_name}
                             </span>
                           )}
                           {o.status === "refunded" && (
