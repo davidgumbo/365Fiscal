@@ -3020,7 +3020,7 @@ export default function InvoicesPage({
 
                 {/* Fields */}
                 <div className="row g-3 mb-4">
-                  <div className="col-md-6">
+                  <div className="col-md-4">
                     <label className="form-label ">Customer</label>
                     {canEdit ? (
                       <div
@@ -3092,7 +3092,7 @@ export default function InvoicesPage({
                       </div>
                     )}
                   </div>
-                  <div className="col-md-3">
+                  <div className="col-md-4">
                     <label className="form-label fw-semibold">
                       Invoice Date
                     </label>
@@ -3109,7 +3109,7 @@ export default function InvoicesPage({
                       </div>
                     )}
                   </div>
-                  <div className="col-md-3">
+                  <div className="col-md-4">
                     <label className="form-label fw-semibold">Due Date</label>
                     {canEdit ? (
                       <input
