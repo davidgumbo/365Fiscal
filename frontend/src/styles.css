@@ -10852,6 +10852,40 @@ button.danger:not(.icon-btn):not(.device-icon-btn):disabled {
   }
 }
 
+.zimra-verify-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--stroke);
+  border-radius: 999px;
+  background: var(--white);
+  color: var(--blue-700);
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background-color 180ms ease;
+}
+
+.zimra-verify-btn:hover {
+  transform: translateY(-1px);
+  border-color: var(--blue-500);
+  background: var(--blue-50);
+  box-shadow: var(--shadow-soft);
+}
+
+.zimra-verify-btn svg {
+  transition: transform 180ms ease;
+}
+
+.zimra-verify-btn:hover svg {
+  transform: translateX(1px);
+}
+
+.zimra-verify-btn:focus-visible {
+  outline: 2px solid var(--blue-300);
+  outline-offset: 2px;
+}
+
 /* ── Print Styles ── */
 @media print {
   body * { visibility: hidden; }

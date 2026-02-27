@@ -2648,6 +2648,7 @@ export default function InvoicesPage({
                             <div style={{ marginTop: 4 }}>
                               <button
                                 type="button"
+                                className="zimra-verify-btn"
                                 aria-label="View ZIMRA verification"
                                 onClick={() =>
                                   window.open(
@@ -2659,14 +2660,6 @@ export default function InvoicesPage({
                                     "noopener,noreferrer",
                                   )
                                 }
-                                style={{
-                                  fontSize: 11,
-                                  color: "var(--accent)",
-                                  border: "none",
-                                  background: "transparent",
-                                  padding: 0,
-                                  cursor: "pointer",
-                                }}
                               >
                                 <svg
                                   width="14"
