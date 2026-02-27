@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../api";
 import { useMe } from "../hooks/useMe";
@@ -131,6 +131,14 @@ type CurrencyRateRead = {
   company_id: number;
   rate: number;
   rate_date: string;
+};
+
+type POSTillInfo = {
+  id: number;
+  company_id: number;
+  name: string;
+  is_active: boolean;
+  sort_order: number;
 };
 
 /* ────────────────────────── helpers ────────────────────────── */
@@ -345,6 +353,7 @@ export default function POSPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [devices, setDevices] = useState<Device[]>([]);
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
+  const [posTills, setPosTills] = useState<POSTillInfo[]>([]);
 
   // Currency: prices are stored in the company's base currency.
   // The cashier can choose a sale currency for the current POS session.
@@ -361,6 +370,10 @@ export default function POSPage() {
   const showBaseCurrencyOnProducts = Boolean(
     normalizedBaseCurrencyCode &&
       normalizedBaseCurrencyCode !== normalizedPosCurrencyCode,
+  );
+  const tillNameById = useMemo(
+    () => new Map(posTills.map((till) => [till.id, till.name])),
+    [posTills],
   );
   const [session, setSession] = useState<POSSession | null>(null);
   const [cart, setCart] = useState<CartLine[]>([]);
@@ -456,6 +469,26 @@ export default function POSPage() {
     )
       .then((list) => setCurrencyList(list || []))
       .catch(() => setCurrencyList([]));
+  }, [companyId]);
+
+  useEffect(() => {
+    if (!companyId) {
+      setPosTills([]);
+      return;
+    }
+    let cancelled = false;
+    apiFetch<POSTillInfo[]>(
+      `/pos/tills?company_id=${companyId}&include_inactive=true`,
+    )
+      .then((list) => {
+        if (!cancelled) setPosTills(list || []);
+      })
+      .catch(() => {
+        if (!cancelled) setPosTills([]);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [companyId]);
 
   const defaultCurrency =
@@ -618,15 +651,15 @@ export default function POSPage() {
     [posCurrencyCode, posCurrencySymbol],
   );
 
-  const moneyFor = useCallback(
-    (amount: number, currency: string | null | undefined) => {
-      const code = normalizeCurrency(currency) || "";
-      if (!code || code === normalizeCurrency(posCurrencyCode))
-        return money(amount);
-      const gap = code.length === 1 ? "" : " ";
-      return `${code}${gap}${fmt(amount)}`;
+
+  const formatBaseCurrency = useCallback(
+    (amount: number) => {
+      const label =
+        (baseCurrencySymbol || baseCurrencyCode || "USD").trim() || "USD";
+      const gap = label.length === 1 ? "" : " ";
+      return `${label}${gap}${fmt(amount)}`;
     },
-    [money, posCurrencyCode],
+    [baseCurrencyCode, baseCurrencySymbol],
   );
 
   // ── calculated ──
@@ -2036,7 +2069,7 @@ export default function POSPage() {
                     <span>{money(toSale(p.sale_price))}</span>
                     {showBaseCurrencyOnProducts && (
                       <span className="pos-product-card-base-price">
-                        {moneyFor(p.sale_price, baseCurrencyCode)}
+                        {formatBaseCurrency(p.sale_price)}
                       </span>
                     )}
                   </div>
@@ -2422,6 +2455,21 @@ export default function POSPage() {
                       Cashier: <strong>{selectedOrder.cashier_name}</strong>
                     </div>
                   )}
+                  {selectedOrder.till_id && (
+                    <div
+                      style={{
+                        fontSize: 12,
+                        color: "var(--slate-500)",
+                        marginTop: 4,
+                      }}
+                    >
+                      Point of Sale:{" "}
+                      <strong>
+                        {tillNameById.get(selectedOrder.till_id) ||
+                          `POS #${selectedOrder.till_id}`}
+                      </strong>
+                    </div>
+                  )}
                 </div>
 
                 <div className="pos-order-detail-lines">
@@ -2594,7 +2642,12 @@ export default function POSPage() {
                       <p>No orders yet</p>
                     </div>
                   )}
-                  {orders.map((o) => (
+                {orders.map((o) => {
+                  const orderTillLabel =
+                    o.till_id &&
+                    (tillNameById.get(o.till_id) ||
+                      `POS #${o.till_id}`);
+                  return (
                     <div
                       key={o.id}
                       className={`pos-orders-panel-row ${o.status === "refunded" ? "refunded" : ""} ${o.total_amount < 0 ? "credit-note" : ""}`}
@@ -2630,6 +2683,11 @@ export default function POSPage() {
                           {o.cashier_name && (
                             <span className="pos-orders-panel-row-cashier">
                               Cashier: {o.cashier_name}
+                            </span>
+                          )}
+                          {orderTillLabel && (
+                            <span className="pos-orders-panel-row-till">
+                              Point of Sale: {orderTillLabel}
                             </span>
                           )}
                           {o.status === "refunded" && (

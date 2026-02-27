@@ -10585,6 +10585,12 @@ button.danger:not(.icon-btn):not(.device-icon-btn):disabled {
   margin-left: 4px;
   text-transform: none;
 }
+.pos-orders-panel-row-till {
+  font-size: 0.65rem;
+  color: var(--slate-500, #94a3b8);
+  margin-left: 4px;
+  text-transform: none;
+}
 .pos-orders-panel-row-amount {
   font-size: 0.85rem;
   font-weight: 700;
