@@ -2387,12 +2387,6 @@ export default function InvoicesPage({
                         <th className="text-end" style={{ width: 100 }}>
                           Price
                         </th>
-                        <th className="text-end" style={{ width: 100 }}>
-                          Disc %
-                        </th>
-                        <th className="text-end" style={{ width: 100 }}>
-                          Tax %
-                        </th>
                         <th className="text-end" style={{ width: 110 }}>
                           Amount
                         </th>
@@ -2481,31 +2475,6 @@ export default function InvoicesPage({
                                 onChange={(e) =>
                                   updateLine(index, {
                                     unit_price: Number(e.target.value),
-                                  })
-                                }
-                              />
-                            </td>
-                            <td>
-                              <input
-                                className="form-control form-control-sm text-end"
-                                type="number"
-                                value={line.discount || 0}
-                                onChange={(e) =>
-                                  updateLine(index, {
-                                    discount: Number(e.target.value),
-                                  })
-                                }
-                              />
-                            </td>
-                            <td>
-                              <input
-                                className="form-control form-control-sm text-end input-ghost"
-                                type="number"
-                                placeholder="Tax %"
-                                value={line.vat_rate ?? ""}
-                                onChange={(e) =>
-                                  updateLine(index, {
-                                    vat_rate: Number(e.target.value),
                                   })
                                 }
                               />
