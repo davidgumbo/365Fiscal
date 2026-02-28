@@ -354,6 +354,21 @@ export default function POSPage() {
   const [devices, setDevices] = useState<Device[]>([]);
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
   const [posTills, setPosTills] = useState<POSTillInfo[]>([]);
+  const [selectedTillId, setSelectedTillId] = useState<number | null>(null);
+  const sortedPosTills = useMemo(
+    () =>
+      [...posTills].sort((a, b) => {
+        if (a.sort_order !== b.sort_order) {
+          return a.sort_order - b.sort_order;
+        }
+        return a.name.localeCompare(b.name);
+      }),
+    [posTills],
+  );
+  const selectedTill = useMemo(
+    () => sortedPosTills.find((till) => till.id === selectedTillId) ?? null,
+    [selectedTillId, sortedPosTills],
+  );
 
   // Currency: prices are stored in the company's base currency.
   // The cashier can choose a sale currency for the current POS session.
@@ -372,8 +387,8 @@ export default function POSPage() {
       normalizedBaseCurrencyCode !== normalizedPosCurrencyCode,
   );
   const tillNameById = useMemo(
-    () => new Map(posTills.map((till) => [till.id, till.name])),
-    [posTills],
+    () => new Map(sortedPosTills.map((till) => [till.id, till.name])),
+    [sortedPosTills],
   );
   const [session, setSession] = useState<POSSession | null>(null);
   const [cart, setCart] = useState<CartLine[]>([]);
@@ -491,11 +506,42 @@ export default function POSPage() {
     };
   }, [companyId]);
 
+  useEffect(() => {
+    if (!companyId) {
+      if (selectedTillId !== null) {
+        setSelectedTillId(null);
+      }
+      return;
+    }
+    if (sortedPosTills.length === 0) {
+      if (selectedTillId !== null) {
+        setSelectedTillId(null);
+      }
+      return;
+    }
+    if (
+      selectedTillId &&
+      sortedPosTills.some((till) => till.id === selectedTillId)
+    ) {
+      return;
+    }
+    const defaultTill =
+      sortedPosTills.find((till) => till.is_active) || sortedPosTills[0];
+    setSelectedTillId(defaultTill.id);
+  }, [companyId, selectedTillId, sortedPosTills]);
+
   const defaultCurrency =
-    currencyList.find((c) => c.is_default) || currencyList[0] || null;
+    currencyList.find(
+      (c) => normalizeCurrency(c.code) === normalizedBaseCurrencyCode,
+    ) ||
+    currencyList.find((c) => c.is_default) ||
+    currencyList[0] ||
+    null;
 
   const effectiveBaseCode =
-    normalizeCurrency(defaultCurrency?.code) || baseCurrencyCode || "USD";
+    normalizeCurrency(defaultCurrency?.code) ||
+    normalizedBaseCurrencyCode ||
+    "USD";
   const effectiveBaseSymbol =
     (defaultCurrency?.symbol || baseCurrencySymbol || "$").trim() || "$";
 
@@ -973,6 +1019,7 @@ export default function POSPage() {
           mobile_amount: mobile,
           auto_fiscalize: autoFiscalize,
           cashier_name: currentCashier?.name || "",
+          till_id: selectedTillId,
           lines: cart.map((l) => ({
             product_id: l.product.id,
             description: l.product.name,
@@ -1542,6 +1589,33 @@ export default function POSPage() {
               <div className="pos-session-badge" style={{ marginLeft: 8 }}>
                 {posCurrencyCode}
               </div>
+              {sortedPosTills.length > 0 && (
+                <div
+                  className="pos-session-badge pos-till-selector"
+                  title={selectedTill?.name || "Select Point of Sale"}
+                >
+                  <span className="pos-session-dot" />
+                  <select
+                    value={selectedTillId ?? ""}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setSelectedTillId(val === "" ? null : Number(val));
+                    }}
+                    aria-label="Select Point of Sale"
+                  >
+                    {sortedPosTills.map((till) => (
+                      <option
+                        key={till.id}
+                        value={till.id}
+                        disabled={!till.is_active}
+                      >
+                        {till.name}
+                        {!till.is_active ? " (inactive)" : ""}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -2642,120 +2716,124 @@ export default function POSPage() {
                       <p>No orders yet</p>
                     </div>
                   )}
-                {orders.map((o) => {
-                  const orderTillLabel =
-                    o.till_id &&
-                    (tillNameById.get(o.till_id) ||
-                      `POS #${o.till_id}`);
-                  return (
-                    <div
-                      key={o.id}
-                      className={`pos-orders-panel-row ${o.status === "refunded" ? "refunded" : ""} ${o.total_amount < 0 ? "credit-note" : ""}`}
-                      onClick={() => viewOrderDetail(o)}
-                    >
-                      <div className="pos-orders-panel-row-main">
-                        <div className="pos-orders-panel-row-ref">
-                          {o.total_amount < 0 && (
-                            <span className="pos-orders-cn-tag">CN</span>
-                          )}
-                          {o.reference}
-                        </div>
-                        <div className="pos-orders-panel-row-meta">
-                          <span>
-                            {ordersFilter === "all"
-                              ? new Date(o.order_date).toLocaleDateString(
-                                  undefined,
-                                  { month: "short", day: "numeric" },
-                                ) +
-                                " " +
-                                new Date(o.order_date).toLocaleTimeString([], {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })
-                              : new Date(o.order_date).toLocaleTimeString([], {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
-                          </span>
-                          <span className="pos-orders-panel-row-method">
-                            {o.payment_method}
-                          </span>
-                          {o.cashier_name && (
-                            <span className="pos-orders-panel-row-cashier">
-                              Cashier: {o.cashier_name}
-                            </span>
-                          )}
-                          {orderTillLabel && (
-                            <span className="pos-orders-panel-row-till">
-                              Point of Sale: {orderTillLabel}
-                            </span>
-                          )}
-                          {o.status === "refunded" && (
-                            <span className="pos-orders-refund-tag">
-                              Refunded
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="pos-orders-panel-row-amount">
-                        {money(o.total_amount)}
-                      </div>
+                  {orders.map((o) => {
+                    const orderTillLabel =
+                      o.till_id &&
+                      (tillNameById.get(o.till_id) || `POS #${o.till_id}`);
+                    return (
                       <div
-                        className="pos-orders-panel-row-actions"
-                        onClick={(e) => e.stopPropagation()}
+                        key={o.id}
+                        className={`pos-orders-panel-row ${
+                          o.status === "refunded" ? "refunded" : ""
+                        } ${o.total_amount < 0 ? "credit-note" : ""}`}
+                        onClick={() => viewOrderDetail(o)}
                       >
-                        {o.zimra_verification_code ? (
-                          <span
-                            className="pos-badge pos-badge-success pos-badge-sm"
-                            title={o.zimra_verification_code}
-                          >
-                            ✓
-                          </span>
-                        ) : o.fiscal_errors ? (
-                          <button
-                            className="pos-btn pos-btn-xs pos-btn-outline"
-                            onClick={() => fiscalizeOrder(o.id)}
-                            title={o.fiscal_errors}
-                          >
-                            Retry
-                          </button>
-                        ) : o.status !== "refunded" && o.total_amount > 0 ? (
-                          <button
-                            className="pos-btn pos-btn-xs pos-btn-outline"
-                            onClick={() => fiscalizeOrder(o.id)}
-                          >
-                            Fiscal
-                          </button>
-                        ) : null}
-                        <button
-                          className="pos-btn pos-btn-icon pos-btn-xs"
-                          onClick={() => handlePrintOrder(o)}
-                          title="Print"
+                        <div className="pos-orders-panel-row-main">
+                          <div className="pos-orders-panel-row-ref">
+                            {o.total_amount < 0 && (
+                              <span className="pos-orders-cn-tag">CN</span>
+                            )}
+                            {o.reference}
+                          </div>
+                          <div className="pos-orders-panel-row-meta">
+                            <span>
+                              {ordersFilter === "all"
+                                ? new Date(o.order_date).toLocaleDateString(
+                                    undefined,
+                                    { month: "short", day: "numeric" },
+                                  ) +
+                                  " " +
+                                  new Date(o.order_date).toLocaleTimeString([], {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })
+                                : new Date(o.order_date).toLocaleTimeString([], {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })}
+                            </span>
+                            <span className="pos-orders-panel-row-method">
+                              {o.payment_method}
+                            </span>
+                            {o.cashier_name && (
+                              <span className="pos-orders-panel-row-cashier">
+                                Cashier: {o.cashier_name}
+                              </span>
+                            )}
+                            {orderTillLabel && (
+                              <span className="pos-orders-panel-row-till">
+                                Point of Sale: {orderTillLabel}
+                              </span>
+                            )}
+                            {o.status === "refunded" && (
+                              <span className="pos-orders-refund-tag">
+                                Refunded
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="pos-orders-panel-row-amount">
+                          {money(o.total_amount)}
+                        </div>
+                        <div
+                          className="pos-orders-panel-row-actions"
+                          onClick={(e) => e.stopPropagation()}
                         >
-                          <svg
-                            width="14"
-                            height="14"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
+                          {o.zimra_verification_code ? (
+                            <span
+                              className="pos-badge pos-badge-success pos-badge-sm"
+                              title={o.zimra_verification_code}
+                            >
+                              ✓
+                            </span>
+                          ) : o.fiscal_errors ? (
+                            <button
+                              className="pos-btn pos-btn-xs pos-btn-outline"
+                              onClick={() => fiscalizeOrder(o.id)}
+                              title={o.fiscal_errors}
+                            >
+                              Retry
+                            </button>
+                          ) : o.status !== "refunded" &&
+                            o.total_amount > 0 ? (
+                            <button
+                              className="pos-btn pos-btn-xs pos-btn-outline"
+                              onClick={() => fiscalizeOrder(o.id)}
+                            >
+                              Fiscal
+                            </button>
+                          ) : null}
+                          <button
+                            className="pos-btn pos-btn-icon pos-btn-xs"
+                            onClick={() => handlePrintOrder(o)}
+                            title="Print"
                           >
-                            <polyline points="6 9 6 2 18 2 18 9" />
-                            <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
-                            <rect x="6" y="14" width="12" height="8" />
-                          </svg>
-                        </button>
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                            >
+                              <polyline points="6 9 6 2 18 2 18 9" />
+                              <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
+                              <rect x="6" y="14" width="12" height="8" />
+                            </svg>
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
                 </div>
                 {orders.length > 0 && (
                   <div className="pos-orders-panel-footer">
                     <div className="pos-orders-panel-summary">
                       <span>Total: {orders.length} orders</span>
                       <span className="pos-orders-panel-total">
-                        {money(orders.reduce((s, o) => s + o.total_amount, 0))}
+                        {money(
+                          orders.reduce((s, o) => s + o.total_amount, 0),
+                        )}
                       </span>
                     </div>
                   </div>

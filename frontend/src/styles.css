@@ -8937,6 +8937,32 @@ button.danger:not(.icon-btn):not(.device-icon-btn):disabled {
   display: inline-block;
   animation: posPulse 2s ease-in-out infinite;
 }
+.pos-till-selector {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+  letter-spacing: 0.4px;
+}
+.pos-till-selector select {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-transform: none;
+}
+.pos-till-selector select:focus {
+  outline: none;
+}
+.pos-till-selector option {
+  background: #1e1b4b;
+  color: inherit;
+}
 @keyframes posPulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
