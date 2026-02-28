@@ -1,7 +1,7 @@
 """pos_tills_and_cashier_name
 
 Revision ID: y1z2a3b4c5d6
-Revises: x1y2z3
+Revises: x1y2z3_expense_cats
 Create Date: 2026-02-26 00:00:00.000000
 
 """
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'y1z2a3b4c5d6'
-down_revision = 'x1y2z3'
+down_revision = 'x1y2z3_expense_cats'
 branch_labels = None
 depends_on = None
 
