@@ -1284,7 +1284,6 @@ export default function InvoicesPage({
                   <th>Description</th>
                   <th style="width:70px; text-align:right">Qty</th>
                   <th style="width:90px; text-align:right">Price</th>
-                  <th style="width:70px; text-align:right">VAT</th>
                   <th style="width:110px; text-align:right">Total (inc VAT)</th>
                 </tr>
               </thead>
@@ -1307,7 +1306,6 @@ export default function InvoicesPage({
                         <td>${line.description || ""}</td>
                         <td style="text-align:right;">${(line.quantity || 0).toFixed(2)}</td>
                         <td style="text-align:right;">${(line.unit_price || 0).toFixed(2)}</td>
-                        <td style="text-align:right;">${(line.vat_rate || 0).toFixed(2)}</td>
                         <td style="text-align:right;">${formatCurrency(total, currency)}</td>
                       </tr>`;
                   })
@@ -2826,8 +2824,6 @@ export default function InvoicesPage({
                         <th className="text-end">Qty</th>
                         <th>UoM</th>
                         <th className="text-end">Price</th>
-                        <th className="text-end">Disc %</th>
-                        <th className="text-end">Tax %</th>
                         <th className="text-end">Amount</th>
                         {canEdit && <th></th>}
                       </tr>
@@ -2942,43 +2938,6 @@ export default function InvoicesPage({
                                 )
                               )}
                             </td>
-                            <td className="text-end">
-                              {canEdit ? (
-                                <input
-                                  className="form-control form-control-sm text-end"
-                                  type="number"
-                                  value={line.discount || 0}
-                                  onChange={(e) =>
-                                    updateLine(index, {
-                                      discount: Number(e.target.value),
-                                    })
-                                  }
-                                />
-                              ) : line.discount ? (
-                                `${line.discount}%`
-                              ) : (
-                                "—"
-                              )}
-                            </td>
-                            <td className="text-end">
-                              {canEdit ? (
-                                <input
-                                  className="form-control form-control-sm text-end input-ghost"
-                                  type="number"
-                                  placeholder="Tax %"
-                                  value={line.vat_rate ?? ""}
-                                  onChange={(e) =>
-                                    updateLine(index, {
-                                      vat_rate: Number(e.target.value),
-                                    })
-                                  }
-                                />
-                              ) : line.vat_rate ? (
-                                `${line.vat_rate}%`
-                              ) : (
-                                "—"
-                              )}
-                            </td>
                             <td className="text-end fw-semibold">
                               {formatCurrency(lineTotal, invoiceCurrency)}
                             </td>
@@ -2999,7 +2958,7 @@ export default function InvoicesPage({
                       {!displayLines.length && (
                         <tr>
                           <td
-                            colSpan={canEdit ? 9 : 8}
+                            colSpan={canEdit ? 7 : 6}
                             className="text-center py-4 text-muted"
                           >
                             No invoice lines
@@ -3009,7 +2968,7 @@ export default function InvoicesPage({
                     </tbody>
                     <tfoot className="table-light">
                       <tr>
-                        <td colSpan={7} className="text-end fw-semibold">
+                        <td colSpan={5} className="text-end fw-semibold">
                           Untaxed Amount:
                         </td>
                         <td className="text-end fw-semibold">
@@ -3021,7 +2980,7 @@ export default function InvoicesPage({
                         {canEdit && <td></td>}
                       </tr>
                       <tr>
-                        <td colSpan={7} className="text-end fw-semibold">
+                        <td colSpan={5} className="text-end fw-semibold">
                           {invoiceTaxLabel}
                         </td>
                         <td className="text-end fw-semibold">
@@ -3033,7 +2992,7 @@ export default function InvoicesPage({
                         {canEdit && <td></td>}
                       </tr>
                       <tr>
-                        <td colSpan={7} className="text-end fw-bold fs-5">
+                        <td colSpan={5} className="text-end fw-bold fs-5">
                           Total:
                         </td>
                         <td className="text-end fw-bold fs-5">
