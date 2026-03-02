@@ -1324,34 +1324,9 @@ thead.table-light th {
   gap: 12px;
 }
 
-.invoice-editor-card {
-  height: 82vh;
-  overflow: hidden;
-}
-
-.invoice-editor-body {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
-.invoice-lines-section {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
 .invoice-lines-table-wrap {
-  flex: 1 1 auto;
-  min-height: 0;
+  max-height: 460px;
   overflow-y: auto;
-}
-
-.invoice-lines-table {
-  border-collapse: separate;
-  border-spacing: 0;
 }
 
 .invoice-lines-table thead th {

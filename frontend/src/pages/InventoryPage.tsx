@@ -57,6 +57,7 @@ type ProductWithStock = Product & {
   quantity_available: number;
   quantity_reserved: number;
   stock_value: number;
+  location?: string;
 };
 
 type Warehouse = {
@@ -1041,6 +1042,69 @@ export default function InventoryPage() {
     );
   });
 
+  const productLocationById = useMemo(() => {
+    const locationById = new Map(locations.map((l) => [l.id, l]));
+    const warehouseById = new Map(warehouses.map((w) => [w.id, w]));
+    const grouped = new Map<
+      number,
+      Array<{ warehouse_id: number | null; location_id: number | null; qty: number }>
+    >();
+
+    for (const quant of stockQuants) {
+      const qty = Number.isFinite(quant.available_quantity)
+        ? quant.available_quantity
+        : quant.quantity;
+      if (!Number.isFinite(qty) || qty <= 0) continue;
+
+      const existing = grouped.get(quant.product_id) ?? [];
+      const same = existing.find(
+        (entry) =>
+          entry.location_id === quant.location_id &&
+          entry.warehouse_id === quant.warehouse_id,
+      );
+      if (same) {
+        same.qty += qty;
+      } else {
+        existing.push({
+          warehouse_id: quant.warehouse_id,
+          location_id: quant.location_id,
+          qty,
+        });
+      }
+      grouped.set(quant.product_id, existing);
+    }
+
+    const labels = new Map<number, string>();
+    for (const product of products) {
+      const buckets = grouped.get(product.id) ?? [];
+      if (!buckets.length) {
+        labels.set(product.id, product.location || "-");
+        continue;
+      }
+
+      buckets.sort((a, b) => b.qty - a.qty);
+      const primary = buckets[0];
+      const location = primary.location_id
+        ? locationById.get(primary.location_id)
+        : null;
+      const warehouse = primary.warehouse_id
+        ? warehouseById.get(primary.warehouse_id)
+        : location?.warehouse_id
+          ? warehouseById.get(location.warehouse_id)
+          : null;
+
+      const base = [warehouse?.name, location?.name].filter(Boolean).join(" / ");
+      const primaryLabel = base || location?.name || warehouse?.name || product.location || "-";
+      const extraCount = buckets.length - 1;
+      labels.set(
+        product.id,
+        extraCount > 0 ? `${primaryLabel} (+${extraCount} more)` : primaryLabel,
+      );
+    }
+
+    return labels;
+  }, [locations, warehouses, stockQuants, products]);
+
   const filteredMoves = stockMoves.filter((m) => {
     if (filterState !== "all" && m.state !== filterState) return false;
     if (!searchQuery) return true;
@@ -1415,7 +1479,6 @@ export default function InventoryPage() {
                 >
                   <div className="o-control-panel-left">
                     <div className="o-searchbox">
-                      <span className="o-searchbox-icon">Search</span>
                       <input
                         type="text"
                         placeholder="Search..."
@@ -2056,6 +2119,7 @@ export default function InventoryPage() {
                             <th style={{ width: 40 }}></th>
                             <th>Product</th>
                             <th>Reference</th>
+                            <th>Location</th>
                             <th>Category</th>
                             <th>Type</th>
                             <th>On Hand</th>
@@ -2106,6 +2170,7 @@ export default function InventoryPage() {
                                   )}
                                 </td>
                                 <td>{p.reference || "-"}</td>
+                                <td>{productLocationById.get(p.id) || "-"}</td>
                                 <td>{category?.name || "-"}</td>
                                 <td>
                                   <span

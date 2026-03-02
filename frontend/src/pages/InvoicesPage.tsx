@@ -2223,9 +2223,10 @@ export default function InvoicesPage({
           {/* ── New Invoice Form ── */}
           {newMode && (
             <div
-              className="card shadow-sm invoice-editor-card"
+              className="card shadow-sm"
+              style={{ maxHeight: "82vh", overflowY: "auto" }}
             >
-              <div className="card-body invoice-form invoice-editor-body">
+              <div className="card-body invoice-form">
                 <div className="row g-3">
                   <div className="col-md-6">
                     <label className="form-label ">
@@ -2429,7 +2430,6 @@ export default function InvoicesPage({
                   </div>
                 </div>
 
-                <div className="invoice-lines-section">
                 <hr className="my-4" />
                 <div className="d-flex flex-wrap justify-content-between align-items-center mb-2">
                   <h6 className="fw-semibold mb-0">Invoice Lines</h6>
@@ -2661,7 +2661,6 @@ export default function InvoicesPage({
                     </tfoot>
                   </table>
                 </div>
-                </div>
               </div>
             </div>
           )}
@@ -2669,9 +2668,10 @@ export default function InvoicesPage({
           {/* ── Existing Invoice Detail ── */}
           {selectedInvoice && !newMode && (
             <div
-              className="card shadow-sm invoice-editor-card"
+              className="card shadow-sm"
+              style={{ maxHeight: "82vh", overflowY: "auto" }}
             >
-              <div className="card-body invoice-form invoice-editor-body">
+              <div className="card-body invoice-form">
                 {companySettings?.logo_data && (
                   <div className="mb-3">
                     <img
@@ -2951,7 +2951,6 @@ export default function InvoicesPage({
                   </div>
                 </div>
 
-                <div className="invoice-lines-section">
                 {/* Lines table */}
                 <div className="d-flex justify-content-between align-items-center mb-2">
                   <div className="fw-semibold">Invoice Lines</div>
@@ -3204,7 +3203,6 @@ export default function InvoicesPage({
                       </tr>
                     </tfoot>
                   </table>
-                </div>
                 </div>
               </div>
             </div>
