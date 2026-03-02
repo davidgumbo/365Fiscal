@@ -1047,7 +1047,11 @@ export default function InventoryPage() {
     const warehouseById = new Map(warehouses.map((w) => [w.id, w]));
     const grouped = new Map<
       number,
-      Array<{ warehouse_id: number | null; location_id: number | null; qty: number }>
+      Array<{
+        warehouse_id: number | null;
+        location_id: number | null;
+        qty: number;
+      }>
     >();
 
     for (const quant of stockQuants) {
@@ -1093,8 +1097,11 @@ export default function InventoryPage() {
           ? warehouseById.get(location.warehouse_id)
           : null;
 
-      const base = [warehouse?.name, location?.name].filter(Boolean).join(" / ");
-      const primaryLabel = base || location?.name || warehouse?.name || product.location || "-";
+      const base = [warehouse?.name, location?.name]
+        .filter(Boolean)
+        .join(" / ");
+      const primaryLabel =
+        base || location?.name || warehouse?.name || product.location || "-";
       const extraCount = buckets.length - 1;
       labels.set(
         product.id,
@@ -2223,7 +2230,7 @@ export default function InventoryPage() {
                         <tfoot>
                           <tr>
                             <td
-                              colSpan={7}
+                              colSpan={8}
                               style={{
                                 textAlign: "left",
                                 fontWeight: "bold",
