@@ -1159,9 +1159,35 @@ export default function SettingsPage() {
               {activeSection === "sequences" && (
                 <section id="sequences" className="settings-section">
                   <div className="settings-section-header">
-                    <h4>Invoice Sequencing</h4>
+                    <h4>Invoice Settings</h4>
                     <div style={{ display: "flex", gap: 8 }}>
                       {renderGeneralSaveActions()}
+                    </div>
+                  </div>
+                  <p className="settings-section-desc">
+                    Control how invoice references are formatted and incremented. The preview shows what the next invoice number will look like.
+                  </p>
+                  <div
+                    style={{
+                      marginBottom: 16,
+                      padding: 16,
+                      borderRadius: 12,
+                      border: "1px solid var(--slate-200)",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: 12, color: "var(--muted)" }}>
+                        Next invoice reference
+                      </div>
+                      <div style={{ fontSize: 28, fontWeight: 700 }}>
+                        {invoiceSequencePreview}
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 11, textAlign: "right", color: "var(--slate-500)" }}>
+                      Sequence Size controls the padding of the numeric portion. Step and Next Number determine how the counter advances.
                     </div>
                   </div>
                   <div className="settings-company">
@@ -1178,7 +1204,9 @@ export default function SettingsPage() {
                     <div className="settings-company-logo" style={{ minWidth: 260 }}>
                       <div style={{ padding: 12 }}>
                         <div style={{ fontWeight: 600, marginBottom: 8 }}>Customer Invoice Numbering</div>
-                        <div style={{ color: "#666", marginBottom: 8 }}>Implementation: Standard</div>
+                        <div style={{ color: "#666", marginBottom: 8 }}>
+                          Implementation: Standard sequence (prefix + step-based counter)
+                        </div>
                         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                           <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
                             Active
@@ -1253,6 +1281,18 @@ export default function SettingsPage() {
                                 }
                               />
                             </label>
+                          </div>
+                          <div
+                            style={{
+                              marginTop: 12,
+                              fontSize: 12,
+                              color: "var(--muted)",
+                              lineHeight: 1.4,
+                            }}
+                          >
+                            <div>Sequence Size determines how many digits appear after the prefix.</div>
+                            <div>Step controls how much the counter increases each time an invoice is created.</div>
+                            <div>Next Number is the raw numeric value that will be used for the next invoice.</div>
                           </div>
                         </div>
                       </div>
@@ -1473,6 +1513,17 @@ export default function SettingsPage() {
     () => companies.find((c) => c.id === companyId) || null,
     [companies, companyId],
   );
+  const invoiceSequencePreview = useMemo(() => {
+    const prefix = (settingsForm.invoice_prefix || "INV").trim() || "INV";
+    const next = Math.max(1, settingsForm.sequence_next ?? 1);
+    const size = Math.max(1, settingsForm.sequence_size ?? 4);
+    const padded = String(next).padStart(size, "0");
+    return `${prefix}-${padded}`;
+  }, [
+    settingsForm.invoice_prefix,
+    settingsForm.sequence_next,
+    settingsForm.sequence_size,
+  ]);
 
   if (companiesLoading && companyId === null) {
     return <div className="loading-indicator">Loading companies...</div>;
@@ -1682,7 +1733,7 @@ export default function SettingsPage() {
               setActiveSection("sequences");
             }}
           >
-            Sequences
+            Invoice Settings
           </button>
           <button
             className={`settings-sidebar-item ${activeSection === "zimra-tax" ? "active" : ""}`}
@@ -1960,17 +2011,7 @@ export default function SettingsPage() {
                             placeholder="Footer text for invoices/quotations"
                           />
                         </label>
-                        <label className="input">
-                          Invoice Prefix
-                          <input
-                            type="text"
-                            value={settingsForm.invoice_prefix}
-                            onChange={(e) =>
-                              setSettingsForm({ ...settingsForm, invoice_prefix: e.target.value })
-                            }
-                            placeholder="e.g., INV"
-                          />
-                        </label>
+                        {/* Invoice Prefix moved to Invoice Sequencing section */}
                         <label className="input">
                           Invoice Notes
                           <textarea
@@ -2022,6 +2063,112 @@ export default function SettingsPage() {
                       </div>
                     </div>
                     <div className="settings-doc-preview">{previewCard()}</div>
+                  </div>
+                </section>
+              )}
+
+              {/* Invoice Sequencing */}
+              {activeSection === "sequences" && (
+                <section id="sequences" className="settings-section">
+                  <div className="settings-section-header">
+                    <h4>Invoice Sequencing</h4>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      {renderGeneralSaveActions()}
+                    </div>
+                  </div>
+                  <div className="settings-company">
+                    <div className="settings-company-info">
+                      <div className="settings-company-name">
+                        {selectedCompany?.name ?? "—"}
+                      </div>
+                      <div className="settings-company-line">
+                        Company: {selectedCompany?.name || "—"}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="settings-company">
+                    <div className="settings-company-logo" style={{ minWidth: 260 }}>
+                      <div style={{ padding: 12 }}>
+                        <div style={{ fontWeight: 600, marginBottom: 8 }}>Customer Invoice Numbering</div>
+                        <div style={{ color: "#666", marginBottom: 8 }}>Implementation: Standard</div>
+                        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                          <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                            Active
+                            <input
+                              type="checkbox"
+                              checked={true}
+                              readOnly
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div className="settings-doc-col">
+                        <div className="settings-doc-group-title">Sequence</div>
+                        <div className="settings-doc-fields">
+                          <label className="input">
+                            Prefix
+                            <input
+                              type="text"
+                              value={settingsForm.invoice_prefix}
+                              onChange={(e) =>
+                                setSettingsForm({ ...settingsForm, invoice_prefix: e.target.value })
+                              }
+                              placeholder="e.g., INV"
+                            />
+                          </label>
+                          <label className="input">
+                            Suffix
+                            <input
+                              type="text"
+                              value={settingsForm.quotation_prefix}
+                              onChange={(e) =>
+                                setSettingsForm({ ...settingsForm, quotation_prefix: e.target.value })
+                              }
+                              placeholder="e.g., /%{year}s/"
+                            />
+                          </label>
+                          <div style={{ display: "flex", gap: 12 }}>
+                            <label className="input" style={{ flex: 1 }}>
+                              Sequence Size
+                              <input
+                                type="number"
+                                min={1}
+                                value={settingsForm.sequence_size}
+                                onChange={(e) =>
+                                  setSettingsForm({ ...settingsForm, sequence_size: Number(e.target.value) })
+                                }
+                              />
+                            </label>
+                            <label className="input" style={{ flex: 1 }}>
+                              Step
+                              <input
+                                type="number"
+                                min={1}
+                                value={settingsForm.sequence_step}
+                                onChange={(e) =>
+                                  setSettingsForm({ ...settingsForm, sequence_step: Number(e.target.value) })
+                                }
+                              />
+                            </label>
+                          </div>
+                          <div style={{ display: "flex", gap: 12 }}>
+                            <label className="input" style={{ flex: 1 }}>
+                              Next Number
+                              <input
+                                type="number"
+                                min={1}
+                                value={settingsForm.sequence_next}
+                                onChange={(e) =>
+                                  setSettingsForm({ ...settingsForm, sequence_next: Number(e.target.value) })
+                                }
+                              />
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </section>
               )}
