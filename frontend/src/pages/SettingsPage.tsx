@@ -2076,97 +2076,79 @@ export default function SettingsPage() {
                       {renderGeneralSaveActions()}
                     </div>
                   </div>
-                  <div className="settings-company">
-                    <div className="settings-company-info">
-                      <div className="settings-company-name">
-                        {selectedCompany?.name ?? "—"}
-                      </div>
-                      <div className="settings-company-line">
-                        Company: {selectedCompany?.name || "—"}
+                  <p className="settings-section-desc">Configure per-company invoice numbering and sequence options.</p>
+
+                  <div className="settings-doc-layout">
+                    <div className="settings-doc-col">
+                      <div className="settings-doc-group-title">Customer Invoice Numbering</div>
+                      <div className="settings-doc-fields">
+                        <div style={{ fontWeight: 600 }}>{selectedCompany?.name ?? "—"}</div>
+                        <div style={{ color: "#666", marginBottom: 8 }}>Company: {selectedCompany?.name || "—"}</div>
+                        <label className="input">
+                          Implementation
+                          <input value="Standard" readOnly />
+                        </label>
+                        <label className="input">
+                          Active
+                          <input type="checkbox" checked={true} readOnly />
+                        </label>
                       </div>
                     </div>
-                  </div>
-                  <div className="settings-company">
-                    <div className="settings-company-logo" style={{ minWidth: 260 }}>
-                      <div style={{ padding: 12 }}>
-                        <div style={{ fontWeight: 600, marginBottom: 8 }}>Customer Invoice Numbering</div>
-                        <div style={{ color: "#666", marginBottom: 8 }}>Implementation: Standard</div>
-                        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                          <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                            Active
+
+                    <div className="settings-doc-col">
+                      <div className="settings-doc-group-title">Sequence</div>
+                      <div className="settings-doc-fields">
+                        <label className="input">
+                          Prefix
+                          <input
+                            type="text"
+                            value={settingsForm.invoice_prefix}
+                            onChange={(e) => setSettingsForm({ ...settingsForm, invoice_prefix: e.target.value })}
+                            placeholder="e.g., INV"
+                          />
+                        </label>
+
+                        <label className="input">
+                          Suffix
+                          <input
+                            type="text"
+                            value={settingsForm.quotation_prefix}
+                            onChange={(e) => setSettingsForm({ ...settingsForm, quotation_prefix: e.target.value })}
+                            placeholder="e.g., /%{year}s/"
+                          />
+                        </label>
+
+                        <div style={{ display: "flex", gap: 12 }}>
+                          <label className="input" style={{ flex: 1 }}>
+                            Sequence Size
                             <input
-                              type="checkbox"
-                              checked={true}
-                              readOnly
+                              type="number"
+                              min={1}
+                              value={settingsForm.sequence_size}
+                              onChange={(e) => setSettingsForm({ ...settingsForm, sequence_size: Number(e.target.value) })}
+                            />
+                          </label>
+
+                          <label className="input" style={{ flex: 1 }}>
+                            Step
+                            <input
+                              type="number"
+                              min={1}
+                              value={settingsForm.sequence_step}
+                              onChange={(e) => setSettingsForm({ ...settingsForm, sequence_step: Number(e.target.value) })}
                             />
                           </label>
                         </div>
-                      </div>
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div className="settings-doc-col">
-                        <div className="settings-doc-group-title">Sequence</div>
-                        <div className="settings-doc-fields">
-                          <label className="input">
-                            Prefix
-                            <input
-                              type="text"
-                              value={settingsForm.invoice_prefix}
-                              onChange={(e) =>
-                                setSettingsForm({ ...settingsForm, invoice_prefix: e.target.value })
-                              }
-                              placeholder="e.g., INV"
-                            />
-                          </label>
-                          <label className="input">
-                            Suffix
-                            <input
-                              type="text"
-                              value={settingsForm.quotation_prefix}
-                              onChange={(e) =>
-                                setSettingsForm({ ...settingsForm, quotation_prefix: e.target.value })
-                              }
-                              placeholder="e.g., /%{year}s/"
-                            />
-                          </label>
-                          <div style={{ display: "flex", gap: 12 }}>
-                            <label className="input" style={{ flex: 1 }}>
-                              Sequence Size
-                              <input
-                                type="number"
-                                min={1}
-                                value={settingsForm.sequence_size}
-                                onChange={(e) =>
-                                  setSettingsForm({ ...settingsForm, sequence_size: Number(e.target.value) })
-                                }
-                              />
-                            </label>
-                            <label className="input" style={{ flex: 1 }}>
-                              Step
-                              <input
-                                type="number"
-                                min={1}
-                                value={settingsForm.sequence_step}
-                                onChange={(e) =>
-                                  setSettingsForm({ ...settingsForm, sequence_step: Number(e.target.value) })
-                                }
-                              />
-                            </label>
-                          </div>
-                          <div style={{ display: "flex", gap: 12 }}>
-                            <label className="input" style={{ flex: 1 }}>
-                              Next Number
-                              <input
-                                type="number"
-                                min={1}
-                                value={settingsForm.sequence_next}
-                                onChange={(e) =>
-                                  setSettingsForm({ ...settingsForm, sequence_next: Number(e.target.value) })
-                                }
-                              />
-                            </label>
-                          </div>
-                        </div>
+
+                        <label className="input">
+                          Next Number
+                          <input
+                            type="number"
+                            min={1}
+                            value={settingsForm.sequence_next}
+                            onChange={(e) => setSettingsForm({ ...settingsForm, sequence_next: Number(e.target.value) })}
+                          />
+                        </label>
                       </div>
                     </div>
                   </div>
