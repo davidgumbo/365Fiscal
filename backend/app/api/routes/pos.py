@@ -59,9 +59,18 @@ def _next_order_ref(db: Session) -> str:
     return f"{prefix}{count + 1:04d}"
 
 
-def _next_invoice_ref(db: Session) -> str:
+def _next_invoice_ref(db: Session, company_id: int | None = None) -> str:
+    """Generate next POS invoice reference. If company has an `invoice_prefix` setting
+    use it (prefixed by `POS-`) so POS invoices remain distinct.
+    """
+    base_prefix = "INV"
+    if company_id:
+        settings = db.query(CompanySettings).filter(CompanySettings.company_id == company_id).first()
+        if settings and settings.invoice_prefix:
+            base_prefix = settings.invoice_prefix
+
     today = datetime.utcnow().strftime("%Y%m%d")
-    prefix = f"POS-INV-{today}-"
+    prefix = f"POS-{base_prefix}-{today}-"
     count = db.query(Invoice).filter(Invoice.reference.like(f"{prefix}%")).count()
     return f"{prefix}{count + 1:04d}"
 
@@ -376,7 +385,7 @@ def create_order(
     session.transaction_count = (session.transaction_count or 0) + 1
 
     # Create backing Invoice for fiscal trail
-    inv_ref = _next_invoice_ref(db)
+    inv_ref = _next_invoice_ref(db, company_id=payload.company_id)
     invoice = Invoice(
         company_id=payload.company_id,
         customer_id=payload.customer_id,

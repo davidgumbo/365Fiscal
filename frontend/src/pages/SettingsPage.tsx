@@ -1835,6 +1835,17 @@ export default function SettingsPage() {
                           />
                         </label>
                         <label className="input">
+                          Invoice Prefix
+                          <input
+                            type="text"
+                            value={settingsForm.invoice_prefix}
+                            onChange={(e) =>
+                              setSettingsForm({ ...settingsForm, invoice_prefix: e.target.value })
+                            }
+                            placeholder="e.g., INV"
+                          />
+                        </label>
+                        <label className="input">
                           Invoice Notes
                           <textarea
                             rows={2}

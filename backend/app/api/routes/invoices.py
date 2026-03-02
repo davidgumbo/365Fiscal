@@ -21,7 +21,17 @@ from app.services.fdms import submit_invoice
 router = APIRouter(prefix="/invoices", tags=["invoices"])
 
 
-def next_invoice_reference(db: Session, prefix: str = "INV") -> str:
+def next_invoice_reference(db: Session, prefix: str = "INV", company_id: int | None = None) -> str:
+    """Generate next invoice reference. If `company_id` provided and company settings
+    define an `invoice_prefix`, it will be used for regular invoices (prefix == 'INV').
+    Credit notes (prefix 'CN' or explicitly provided) keep their provided prefix.
+    """
+    # Prefer company-specific prefix when creating normal invoices
+    if company_id and prefix == "INV":
+        settings = db.query(CompanySettings).filter(CompanySettings.company_id == company_id).first()
+        if settings and settings.invoice_prefix:
+            prefix = settings.invoice_prefix
+
     today = datetime.utcnow().strftime("%Y%m%d")
     full_prefix = f"{prefix}-{today}-"
     count = db.query(Invoice).filter(Invoice.reference.like(f"{full_prefix}%")).count()
@@ -141,7 +151,7 @@ def create_invoice(
     
     invoice_type = payload.invoice_type or "invoice"
     prefix = "CN" if invoice_type == "credit_note" else "INV"
-    reference = payload.reference or next_invoice_reference(db, prefix=prefix)
+    reference = payload.reference or next_invoice_reference(db, prefix=prefix, company_id=payload.company_id)
     
     # Get customer from quotation if not provided
     customer_id = payload.customer_id
@@ -304,7 +314,7 @@ def create_credit_note(
     if invoice.status not in ["posted", "paid", "fiscalized"]:
         raise HTTPException(status_code=400, detail="Can only create credit notes for posted invoices")
 
-    reference = next_invoice_reference(db, prefix="CN")
+    reference = next_invoice_reference(db, prefix="CN", company_id=invoice.company_id)
     credit_note = Invoice(
         company_id=invoice.company_id,
         invoice_type="credit_note",
