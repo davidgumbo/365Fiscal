@@ -371,8 +371,28 @@ export default function InventoryPage() {
     }
   }, [productForm.product_type, productInfoTab]);
   const [productImageUrl, setProductImageUrl] = useState("");
+  const [pendingProductImageFile, setPendingProductImageFile] =
+    useState<File | null>(null);
+  const [pendingProductImagePreviewUrl, setPendingProductImagePreviewUrl] =
+    useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
+
+  const clearPendingProductImage = () => {
+    if (pendingProductImagePreviewUrl) {
+      URL.revokeObjectURL(pendingProductImagePreviewUrl);
+    }
+    setPendingProductImageFile(null);
+    setPendingProductImagePreviewUrl(null);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (pendingProductImagePreviewUrl) {
+        URL.revokeObjectURL(pendingProductImagePreviewUrl);
+      }
+    };
+  }, [pendingProductImagePreviewUrl]);
 
   // Warehouse form
   const [warehouseForm, setWarehouseForm] = useState({
@@ -505,6 +525,7 @@ export default function InventoryPage() {
     setSelectedProductId(null);
     setIsNew(true);
     setProductImageUrl("");
+    clearPendingProductImage();
     setProductForm({
       name: "",
       description: "",
@@ -535,6 +556,7 @@ export default function InventoryPage() {
   const openProduct = (product: Product) => {
     setSelectedProductId(product.id);
     setIsNew(false);
+    clearPendingProductImage();
     setProductImageUrl(product.image_url || "");
     setProductForm({
       name: product.name,
@@ -593,10 +615,29 @@ export default function InventoryPage() {
           body: JSON.stringify(payload),
         });
       } else {
-        await apiFetch("/products", {
+        const created = await apiFetch<Product>("/products", {
           method: "POST",
           body: JSON.stringify(payload),
         });
+        if (pendingProductImageFile) {
+          setUploadingImage(true);
+          try {
+            const fd = new FormData();
+            fd.append("file", pendingProductImageFile);
+            await apiFetch<Product>(`/products/${created.id}/image`, {
+              method: "POST",
+              body: fd,
+            });
+          } catch (err: any) {
+            alert(
+              err?.message ||
+                "Product was created, but image upload failed. You can upload it from the product form.",
+            );
+          } finally {
+            setUploadingImage(false);
+            clearPendingProductImage();
+          }
+        }
       }
       await loadAllData();
       setSubView("list");
@@ -609,8 +650,18 @@ export default function InventoryPage() {
   const handleProductImageUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
   ) => {
-    if (!selectedProductId || !e.target.files?.length) return;
+    if (!e.target.files?.length) return;
     const file = e.target.files[0];
+    if (!selectedProductId) {
+      if (pendingProductImagePreviewUrl) {
+        URL.revokeObjectURL(pendingProductImagePreviewUrl);
+      }
+      const previewUrl = URL.createObjectURL(file);
+      setPendingProductImageFile(file);
+      setPendingProductImagePreviewUrl(previewUrl);
+      setProductImageUrl(previewUrl);
+      return;
+    }
     setUploadingImage(true);
     try {
       const fd = new FormData();
@@ -632,6 +683,12 @@ export default function InventoryPage() {
   };
 
   const handleProductImageDelete = async () => {
+    if (!selectedProductId) {
+      clearPendingProductImage();
+      setProductImageUrl("");
+      if (imageInputRef.current) imageInputRef.current.value = "";
+      return;
+    }
     if (!selectedProductId) return;
     setUploadingImage(true);
     try {
@@ -2324,16 +2381,14 @@ export default function InventoryPage() {
                             background: productImageUrl
                               ? "transparent"
                               : "var(--gray-50, #f9fafb)",
-                            cursor: selectedProductId ? "pointer" : "default",
+                            cursor: "pointer",
                             position: "relative",
                           }}
-                          onClick={() =>
-                            selectedProductId && imageInputRef.current?.click()
-                          }
+                          onClick={() => imageInputRef.current?.click()}
                           title={
                             selectedProductId
                               ? "Click to upload image"
-                              : "Save product first to upload image"
+                              : "Choose image to upload when saved"
                           }
                         >
                           {productImageUrl ? (
@@ -2347,7 +2402,7 @@ export default function InventoryPage() {
                                   objectFit: "cover",
                                 }}
                               />
-                              {selectedProductId && (
+                              {(selectedProductId || isNew) && (
                                 <div
                                   style={{
                                     position: "absolute",
