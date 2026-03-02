@@ -1349,6 +1349,11 @@ thead.table-light th {
   overflow-y: auto;
 }
 
+.invoice-lines-table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
 .invoice-lines-table thead th {
   position: sticky;
   top: 0;
