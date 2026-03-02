@@ -1913,7 +1913,10 @@ export default function InvoicesPage({
                 </button>
               </div>
 
-              <div className="card shadow-sm card-bg-shadow">
+              <div
+                className="card shadow-sm card-bg-shadow"
+                style={{ overflow: "auto", maxHeight: "80vh" }}
+              >
                 <div className="card-body p-0">
                   <div className="table-responsive">
                     <table className="table table-hover align-middle mb-0">
