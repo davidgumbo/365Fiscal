@@ -2223,10 +2223,9 @@ export default function InvoicesPage({
           {/* ── New Invoice Form ── */}
           {newMode && (
             <div
-              className="card shadow-sm"
-              style={{ maxHeight: "82vh", overflowY: "auto" }}
+              className="card shadow-sm invoice-editor-card"
             >
-              <div className="card-body invoice-form">
+              <div className="card-body invoice-form invoice-editor-body">
                 <div className="row g-3">
                   <div className="col-md-6">
                     <label className="form-label ">
@@ -2429,68 +2428,70 @@ export default function InvoicesPage({
                     />
                   </div>
                 </div>
-
-                <hr className="my-4" />
-                <div className="d-flex flex-wrap justify-content-between align-items-center mb-2">
-                  <h6 className="fw-semibold mb-0">Invoice Lines</h6>
-                  <div className="d-flex gap-2">
-                    <button
-                      className="btn btn-sm btn-light border"
-                      onClick={addLine}
-                    >
-                      + Add Line
-                    </button>
-                    <button
-                      className="btn btn-sm btn-light border"
-                      onClick={() => setCreateProductOpen(true)}
-                    >
-                      + New Product
-                    </button>
+                <div className="invoice-lines-section">
+                  <hr className="my-4" />
+                  <div className="d-flex flex-wrap justify-content-between align-items-center mb-2">
+                    <h6 className="fw-semibold mb-0">Invoice Lines</h6>
+                    <div className="d-flex gap-2">
+                      <button
+                        className="btn btn-sm btn-light border"
+                        onClick={addLine}
+                      >
+                        + Add Line
+                      </button>
+                      <button
+                        className="btn btn-sm btn-light border"
+                        onClick={() => setCreateProductOpen(true)}
+                      >
+                        + New Product
+                      </button>
+                    </div>
                   </div>
-                </div>
-                <div className="d-flex justify-content-between align-items-center mb-2">
-                  <small className="text-muted">
-                    Showing {visibleLineStart}-{visibleLineEnd} of {activeLineCount}
-                  </small>
-                  <div className="d-flex align-items-center gap-2">
-                    <select
-                      className="form-select form-select-sm"
-                      style={{ width: 90 }}
-                      value={linesPerPage}
-                      onChange={(e) => {
-                        setLinesPerPage(Number(e.target.value));
-                        setLinesPage(1);
-                      }}
-                    >
-                      <option value={5}>5 / page</option>
-                      <option value={10}>10 / page</option>
-                      <option value={20}>20 / page</option>
-                    </select>
-                    <button
-                      className="btn btn-sm btn-light border"
-                      onClick={() => setLinesPage((prev) => Math.max(1, prev - 1))}
-                      disabled={linesPage <= 1}
-                    >
-                      Prev
-                    </button>
+                  <div className="d-flex justify-content-between align-items-center mb-2">
                     <small className="text-muted">
-                      Page {linesPage} / {activeLinesTotalPages}
+                      Showing {visibleLineStart}-{visibleLineEnd} of {activeLineCount}
                     </small>
-                    <button
-                      className="btn btn-sm btn-light border"
-                      onClick={() =>
-                        setLinesPage((prev) =>
-                          Math.min(activeLinesTotalPages, prev + 1),
-                        )
-                      }
-                      disabled={linesPage >= activeLinesTotalPages}
-                    >
-                      Next
-                    </button>
+                    <div className="d-flex align-items-center gap-2">
+                      <select
+                        className="form-select form-select-sm"
+                        style={{ width: 90 }}
+                        value={linesPerPage}
+                        onChange={(e) => {
+                          setLinesPerPage(Number(e.target.value));
+                          setLinesPage(1);
+                        }}
+                      >
+                        <option value={5}>5 / page</option>
+                        <option value={10}>10 / page</option>
+                        <option value={20}>20 / page</option>
+                      </select>
+                      <button
+                        className="btn btn-sm btn-light border"
+                        onClick={() =>
+                          setLinesPage((prev) => Math.max(1, prev - 1))
+                        }
+                        disabled={linesPage <= 1}
+                      >
+                        Prev
+                      </button>
+                      <small className="text-muted">
+                        Page {linesPage} / {activeLinesTotalPages}
+                      </small>
+                      <button
+                        className="btn btn-sm btn-light border"
+                        onClick={() =>
+                          setLinesPage((prev) =>
+                            Math.min(activeLinesTotalPages, prev + 1),
+                          )
+                        }
+                        disabled={linesPage >= activeLinesTotalPages}
+                      >
+                        Next
+                      </button>
+                    </div>
                   </div>
-                </div>
-                <div className="table-responsive invoice-lines-table-wrap">
-                  <table className="table table-bordered align-middle mb-0 invoice-lines-table">
+                  <div className="table-responsive invoice-lines-table-wrap">
+                    <table className="table table-bordered align-middle mb-0 invoice-lines-table">
                     <thead className="table-light">
                       <tr>
                         <th style={{ minWidth: 160 }}>Product</th>
@@ -2659,7 +2660,8 @@ export default function InvoicesPage({
                         {canEdit && <td></td>}
                       </tr>
                     </tfoot>
-                  </table>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>
@@ -2668,10 +2670,9 @@ export default function InvoicesPage({
           {/* ── Existing Invoice Detail ── */}
           {selectedInvoice && !newMode && (
             <div
-              className="card shadow-sm"
-              style={{ maxHeight: "82vh", overflowY: "auto" }}
+              className="card shadow-sm invoice-editor-card"
             >
-              <div className="card-body invoice-form">
+              <div className="card-body invoice-form invoice-editor-body">
                 {companySettings?.logo_data && (
                   <div className="mb-3">
                     <img
@@ -2951,69 +2952,72 @@ export default function InvoicesPage({
                   </div>
                 </div>
 
-                {/* Lines table */}
-                <div className="d-flex justify-content-between align-items-center mb-2">
-                  <div className="fw-semibold">Invoice Lines</div>
-                  {canEdit && (
-                    <div className="d-flex gap-2">
+                <div className="invoice-lines-section">
+                  {/* Lines table */}
+                  <div className="d-flex justify-content-between align-items-center mb-2">
+                    <div className="fw-semibold">Invoice Lines</div>
+                    {canEdit && (
+                      <div className="d-flex gap-2">
+                        <button
+                          className="btn btn-sm btn-light border"
+                          onClick={addLine}
+                        >
+                          + Add Line
+                        </button>
+                        <button
+                          className="btn btn-sm btn-light border"
+                          onClick={() => setCreateProductOpen(true)}
+                        >
+                          + New Product
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="d-flex justify-content-between align-items-center mb-2">
+                    <small className="text-muted">
+                      Showing {visibleLineStart}-{visibleLineEnd} of {activeLineCount}
+                    </small>
+                    <div className="d-flex align-items-center gap-2">
+                      <select
+                        className="form-select form-select-sm"
+                        style={{ width: 90 }}
+                        value={linesPerPage}
+                        onChange={(e) => {
+                          setLinesPerPage(Number(e.target.value));
+                          setLinesPage(1);
+                        }}
+                      >
+                        <option value={5}>5 / page</option>
+                        <option value={10}>10 / page</option>
+                        <option value={20}>20 / page</option>
+                      </select>
                       <button
                         className="btn btn-sm btn-light border"
-                        onClick={addLine}
+                        onClick={() =>
+                          setLinesPage((prev) => Math.max(1, prev - 1))
+                        }
+                        disabled={linesPage <= 1}
                       >
-                        + Add Line
+                        Prev
                       </button>
+                      <small className="text-muted">
+                        Page {linesPage} / {activeLinesTotalPages}
+                      </small>
                       <button
                         className="btn btn-sm btn-light border"
-                        onClick={() => setCreateProductOpen(true)}
+                        onClick={() =>
+                          setLinesPage((prev) =>
+                            Math.min(activeLinesTotalPages, prev + 1),
+                          )
+                        }
+                        disabled={linesPage >= activeLinesTotalPages}
                       >
-                        + New Product
+                        Next
                       </button>
                     </div>
-                  )}
-                </div>
-                <div className="d-flex justify-content-between align-items-center mb-2">
-                  <small className="text-muted">
-                    Showing {visibleLineStart}-{visibleLineEnd} of {activeLineCount}
-                  </small>
-                  <div className="d-flex align-items-center gap-2">
-                    <select
-                      className="form-select form-select-sm"
-                      style={{ width: 90 }}
-                      value={linesPerPage}
-                      onChange={(e) => {
-                        setLinesPerPage(Number(e.target.value));
-                        setLinesPage(1);
-                      }}
-                    >
-                      <option value={5}>5 / page</option>
-                      <option value={10}>10 / page</option>
-                      <option value={20}>20 / page</option>
-                    </select>
-                    <button
-                      className="btn btn-sm btn-light border"
-                      onClick={() => setLinesPage((prev) => Math.max(1, prev - 1))}
-                      disabled={linesPage <= 1}
-                    >
-                      Prev
-                    </button>
-                    <small className="text-muted">
-                      Page {linesPage} / {activeLinesTotalPages}
-                    </small>
-                    <button
-                      className="btn btn-sm btn-light border"
-                      onClick={() =>
-                        setLinesPage((prev) =>
-                          Math.min(activeLinesTotalPages, prev + 1),
-                        )
-                      }
-                      disabled={linesPage >= activeLinesTotalPages}
-                    >
-                      Next
-                    </button>
                   </div>
-                </div>
-                <div className="table-responsive invoice-lines-table-wrap">
-                  <table className="table table-bordered align-middle mb-0 invoice-lines-table">
+                  <div className="table-responsive invoice-lines-table-wrap">
+                    <table className="table table-bordered align-middle mb-0 invoice-lines-table">
                     <thead className="table-light">
                       <tr>
                         <th>Product</th>
@@ -3202,7 +3206,8 @@ export default function InvoicesPage({
                         {canEdit && <td></td>}
                       </tr>
                     </tfoot>
-                  </table>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>
