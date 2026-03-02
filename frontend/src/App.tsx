@@ -166,7 +166,7 @@ function AppContent() {
     () => getCustomFields(currentPath),
     [currentPath],
   );
-  const breadcrumb = getBreadcrumb(currentPath, navItems);
+  const appTitle = getAppTitle(currentPath, navItems);
 
   useEffect(() => {
     const fields = getCustomFields(currentPath).filter((f) => f.valuesEndpoint);
@@ -249,15 +249,7 @@ function AppContent() {
                     <BackIcon aria-hidden="true" focusable="false" />
                   </span>
                 </NavLink>
-                <div className="breadcrumb">
-                  {breadcrumb.section && (
-                    <span className="breadcrumb-section">
-                      {breadcrumb.section}
-                    </span>
-                  )}
-                  <span className="breadcrumb-sep">/</span>
-                  <span className="breadcrumb-page">{breadcrumb.page}</span>
-                </div>
+                <h1 className="topbar-title">{appTitle}</h1>
               </div>
               <div className="topbar-right">
                 <button
@@ -425,26 +417,19 @@ function getGroupOptions(path: string): { label: string; value: string }[] {
   return [];
 }
 
-function getBreadcrumb(
+function getAppTitle(
   path: string,
   navItems: { to: string; label: string }[],
 ) {
-  const item = navItems.find((n) => n.to === path);
-  if (!item) {
-    return { section: "Home", page: "Dashboard" };
-  }
-  if (item.to === "/") {
-    return { section: "Home", page: "Dashboard" };
-  }
-  const section =
-    item.to.includes("/invoices") || item.to.includes("/quotations")
-      ? "Accounting"
-      : item.to.includes("/purchases")
-        ? "Purchasing"
-        : item.to.includes("/products") || item.to.includes("/contacts")
-          ? "Sales"
-          : "Management";
-  return { section, page: item.label };
+  const exactMatch = navItems.find((item) => item.to === path);
+  if (exactMatch) return exactMatch.label;
+
+  const baseMatch = navItems
+    .filter((item) => item.to !== "/" && path.startsWith(`${item.to}/`))
+    .sort((a, b) => b.to.length - a.to.length)[0];
+  if (baseMatch) return baseMatch.label;
+
+  return "Dashboard";
 }
 
 function getCustomFields(path: string): CustomField[] {
