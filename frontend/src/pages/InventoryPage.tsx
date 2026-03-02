@@ -4,6 +4,7 @@ import { apiFetch } from "../api";
 import { useMe } from "../hooks/useMe";
 import { useCompanies, Company } from "../hooks/useCompanies";
 import { Trash2 } from "lucide-react";
+import { getRequiredFieldError } from "../utils/formValidation";
 
 // ============= TYPES =============
 type Category = {
@@ -563,7 +564,26 @@ export default function InventoryPage() {
   };
 
   const saveProduct = async () => {
-    if (!companyId || !productForm.name) return;
+    if (!companyId) {
+      alert("Please select a company first.");
+      return;
+    }
+    const requiredError = getRequiredFieldError([
+      { label: "Product name", value: productForm.name },
+      { label: "Unit of measure", value: productForm.uom },
+    ]);
+    if (requiredError) {
+      alert(requiredError);
+      return;
+    }
+    if (Number(productForm.sale_price) < 0) {
+      alert("Sale price cannot be negative.");
+      return;
+    }
+    if (Number(productForm.tax_rate) < 0) {
+      alert("Tax rate cannot be negative.");
+      return;
+    }
     setSaving(true);
     try {
       const payload = { ...productForm, company_id: companyId };
@@ -745,7 +765,14 @@ export default function InventoryPage() {
   };
 
   const saveLocation = async () => {
-    if (!locationForm.warehouse_id || !locationForm.name) return;
+    const requiredError = getRequiredFieldError([
+      { label: "Warehouse", value: locationForm.warehouse_id },
+      { label: "Location name", value: locationForm.name },
+    ]);
+    if (requiredError) {
+      alert(requiredError);
+      return;
+    }
     setSaving(true);
     try {
       if (selectedLocationId) {
@@ -821,7 +848,23 @@ export default function InventoryPage() {
   };
 
   const saveMove = async () => {
-    if (!companyId || !moveForm.product_id) return;
+    if (!companyId) {
+      alert("Please select a company first.");
+      return;
+    }
+    const requiredError = getRequiredFieldError([
+      { label: "Product", value: moveForm.product_id },
+      { label: "Warehouse", value: moveForm.warehouse_id },
+      { label: "Location", value: moveForm.location_id },
+    ]);
+    if (requiredError) {
+      alert(requiredError);
+      return;
+    }
+    if (Number(moveForm.quantity) <= 0) {
+      alert("Quantity must be greater than 0.");
+      return;
+    }
     setSaving(true);
     try {
       const payload = { ...moveForm, company_id: companyId };
@@ -869,7 +912,17 @@ export default function InventoryPage() {
   };
 
   const saveCategory = async () => {
-    if (!companyId || !categoryForm.name) return;
+    if (!companyId) {
+      alert("Please select a company first.");
+      return;
+    }
+    const requiredError = getRequiredFieldError([
+      { label: "Category name", value: categoryForm.name },
+    ]);
+    if (requiredError) {
+      alert(requiredError);
+      return;
+    }
     setSaving(true);
     try {
       if (selectedCategoryId) {

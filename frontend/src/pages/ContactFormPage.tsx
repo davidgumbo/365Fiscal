@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiFetch } from "../api";
 import { useCompanies, Company } from "../hooks/useCompanies";
+import { getRequiredFieldError } from "../utils/formValidation";
 
 type Contact = {
   id: number;
@@ -102,7 +103,17 @@ export default function ContactFormPage() {
   };
 
   const createContact = async () => {
-    if (!companyId) return;
+    if (!companyId) {
+      alert("Please select a company first.");
+      return;
+    }
+    const requiredError = getRequiredFieldError([
+      { label: "Name", value: form.name },
+    ]);
+    if (requiredError) {
+      alert(requiredError);
+      return;
+    }
     const created = await apiFetch<Contact>("/contacts", {
       method: "POST",
       body: JSON.stringify({
@@ -119,6 +130,17 @@ export default function ContactFormPage() {
 
   const updateContact = async () => {
     if (!selectedContactId) return;
+    if (!companyId) {
+      alert("Please select a company first.");
+      return;
+    }
+    const requiredError = getRequiredFieldError([
+      { label: "Name", value: form.name },
+    ]);
+    if (requiredError) {
+      alert(requiredError);
+      return;
+    }
     await apiFetch<Contact>(`/contacts/${selectedContactId}`, {
       method: "PUT",
       body: JSON.stringify({

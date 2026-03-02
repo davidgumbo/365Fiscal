@@ -4,6 +4,10 @@ import { useNavigate, useParams } from "react-router-dom";
 import { apiFetch } from "../api";
 import { useMe } from "../hooks/useMe";
 import { useCompanies, Company } from "../hooks/useCompanies";
+import {
+  getDocumentLinesError,
+  getRequiredFieldError,
+} from "../utils/formValidation";
 
 type Contact = {
   id: number;
@@ -508,7 +512,25 @@ export default function PurchasesPage({
   };
 
   const saveOrder = async () => {
-    if (!companyId) return;
+    if (!companyId) {
+      setError("Please select a company first.");
+      return;
+    }
+    const requiredError = getRequiredFieldError([
+      { label: "Supplier", value: form.supplier_id },
+      { label: "Order date", value: form.order_date },
+      { label: "Currency", value: form.currency },
+    ]);
+    if (requiredError) {
+      setError(requiredError);
+      return;
+    }
+    const linesError = getDocumentLinesError(lines);
+    if (linesError) {
+      setError(linesError);
+      return;
+    }
+    setError(null);
     setSaving(true);
     const payload = {
       supplier_id: form.supplier_id,

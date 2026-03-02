@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { apiFetch, apiRequest } from "../api";
 import { useMe } from "../hooks/useMe";
 import { useCompanies, Company } from "../hooks/useCompanies";
+import { getRequiredFieldError } from "../utils/formValidation";
 
 type Contact = {
   id: number;
@@ -296,6 +297,25 @@ export default function ExpensesPage() {
 
   const saveExpense = async () => {
     if (!companyId) return;
+    const requiredError = getRequiredFieldError([
+      { label: "Expense date", value: form.expense_date },
+      { label: "Category", value: form.category },
+      { label: "Description", value: form.description },
+      { label: "Currency", value: form.currency },
+      { label: "Status", value: form.status },
+    ]);
+    if (requiredError) {
+      setError(requiredError);
+      return;
+    }
+    if (Number(form.subtotal) <= 0) {
+      setError("Subtotal must be greater than 0.");
+      return;
+    }
+    if (Number(form.vat_rate) < 0) {
+      setError("VAT rate cannot be negative.");
+      return;
+    }
     setError(null);
     setSaving(true);
     try {
@@ -364,7 +384,14 @@ export default function ExpensesPage() {
   };
 
   const saveCategory = async () => {
-    if (!companyId || !categoryFormName.trim()) return;
+    if (!companyId) {
+      setError("Please select a company first.");
+      return;
+    }
+    if (!categoryFormName.trim()) {
+      setError("Category name is required.");
+      return;
+    }
     setSaving(true);
     setError(null);
     try {

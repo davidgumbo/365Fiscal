@@ -4,6 +4,10 @@ import { useNavigate, useParams } from "react-router-dom";
 import { apiFetch } from "../api";
 import { useMe } from "../hooks/useMe";
 import { useCompanies, Company } from "../hooks/useCompanies";
+import {
+  getDocumentLinesError,
+  getRequiredFieldError,
+} from "../utils/formValidation";
 
 type Contact = {
   id: number;
@@ -289,7 +293,23 @@ export default function QuotationsPage({
   };
 
   const saveQuotation = async () => {
-    if (!companyId || !form.customer_id) return;
+    if (!companyId) {
+      alert("Please select a company first.");
+      return;
+    }
+    const requiredError = getRequiredFieldError([
+      { label: "Customer", value: form.customer_id },
+      { label: "Currency", value: form.currency },
+    ]);
+    if (requiredError) {
+      alert(requiredError);
+      return;
+    }
+    const linesError = getDocumentLinesError(lines);
+    if (linesError) {
+      alert(linesError);
+      return;
+    }
     setSaving(true);
     const payload = {
       customer_id: form.customer_id,
@@ -592,6 +612,18 @@ export default function QuotationsPage({
 
   const createProduct = async () => {
     if (!companyId) return;
+    if (!productName.trim()) {
+      alert("Product name is required.");
+      return;
+    }
+    if (Number(productPrice || 0) < 0) {
+      alert("Product price cannot be negative.");
+      return;
+    }
+    if (Number(productTaxRate || 0) < 0) {
+      alert("Product VAT rate cannot be negative.");
+      return;
+    }
     const payload = {
       company_id: companyId,
       name: productName.trim(),

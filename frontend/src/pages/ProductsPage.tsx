@@ -1,6 +1,7 @@
 ﻿import { useEffect, useState, useRef } from "react";
 import { apiFetch } from "../api";
 import { useCompanies, Company } from "../hooks/useCompanies";
+import { getRequiredFieldError } from "../utils/formValidation";
 
 type Product = {
   id: number;
@@ -157,6 +158,22 @@ export default function ProductsPage() {
 
   const createProduct = async () => {
     if (!companyId) return;
+    const requiredError = getRequiredFieldError([
+      { label: "Product name", value: form.name },
+      { label: "Unit of measure", value: form.uom },
+    ]);
+    if (requiredError) {
+      alert(requiredError);
+      return;
+    }
+    if (Number(form.sale_price) < 0) {
+      alert("Sale price cannot be negative.");
+      return;
+    }
+    if (Number(form.tax_rate) < 0) {
+      alert("Tax rate cannot be negative.");
+      return;
+    }
     await apiFetch<Product>("/products", {
       method: "POST",
       body: JSON.stringify({ ...form, company_id: companyId }),
@@ -167,6 +184,22 @@ export default function ProductsPage() {
 
   const updateProduct = async () => {
     if (!selectedProductId) return;
+    const requiredError = getRequiredFieldError([
+      { label: "Product name", value: form.name },
+      { label: "Unit of measure", value: form.uom },
+    ]);
+    if (requiredError) {
+      alert(requiredError);
+      return;
+    }
+    if (Number(form.sale_price) < 0) {
+      alert("Sale price cannot be negative.");
+      return;
+    }
+    if (Number(form.tax_rate) < 0) {
+      alert("Tax rate cannot be negative.");
+      return;
+    }
     await apiFetch<Product>(`/products/${selectedProductId}`, {
       method: "PATCH",
       body: JSON.stringify(form),

@@ -4,6 +4,10 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { apiFetch } from "../api";
 import { useMe } from "../hooks/useMe";
 import { useCompanies, Company } from "../hooks/useCompanies";
+import {
+  getDocumentLinesError,
+  getRequiredFieldError,
+} from "../utils/formValidation";
 
 type InvoiceLine = {
   id: number;
@@ -868,6 +872,19 @@ export default function InvoicesPage({
 
   const createInvoice = async () => {
     if (!companyId) return;
+    const requiredError = getRequiredFieldError([
+      { label: "Customer", value: newCustomerId },
+      { label: "Currency", value: newCurrency },
+    ]);
+    if (requiredError) {
+      setError(requiredError);
+      return;
+    }
+    const linesError = getDocumentLinesError(editLines);
+    if (linesError) {
+      setError(linesError);
+      return;
+    }
     setError(null);
     setLoading(true);
     try {
@@ -911,6 +928,19 @@ export default function InvoicesPage({
 
   const saveInvoice = async () => {
     if (!selectedInvoiceId) return;
+    const requiredError = getRequiredFieldError([
+      { label: "Customer", value: editCustomerId },
+      { label: "Currency", value: editCurrency },
+    ]);
+    if (requiredError) {
+      setError(requiredError);
+      return;
+    }
+    const linesError = getDocumentLinesError(editLines);
+    if (linesError) {
+      setError(linesError);
+      return;
+    }
     setError(null);
     setLoading(true);
     try {
@@ -1003,7 +1033,10 @@ export default function InvoicesPage({
   const registerPayment = async () => {
     if (!selectedInvoiceId) return;
     const amount = Number(paymentAmount);
-    if (!amount || Number.isNaN(amount)) return;
+    if (!amount || Number.isNaN(amount)) {
+      setError("Enter a valid payment amount.");
+      return;
+    }
     await apiFetch<Invoice>(
       `/invoices/${selectedInvoiceId}/pay?amount=${amount}&payment_reference=${encodeURIComponent(paymentReference)}`,
       {
@@ -1053,7 +1086,18 @@ export default function InvoicesPage({
 
   const createProduct = async () => {
     if (!companyId) return;
-    if (!productName.trim()) return;
+    if (!productName.trim()) {
+      setError("Product name is required.");
+      return;
+    }
+    if (Number(productPrice) < 0) {
+      setError("Product price cannot be negative.");
+      return;
+    }
+    if (Number(productTaxRate) < 0) {
+      setError("Product VAT rate cannot be negative.");
+      return;
+    }
     const initialQty = Number(productInitialStock) || 0;
     if (initialQty > 0 && (!productWarehouseId || !productLocationId)) {
       setError("Select warehouse and location for initial stock");
@@ -2503,6 +2547,44 @@ export default function InvoicesPage({
                         </tr>
                       )}
                     </tbody>
+                    <tfoot className="table-light">
+                      <tr>
+                        <td colSpan={5} className="text-end fw-semibold">
+                          Untaxed Amount:
+                        </td>
+                        <td className="text-end fw-semibold">
+                          {formatCurrency(
+                            selectedInvoice?.subtotal || 0,
+                            invoiceCurrency,
+                          )}
+                        </td>
+                        {canEdit && <td></td>}
+                      </tr>
+                      <tr>
+                        <td colSpan={5} className="text-end fw-semibold">
+                          {invoiceTaxLabel}
+                        </td>
+                        <td className="text-end fw-semibold">
+                          {formatCurrency(
+                            selectedInvoice?.tax_amount || 0,
+                            invoiceCurrency,
+                          )}
+                        </td>
+                        {canEdit && <td></td>}
+                      </tr>
+                      <tr>
+                        <td colSpan={5} className="text-end fw-bold fs-5">
+                          Total:
+                        </td>
+                        <td className="text-end fw-bold fs-5">
+                          {formatCurrency(
+                            selectedInvoice?.total_amount || 0,
+                            invoiceCurrency,
+                          )}
+                        </td>
+                        {canEdit && <td></td>}
+                      </tr>
+                    </tfoot>
                   </table>
                 </div>
               </div>
