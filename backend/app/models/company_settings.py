@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, ForeignKey, String, Text
+from sqlalchemy import Boolean, ForeignKey, String, Text, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -31,6 +31,11 @@ class CompanySettings(Base, TimestampMixin):
     quotation_prefix: Mapped[str] = mapped_column(String(20), default="QUO")
     invoice_notes: Mapped[str] = mapped_column(String(2000), default="")
     payment_terms_default: Mapped[str] = mapped_column(String(255), default="Due on receipt")
+
+    # Sequence configuration
+    sequence_size: Mapped[int] = mapped_column(Integer, default=4)
+    sequence_step: Mapped[int] = mapped_column(Integer, default=1)
+    sequence_next: Mapped[int] = mapped_column(Integer, default=1)
     
     # Inventory settings
     inventory_valuation: Mapped[str] = mapped_column(String(50), default="fifo")  # fifo, lifo, average

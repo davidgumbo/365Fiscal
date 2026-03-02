@@ -105,6 +105,9 @@ type CompanySettings = {
   document_footer: string;
   document_watermark: string;
   document_watermark_opacity: string;
+  sequence_size?: number;
+  sequence_step?: number;
+  sequence_next?: number;
 };
 
 type POSEmployeeItem = {
@@ -160,17 +163,7 @@ const PlusIcon = () => (
   <svg
     width="16"
     height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <line x1="12" y1="5" x2="12" y2="19" />
-    <line x1="5" y1="12" x2="19" y2="12" />
-  </svg>
-);
+                        {/* Invoice Prefix moved to its own Sequences section */}
 
 const EditIcon = () => (
   <svg
@@ -280,6 +273,9 @@ export default function SettingsPage() {
     invoice_prefix: "INV",
     quotation_prefix: "QUO",
     invoice_notes: "",
+    sequence_size: 4,
+    sequence_step: 1,
+    sequence_next: 1,
     payment_terms_default: "Due on receipt",
     inventory_valuation: "fifo",
     auto_reserve_stock: true,
@@ -830,6 +826,9 @@ export default function SettingsPage() {
         document_footer: data.document_footer || "",
         document_watermark: data.document_watermark || "",
         document_watermark_opacity: data.document_watermark_opacity || "0.08",
+        sequence_size: data.sequence_size ?? 4,
+        sequence_step: data.sequence_step ?? 1,
+        sequence_next: data.sequence_next ?? 1,
       };
       setSettingsForm(formData);
       setInitialSettings(formData);
@@ -863,6 +862,9 @@ export default function SettingsPage() {
         document_footer: "",
         document_watermark: "",
         document_watermark_opacity: "0.08",
+        sequence_size: 4,
+        sequence_step: 1,
+        sequence_next: 1,
       };
       setSettingsForm(defaults);
       setInitialSettings(defaults);
@@ -1142,6 +1144,111 @@ export default function SettingsPage() {
                 >
                   {settingsForm.document_watermark}
                 </div>
+              )}
+
+              {activeSection === "sequences" && (
+                <section id="sequences" className="settings-section">
+                  <div className="settings-section-header">
+                    <h4>Invoice Sequencing</h4>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      {renderGeneralSaveActions()}
+                    </div>
+                  </div>
+                  <div className="settings-company">
+                    <div className="settings-company-info">
+                      <div className="settings-company-name">
+                        {selectedCompany?.name ?? "—"}
+                      </div>
+                      <div className="settings-company-line">
+                        Company: {selectedCompany?.name || "—"}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="settings-company">
+                    <div className="settings-company-logo" style={{ minWidth: 260 }}>
+                      <div style={{ padding: 12 }}>
+                        <div style={{ fontWeight: 600, marginBottom: 8 }}>Customer Invoice Numbering</div>
+                        <div style={{ color: "#666", marginBottom: 8 }}>Implementation: Standard</div>
+                        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                          <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                            Active
+                            <input
+                              type="checkbox"
+                              checked={true}
+                              readOnly
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div className="settings-doc-col">
+                        <div className="settings-doc-group-title">Sequence</div>
+                        <div className="settings-doc-fields">
+                          <label className="input">
+                            Prefix
+                            <input
+                              type="text"
+                              value={settingsForm.invoice_prefix}
+                              onChange={(e) =>
+                                setSettingsForm({ ...settingsForm, invoice_prefix: e.target.value })
+                              }
+                              placeholder="e.g., INV"
+                            />
+                          </label>
+                          <label className="input">
+                            Suffix
+                            <input
+                              type="text"
+                              value={settingsForm.quotation_prefix}
+                              onChange={(e) =>
+                                setSettingsForm({ ...settingsForm, quotation_prefix: e.target.value })
+                              }
+                              placeholder="e.g., /%{year}s/"
+                            />
+                          </label>
+                          <div style={{ display: "flex", gap: 12 }}>
+                            <label className="input" style={{ flex: 1 }}>
+                              Sequence Size
+                              <input
+                                type="number"
+                                min={1}
+                                value={settingsForm.sequence_size}
+                                onChange={(e) =>
+                                  setSettingsForm({ ...settingsForm, sequence_size: Number(e.target.value) })
+                                }
+                              />
+                            </label>
+                            <label className="input" style={{ flex: 1 }}>
+                              Step
+                              <input
+                                type="number"
+                                min={1}
+                                value={settingsForm.sequence_step}
+                                onChange={(e) =>
+                                  setSettingsForm({ ...settingsForm, sequence_step: Number(e.target.value) })
+                                }
+                              />
+                            </label>
+                          </div>
+                          <div style={{ display: "flex", gap: 12 }}>
+                            <label className="input" style={{ flex: 1 }}>
+                              Next Number
+                              <input
+                                type="number"
+                                min={1}
+                                value={settingsForm.sequence_next}
+                                onChange={(e) =>
+                                  setSettingsForm({ ...settingsForm, sequence_next: Number(e.target.value) })
+                                }
+                              />
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </section>
               )}
               <div
                 style={{
@@ -1557,6 +1664,15 @@ export default function SettingsPage() {
             }}
           >
             Document Layout
+          </button>
+          <button
+            className={`settings-sidebar-item ${activeSection === "sequences" ? "active" : ""}`}
+            onClick={() => {
+              setActiveTopTab("general");
+              setActiveSection("sequences");
+            }}
+          >
+            Sequences
           </button>
           <button
             className={`settings-sidebar-item ${activeSection === "zimra-tax" ? "active" : ""}`}
@@ -2053,7 +2169,7 @@ export default function SettingsPage() {
                                     setShowForm(true);
                                   }}
                                 >
-                                  <EditIcon />
+                                  
                                 </button>
                                 <button
                                   className="icon-btn"
@@ -3400,7 +3516,7 @@ export default function SettingsPage() {
                                           borderRadius: 6,
                                         }}
                                       >
-                                        <EditIcon />
+                                     
                                       </button>
                                       <button
                                         className="icon-btn"

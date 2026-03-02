@@ -22,16 +22,30 @@ router = APIRouter(prefix="/invoices", tags=["invoices"])
 
 
 def next_invoice_reference(db: Session, prefix: str = "INV", company_id: int | None = None) -> str:
-    """Generate next invoice reference. If `company_id` provided and company settings
-    define an `invoice_prefix`, it will be used for regular invoices (prefix == 'INV').
-    Credit notes (prefix 'CN' or explicitly provided) keep their provided prefix.
-    """
-    # Prefer company-specific prefix when creating normal invoices
-    if company_id and prefix == "INV":
-        settings = db.query(CompanySettings).filter(CompanySettings.company_id == company_id).first()
-        if settings and settings.invoice_prefix:
-            prefix = settings.invoice_prefix
+    """Generate the next invoice reference.
 
+    If company settings define a sequence (sequence_size/step/next), use that and increment
+    the `sequence_next` value. Otherwise fall back to date-based counting.
+    """
+    if company_id:
+        # Attempt to lock the settings row for update to avoid race conditions
+        try:
+            settings = db.query(CompanySettings).filter(CompanySettings.company_id == company_id).with_for_update().first()
+        except Exception:
+            # Some DB backends or SQLAlchemy configs may not support with_for_update(); fall back
+            settings = db.query(CompanySettings).filter(CompanySettings.company_id == company_id).first()
+        if settings and settings.sequence_next is not None:
+            seq_size = settings.sequence_size or 4
+            next_num = settings.sequence_next or 1
+            used_prefix = settings.invoice_prefix or prefix
+            # Format without date by default, e.g. INV-0001
+            reference = f"{used_prefix}-{next_num:0{seq_size}d}"
+            # Increment and persist
+            settings.sequence_next = next_num + (settings.sequence_step or 1)
+            db.commit()
+            return reference
+
+    # Fallback: date-based sequence
     today = datetime.utcnow().strftime("%Y%m%d")
     full_prefix = f"{prefix}-{today}-"
     count = db.query(Invoice).filter(Invoice.reference.like(f"{full_prefix}%")).count()

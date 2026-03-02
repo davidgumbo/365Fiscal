@@ -17,6 +17,9 @@ class CompanySettingsCreate(BaseModel):
     invoice_prefix: str = "INV"
     quotation_prefix: str = "QUO"
     invoice_notes: str = ""
+    sequence_size: int = 4
+    sequence_step: int = 1
+    sequence_next: int = 1
     payment_terms_default: str = "Due on receipt"
     inventory_valuation: str = "fifo"
     auto_reserve_stock: bool = True
@@ -56,6 +59,9 @@ class CompanySettingsUpdate(BaseModel):
     invoice_prefix: str | None = None
     quotation_prefix: str | None = None
     invoice_notes: str | None = None
+    sequence_size: int | None = None
+    sequence_step: int | None = None
+    sequence_next: int | None = None
     payment_terms_default: str | None = None
     inventory_valuation: str | None = None
     auto_reserve_stock: bool | None = None
@@ -109,6 +115,9 @@ class CompanySettingsRead(ORMBase):
     default_sales_tax_id: int | None
     default_purchase_tax_id: int | None
     tax_included_in_price: bool
+    sequence_size: int
+    sequence_step: int
+    sequence_next: int
     customer_account_enabled: bool
     customer_signup_mode: str
     password_reset_enabled: bool
