@@ -1324,6 +1324,25 @@ thead.table-light th {
   gap: 12px;
 }
 
+.invoice-lines-table-wrap {
+  max-height: 460px;
+  overflow-y: auto;
+}
+
+.invoice-lines-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--bs-table-bg, #f8f9fa);
+}
+
+.invoice-lines-table tfoot td {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  background: var(--bs-table-bg, #f8f9fa);
+}
+
 .list {
   display: grid;
   gap: 8px;

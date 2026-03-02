@@ -445,6 +445,8 @@ export default function InvoicesPage({
   const [listStatus, setListStatus] = useState("");
   const [listType, setListType] = useState("");
   const [listCurrency, setListCurrency] = useState("");
+  const [linesPage, setLinesPage] = useState(1);
+  const [linesPerPage, setLinesPerPage] = useState(10);
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentReference, setPaymentReference] = useState("");
@@ -843,6 +845,7 @@ export default function InvoicesPage({
   const beginNew = () => {
     setNewMode(true);
     setIsEditing(true);
+    setLinesPage(1);
     setSelectedInvoiceId(null);
     setNewQuotationId(null);
     setNewCustomerId(contacts[0]?.id ?? null);
@@ -1149,6 +1152,32 @@ export default function InvoicesPage({
   };
 
   const displayLines = isEditing ? editLines : (selectedInvoice?.lines ?? []);
+  const activeLineCount = newMode ? editLines.length : displayLines.length;
+  const activeLinesTotalPages = Math.max(
+    1,
+    Math.ceil(activeLineCount / linesPerPage),
+  );
+  const editLineStart = (linesPage - 1) * linesPerPage;
+  const displayLineStart = (linesPage - 1) * linesPerPage;
+  const pagedEditLines = editLines.slice(
+    editLineStart,
+    editLineStart + linesPerPage,
+  );
+  const pagedDisplayLines = displayLines.slice(
+    displayLineStart,
+    displayLineStart + linesPerPage,
+  );
+  const visibleLineStart = activeLineCount ? (linesPage - 1) * linesPerPage + 1 : 0;
+  const visibleLineEnd = Math.min(linesPage * linesPerPage, activeLineCount);
+
+  useEffect(() => {
+    setLinesPage((prev) => Math.min(prev, activeLinesTotalPages));
+  }, [activeLinesTotalPages]);
+
+  useEffect(() => {
+    setLinesPage(1);
+  }, [selectedInvoiceId, newMode]);
+
   const canEdit = isEditing && statusLabel === "draft" && !isCreditNote;
 
   const taxBreakdown = useMemo(() => {
@@ -2419,8 +2448,49 @@ export default function InvoicesPage({
                     </button>
                   </div>
                 </div>
-                <div className="table-responsive">
-                  <table className="table table-bordered align-middle mb-0">
+                <div className="d-flex justify-content-between align-items-center mb-2">
+                  <small className="text-muted">
+                    Showing {visibleLineStart}-{visibleLineEnd} of {activeLineCount}
+                  </small>
+                  <div className="d-flex align-items-center gap-2">
+                    <select
+                      className="form-select form-select-sm"
+                      style={{ width: 90 }}
+                      value={linesPerPage}
+                      onChange={(e) => {
+                        setLinesPerPage(Number(e.target.value));
+                        setLinesPage(1);
+                      }}
+                    >
+                      <option value={5}>5 / page</option>
+                      <option value={10}>10 / page</option>
+                      <option value={20}>20 / page</option>
+                    </select>
+                    <button
+                      className="btn btn-sm btn-light border"
+                      onClick={() => setLinesPage((prev) => Math.max(1, prev - 1))}
+                      disabled={linesPage <= 1}
+                    >
+                      Prev
+                    </button>
+                    <small className="text-muted">
+                      Page {linesPage} / {activeLinesTotalPages}
+                    </small>
+                    <button
+                      className="btn btn-sm btn-light border"
+                      onClick={() =>
+                        setLinesPage((prev) =>
+                          Math.min(activeLinesTotalPages, prev + 1),
+                        )
+                      }
+                      disabled={linesPage >= activeLinesTotalPages}
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+                <div className="table-responsive invoice-lines-table-wrap">
+                  <table className="table table-bordered align-middle mb-0 invoice-lines-table">
                     <thead className="table-light">
                       <tr>
                         <th style={{ minWidth: 160 }}>Product</th>
@@ -2439,7 +2509,8 @@ export default function InvoicesPage({
                       </tr>
                     </thead>
                     <tbody>
-                      {editLines.map((line, index) => {
+                      {pagedEditLines.map((line, pageIndex) => {
+                        const index = editLineStart + pageIndex;
                         const product = line.product_id
                           ? productById.get(line.product_id)
                           : null;
@@ -2900,8 +2971,49 @@ export default function InvoicesPage({
                     </div>
                   )}
                 </div>
-                <div className="table-responsive">
-                  <table className="table table-bordered align-middle mb-0">
+                <div className="d-flex justify-content-between align-items-center mb-2">
+                  <small className="text-muted">
+                    Showing {visibleLineStart}-{visibleLineEnd} of {activeLineCount}
+                  </small>
+                  <div className="d-flex align-items-center gap-2">
+                    <select
+                      className="form-select form-select-sm"
+                      style={{ width: 90 }}
+                      value={linesPerPage}
+                      onChange={(e) => {
+                        setLinesPerPage(Number(e.target.value));
+                        setLinesPage(1);
+                      }}
+                    >
+                      <option value={5}>5 / page</option>
+                      <option value={10}>10 / page</option>
+                      <option value={20}>20 / page</option>
+                    </select>
+                    <button
+                      className="btn btn-sm btn-light border"
+                      onClick={() => setLinesPage((prev) => Math.max(1, prev - 1))}
+                      disabled={linesPage <= 1}
+                    >
+                      Prev
+                    </button>
+                    <small className="text-muted">
+                      Page {linesPage} / {activeLinesTotalPages}
+                    </small>
+                    <button
+                      className="btn btn-sm btn-light border"
+                      onClick={() =>
+                        setLinesPage((prev) =>
+                          Math.min(activeLinesTotalPages, prev + 1),
+                        )
+                      }
+                      disabled={linesPage >= activeLinesTotalPages}
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+                <div className="table-responsive invoice-lines-table-wrap">
+                  <table className="table table-bordered align-middle mb-0 invoice-lines-table">
                     <thead className="table-light">
                       <tr>
                         <th>Product</th>
@@ -2914,7 +3026,8 @@ export default function InvoicesPage({
                       </tr>
                     </thead>
                     <tbody>
-                      {displayLines.map((line, index) => {
+                      {pagedDisplayLines.map((line, pageIndex) => {
+                        const index = displayLineStart + pageIndex;
                         const product = line.product_id
                           ? productById.get(line.product_id)
                           : null;
