@@ -19,7 +19,7 @@ export const getRequiredFieldError = (
   const missing = getMissingRequiredFields(fields);
   if (!missing.length) return null;
   const list = missing.map((field) => `• ${field.label}`).join("\n");
-  return `Please fill in the following required fields:\n${list}`;
+  return (`Please fill in the following required fields:\n${list}`);
 };
 
 export type ValidatedLine = {

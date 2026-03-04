@@ -527,7 +527,7 @@ export default function InvoicesPage({
     setInvalidFields((prev) => prev.filter((field) => field !== key));
   };
 
-  const validateNewInvoiceRequiredFields = (): boolean => {
+  const validateNewInvoiceRequiredFields = (): string | null => {
     const requiredFields = [
       { key: "newCustomer", label: "Customer", value: newCustomerId },
       { key: "newCurrency", label: "Currency", value: newCurrency },
@@ -536,17 +536,16 @@ export default function InvoicesPage({
     if (missingFields.length) {
       const message = getRequiredFieldError(requiredFields);
       if (message) {
-        alert(message);
         setError(message);
       }
       setInvalidFields(missingFields.map((field) => field.key));
-      return false;
+      return message;
     }
     setInvalidFields([]);
-    return true;
+    return null;
   };
 
-  const validateEditInvoiceRequiredFields = (): boolean => {
+  const validateEditInvoiceRequiredFields = (): string | null => {
     const requiredFields = [
       { key: "editCustomer", label: "Customer", value: editCustomerId },
       { key: "editCurrency", label: "Currency", value: editCurrency },
@@ -555,14 +554,13 @@ export default function InvoicesPage({
     if (missingFields.length) {
       const message = getRequiredFieldError(requiredFields);
       if (message) {
-        alert(message);
         setError(message);
       }
       setInvalidFields(missingFields.map((field) => field.key));
-      return false;
+      return message;
     }
     setInvalidFields([]);
-    return true;
+    return null;
   };
 
   const selectCustomer = (id: number, name: string, mode: "new" | "edit") => {
@@ -924,7 +922,8 @@ export default function InvoicesPage({
 
   const createInvoice = async () => {
     if (!companyId) return;
-    if (!validateNewInvoiceRequiredFields()) {
+    const requiredError = validateNewInvoiceRequiredFields();
+    if (requiredError) {
       return;
     }
     const linesError = getDocumentLinesError(editLines);
@@ -975,7 +974,8 @@ export default function InvoicesPage({
 
   const saveInvoice = async () => {
     if (!selectedInvoiceId) return;
-    if (!validateEditInvoiceRequiredFields()) {
+    const requiredError = validateEditInvoiceRequiredFields();
+    if (requiredError) {
       return;
     }
     const linesError = getDocumentLinesError(editLines);
