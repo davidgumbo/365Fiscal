@@ -666,7 +666,15 @@ export default function PurchasesPage({
         o.reference.toLowerCase().includes(term) || supplierName.includes(term)
       );
     });
-  }, [orders, listSearch, listStatus, listPaidState, listFrom, listTo, contacts]);
+  }, [
+    orders,
+    listSearch,
+    listStatus,
+    listPaidState,
+    listFrom,
+    listTo,
+    contacts,
+  ]);
 
   const currentStatus = selectedOrder?.status || "draft";
   const canEdit = isEditing || mode === "new" || currentStatus === "draft";
@@ -1148,8 +1156,9 @@ export default function PurchasesPage({
                                 {order.reference}
                               </td>
                               <td>
-                                {contacts.find((c) => c.id === order.supplier_id)
-                                  ?.name || "-"}
+                                {contacts.find(
+                                  (c) => c.id === order.supplier_id,
+                                )?.name || "-"}
                               </td>
                               <td>
                                 <span
@@ -1368,7 +1377,7 @@ export default function PurchasesPage({
                   ))}
                 </select>
               </div>
-              <div className="col-md-3">
+              <div className="col-md-6">
                 <label className="form-label fw-semibold">Order Date</label>
                 <input
                   type="date"
@@ -1380,7 +1389,7 @@ export default function PurchasesPage({
                   disabled={!canEdit}
                 />
               </div>
-              <div className="col-md-3">
+              <div className="col-md-6">
                 <label className="form-label fw-semibold">Expected Date</label>
                 <input
                   type="date"
@@ -1395,7 +1404,7 @@ export default function PurchasesPage({
                   disabled={!canEdit}
                 />
               </div>
-              <div className="col-md-4">
+              <div className="col-md-6">
                 <label className="form-label">Warehouse</label>
                 <select
                   className="form-select input-underline"
@@ -1416,7 +1425,7 @@ export default function PurchasesPage({
                   ))}
                 </select>
               </div>
-              <div className="col-md-4">
+              <div className="col-md-6">
                 <label className="form-label">Location</label>
                 <select
                   className="form-select input-underline"
@@ -1437,7 +1446,7 @@ export default function PurchasesPage({
                   ))}
                 </select>
               </div>
-              <div className="col-md-4">
+              <div className="col-md-6">
                 <label className="form-label">Currency</label>
                 <input
                   className="form-control input-underline"

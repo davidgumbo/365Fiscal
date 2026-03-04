@@ -635,6 +635,7 @@ textarea {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  padding: 1rem 0;
 }
 
 .status-pill {
