@@ -827,8 +827,11 @@ export default function PurchasesPage({
       <div className="page-header">
         <div className="header-actions">
           {mode !== "list" && (
-            <button className="outline" onClick={() => navigate("/purchases")}>
-              Back to List
+            <button
+              className="btn btn-sm btn-light border"
+              onClick={() => navigate("/purchases")}
+            >
+              ← Back
             </button>
           )}
         </div>
