@@ -1275,9 +1275,62 @@ export default function PurchasesPage({
             )}
             <div className="d-flex flex-wrap justify-content-between align-items-center mb-3">
               <div>
-                <h2 className="mb-1">
-                  {selectedOrder?.reference || "New Purchase"}
-                </h2>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <h2 className="mb-1">
+                    {selectedOrder?.reference || "New Purchase"}
+                  </h2>
+                  <div className="form-actions">
+                    {selectedOrderId && (
+                      <button
+                        className="btn btn-outline-secondary btn-sm"
+                        onClick={printOrder}
+                      >
+                        Print
+                      </button>
+                    )}
+                    {canEdit && (
+                      <button
+                        className="btn btn-primary btn-sm"
+                        onClick={saveOrder}
+                        disabled={saving}
+                      >
+                        {saving ? "Saving..." : "Save"}
+                      </button>
+                    )}
+                    {!canEdit && currentStatus === "draft" && (
+                      <button
+                        className="btn btn-outline-secondary btn-sm"
+                        onClick={() => setIsEditing(true)}
+                      >
+                        Edit
+                      </button>
+                    )}
+                    {selectedOrderId && currentStatus === "draft" && (
+                      <button
+                        className="btn btn-success btn-sm"
+                        onClick={confirmOrder}
+                      >
+                        Confirm
+                      </button>
+                    )}
+                    {selectedOrderId && currentStatus === "confirmed" && (
+                      <button
+                        className="btn btn-success btn-sm"
+                        onClick={receiveOrder}
+                      >
+                        Receive
+                      </button>
+                    )}
+                    {selectedOrderId && currentStatus !== "received" && (
+                      <button
+                        className="btn btn-outline-danger btn-sm"
+                        onClick={cancelOrder}
+                      >
+                        Cancel
+                      </button>
+                    )}
+                  </div>
+                </div>
                 <div className="statusbar">
                   {["draft", "confirmed", "received"].map((step) => (
                     <span
@@ -1318,57 +1371,6 @@ export default function PurchasesPage({
                       <option value="paid">paid</option>
                     </select>
                   </div>
-                )}
-              </div>
-              <div className="form-actions">
-                {selectedOrderId && (
-                  <button
-                    className="btn btn-outline-secondary btn-sm"
-                    onClick={printOrder}
-                  >
-                    Print
-                  </button>
-                )}
-                {canEdit && (
-                  <button
-                    className="btn btn-primary btn-sm"
-                    onClick={saveOrder}
-                    disabled={saving}
-                  >
-                    {saving ? "Saving..." : "Save"}
-                  </button>
-                )}
-                {!canEdit && currentStatus === "draft" && (
-                  <button
-                    className="btn btn-outline-secondary btn-sm"
-                    onClick={() => setIsEditing(true)}
-                  >
-                    Edit
-                  </button>
-                )}
-                {selectedOrderId && currentStatus === "draft" && (
-                  <button
-                    className="btn btn-success btn-sm"
-                    onClick={confirmOrder}
-                  >
-                    Confirm
-                  </button>
-                )}
-                {selectedOrderId && currentStatus === "confirmed" && (
-                  <button
-                    className="btn btn-success btn-sm"
-                    onClick={receiveOrder}
-                  >
-                    Receive
-                  </button>
-                )}
-                {selectedOrderId && currentStatus !== "received" && (
-                  <button
-                    className="btn btn-outline-danger btn-sm"
-                    onClick={cancelOrder}
-                  >
-                    Cancel
-                  </button>
                 )}
               </div>
             </div>
