@@ -1357,7 +1357,7 @@ export default function PurchasesPage({
 
             <div className="row g-3 mb-4">
               <div className="col-md-6">
-                <label className="form-label fw-semibold">Supplier</label>
+                <label className="form-label ">Supplier</label>
                 <select
                   className="form-select input-underline"
                   value={form.supplier_id ?? ""}
@@ -1378,7 +1378,7 @@ export default function PurchasesPage({
                 </select>
               </div>
               <div className="col-md-6">
-                <label className="form-label fw-semibold">Order Date</label>
+                <label className="form-label ">Order Date</label>
                 <input
                   type="date"
                   className="form-control input-underline"
@@ -1390,7 +1390,7 @@ export default function PurchasesPage({
                 />
               </div>
               <div className="col-md-6">
-                <label className="form-label fw-semibold">Expected Date</label>
+                <label className="form-label ">Expected Date</label>
                 <input
                   type="date"
                   className="form-control input-underline"
