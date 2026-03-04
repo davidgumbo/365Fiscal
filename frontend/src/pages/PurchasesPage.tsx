@@ -1275,7 +1275,7 @@ export default function PurchasesPage({
             )}
             <div className="d-flex flex-wrap justify-content-between align-items-center mb-3">
               <div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ display: "flex", alignItems: "top", gap: 8 }}>
                   <h2 className="mb-1">
                     {selectedOrder?.reference || "New Purchase"}
                   </h2>
