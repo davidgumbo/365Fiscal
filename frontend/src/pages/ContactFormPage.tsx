@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiFetch } from "../api";
 import { useCompanies, Company } from "../hooks/useCompanies";
+import ValidatedField from "../components/ValidatedField";
 import {
   getMissingRequiredFields,
   getRequiredFieldError,
@@ -252,20 +253,21 @@ export default function ContactFormPage() {
                     <option value="individual">Individual</option>
                   </select>
                 </label>
-              <label
-                className={`input ${invalidFields.includes("name") ? "input-error" : ""}`}
-              >
-                Display Name
-                <input
-                  className={`input-underline ${
-                    invalidFields.includes("name") ? "input-field-error" : ""
-                  }`}
-                  type="text"
-                  value={form.name}
-                  onChange={(e) => handleNameInput(e.target.value)}
-                  disabled={!isEditing}
-                />
-              </label>
+              <div className="input-group">
+                <ValidatedField
+                  label="Display Name"
+                  className="input"
+                  isInvalid={invalidFields.includes("name")}
+                >
+                  <input
+                    className="input-underline"
+                    type="text"
+                    value={form.name}
+                    onChange={(e) => handleNameInput(e.target.value)}
+                    disabled={!isEditing}
+                  />
+                </ValidatedField>
+              </div>
                 <label className="input">
                   Phone
                   <input className="input-underline" type="text" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} disabled={!isEditing} />

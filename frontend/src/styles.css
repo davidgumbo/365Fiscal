@@ -1359,6 +1359,11 @@ thead.table-light th {
   gap: 12px;
 }
 
+.validated-field {
+  display: grid;
+  gap: 6px;
+}
+
 .input {
   display: grid;
   gap: 6px;

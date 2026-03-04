@@ -883,33 +883,26 @@ export default function ExpensesPage() {
                     <div className="card-body invoice-form">
                       <div className="row g-3">
                         <div className="col-md-6">
-                          <label
-                            className={`form-label fw-semibold ${
-                              invalidFields.includes("expense_date")
-                                ? "form-label-error"
-                                : ""
-                            }`}
+                          <ValidatedField
+                            label="Date"
+                            labelClassName="form-label fw-semibold"
+                            isInvalid={invalidFields.includes("expense_date")}
                           >
-                            Date
-                          </label>
-                          <input
-                            className={`form-control input-underline ${
-                              invalidFields.includes("expense_date")
-                                ? "input-field-error"
-                                : ""
-                            }`}
-                            type="date"
-                            value={form.expense_date}
-                            onChange={(e) => {
-                              const { value } = e.target;
-                              setForm((p) => ({
-                                ...p,
-                                expense_date: value,
-                              }));
-                              clearInvalidField("expense_date", value);
-                            }}
-                            disabled={!isEditing}
-                          />
+                            <input
+                              className="form-control input-underline"
+                              type="date"
+                              value={form.expense_date}
+                              onChange={(e) => {
+                                const { value } = e.target;
+                                setForm((p) => ({
+                                  ...p,
+                                  expense_date: value,
+                                }));
+                                clearInvalidField("expense_date", value);
+                              }}
+                              disabled={!isEditing}
+                            />
+                          </ValidatedField>
                         </div>
                         <div className="col-md-6">
                           <label className="form-label fw-semibold">Reference</label>
@@ -923,114 +916,89 @@ export default function ExpensesPage() {
                           </select>
                         </div>
                         <div className="col-md-6">
-                          <label
-                            className={`form-label fw-semibold ${
-                              invalidFields.includes("category")
-                                ? "form-label-error"
-                                : ""
-                            }`}
+                          <ValidatedField
+                            label="Category"
+                            labelClassName="form-label fw-semibold"
+                            isInvalid={invalidFields.includes("category")}
                           >
-                            Category
-                          </label>
-                          <select
-                            className={`form-select input-underline ${
-                              invalidFields.includes("category")
-                                ? "input-field-error"
-                                : ""
-                            }`}
-                            value={form.category || ""}
-                            onChange={(e) => {
-                              const { value } = e.target;
-                              setForm((p) => ({ ...p, category: value }));
-                              clearInvalidField("category", value);
-                            }}
-                            disabled={!isEditing}
-                          >
-                            <option value="">— Select Category —</option>
-                            {categories.slice().sort((a, b) => a.name.localeCompare(b.name)).map((c) => (
-                              <option key={c.id} value={c.name}>{c.name}</option>
-                            ))}
-                          </select>
+                            <select
+                              className="form-select input-underline"
+                              value={form.category || ""}
+                              onChange={(e) => {
+                                const { value } = e.target;
+                                setForm((p) => ({ ...p, category: value }));
+                                clearInvalidField("category", value);
+                              }}
+                              disabled={!isEditing}
+                            >
+                              <option value="">— Select Category —</option>
+                              {categories
+                                .slice()
+                                .sort((a, b) => a.name.localeCompare(b.name))
+                                .map((c) => (
+                                  <option key={c.id} value={c.name}>
+                                    {c.name}
+                                  </option>
+                                ))}
+                            </select>
+                          </ValidatedField>
                         </div>
 
                         <div className="col-md-3">
-                          <label
-                            className={`form-label ${
-                              invalidFields.includes("status")
-                                ? "form-label-error"
-                                : ""
-                            }`}
+                          <ValidatedField
+                            label="Status"
+                            isInvalid={invalidFields.includes("status")}
                           >
-                            Status
-                          </label>
-                          <select
-                            className={`form-select input-underline ${
-                              invalidFields.includes("status")
-                                ? "input-field-error"
-                                : ""
-                            }`}
-                            value={form.status}
-                            onChange={(e) => {
-                              const { value } = e.target;
-                              setForm((p) => ({ ...p, status: value }));
-                              clearInvalidField("status", value);
-                            }}
-                            disabled={!isEditing}
-                          >
-                            <option value="posted">Posted</option>
-                            <option value="draft">Draft</option>
-                          </select>
+                            <select
+                              className="form-select input-underline"
+                              value={form.status}
+                              onChange={(e) => {
+                                const { value } = e.target;
+                                setForm((p) => ({ ...p, status: value }));
+                                clearInvalidField("status", value);
+                              }}
+                              disabled={!isEditing}
+                            >
+                              <option value="posted">Posted</option>
+                              <option value="draft">Draft</option>
+                            </select>
+                          </ValidatedField>
                         </div>
                         <div className="col-md-3">
-                          <label
-                            className={`form-label ${
-                              invalidFields.includes("currency")
-                                ? "form-label-error"
-                                : ""
-                            }`}
+                          <ValidatedField
+                            label="Currency"
+                            isInvalid={invalidFields.includes("currency")}
                           >
-                            Currency
-                          </label>
-                          <input
-                            className={`form-control input-underline ${
-                              invalidFields.includes("currency")
-                                ? "input-field-error"
-                                : ""
-                            }`}
-                            value={form.currency}
-                            onChange={(e) => {
-                              const { value } = e.target;
-                              setForm((p) => ({ ...p, currency: value }));
-                              clearInvalidField("currency", value);
-                            }}
-                            disabled={!isEditing}
-                          />
+                            <input
+                              className="form-control input-underline"
+                              value={form.currency}
+                              onChange={(e) => {
+                                const { value } = e.target;
+                                setForm((p) => ({ ...p, currency: value }));
+                                clearInvalidField("currency", value);
+                              }}
+                              disabled={!isEditing}
+                            />
+                          </ValidatedField>
                         </div>
                         <div className="col-md-6">
-                          <label
-                            className={`form-label fw-semibold ${
-                              invalidFields.includes("description")
-                                ? "form-label-error"
-                                : ""
-                            }`}
+                          <ValidatedField
+                            label="Description"
+                            labelClassName="form-label fw-semibold"
+                            isInvalid={invalidFields.includes("description")}
                           >
-                            Description
-                          </label>
-                          <input
-                            className={`form-control input-underline ${
-                              invalidFields.includes("description")
-                                ? "input-field-error"
-                                : ""
-                            }`}
-                            value={form.description}
-                            onChange={(e) => {
-                              const { value } = e.target;
-                              setForm((p) => ({ ...p, description: value }));
-                              clearInvalidField("description", value);
-                            }}
-                            placeholder="What was the expense for?"
-                            disabled={!isEditing}
-                          />
+                            <input
+                              className="form-control input-underline"
+                              value={form.description}
+                              onChange={(e) => {
+                                const { value } = e.target;
+                                setForm((p) => ({ ...p, description: value }));
+                                clearInvalidField("description", value);
+                              }}
+                              placeholder="What was the expense for?"
+                              disabled={!isEditing}
+                            />
+                          </ValidatedField>
                         </div>
 
                         <div className="col-12"><hr className="my-1" /></div>

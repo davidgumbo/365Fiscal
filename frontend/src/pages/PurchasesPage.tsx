@@ -1375,63 +1375,50 @@ export default function PurchasesPage({
 
             <div className="row g-3 mb-4">
               <div className="col-md-6">
-                <label
-                  className={`form-label ${
-                    invalidFields.includes("supplier") ? "form-label-error" : ""
-                  }`}
+                <ValidatedField
+                  label="Supplier"
+                  isInvalid={invalidFields.includes("supplier")}
+                  labelClassName="form-label"
                 >
-                  Supplier
-                </label>
-                <select
-                  className={`form-select input-underline ${
-                    invalidFields.includes("supplier")
-                      ? "input-field-error"
-                      : ""
-                  }`}
-                  value={form.supplier_id ?? ""}
-                  onChange={(e) => {
-                    const supplierId = Number(e.target.value) || null;
-                    setForm((prev) => ({
-                      ...prev,
-                      supplier_id: supplierId,
-                    }));
-                    clearInvalidField("supplier", supplierId);
-                  }}
-                  disabled={!canEdit}
-                >
-                  <option value="">Select supplier</option>
-                  {contacts.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+                  <select
+                    className="form-select input-underline"
+                    value={form.supplier_id ?? ""}
+                    onChange={(e) => {
+                      const supplierId = Number(e.target.value) || null;
+                      setForm((prev) => ({
+                        ...prev,
+                        supplier_id: supplierId,
+                      }));
+                      clearInvalidField("supplier", supplierId);
+                    }}
+                    disabled={!canEdit}
+                  >
+                    <option value="">Select supplier</option>
+                    {contacts.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </ValidatedField>
               </div>
               <div className="col-md-6">
-                <label
-                  className={`form-label ${
-                    invalidFields.includes("order_date")
-                      ? "form-label-error"
-                      : ""
-                  }`}
+                <ValidatedField
+                  label="Order Date"
+                  isInvalid={invalidFields.includes("order_date")}
                 >
-                  Order Date
-                </label>
-                <input
-                  type="date"
-                  className={`form-control input-underline ${
-                    invalidFields.includes("order_date")
-                      ? "input-field-error"
-                      : ""
-                  }`}
-                  value={form.order_date}
-                  onChange={(e) => {
-                    const { value } = e.target;
-                    setForm((prev) => ({ ...prev, order_date: value }));
-                    clearInvalidField("order_date", value);
-                  }}
-                  disabled={!canEdit}
-                />
+                  <input
+                    type="date"
+                    className="form-control input-underline"
+                    value={form.order_date}
+                    onChange={(e) => {
+                      const { value } = e.target;
+                      setForm((prev) => ({ ...prev, order_date: value }));
+                      clearInvalidField("order_date", value);
+                    }}
+                    disabled={!canEdit}
+                  />
+                </ValidatedField>
               </div>
               <div className="col-md-6">
                 <label className="form-label ">Expected Date</label>
@@ -1491,27 +1478,21 @@ export default function PurchasesPage({
                 </select>
               </div>
               <div className="col-md-6">
-                <label
-                  className={`form-label ${
-                    invalidFields.includes("currency") ? "form-label-error" : ""
-                  }`}
+                <ValidatedField
+                  label="Currency"
+                  isInvalid={invalidFields.includes("currency")}
                 >
-                  Currency
-                </label>
-                <input
-                  className={`form-control input-underline ${
-                    invalidFields.includes("currency")
-                      ? "input-field-error"
-                      : ""
-                  }`}
-                  value={form.currency}
-                  onChange={(e) => {
-                    const { value } = e.target;
-                    setForm((prev) => ({ ...prev, currency: value }));
-                    clearInvalidField("currency", value);
-                  }}
-                  disabled={!canEdit}
-                />
+                  <input
+                    className="form-control input-underline"
+                    value={form.currency}
+                    onChange={(e) => {
+                      const { value } = e.target;
+                      setForm((prev) => ({ ...prev, currency: value }));
+                      clearInvalidField("currency", value);
+                    }}
+                    disabled={!canEdit}
+                  />
+                </ValidatedField>
               </div>
               <div className="col-12">
                 <label className="form-label">Notes</label>

@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { apiFetch } from "../api";
 import { useMe } from "../hooks/useMe";
 import { useCompanies, Company } from "../hooks/useCompanies";
+import ValidatedField from "../components/ValidatedField";
 import {
   getDocumentLinesError,
   getMissingRequiredFields,
@@ -1345,40 +1346,33 @@ export default function QuotationsPage({
                   </select>
                 </div>
                 <div className="col-md-6">
-                  <label
-                    className={`form-label fw-semibold ${
-                      invalidFields.includes("customer")
-                        ? "form-label-error"
-                        : ""
-                    }`}
+                  <ValidatedField
+                    label="Customer"
+                    labelClassName="form-label fw-semibold"
+                    isInvalid={invalidFields.includes("customer")}
                   >
-                    Customer
-                  </label>
-                  <select
-                    className={`form-select input-underline ${
-                      invalidFields.includes("customer")
-                        ? "input-field-error"
-                        : ""
-                    }`}
-                    value={form.customer_id ?? ""}
-                    onChange={(e) => {
-                      const customerId = e.target.value
-                        ? Number(e.target.value)
-                        : null;
-                      setForm((prev) => ({
-                        ...prev,
-                        customer_id: customerId,
-                      }));
-                      clearInvalidField("customer", customerId);
-                    }}
-                    disabled={!canEdit}
-                  >
-                    {contacts.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
+                    <select
+                      className="form-select input-underline"
+                      value={form.customer_id ?? ""}
+                      onChange={(e) => {
+                        const customerId = e.target.value
+                          ? Number(e.target.value)
+                          : null;
+                        setForm((prev) => ({
+                          ...prev,
+                          customer_id: customerId,
+                        }));
+                        clearInvalidField("customer", customerId);
+                      }}
+                      disabled={!canEdit}
+                    >
+                      {contacts.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </ValidatedField>
                 </div>
                 <div className="col-md-6">
                   <label className="form-label fw-semibold">
@@ -1397,35 +1391,28 @@ export default function QuotationsPage({
                   />
                 </div>
                 <div className="col-md-6">
-                  <label
-                    className={`form-label fw-semibold ${
-                      invalidFields.includes("currency")
-                        ? "form-label-error"
-                        : ""
-                    }`}
+                  <ValidatedField
+                    label="Currency"
+                    labelClassName="form-label fw-semibold"
+                    isInvalid={invalidFields.includes("currency")}
                   >
-                    Currency
-                  </label>
-                  <select
-                    className={`form-select input-underline ${
-                      invalidFields.includes("currency")
-                        ? "input-field-error"
-                        : ""
-                    }`}
-                    value={form.currency}
-                    onChange={(e) => {
-                      const { value } = e.target;
-                      setForm((prev) => ({
-                        ...prev,
-                        currency: value,
-                      }));
-                      clearInvalidField("currency", value);
-                    }}
-                    disabled={!canEdit}
-                  >
-                    <option value="USD">USD</option>
-                    <option value="ZWG">ZWG</option>
-                  </select>
+                    <select
+                      className="form-select input-underline"
+                      value={form.currency}
+                      onChange={(e) => {
+                        const { value } = e.target;
+                        setForm((prev) => ({
+                          ...prev,
+                          currency: value,
+                        }));
+                        clearInvalidField("currency", value);
+                      }}
+                      disabled={!canEdit}
+                    >
+                      <option value="USD">USD</option>
+                      <option value="ZWG">ZWG</option>
+                    </select>
+                  </ValidatedField>
                 </div>
                 <div className="col-md-6">
                   <label className="form-label fw-semibold">Expiration</label>

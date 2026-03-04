@@ -1,6 +1,7 @@
 ﻿import { useEffect, useState, useRef } from "react";
 import { apiFetch } from "../api";
 import { useCompanies, Company } from "../hooks/useCompanies";
+import ValidatedField from "../components/ValidatedField";
 import {
   getMissingRequiredFields,
   getRequiredFieldError,
@@ -499,26 +500,23 @@ export default function ProductsPage() {
                 </select>
               </div>
               <div className="input-group">
-                <label
-                  className={`input-label ${
-                    invalidFields.includes("name") ? "input-label-error" : ""
-                  }`}
+                <ValidatedField
+                  label="Product Name"
+                  className="input"
+                  isInvalid={invalidFields.includes("name")}
                 >
-                  Product Name
-                </label>
-                <input
-                  className={`input-field ${
-                    invalidFields.includes("name") ? "input-field-error" : ""
-                  }`}
-                  type="text"
-                  value={form.name}
-                  onChange={(e) => {
-                    setForm({ ...form, name: e.target.value });
-                    clearInvalidField("name", e.target.value);
-                  }}
-                  disabled={!isEditing}
-                  placeholder="Enter product name"
-                />
+                  <input
+                    className="input-field"
+                    type="text"
+                    value={form.name}
+                    onChange={(e) => {
+                      setForm({ ...form, name: e.target.value });
+                      clearInvalidField("name", e.target.value);
+                    }}
+                    disabled={!isEditing}
+                    placeholder="Enter product name"
+                  />
+                </ValidatedField>
               </div>
               <div className="input-group">
                 <label className="input-label">Category</label>
@@ -629,26 +627,23 @@ export default function ProductsPage() {
           {activeTab === "inventory" && (
             <div className="form-grid-pro">
               <div className="input-group">
-                <label
-                  className={`input-label ${
-                    invalidFields.includes("uom") ? "input-label-error" : ""
-                  }`}
+                <ValidatedField
+                  label="Unit of Measure"
+                  className="input"
+                  isInvalid={invalidFields.includes("uom")}
                 >
-                  Unit of Measure
-                </label>
-                <input
-                  className={`input-field ${
-                    invalidFields.includes("uom") ? "input-field-error" : ""
-                  }`}
-                  type="text"
-                  value={form.uom}
-                  onChange={(e) => {
-                    setForm({ ...form, uom: e.target.value });
-                    clearInvalidField("uom", e.target.value);
-                  }}
-                  disabled={!isEditing}
-                  placeholder="e.g., Units, KG, L"
-                />
+                  <input
+                    className="input-field"
+                    type="text"
+                    value={form.uom}
+                    onChange={(e) => {
+                      setForm({ ...form, uom: e.target.value });
+                      clearInvalidField("uom", e.target.value);
+                    }}
+                    disabled={!isEditing}
+                    placeholder="e.g., Units, KG, L"
+                  />
+                </ValidatedField>
               </div>
               <div className="input-group">
                 <label className="input-label">Weight</label>

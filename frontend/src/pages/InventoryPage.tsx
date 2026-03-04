@@ -4,6 +4,7 @@ import { apiFetch } from "../api";
 import { useMe } from "../hooks/useMe";
 import { useCompanies, Company } from "../hooks/useCompanies";
 import { Trash2 } from "lucide-react";
+import ValidatedField from "../components/ValidatedField";
 import {
   getMissingRequiredFields,
   getRequiredFieldError,
@@ -4014,22 +4015,13 @@ export default function InventoryPage() {
                       >
                         <div>
                           <div className="o-form-group">
-                            <label
-                              className={`o-form-label ${
-                                invalidMoveFields.includes("product")
-                                  ? "form-label-error"
-                                  : ""
-                              }`}
+                            <ValidatedField
+                              label="Product"
+                              className="o-form-field"
+                              isInvalid={invalidMoveFields.includes("product")}
                             >
-                              Product
-                            </label>
-                            <div className="o-form-field">
                               <select
-                                className={`o-form-select ${
-                                  invalidMoveFields.includes("product")
-                                    ? "input-field-error"
-                                    : ""
-                                }`}
+                                className="o-form-select"
                                 value={moveForm.product_id ?? ""}
                                 onChange={(e) => {
                                   const value = e.target.value
@@ -4054,7 +4046,7 @@ export default function InventoryPage() {
                                   </option>
                                 ))}
                               </select>
-                            </div>
+                            </ValidatedField>
                           </div>
 
                           <div className="o-form-group">
@@ -4083,22 +4075,13 @@ export default function InventoryPage() {
                           </div>
 
                           <div className="o-form-group">
-                            <label
-                              className={`o-form-label ${
-                                invalidMoveFields.includes("warehouse")
-                                  ? "form-label-error"
-                                  : ""
-                              }`}
+                            <ValidatedField
+                              label="Warehouse"
+                              className="o-form-field"
+                              isInvalid={invalidMoveFields.includes("warehouse")}
                             >
-                              Warehouse
-                            </label>
-                            <div className="o-form-field">
                               <select
-                                className={`o-form-select ${
-                                  invalidMoveFields.includes("warehouse")
-                                    ? "input-field-error"
-                                    : ""
-                                }`}
+                                className="o-form-select"
                                 value={moveForm.warehouse_id ?? ""}
                                 onChange={(e) => {
                                   const value = e.target.value
@@ -4120,26 +4103,17 @@ export default function InventoryPage() {
                                   </option>
                                 ))}
                               </select>
-                            </div>
+                            </ValidatedField>
                           </div>
 
                           <div className="o-form-group">
-                            <label
-                              className={`o-form-label ${
-                                invalidMoveFields.includes("location")
-                                  ? "form-label-error"
-                                  : ""
-                              }`}
+                            <ValidatedField
+                              label="Location"
+                              className="o-form-field"
+                              isInvalid={invalidMoveFields.includes("location")}
                             >
-                              Location
-                            </label>
-                            <div className="o-form-field">
                               <select
-                                className={`o-form-select ${
-                                  invalidMoveFields.includes("location")
-                                    ? "input-field-error"
-                                    : ""
-                                }`}
+                                className="o-form-select"
                                 value={moveForm.location_id ?? ""}
                                 onChange={(e) => {
                                   const value = e.target.value
@@ -4166,7 +4140,7 @@ export default function InventoryPage() {
                                     </option>
                                   ))}
                               </select>
-                            </div>
+                            </ValidatedField>
                           </div>
                         </div>
 
@@ -4324,23 +4298,14 @@ export default function InventoryPage() {
                     {selectedCategoryId ? "Edit Category" : "New Category"}
                   </h3>
                   <div className="o-form-group">
-                    <label
-                      className={`o-form-label ${
-                        invalidCategoryFields.includes("category_name")
-                          ? "form-label-error"
-                          : ""
-                      }`}
+                    <ValidatedField
+                      label="Name"
+                      className="o-form-field"
+                      isInvalid={invalidCategoryFields.includes("category_name")}
                     >
-                      Name
-                    </label>
-                    <div className="o-form-field">
                       <input
                         type="text"
-                        className={`o-form-input ${
-                          invalidCategoryFields.includes("category_name")
-                            ? "input-field-error"
-                            : ""
-                        }`}
+                        className="o-form-input"
                         value={categoryForm.name}
                         onChange={(e) => {
                           const { value } = e.target;
@@ -4352,7 +4317,7 @@ export default function InventoryPage() {
                         }}
                         autoFocus
                       />
-                    </div>
+                    </ValidatedField>
                   </div>
                   <div
                     style={{
@@ -4413,22 +4378,13 @@ export default function InventoryPage() {
                     {selectedLocationId ? "Edit Location" : "New Location"}
                   </h3>
                   <div className="o-form-group">
-                    <label
-                      className={`o-form-label ${
-                        invalidLocationFields.includes("warehouse")
-                          ? "form-label-error"
-                          : ""
-                      }`}
+                    <ValidatedField
+                      label="Warehouse"
+                      className="o-form-field"
+                      isInvalid={invalidLocationFields.includes("warehouse")}
                     >
-                      Warehouse
-                    </label>
-                    <div className="o-form-field">
                       <select
-                        className={`o-form-select ${
-                          invalidLocationFields.includes("warehouse")
-                            ? "input-field-error"
-                            : ""
-                        }`}
+                        className="o-form-select"
                         value={locationForm.warehouse_id ?? ""}
                         onChange={(e) => {
                           const value = e.target.value
@@ -4449,26 +4405,17 @@ export default function InventoryPage() {
                           </option>
                         ))}
                       </select>
-                    </div>
+                    </ValidatedField>
                   </div>
                   <div className="o-form-group">
-                    <label
-                      className={`o-form-label ${
-                        invalidLocationFields.includes("location_name")
-                          ? "form-label-error"
-                          : ""
-                      }`}
+                    <ValidatedField
+                      label="Name"
+                      className="o-form-field"
+                      isInvalid={invalidLocationFields.includes("location_name")}
                     >
-                      Name
-                    </label>
-                    <div className="o-form-field">
                       <input
                         type="text"
-                        className={`o-form-input ${
-                          invalidLocationFields.includes("location_name")
-                            ? "input-field-error"
-                            : ""
-                        }`}
+                        className="o-form-input"
                         value={locationForm.name}
                         onChange={(e) => {
                           const { value } = e.target;
@@ -4480,7 +4427,7 @@ export default function InventoryPage() {
                         }}
                         placeholder="e.g., Shelf A-1"
                       />
-                    </div>
+                    </ValidatedField>
                   </div>
                   <div className="o-form-group">
                     <label className="o-form-label">Code</label>
