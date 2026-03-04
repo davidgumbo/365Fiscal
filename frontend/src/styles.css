@@ -8864,9 +8864,10 @@ button.danger:not(.icon-btn):not(.device-icon-btn):disabled {
 }
 .pos-topbar-brand {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  /* flex-direction: column; */
+  gap: 8px;
   margin: 0 1rem;
+  justify-items: center;
 }
 
 .pos-topbar-center {
