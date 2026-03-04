@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { apiFetch } from "../api";
 import { useMe } from "../hooks/useMe";
 import { useCompanies, Company } from "../hooks/useCompanies";
+import ValidationAlert from "../components/ValidationAlert";
 import {
   getDocumentLinesError,
   getMissingRequiredFields,
@@ -833,14 +834,7 @@ export default function PurchasesPage({
         </div>
       </div>
 
-      {error && (
-        <div className="alert alert-error" style={{ marginBottom: 16 }}>
-          {error}
-          <button onClick={() => setError(null)} style={{ marginLeft: 8 }}>
-            ×
-          </button>
-        </div>
-      )}
+      <ValidationAlert message={error} onClose={() => setError(null)} />
 
       {mode === "list" && (
         <>

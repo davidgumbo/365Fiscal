@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { apiFetch, apiRequest } from "../api";
 import { useMe } from "../hooks/useMe";
 import { useCompanies, Company } from "../hooks/useCompanies";
+import ValidationAlert from "../components/ValidationAlert";
 import {
   getMissingRequiredFields,
   getRequiredFieldError,
@@ -559,12 +560,7 @@ export default function ExpensesPage() {
         </div>
       )}
 
-      {error && (
-        <div className="alert alert-danger alert-dismissible fade show" role="alert" style={{ margin: "8px 16px" }}>
-          {error}
-          <button type="button" className="btn-close" onClick={() => setError(null)} />
-        </div>
-      )}
+      <ValidationAlert message={error} onClose={() => setError(null)} />
 
       <div className="page-container" style={{ display: "flex", gap: 0, flexWrap: "nowrap" }}>
         <div id="main-content" className="two-panel two-panel-left">
