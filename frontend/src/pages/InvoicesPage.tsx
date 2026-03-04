@@ -5,6 +5,7 @@ import { apiFetch } from "../api";
 import { useMe } from "../hooks/useMe";
 import { useCompanies, Company } from "../hooks/useCompanies";
 import ValidationAlert from "../components/ValidationAlert";
+import ValidatedField from "../components/ValidatedField";
 import {
   getDocumentLinesError,
   getMissingRequiredFields,
@@ -1207,7 +1208,9 @@ export default function InvoicesPage({
     displayLineStart,
     displayLineStart + linesPerPage,
   );
-  const visibleLineStart = activeLineCount ? (linesPage - 1) * linesPerPage + 1 : 0;
+  const visibleLineStart = activeLineCount
+    ? (linesPage - 1) * linesPerPage + 1
+    : 0;
   const visibleLineEnd = Math.min(linesPage * linesPerPage, activeLineCount);
 
   useEffect(() => {
@@ -2504,7 +2507,8 @@ export default function InvoicesPage({
                 </div>
                 <div className="d-flex justify-content-between align-items-center mb-2">
                   <small className="text-muted">
-                    Showing {visibleLineStart}-{visibleLineEnd} of {activeLineCount}
+                    Showing {visibleLineStart}-{visibleLineEnd} of{" "}
+                    {activeLineCount}
                   </small>
                   <div className="d-flex align-items-center gap-2">
                     <select
@@ -2522,7 +2526,9 @@ export default function InvoicesPage({
                     </select>
                     <button
                       className="btn btn-sm btn-light border"
-                      onClick={() => setLinesPage((prev) => Math.max(1, prev - 1))}
+                      onClick={() =>
+                        setLinesPage((prev) => Math.max(1, prev - 1))
+                      }
                       disabled={linesPage <= 1}
                     >
                       Prev
@@ -2745,7 +2751,7 @@ export default function InvoicesPage({
 
                 {/* Fields */}
                 <div className="row g-3 mb-4">
-                <div className="col-md-4">
+                  <div className="col-md-4">
                     <label
                       className={`form-label ${
                         invalidFields.includes("editCustomer")
@@ -3055,7 +3061,8 @@ export default function InvoicesPage({
                 </div>
                 <div className="d-flex justify-content-between align-items-center mb-2">
                   <small className="text-muted">
-                    Showing {visibleLineStart}-{visibleLineEnd} of {activeLineCount}
+                    Showing {visibleLineStart}-{visibleLineEnd} of{" "}
+                    {activeLineCount}
                   </small>
                   <div className="d-flex align-items-center gap-2">
                     <select
@@ -3073,7 +3080,9 @@ export default function InvoicesPage({
                     </select>
                     <button
                       className="btn btn-sm btn-light border"
-                      onClick={() => setLinesPage((prev) => Math.max(1, prev - 1))}
+                      onClick={() =>
+                        setLinesPage((prev) => Math.max(1, prev - 1))
+                      }
                       disabled={linesPage <= 1}
                     >
                       Prev
