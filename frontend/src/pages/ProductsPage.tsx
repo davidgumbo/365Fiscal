@@ -1,7 +1,10 @@
 ﻿import { useEffect, useState, useRef } from "react";
 import { apiFetch } from "../api";
 import { useCompanies, Company } from "../hooks/useCompanies";
-import { getRequiredFieldError } from "../utils/formValidation";
+import {
+  getMissingRequiredFields,
+  getRequiredFieldError,
+} from "../utils/formValidation";
 
 type Product = {
   id: number;
@@ -80,6 +83,7 @@ export default function ProductsPage() {
   const [productImageUrl, setProductImageUrl] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const [invalidFields, setInvalidFields] = useState<string[]>([]);
 
   useEffect(() => {
     if (companies.length && companyId === null) {
@@ -132,6 +136,29 @@ export default function ProductsPage() {
     }
   }, [companyId]);
 
+  const clearInvalidField = (key: string, value: unknown) => {
+    if (!invalidFields.includes(key)) return;
+    if (value === null || value === undefined) return;
+    if (typeof value === "string" && value.trim().length === 0) return;
+    setInvalidFields((prev) => prev.filter((field) => field !== key));
+  };
+
+  const validateProductRequiredFields = (): boolean => {
+    const requiredFields = [
+      { key: "name", label: "Product name", value: form.name },
+      { key: "uom", label: "Unit of measure", value: form.uom },
+    ];
+    const missingFields = getMissingRequiredFields(requiredFields);
+    if (missingFields.length) {
+      const message = getRequiredFieldError(requiredFields);
+      if (message) alert(message);
+      setInvalidFields(missingFields.map((field) => field.key));
+      return false;
+    }
+    setInvalidFields([]);
+    return true;
+  };
+
   const emptyForm = () => ({
     name: "",
     category_id: null as number | null,
@@ -158,14 +185,7 @@ export default function ProductsPage() {
 
   const createProduct = async () => {
     if (!companyId) return;
-    const requiredError = getRequiredFieldError([
-      { label: "Product name", value: form.name },
-      { label: "Unit of measure", value: form.uom },
-    ]);
-    if (requiredError) {
-      alert(requiredError);
-      return;
-    }
+    if (!validateProductRequiredFields()) return;
     if (Number(form.sale_price) < 0) {
       alert("Sale price cannot be negative.");
       return;
@@ -184,14 +204,7 @@ export default function ProductsPage() {
 
   const updateProduct = async () => {
     if (!selectedProductId) return;
-    const requiredError = getRequiredFieldError([
-      { label: "Product name", value: form.name },
-      { label: "Unit of measure", value: form.uom },
-    ]);
-    if (requiredError) {
-      alert(requiredError);
-      return;
-    }
+    if (!validateProductRequiredFields()) return;
     if (Number(form.sale_price) < 0) {
       alert("Sale price cannot be negative.");
       return;
@@ -213,6 +226,7 @@ export default function ProductsPage() {
     setProductImageUrl("");
     setForm(emptyForm());
     setIsEditing(true);
+    setInvalidFields([]);
   };
 
   const selectProduct = (product: Product) => {
@@ -241,6 +255,7 @@ export default function ProductsPage() {
       can_be_sold: product.can_be_sold ?? true,
       can_be_purchased: product.can_be_purchased ?? true,
     });
+    setInvalidFields([]);
     setIsEditing(false);
   };
 
@@ -484,12 +499,23 @@ export default function ProductsPage() {
                 </select>
               </div>
               <div className="input-group">
-                <label className="input-label">Product Name</label>
+                <label
+                  className={`input-label ${
+                    invalidFields.includes("name") ? "input-label-error" : ""
+                  }`}
+                >
+                  Product Name
+                </label>
                 <input
-                  className="input-field"
+                  className={`input-field ${
+                    invalidFields.includes("name") ? "input-field-error" : ""
+                  }`}
                   type="text"
                   value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  onChange={(e) => {
+                    setForm({ ...form, name: e.target.value });
+                    clearInvalidField("name", e.target.value);
+                  }}
                   disabled={!isEditing}
                   placeholder="Enter product name"
                 />
@@ -603,12 +629,23 @@ export default function ProductsPage() {
           {activeTab === "inventory" && (
             <div className="form-grid-pro">
               <div className="input-group">
-                <label className="input-label">Unit of Measure</label>
+                <label
+                  className={`input-label ${
+                    invalidFields.includes("uom") ? "input-label-error" : ""
+                  }`}
+                >
+                  Unit of Measure
+                </label>
                 <input
-                  className="input-field"
+                  className={`input-field ${
+                    invalidFields.includes("uom") ? "input-field-error" : ""
+                  }`}
                   type="text"
                   value={form.uom}
-                  onChange={(e) => setForm({ ...form, uom: e.target.value })}
+                  onChange={(e) => {
+                    setForm({ ...form, uom: e.target.value });
+                    clearInvalidField("uom", e.target.value);
+                  }}
                   disabled={!isEditing}
                   placeholder="e.g., Units, KG, L"
                 />

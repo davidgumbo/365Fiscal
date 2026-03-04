@@ -3,7 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { apiFetch, apiRequest } from "../api";
 import { useMe } from "../hooks/useMe";
 import { useCompanies, Company } from "../hooks/useCompanies";
-import { getRequiredFieldError } from "../utils/formValidation";
+import {
+  getMissingRequiredFields,
+  getRequiredFieldError,
+} from "../utils/formValidation";
 
 type Contact = {
   id: number;
@@ -124,6 +127,7 @@ export default function ExpensesPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [isNew, setIsNew] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [invalidFields, setInvalidFields] = useState<string[]>([]);
 
   /* ── Category modal ── */
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -278,6 +282,7 @@ export default function ExpensesPage() {
     setIsNew(true);
     setIsEditing(true);
     setSubView("form");
+    setInvalidFields([]);
   };
 
   const openExpense = (id: number) => {
@@ -285,6 +290,7 @@ export default function ExpensesPage() {
     setIsNew(false);
     setIsEditing(false);
     setSubView("form");
+    setInvalidFields([]);
   };
 
   const goBack = () => {
@@ -293,21 +299,41 @@ export default function ExpensesPage() {
     setIsNew(false);
     setIsEditing(false);
     setForm(emptyForm);
+    setInvalidFields([]);
+  };
+
+  const clearInvalidField = (key: string, value: unknown) => {
+    if (!invalidFields.includes(key)) return;
+    if (value === null || value === undefined) return;
+    if (typeof value === "string" && value.trim().length === 0) return;
+    setInvalidFields((prev) => prev.filter((field) => field !== key));
+  };
+
+  const validateExpenseRequiredFields = (): boolean => {
+    const requiredFields = [
+      { key: "expense_date", label: "Expense date", value: form.expense_date },
+      { key: "category", label: "Category", value: form.category },
+      { key: "description", label: "Description", value: form.description },
+      { key: "currency", label: "Currency", value: form.currency },
+      { key: "status", label: "Status", value: form.status },
+    ];
+    const missingFields = getMissingRequiredFields(requiredFields);
+    if (missingFields.length) {
+      const message = getRequiredFieldError(requiredFields);
+      if (message) {
+        alert(message);
+        setError(message);
+      }
+      setInvalidFields(missingFields.map((field) => field.key));
+      return false;
+    }
+    setInvalidFields([]);
+    return true;
   };
 
   const saveExpense = async () => {
     if (!companyId) return;
-    const requiredError = getRequiredFieldError([
-      { label: "Expense date", value: form.expense_date },
-      { label: "Category", value: form.category },
-      { label: "Description", value: form.description },
-      { label: "Currency", value: form.currency },
-      { label: "Status", value: form.status },
-    ]);
-    if (requiredError) {
-      setError(requiredError);
-      return;
-    }
+    if (!validateExpenseRequiredFields()) return;
     if (Number(form.subtotal) <= 0) {
       setError("Subtotal must be greater than 0.");
       return;
@@ -861,8 +887,33 @@ export default function ExpensesPage() {
                     <div className="card-body invoice-form">
                       <div className="row g-3">
                         <div className="col-md-6">
-                          <label className="form-label fw-semibold">Date</label>
-                          <input className="form-control input-underline" type="date" value={form.expense_date} onChange={(e) => setForm((p) => ({ ...p, expense_date: e.target.value }))} disabled={!isEditing} />
+                          <label
+                            className={`form-label fw-semibold ${
+                              invalidFields.includes("expense_date")
+                                ? "form-label-error"
+                                : ""
+                            }`}
+                          >
+                            Date
+                          </label>
+                          <input
+                            className={`form-control input-underline ${
+                              invalidFields.includes("expense_date")
+                                ? "input-field-error"
+                                : ""
+                            }`}
+                            type="date"
+                            value={form.expense_date}
+                            onChange={(e) => {
+                              const { value } = e.target;
+                              setForm((p) => ({
+                                ...p,
+                                expense_date: value,
+                              }));
+                              clearInvalidField("expense_date", value);
+                            }}
+                            disabled={!isEditing}
+                          />
                         </div>
                         <div className="col-md-6">
                           <label className="form-label fw-semibold">Reference</label>
@@ -876,8 +927,29 @@ export default function ExpensesPage() {
                           </select>
                         </div>
                         <div className="col-md-6">
-                          <label className="form-label fw-semibold">Category</label>
-                          <select className="form-select input-underline" value={form.category || ""} onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))} disabled={!isEditing}>
+                          <label
+                            className={`form-label fw-semibold ${
+                              invalidFields.includes("category")
+                                ? "form-label-error"
+                                : ""
+                            }`}
+                          >
+                            Category
+                          </label>
+                          <select
+                            className={`form-select input-underline ${
+                              invalidFields.includes("category")
+                                ? "input-field-error"
+                                : ""
+                            }`}
+                            value={form.category || ""}
+                            onChange={(e) => {
+                              const { value } = e.target;
+                              setForm((p) => ({ ...p, category: value }));
+                              clearInvalidField("category", value);
+                            }}
+                            disabled={!isEditing}
+                          >
                             <option value="">— Select Category —</option>
                             {categories.slice().sort((a, b) => a.name.localeCompare(b.name)).map((c) => (
                               <option key={c.id} value={c.name}>{c.name}</option>
@@ -886,19 +958,83 @@ export default function ExpensesPage() {
                         </div>
 
                         <div className="col-md-3">
-                          <label className="form-label">Status</label>
-                          <select className="form-select input-underline" value={form.status} onChange={(e) => setForm((p) => ({ ...p, status: e.target.value }))} disabled={!isEditing}>
+                          <label
+                            className={`form-label ${
+                              invalidFields.includes("status")
+                                ? "form-label-error"
+                                : ""
+                            }`}
+                          >
+                            Status
+                          </label>
+                          <select
+                            className={`form-select input-underline ${
+                              invalidFields.includes("status")
+                                ? "input-field-error"
+                                : ""
+                            }`}
+                            value={form.status}
+                            onChange={(e) => {
+                              const { value } = e.target;
+                              setForm((p) => ({ ...p, status: value }));
+                              clearInvalidField("status", value);
+                            }}
+                            disabled={!isEditing}
+                          >
                             <option value="posted">Posted</option>
                             <option value="draft">Draft</option>
                           </select>
                         </div>
                         <div className="col-md-3">
-                          <label className="form-label">Currency</label>
-                          <input className="form-control input-underline" value={form.currency} onChange={(e) => setForm((p) => ({ ...p, currency: e.target.value }))} disabled={!isEditing} />
+                          <label
+                            className={`form-label ${
+                              invalidFields.includes("currency")
+                                ? "form-label-error"
+                                : ""
+                            }`}
+                          >
+                            Currency
+                          </label>
+                          <input
+                            className={`form-control input-underline ${
+                              invalidFields.includes("currency")
+                                ? "input-field-error"
+                                : ""
+                            }`}
+                            value={form.currency}
+                            onChange={(e) => {
+                              const { value } = e.target;
+                              setForm((p) => ({ ...p, currency: value }));
+                              clearInvalidField("currency", value);
+                            }}
+                            disabled={!isEditing}
+                          />
                         </div>
                         <div className="col-md-6">
-                          <label className="form-label fw-semibold">Description</label>
-                          <input className="form-control input-underline" value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} placeholder="What was the expense for?" disabled={!isEditing} />
+                          <label
+                            className={`form-label fw-semibold ${
+                              invalidFields.includes("description")
+                                ? "form-label-error"
+                                : ""
+                            }`}
+                          >
+                            Description
+                          </label>
+                          <input
+                            className={`form-control input-underline ${
+                              invalidFields.includes("description")
+                                ? "input-field-error"
+                                : ""
+                            }`}
+                            value={form.description}
+                            onChange={(e) => {
+                              const { value } = e.target;
+                              setForm((p) => ({ ...p, description: value }));
+                              clearInvalidField("description", value);
+                            }}
+                            placeholder="What was the expense for?"
+                            disabled={!isEditing}
+                          />
                         </div>
 
                         <div className="col-12"><hr className="my-1" /></div>

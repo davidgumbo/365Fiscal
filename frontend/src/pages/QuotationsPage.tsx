@@ -6,6 +6,7 @@ import { useMe } from "../hooks/useMe";
 import { useCompanies, Company } from "../hooks/useCompanies";
 import {
   getDocumentLinesError,
+  getMissingRequiredFields,
   getRequiredFieldError,
 } from "../utils/formValidation";
 
@@ -150,6 +151,7 @@ export default function QuotationsPage({
     currency: "USD",
   });
   const [lines, setLines] = useState<QuotationLine[]>([emptyLine()]);
+  const [invalidFields, setInvalidFields] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
   // Portal users auto-select their first company
@@ -292,17 +294,35 @@ export default function QuotationsPage({
     setIsEditing(true);
   };
 
+  const clearInvalidField = (key: string, value: unknown) => {
+    if (!invalidFields.includes(key)) return;
+    if (value === null || value === undefined) return;
+    if (typeof value === "string" && value.trim().length === 0) return;
+    setInvalidFields((prev) => prev.filter((field) => field !== key));
+  };
+
+  const validateQuotationRequiredFields = (): boolean => {
+    const requiredFields = [
+      { key: "customer", label: "Customer", value: form.customer_id },
+      { key: "currency", label: "Currency", value: form.currency },
+    ];
+    const missingFields = getMissingRequiredFields(requiredFields);
+    if (missingFields.length) {
+      const message = getRequiredFieldError(requiredFields);
+      if (message) alert(message);
+      setInvalidFields(missingFields.map((field) => field.key));
+      return false;
+    }
+    setInvalidFields([]);
+    return true;
+  };
+
   const saveQuotation = async () => {
     if (!companyId) {
       alert("Please select a company first.");
       return;
     }
-    const requiredError = getRequiredFieldError([
-      { label: "Customer", value: form.customer_id },
-      { label: "Currency", value: form.currency },
-    ]);
-    if (requiredError) {
-      alert(requiredError);
+    if (!validateQuotationRequiredFields()) {
       return;
     }
     const linesError = getDocumentLinesError(lines);
@@ -1325,16 +1345,32 @@ export default function QuotationsPage({
                   </select>
                 </div>
                 <div className="col-md-6">
-                  <label className="form-label fw-semibold">Customer</label>
+                  <label
+                    className={`form-label fw-semibold ${
+                      invalidFields.includes("customer")
+                        ? "form-label-error"
+                        : ""
+                    }`}
+                  >
+                    Customer
+                  </label>
                   <select
-                    className="form-select input-underline"
+                    className={`form-select input-underline ${
+                      invalidFields.includes("customer")
+                        ? "input-field-error"
+                        : ""
+                    }`}
                     value={form.customer_id ?? ""}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const customerId = e.target.value
+                        ? Number(e.target.value)
+                        : null;
                       setForm((prev) => ({
                         ...prev,
-                        customer_id: Number(e.target.value),
-                      }))
-                    }
+                        customer_id: customerId,
+                      }));
+                      clearInvalidField("customer", customerId);
+                    }}
                     disabled={!canEdit}
                   >
                     {contacts.map((c) => (
@@ -1361,16 +1397,30 @@ export default function QuotationsPage({
                   />
                 </div>
                 <div className="col-md-6">
-                  <label className="form-label fw-semibold">Currency</label>
+                  <label
+                    className={`form-label fw-semibold ${
+                      invalidFields.includes("currency")
+                        ? "form-label-error"
+                        : ""
+                    }`}
+                  >
+                    Currency
+                  </label>
                   <select
-                    className="form-select input-underline"
+                    className={`form-select input-underline ${
+                      invalidFields.includes("currency")
+                        ? "input-field-error"
+                        : ""
+                    }`}
                     value={form.currency}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const { value } = e.target;
                       setForm((prev) => ({
                         ...prev,
-                        currency: e.target.value,
-                      }))
-                    }
+                        currency: value,
+                      }));
+                      clearInvalidField("currency", value);
+                    }}
                     disabled={!canEdit}
                   >
                     <option value="USD">USD</option>

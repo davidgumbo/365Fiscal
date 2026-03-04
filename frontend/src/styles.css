@@ -1380,6 +1380,17 @@ thead.table-light th {
   font-size: 1rem;
 }
 
+.input.input-error {
+  color: var(--red-600);
+}
+
+.input.input-error input,
+.input.input-error select,
+.input.input-error textarea {
+  border-color: var(--red-500);
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.35);
+}
+
 .inline-input {
   display: flex;
   align-items: center;
@@ -2522,6 +2533,19 @@ thead.table-light th {
   background: var(--slate-50);
   cursor: not-allowed;
   opacity: 0.7;
+}
+
+.input-label-error,
+.form-label-error {
+  color: var(--red-600);
+}
+
+.input-field-error,
+.form-control.input-field-error,
+.form-select.input-field-error,
+.input-underline.input-field-error {
+  border-color: var(--red-500);
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.35);
 }
 
 .login-btn {

@@ -4,11 +4,22 @@ export const isBlank = (value: unknown): boolean => {
   return false;
 };
 
+export type RequiredField = {
+  key: string;
+  label: string;
+  value: unknown;
+};
+
+export const getMissingRequiredFields = (fields: RequiredField[]): RequiredField[] =>
+  fields.filter((field) => isBlank(field.value));
+
 export const getRequiredFieldError = (
-  fields: Array<{ label: string; value: unknown }>,
+  fields: RequiredField[],
 ): string | null => {
-  const missing = fields.find((field) => isBlank(field.value));
-  return missing ? `${missing.label} is required.` : null;
+  const missing = getMissingRequiredFields(fields);
+  if (!missing.length) return null;
+  const list = missing.map((field) => `• ${field.label}`).join("\n");
+  return `Please fill in the following required fields:\n${list}`;
 };
 
 export type ValidatedLine = {

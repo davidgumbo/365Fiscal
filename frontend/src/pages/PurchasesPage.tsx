@@ -6,6 +6,7 @@ import { useMe } from "../hooks/useMe";
 import { useCompanies, Company } from "../hooks/useCompanies";
 import {
   getDocumentLinesError,
+  getMissingRequiredFields,
   getRequiredFieldError,
 } from "../utils/formValidation";
 
@@ -188,6 +189,7 @@ export default function PurchasesPage({
     location_id: null as number | null,
   });
   const [lines, setLines] = useState<PurchaseOrderLine[]>([emptyLine()]);
+  const [invalidFields, setInvalidFields] = useState<string[]>([]);
 
   const currencySymbol = companySettings?.currency_symbol || "$";
 
@@ -271,6 +273,7 @@ export default function PurchasesPage({
       warehouse_id: selectedOrder.warehouse_id,
       location_id: selectedOrder.location_id,
     });
+    setInvalidFields([]);
     setLines(
       selectedOrder.lines?.length
         ? selectedOrder.lines.map((line) => {
@@ -302,6 +305,7 @@ export default function PurchasesPage({
     });
     setLines([emptyLine()]);
     setIsEditing(true);
+    setInvalidFields([]);
   };
 
   const updateLine = (index: number, updates: Partial<PurchaseOrderLine>) => {
@@ -511,18 +515,38 @@ export default function PurchasesPage({
       });
   };
 
+  const clearInvalidField = (key: string, value: unknown) => {
+    if (!invalidFields.includes(key)) return;
+    if (value === null || value === undefined) return;
+    if (typeof value === "string" && value.trim().length === 0) return;
+    setInvalidFields((prev) => prev.filter((field) => field !== key));
+  };
+
+  const validatePurchaseRequiredFields = (): boolean => {
+    const requiredFields = [
+      { key: "supplier", label: "Supplier", value: form.supplier_id },
+      { key: "order_date", label: "Order date", value: form.order_date },
+      { key: "currency", label: "Currency", value: form.currency },
+    ];
+    const missingFields = getMissingRequiredFields(requiredFields);
+    if (missingFields.length) {
+      const message = getRequiredFieldError(requiredFields);
+      if (message) {
+        setError(message);
+      }
+      setInvalidFields(missingFields.map((field) => field.key));
+      return false;
+    }
+    setInvalidFields([]);
+    return true;
+  };
+
   const saveOrder = async () => {
     if (!companyId) {
       setError("Please select a company first.");
       return;
     }
-    const requiredError = getRequiredFieldError([
-      { label: "Supplier", value: form.supplier_id },
-      { label: "Order date", value: form.order_date },
-      { label: "Currency", value: form.currency },
-    ]);
-    if (requiredError) {
-      setError(requiredError);
+    if (!validatePurchaseRequiredFields()) {
       return;
     }
     const linesError = getDocumentLinesError(lines);
@@ -1357,16 +1381,28 @@ export default function PurchasesPage({
 
             <div className="row g-3 mb-4">
               <div className="col-md-6">
-                <label className="form-label ">Supplier</label>
+                <label
+                  className={`form-label ${
+                    invalidFields.includes("supplier") ? "form-label-error" : ""
+                  }`}
+                >
+                  Supplier
+                </label>
                 <select
-                  className="form-select input-underline"
+                  className={`form-select input-underline ${
+                    invalidFields.includes("supplier")
+                      ? "input-field-error"
+                      : ""
+                  }`}
                   value={form.supplier_id ?? ""}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const supplierId = Number(e.target.value) || null;
                     setForm((prev) => ({
                       ...prev,
-                      supplier_id: Number(e.target.value) || null,
-                    }))
-                  }
+                      supplier_id: supplierId,
+                    }));
+                    clearInvalidField("supplier", supplierId);
+                  }}
                   disabled={!canEdit}
                 >
                   <option value="">Select supplier</option>
@@ -1378,14 +1414,28 @@ export default function PurchasesPage({
                 </select>
               </div>
               <div className="col-md-6">
-                <label className="form-label ">Order Date</label>
+                <label
+                  className={`form-label ${
+                    invalidFields.includes("order_date")
+                      ? "form-label-error"
+                      : ""
+                  }`}
+                >
+                  Order Date
+                </label>
                 <input
                   type="date"
-                  className="form-control input-underline"
+                  className={`form-control input-underline ${
+                    invalidFields.includes("order_date")
+                      ? "input-field-error"
+                      : ""
+                  }`}
                   value={form.order_date}
-                  onChange={(e) =>
-                    setForm((prev) => ({ ...prev, order_date: e.target.value }))
-                  }
+                  onChange={(e) => {
+                    const { value } = e.target;
+                    setForm((prev) => ({ ...prev, order_date: value }));
+                    clearInvalidField("order_date", value);
+                  }}
                   disabled={!canEdit}
                 />
               </div>
@@ -1447,13 +1497,25 @@ export default function PurchasesPage({
                 </select>
               </div>
               <div className="col-md-6">
-                <label className="form-label">Currency</label>
+                <label
+                  className={`form-label ${
+                    invalidFields.includes("currency") ? "form-label-error" : ""
+                  }`}
+                >
+                  Currency
+                </label>
                 <input
-                  className="form-control input-underline"
+                  className={`form-control input-underline ${
+                    invalidFields.includes("currency")
+                      ? "input-field-error"
+                      : ""
+                  }`}
                   value={form.currency}
-                  onChange={(e) =>
-                    setForm((prev) => ({ ...prev, currency: e.target.value }))
-                  }
+                  onChange={(e) => {
+                    const { value } = e.target;
+                    setForm((prev) => ({ ...prev, currency: value }));
+                    clearInvalidField("currency", value);
+                  }}
                   disabled={!canEdit}
                 />
               </div>

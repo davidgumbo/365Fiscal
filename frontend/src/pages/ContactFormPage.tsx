@@ -2,7 +2,10 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiFetch } from "../api";
 import { useCompanies, Company } from "../hooks/useCompanies";
-import { getRequiredFieldError } from "../utils/formValidation";
+import {
+  getMissingRequiredFields,
+  getRequiredFieldError,
+} from "../utils/formValidation";
 
 type Contact = {
   id: number;
@@ -47,6 +50,7 @@ export default function ContactFormPage() {
   const [tags, setTags] = useState<string[]>([]);
   const [notFound, setNotFound] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [invalidFields, setInvalidFields] = useState<string[]>([]);
 
   useEffect(() => {
     if (companies.length && companyId === null) {
@@ -73,6 +77,7 @@ export default function ContactFormPage() {
     setCountry("");
     setTags((contact.reference || "").split(",").map((t) => t.trim()).filter(Boolean));
     setIsEditing(true);
+    setInvalidFields([]);
   };
 
   useEffect(() => {
@@ -102,18 +107,37 @@ export default function ContactFormPage() {
       .join("\n");
   };
 
+  const clearInvalidField = (key: string, value: unknown) => {
+    if (!invalidFields.includes(key)) return;
+    if (value === null || value === undefined) return;
+    if (typeof value === "string" && value.trim().length === 0) return;
+    setInvalidFields((prev) => prev.filter((field) => field !== key));
+  };
+
+  const validateContactRequiredFields = (): boolean => {
+    const requiredFields = [{ key: "name", label: "Name", value: form.name }];
+    const missingFields = getMissingRequiredFields(requiredFields);
+    if (missingFields.length) {
+      const message = getRequiredFieldError(requiredFields);
+      if (message) alert(message);
+      setInvalidFields(missingFields.map((field) => field.key));
+      return false;
+    }
+    setInvalidFields([]);
+    return true;
+  };
+
+  const handleNameInput = (value: string) => {
+    setForm((prev) => ({ ...prev, name: value }));
+    clearInvalidField("name", value);
+  };
+
   const createContact = async () => {
     if (!companyId) {
       alert("Please select a company first.");
       return;
     }
-    const requiredError = getRequiredFieldError([
-      { label: "Name", value: form.name },
-    ]);
-    if (requiredError) {
-      alert(requiredError);
-      return;
-    }
+    if (!validateContactRequiredFields()) return;
     const created = await apiFetch<Contact>("/contacts", {
       method: "POST",
       body: JSON.stringify({
@@ -134,13 +158,7 @@ export default function ContactFormPage() {
       alert("Please select a company first.");
       return;
     }
-    const requiredError = getRequiredFieldError([
-      { label: "Name", value: form.name },
-    ]);
-    if (requiredError) {
-      alert(requiredError);
-      return;
-    }
+    if (!validateContactRequiredFields()) return;
     await apiFetch<Contact>(`/contacts/${selectedContactId}`, {
       method: "PUT",
       body: JSON.stringify({
@@ -160,6 +178,7 @@ export default function ContactFormPage() {
     setZip("");
     setCountry("");
     setTags([]);
+    setInvalidFields([]);
   };
 
   useEffect(() => {
@@ -233,10 +252,20 @@ export default function ContactFormPage() {
                     <option value="individual">Individual</option>
                   </select>
                 </label>
-                <label className="input">
-                  Display Name
-                  <input className="input-underline" type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} disabled={!isEditing} />
-                </label>
+              <label
+                className={`input ${invalidFields.includes("name") ? "input-error" : ""}`}
+              >
+                Display Name
+                <input
+                  className={`input-underline ${
+                    invalidFields.includes("name") ? "input-field-error" : ""
+                  }`}
+                  type="text"
+                  value={form.name}
+                  onChange={(e) => handleNameInput(e.target.value)}
+                  disabled={!isEditing}
+                />
+              </label>
                 <label className="input">
                   Phone
                   <input className="input-underline" type="text" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} disabled={!isEditing} />

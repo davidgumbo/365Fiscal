@@ -6,6 +6,7 @@ import { useMe } from "../hooks/useMe";
 import { useCompanies, Company } from "../hooks/useCompanies";
 import {
   getDocumentLinesError,
+  getMissingRequiredFields,
   getRequiredFieldError,
 } from "../utils/formValidation";
 
@@ -440,6 +441,7 @@ export default function InvoicesPage({
   const [editLines, setEditLines] = useState<Partial<InvoiceLine>[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [invalidFields, setInvalidFields] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [listSearch, setListSearch] = useState("");
   const [listStatus, setListStatus] = useState("");
@@ -518,12 +520,58 @@ export default function InvoicesPage({
   const displayQuotations = quotationSearch.trim()
     ? filteredQuotations
     : topQuotations;
+  const clearInvalidField = (key: string, value: unknown) => {
+    if (!invalidFields.includes(key)) return;
+    if (value === null || value === undefined) return;
+    if (typeof value === "string" && value.trim().length === 0) return;
+    setInvalidFields((prev) => prev.filter((field) => field !== key));
+  };
+
+  const validateNewInvoiceRequiredFields = (): boolean => {
+    const requiredFields = [
+      { key: "newCustomer", label: "Customer", value: newCustomerId },
+      { key: "newCurrency", label: "Currency", value: newCurrency },
+    ];
+    const missingFields = getMissingRequiredFields(requiredFields);
+    if (missingFields.length) {
+      const message = getRequiredFieldError(requiredFields);
+      if (message) {
+        alert(message);
+        setError(message);
+      }
+      setInvalidFields(missingFields.map((field) => field.key));
+      return false;
+    }
+    setInvalidFields([]);
+    return true;
+  };
+
+  const validateEditInvoiceRequiredFields = (): boolean => {
+    const requiredFields = [
+      { key: "editCustomer", label: "Customer", value: editCustomerId },
+      { key: "editCurrency", label: "Currency", value: editCurrency },
+    ];
+    const missingFields = getMissingRequiredFields(requiredFields);
+    if (missingFields.length) {
+      const message = getRequiredFieldError(requiredFields);
+      if (message) {
+        alert(message);
+        setError(message);
+      }
+      setInvalidFields(missingFields.map((field) => field.key));
+      return false;
+    }
+    setInvalidFields([]);
+    return true;
+  };
 
   const selectCustomer = (id: number, name: string, mode: "new" | "edit") => {
     if (mode === "new") {
       setNewCustomerId(id);
+      clearInvalidField("newCustomer", id);
     } else {
       setEditCustomerId(id);
+      clearInvalidField("editCustomer", id);
     }
     setCustomerSearch(name);
     setCustomerDropdownOpen(false);
@@ -871,16 +919,12 @@ export default function InvoicesPage({
         vat_rate: 0,
       },
     ]);
+    setInvalidFields([]);
   };
 
   const createInvoice = async () => {
     if (!companyId) return;
-    const requiredError = getRequiredFieldError([
-      { label: "Customer", value: newCustomerId },
-      { label: "Currency", value: newCurrency },
-    ]);
-    if (requiredError) {
-      setError(requiredError);
+    if (!validateNewInvoiceRequiredFields()) {
       return;
     }
     const linesError = getDocumentLinesError(editLines);
@@ -931,12 +975,7 @@ export default function InvoicesPage({
 
   const saveInvoice = async () => {
     if (!selectedInvoiceId) return;
-    const requiredError = getRequiredFieldError([
-      { label: "Customer", value: editCustomerId },
-      { label: "Currency", value: editCurrency },
-    ]);
-    if (requiredError) {
-      setError(requiredError);
+    if (!validateEditInvoiceRequiredFields()) {
       return;
     }
     const linesError = getDocumentLinesError(editLines);
@@ -2229,7 +2268,13 @@ export default function InvoicesPage({
               <div className="card-body invoice-form">
                 <div className="row g-3">
                   <div className="col-md-6">
-                    <label className="form-label ">
+                    <label
+                      className={`form-label ${
+                        invalidFields.includes("newCustomer")
+                          ? "form-label-error"
+                          : ""
+                      }`}
+                    >
                       Customer <span className="text-danger">*</span>
                     </label>
                     <div
@@ -2237,7 +2282,11 @@ export default function InvoicesPage({
                       ref={customerDropdownRef}
                     >
                       <input
-                        className="form-control input-underline"
+                        className={`form-control input-underline ${
+                          invalidFields.includes("newCustomer")
+                            ? "input-field-error"
+                            : ""
+                        }`}
                         placeholder="Search or select customer…"
                         value={customerSearch}
                         onChange={(e) => {
@@ -2353,11 +2402,27 @@ export default function InvoicesPage({
                     />
                   </div>
                   <div className="col-md-6">
-                    <label className="form-label">Currency</label>
+                    <label
+                      className={`form-label ${
+                        invalidFields.includes("newCurrency")
+                          ? "form-label-error"
+                          : ""
+                      }`}
+                    >
+                      Currency
+                    </label>
                     <select
-                      className="form-select input-underline"
+                      className={`form-select input-underline ${
+                        invalidFields.includes("newCurrency")
+                          ? "input-field-error"
+                          : ""
+                      }`}
                       value={newCurrency}
-                      onChange={(e) => setNewCurrency(e.target.value)}
+                      onChange={(e) => {
+                        const { value } = e.target;
+                        setNewCurrency(value);
+                        clearInvalidField("newCurrency", value);
+                      }}
                     >
                       {currencyOptions.map((cur) => (
                         <option key={cur} value={cur}>
@@ -2691,15 +2756,27 @@ export default function InvoicesPage({
 
                 {/* Fields */}
                 <div className="row g-3 mb-4">
-                  <div className="col-md-4">
-                    <label className="form-label ">Customer</label>
+                <div className="col-md-4">
+                    <label
+                      className={`form-label ${
+                        invalidFields.includes("editCustomer")
+                          ? "form-label-error"
+                          : ""
+                      }`}
+                    >
+                      Customer
+                    </label>
                     {canEdit ? (
                       <div
                         className="position-relative"
                         ref={customerDropdownRef}
                       >
                         <input
-                          className="form-control input-underline"
+                          className={`form-control input-underline ${
+                            invalidFields.includes("editCustomer")
+                              ? "input-field-error"
+                              : ""
+                          }`}
                           placeholder="Search or select customer…"
                           value={customerSearch}
                           onChange={(e) => {
@@ -2860,12 +2937,28 @@ export default function InvoicesPage({
                     </div>
                   </div>
                   <div className="col-md-4">
-                    <label className="form-label">Currency</label>
+                    <label
+                      className={`form-label ${
+                        invalidFields.includes("editCurrency")
+                          ? "form-label-error"
+                          : ""
+                      }`}
+                    >
+                      Currency
+                    </label>
                     {canEdit ? (
                       <select
-                        className="form-select input-underline"
+                        className={`form-select input-underline ${
+                          invalidFields.includes("editCurrency")
+                            ? "input-field-error"
+                            : ""
+                        }`}
                         value={editCurrency}
-                        onChange={(e) => setEditCurrency(e.target.value)}
+                        onChange={(e) => {
+                          const { value } = e.target;
+                          setEditCurrency(value);
+                          clearInvalidField("editCurrency", value);
+                        }}
                       >
                         {currencyOptions.map((cur) => (
                           <option key={cur} value={cur}>

@@ -4,7 +4,10 @@ import { apiFetch } from "../api";
 import { useMe } from "../hooks/useMe";
 import { useCompanies, Company } from "../hooks/useCompanies";
 import { Trash2 } from "lucide-react";
-import { getRequiredFieldError } from "../utils/formValidation";
+import {
+  getMissingRequiredFields,
+  getRequiredFieldError,
+} from "../utils/formValidation";
 
 // ============= TYPES =============
 type Category = {
@@ -360,6 +363,7 @@ export default function InventoryPage() {
     can_be_sold: true,
     can_be_purchased: true,
   });
+  const [invalidProductFields, setInvalidProductFields] = useState<string[]>([]);
   const [productInfoTab, setProductInfoTab] = useState<
     "general" | "inventory" | "description"
   >("general");
@@ -409,6 +413,9 @@ export default function InventoryPage() {
     code: "",
     is_primary: false,
   });
+  const [invalidLocationFields, setInvalidLocationFields] = useState<string[]>(
+    [],
+  );
   const [showLocationModal, setShowLocationModal] = useState(false);
 
   // Stock move form
@@ -423,6 +430,7 @@ export default function InventoryPage() {
     source_document: "",
     notes: "",
   });
+  const [invalidMoveFields, setInvalidMoveFields] = useState<string[]>([]);
 
   // Category form
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -430,6 +438,9 @@ export default function InventoryPage() {
     null,
   );
   const [categoryForm, setCategoryForm] = useState({ name: "" });
+  const [invalidCategoryFields, setInvalidCategoryFields] = useState<
+    string[]
+  >([]);
   const [filterCategoryId, setFilterCategoryId] = useState<number | null>(null);
 
   // Operations sub-tab
@@ -552,6 +563,30 @@ export default function InventoryPage() {
       can_be_purchased: true,
     });
     setSubView("form");
+    setInvalidProductFields([]);
+  };
+
+  const clearInvalidProductField = (key: string, value: unknown) => {
+    if (!invalidProductFields.includes(key)) return;
+    if (value === null || value === undefined) return;
+    if (typeof value === "string" && value.trim().length === 0) return;
+    setInvalidProductFields((prev) => prev.filter((field) => field !== key));
+  };
+
+  const validateInventoryProductFields = (): boolean => {
+    const requiredFields = [
+      { key: "name", label: "Product name", value: productForm.name },
+      { key: "uom", label: "Unit of measure", value: productForm.uom },
+    ];
+    const missingFields = getMissingRequiredFields(requiredFields);
+    if (missingFields.length) {
+      const message = getRequiredFieldError(requiredFields);
+      if (message) alert(message);
+      setInvalidProductFields(missingFields.map((field) => field.key));
+      return false;
+    }
+    setInvalidProductFields([]);
+    return true;
   };
 
   const openProduct = (product: Product) => {
@@ -583,6 +618,7 @@ export default function InventoryPage() {
       can_be_sold: product.can_be_sold,
       can_be_purchased: product.can_be_purchased,
     });
+    setInvalidProductFields([]);
     setSubView("form");
   };
 
@@ -591,14 +627,7 @@ export default function InventoryPage() {
       alert("Please select a company first.");
       return;
     }
-    const requiredError = getRequiredFieldError([
-      { label: "Product name", value: productForm.name },
-      { label: "Unit of measure", value: productForm.uom },
-    ]);
-    if (requiredError) {
-      alert(requiredError);
-      return;
-    }
+    if (!validateInventoryProductFields()) return;
     if (Number(productForm.sale_price) < 0) {
       alert("Sale price cannot be negative.");
       return;
@@ -643,6 +672,7 @@ export default function InventoryPage() {
       await loadAllData();
       setSubView("list");
       setIsNew(false);
+      setInvalidMoveFields([]);
     } finally {
       setSaving(false);
     }
@@ -819,18 +849,35 @@ export default function InventoryPage() {
         is_primary: false,
       });
     }
+    setInvalidLocationFields([]);
     setShowLocationModal(true);
   };
 
-  const saveLocation = async () => {
-    const requiredError = getRequiredFieldError([
-      { label: "Warehouse", value: locationForm.warehouse_id },
-      { label: "Location name", value: locationForm.name },
-    ]);
-    if (requiredError) {
-      alert(requiredError);
-      return;
+  const clearInvalidLocationField = (key: string, value: unknown) => {
+    if (!invalidLocationFields.includes(key)) return;
+    if (value === null || value === undefined) return;
+    if (typeof value === "string" && value.trim().length === 0) return;
+    setInvalidLocationFields((prev) => prev.filter((field) => field !== key));
+  };
+
+  const validateLocationRequiredFields = (): boolean => {
+    const requiredFields = [
+      { key: "warehouse", label: "Warehouse", value: locationForm.warehouse_id },
+      { key: "location_name", label: "Location name", value: locationForm.name },
+    ];
+    const missingFields = getMissingRequiredFields(requiredFields);
+    if (missingFields.length) {
+      const message = getRequiredFieldError(requiredFields);
+      if (message) alert(message);
+      setInvalidLocationFields(missingFields.map((field) => field.key));
+      return false;
     }
+    setInvalidLocationFields([]);
+    return true;
+  };
+
+  const saveLocation = async () => {
+    if (!validateLocationRequiredFields()) return;
     setSaving(true);
     try {
       if (selectedLocationId) {
@@ -853,6 +900,7 @@ export default function InventoryPage() {
         code: "",
         is_primary: false,
       });
+      setInvalidLocationFields([]);
     } finally {
       setSaving(false);
     }
@@ -886,6 +934,7 @@ export default function InventoryPage() {
       notes: "",
     });
     setSubView("form");
+    setInvalidMoveFields([]);
   };
 
   const openMove = (move: StockMove) => {
@@ -903,6 +952,31 @@ export default function InventoryPage() {
       notes: move.notes,
     });
     setSubView("form");
+    setInvalidMoveFields([]);
+  };
+
+  const clearInvalidMoveField = (key: string, value: unknown) => {
+    if (!invalidMoveFields.includes(key)) return;
+    if (value === null || value === undefined) return;
+    if (typeof value === "string" && value.trim().length === 0) return;
+    setInvalidMoveFields((prev) => prev.filter((field) => field !== key));
+  };
+
+  const validateMoveRequiredFields = (): boolean => {
+    const requiredFields = [
+      { key: "product", label: "Product", value: moveForm.product_id },
+      { key: "warehouse", label: "Warehouse", value: moveForm.warehouse_id },
+      { key: "location", label: "Location", value: moveForm.location_id },
+    ];
+    const missingFields = getMissingRequiredFields(requiredFields);
+    if (missingFields.length) {
+      const message = getRequiredFieldError(requiredFields);
+      if (message) alert(message);
+      setInvalidMoveFields(missingFields.map((field) => field.key));
+      return false;
+    }
+    setInvalidMoveFields([]);
+    return true;
   };
 
   const saveMove = async () => {
@@ -910,15 +984,7 @@ export default function InventoryPage() {
       alert("Please select a company first.");
       return;
     }
-    const requiredError = getRequiredFieldError([
-      { label: "Product", value: moveForm.product_id },
-      { label: "Warehouse", value: moveForm.warehouse_id },
-      { label: "Location", value: moveForm.location_id },
-    ]);
-    if (requiredError) {
-      alert(requiredError);
-      return;
-    }
+    if (!validateMoveRequiredFields()) return;
     if (Number(moveForm.quantity) <= 0) {
       alert("Quantity must be greater than 0.");
       return;
@@ -966,7 +1032,30 @@ export default function InventoryPage() {
       setSelectedCategoryId(null);
       setCategoryForm({ name: "" });
     }
+    setInvalidCategoryFields([]);
     setShowCategoryModal(true);
+  };
+
+  const clearInvalidCategoryField = (key: string, value: unknown) => {
+    if (!invalidCategoryFields.includes(key)) return;
+    if (value === null || value === undefined) return;
+    if (typeof value === "string" && value.trim().length === 0) return;
+    setInvalidCategoryFields((prev) => prev.filter((field) => field !== key));
+  };
+
+  const validateCategoryRequiredFields = (): boolean => {
+    const requiredFields = [
+      { key: "category_name", label: "Category name", value: categoryForm.name },
+    ];
+    const missingFields = getMissingRequiredFields(requiredFields);
+    if (missingFields.length) {
+      const message = getRequiredFieldError(requiredFields);
+      if (message) alert(message);
+      setInvalidCategoryFields(missingFields.map((field) => field.key));
+      return false;
+    }
+    setInvalidCategoryFields([]);
+    return true;
   };
 
   const saveCategory = async () => {
@@ -974,13 +1063,7 @@ export default function InventoryPage() {
       alert("Please select a company first.");
       return;
     }
-    const requiredError = getRequiredFieldError([
-      { label: "Category name", value: categoryForm.name },
-    ]);
-    if (requiredError) {
-      alert(requiredError);
-      return;
-    }
+    if (!validateCategoryRequiredFields()) return;
     setSaving(true);
     try {
       if (selectedCategoryId) {
@@ -998,6 +1081,7 @@ export default function InventoryPage() {
       setShowCategoryModal(false);
       setSelectedCategoryId(null);
       setCategoryForm({ name: "" });
+      setInvalidCategoryFields([]);
     } finally {
       setSaving(false);
     }
@@ -2563,15 +2647,20 @@ export default function InventoryPage() {
                         <div style={{ flex: 1 }}>
                           <input
                             type="text"
-                            className="o-form-input"
+                            className={`o-form-input ${
+                              invalidProductFields.includes("name")
+                                ? "input-field-error"
+                                : ""
+                            }`}
                             placeholder="Product Name"
                             value={productForm.name}
-                            onChange={(e) =>
+                            onChange={(e) => {
                               setProductForm({
                                 ...productForm,
                                 name: e.target.value,
-                              })
-                            }
+                              });
+                              clearInvalidProductField("name", e.target.value);
+                            }}
                             style={{
                               fontSize: 24,
                               fontWeight: 600,
@@ -2933,17 +3022,22 @@ export default function InventoryPage() {
                                 <label className="o-form-label">
                                   Unit of Measure
                                 </label>
-                                <div className="o-form-field">
-                                  <select
-                                    className="o-form-select"
-                                    value={productForm.uom}
-                                    onChange={(e) =>
-                                      setProductForm({
-                                        ...productForm,
-                                        uom: e.target.value,
-                                      })
-                                    }
-                                  >
+                                  <div className="o-form-field">
+                                    <select
+                                      className={`o-form-select ${
+                                        invalidProductFields.includes("uom")
+                                          ? "input-field-error"
+                                          : ""
+                                      }`}
+                                      value={productForm.uom}
+                                      onChange={(e) => {
+                                        setProductForm({
+                                          ...productForm,
+                                          uom: e.target.value,
+                                        });
+                                        clearInvalidProductField("uom", e.target.value);
+                                      }}
+                                    >
                                     {UOMS.map((u) => (
                                       <option key={u.value} value={u.value}>
                                         {u.label}
@@ -3920,20 +4014,36 @@ export default function InventoryPage() {
                       >
                         <div>
                           <div className="o-form-group">
-                            <label className="o-form-label">Product</label>
+                            <label
+                              className={`o-form-label ${
+                                invalidMoveFields.includes("product")
+                                  ? "form-label-error"
+                                  : ""
+                              }`}
+                            >
+                              Product
+                            </label>
                             <div className="o-form-field">
                               <select
-                                className="o-form-select"
+                                className={`o-form-select ${
+                                  invalidMoveFields.includes("product")
+                                    ? "input-field-error"
+                                    : ""
+                                }`}
                                 value={moveForm.product_id ?? ""}
                                 onChange={(e) => {
+                                  const value = e.target.value
+                                    ? Number(e.target.value)
+                                    : null;
                                   const prod = products.find(
-                                    (p) => p.id === Number(e.target.value),
+                                    (p) => p.id === value,
                                   );
                                   setMoveForm({
                                     ...moveForm,
-                                    product_id: Number(e.target.value),
+                                    product_id: value,
                                     unit_cost: prod?.purchase_cost || 0,
                                   });
+                                  clearInvalidMoveField("product", value);
                                 }}
                                 disabled={selectedMove?.state === "done"}
                               >
@@ -3973,18 +4083,34 @@ export default function InventoryPage() {
                           </div>
 
                           <div className="o-form-group">
-                            <label className="o-form-label">Warehouse</label>
+                            <label
+                              className={`o-form-label ${
+                                invalidMoveFields.includes("warehouse")
+                                  ? "form-label-error"
+                                  : ""
+                              }`}
+                            >
+                              Warehouse
+                            </label>
                             <div className="o-form-field">
                               <select
-                                className="o-form-select"
+                                className={`o-form-select ${
+                                  invalidMoveFields.includes("warehouse")
+                                    ? "input-field-error"
+                                    : ""
+                                }`}
                                 value={moveForm.warehouse_id ?? ""}
-                                onChange={(e) =>
+                                onChange={(e) => {
+                                  const value = e.target.value
+                                    ? Number(e.target.value)
+                                    : null;
                                   setMoveForm({
                                     ...moveForm,
-                                    warehouse_id: Number(e.target.value),
+                                    warehouse_id: value,
                                     location_id: null,
-                                  })
-                                }
+                                  });
+                                  clearInvalidMoveField("warehouse", value);
+                                }}
                                 disabled={selectedMove?.state === "done"}
                               >
                                 <option value="">Select a warehouse...</option>
@@ -3998,17 +4124,33 @@ export default function InventoryPage() {
                           </div>
 
                           <div className="o-form-group">
-                            <label className="o-form-label">Location</label>
+                            <label
+                              className={`o-form-label ${
+                                invalidMoveFields.includes("location")
+                                  ? "form-label-error"
+                                  : ""
+                              }`}
+                            >
+                              Location
+                            </label>
                             <div className="o-form-field">
                               <select
-                                className="o-form-select"
+                                className={`o-form-select ${
+                                  invalidMoveFields.includes("location")
+                                    ? "input-field-error"
+                                    : ""
+                                }`}
                                 value={moveForm.location_id ?? ""}
-                                onChange={(e) =>
+                                onChange={(e) => {
+                                  const value = e.target.value
+                                    ? Number(e.target.value)
+                                    : null;
                                   setMoveForm({
                                     ...moveForm,
-                                    location_id: Number(e.target.value),
-                                  })
-                                }
+                                    location_id: value,
+                                  });
+                                  clearInvalidMoveField("location", value);
+                                }}
                                 disabled={selectedMove?.state === "done"}
                               >
                                 <option value="">Select a location...</option>
@@ -4182,18 +4324,32 @@ export default function InventoryPage() {
                     {selectedCategoryId ? "Edit Category" : "New Category"}
                   </h3>
                   <div className="o-form-group">
-                    <label className="o-form-label">Name</label>
+                    <label
+                      className={`o-form-label ${
+                        invalidCategoryFields.includes("category_name")
+                          ? "form-label-error"
+                          : ""
+                      }`}
+                    >
+                      Name
+                    </label>
                     <div className="o-form-field">
                       <input
                         type="text"
-                        className="o-form-input"
+                        className={`o-form-input ${
+                          invalidCategoryFields.includes("category_name")
+                            ? "input-field-error"
+                            : ""
+                        }`}
                         value={categoryForm.name}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const { value } = e.target;
                           setCategoryForm({
                             ...categoryForm,
-                            name: e.target.value,
-                          })
-                        }
+                            name: value,
+                          });
+                          clearInvalidCategoryField("category_name", value);
+                        }}
                         autoFocus
                       />
                     </div>
@@ -4211,6 +4367,7 @@ export default function InventoryPage() {
                       onClick={() => {
                         setShowCategoryModal(false);
                         setSelectedCategoryId(null);
+                        setInvalidCategoryFields([]);
                       }}
                     >
                       Cancel
@@ -4256,17 +4413,33 @@ export default function InventoryPage() {
                     {selectedLocationId ? "Edit Location" : "New Location"}
                   </h3>
                   <div className="o-form-group">
-                    <label className="o-form-label">Warehouse</label>
+                    <label
+                      className={`o-form-label ${
+                        invalidLocationFields.includes("warehouse")
+                          ? "form-label-error"
+                          : ""
+                      }`}
+                    >
+                      Warehouse
+                    </label>
                     <div className="o-form-field">
                       <select
-                        className="o-form-select"
+                        className={`o-form-select ${
+                          invalidLocationFields.includes("warehouse")
+                            ? "input-field-error"
+                            : ""
+                        }`}
                         value={locationForm.warehouse_id ?? ""}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const value = e.target.value
+                            ? Number(e.target.value)
+                            : null;
                           setLocationForm({
                             ...locationForm,
-                            warehouse_id: Number(e.target.value),
-                          })
-                        }
+                            warehouse_id: value,
+                          });
+                          clearInvalidLocationField("warehouse", value);
+                        }}
                         disabled={!!selectedLocationId}
                       >
                         <option value="">Select warehouse...</option>
@@ -4279,18 +4452,32 @@ export default function InventoryPage() {
                     </div>
                   </div>
                   <div className="o-form-group">
-                    <label className="o-form-label">Name</label>
+                    <label
+                      className={`o-form-label ${
+                        invalidLocationFields.includes("location_name")
+                          ? "form-label-error"
+                          : ""
+                      }`}
+                    >
+                      Name
+                    </label>
                     <div className="o-form-field">
                       <input
                         type="text"
-                        className="o-form-input"
+                        className={`o-form-input ${
+                          invalidLocationFields.includes("location_name")
+                            ? "input-field-error"
+                            : ""
+                        }`}
                         value={locationForm.name}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const { value } = e.target;
                           setLocationForm({
                             ...locationForm,
-                            name: e.target.value,
-                          })
-                        }
+                            name: value,
+                          });
+                          clearInvalidLocationField("location_name", value);
+                        }}
                         placeholder="e.g., Shelf A-1"
                       />
                     </div>
