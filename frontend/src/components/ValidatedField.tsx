@@ -24,7 +24,7 @@ export default function ValidatedField({
 
   const enhancedChild =
     isInvalid && typeof children.type === "string"
-      ? cloneElement(children, {
+      ? cloneElement(children as ReactElement<any>, {
           className: joinClassName(
             (children.props as { className?: string }).className,
             "input-field-error",

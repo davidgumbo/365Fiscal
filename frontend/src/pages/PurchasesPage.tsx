@@ -5,6 +5,7 @@ import { apiFetch } from "../api";
 import { useMe } from "../hooks/useMe";
 import { useCompanies, Company } from "../hooks/useCompanies";
 import ValidationAlert from "../components/ValidationAlert";
+import ValidatedField from "../components/ValidatedField";
 import {
   getDocumentLinesError,
   getMissingRequiredFields,
