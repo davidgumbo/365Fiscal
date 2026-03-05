@@ -3632,21 +3632,21 @@ export default function POSPage() {
               <div className="pos-receipt-totals">
                 <div className="pos-receipt-totals-row">
                   <span>Subtotal</span>
-                  <span>{money(lastOrder.subtotal)}</span>
+                  <span>{moneyByCode(lastOrder.subtotal, lastOrder.currency)}</span>
                 </div>
                 {lastOrder.discount_amount > 0 && (
                   <div className="pos-receipt-totals-row">
                     <span>Discount</span>
-                    <span>-{money(lastOrder.discount_amount)}</span>
+                    <span>-{moneyByCode(lastOrder.discount_amount, lastOrder.currency)}</span>
                   </div>
                 )}
                 <div className="pos-receipt-totals-row">
                   <span>Tax</span>
-                  <span>{money(lastOrder.tax_amount)}</span>
+                  <span>{moneyByCode(lastOrder.tax_amount, lastOrder.currency)}</span>
                 </div>
                 <div className="pos-receipt-grand-total">
                   <span>TOTAL</span>
-                  <span>{money(lastOrder.total_amount)}</span>
+                  <span>{moneyByCode(lastOrder.total_amount, lastOrder.currency)}</span>
                 </div>
               </div>
 
@@ -3662,25 +3662,25 @@ export default function POSPage() {
                 {lastOrder.cash_amount > 0 && (
                   <div className="pos-receipt-totals-row">
                     <span>Cash</span>
-                    <span>{money(lastOrder.cash_amount)}</span>
+                    <span>{moneyByCode(lastOrder.cash_amount, lastOrder.currency)}</span>
                   </div>
                 )}
                 {lastOrder.card_amount > 0 && (
                   <div className="pos-receipt-totals-row">
                     <span>Card</span>
-                    <span>{money(lastOrder.card_amount)}</span>
+                    <span>{moneyByCode(lastOrder.card_amount, lastOrder.currency)}</span>
                   </div>
                 )}
                 {lastOrder.mobile_amount > 0 && (
                   <div className="pos-receipt-totals-row">
                     <span>Mobile</span>
-                    <span>{money(lastOrder.mobile_amount)}</span>
+                    <span>{moneyByCode(lastOrder.mobile_amount, lastOrder.currency)}</span>
                   </div>
                 )}
                 {lastOrder.change_amount > 0 && (
                   <div className="pos-receipt-totals-row pos-receipt-change-row">
                     <span>Change</span>
-                    <span>{money(lastOrder.change_amount)}</span>
+                    <span>{moneyByCode(lastOrder.change_amount, lastOrder.currency)}</span>
                   </div>
                 )}
               </div>
