@@ -16,7 +16,7 @@ from app.api.deps import (
     get_db, get_current_user, ensure_company_access, require_portal_user,
     log_audit, check_permission,
 )
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from app.models.pos_session import POSSession, POSOrder, POSOrderLine
 from app.models.invoice import Invoice
 from app.models.invoice_line import InvoiceLine
@@ -31,7 +31,7 @@ from app.models.stock_quant import StockQuant
 from app.models.stock_move import StockMove
 from app.models.audit_log import AuditAction, ResourceType
 from app.models.pos_employee import POSEmployee
-from app.models.pos_till import POSTill, pos_till_employees
+from app.models.pos_till import POSTill
 from app.schemas.pos import (
     POSSessionOpen, POSSessionClose, POSSessionRead, POSSessionSummary,
     POSOrderCreate, POSOrderRead, POSOrderRefund,
@@ -257,6 +257,65 @@ def create_order(
     if not payload.lines:
         raise HTTPException(400, "Order must have at least one line")
 
+    cashier = None
+    if payload.cashier_id is not None:
+        cashier = (
+            db.query(POSEmployee)
+            .filter(
+                POSEmployee.id == payload.cashier_id,
+                POSEmployee.company_id == payload.company_id,
+                POSEmployee.is_active == True,
+            )
+            .first()
+        )
+        if not cashier:
+            raise HTTPException(400, "Cashier not found or inactive")
+
+    resolved_till_id = payload.till_id
+    if cashier and resolved_till_id is None:
+        assigned_tills = (
+            db.query(POSTill)
+            .filter(
+                POSTill.company_id == payload.company_id,
+                POSTill.is_active == True,
+                POSTill.employees.any(POSEmployee.id == cashier.id),
+            )
+            .order_by(POSTill.sort_order, POSTill.name)
+            .all()
+        )
+        if not assigned_tills:
+            raise HTTPException(403, "Cashier is not assigned to any active POS till")
+        if len(assigned_tills) > 1:
+            raise HTTPException(400, "Select a POS till for this cashier")
+        resolved_till_id = assigned_tills[0].id
+
+    till = None
+    if resolved_till_id is not None:
+        till = (
+            db.query(POSTill)
+            .filter(
+                POSTill.id == resolved_till_id,
+                POSTill.company_id == payload.company_id,
+            )
+            .first()
+        )
+        if not till:
+            raise HTTPException(400, "POS till not found")
+        if not till.is_active:
+            raise HTTPException(400, "POS till is inactive")
+        if cashier:
+            assigned = (
+                db.query(POSTill.id)
+                .filter(
+                    POSTill.id == till.id,
+                    POSTill.employees.any(POSEmployee.id == cashier.id),
+                )
+                .first()
+            )
+            if not assigned:
+                raise HTTPException(403, "Cashier is not assigned to this POS till")
+    till_warehouse_id = till.warehouse_id if till else None
+
     # Get device from session
     device = None
     if session.device_id:
@@ -277,8 +336,8 @@ def create_order(
         mobile_amount=payload.mobile_amount,
         payment_reference=payload.payment_reference,
         notes=payload.notes,
-        cashier_name=payload.cashier_name,
-        till_id=payload.till_id,
+        cashier_name=payload.cashier_name or (cashier.name if cashier else ""),
+        till_id=resolved_till_id,
         status="draft",
     )
     db.add(order)
@@ -345,11 +404,13 @@ def create_order(
             continue
         qty = ld.quantity
         # Update stock quant (reduce available)
-        quant = (
-            db.query(StockQuant)
-            .filter(StockQuant.product_id == product.id, StockQuant.company_id == payload.company_id)
-            .first()
+        quant_q = db.query(StockQuant).filter(
+            StockQuant.product_id == product.id,
+            StockQuant.company_id == payload.company_id,
         )
+        if till_warehouse_id is not None:
+            quant_q = quant_q.filter(StockQuant.warehouse_id == till_warehouse_id)
+        quant = quant_q.order_by(StockQuant.id.asc()).first()
         if quant:
             quant.quantity = round(quant.quantity - qty, 4)
             quant.available_quantity = round(quant.available_quantity - qty, 4)
@@ -361,6 +422,7 @@ def create_order(
             reference=ref,
             move_type="out",
             quantity=qty,
+            warehouse_id=till_warehouse_id,
             unit_cost=product.sales_cost or product.purchase_cost,
             total_cost=round(qty * (product.sales_cost or product.purchase_cost), 2),
             source_document=ref,
@@ -401,6 +463,7 @@ def create_order(
         amount_paid=order.total_amount,
         amount_due=0,
         currency=payload.currency,
+        warehouse_id=till_warehouse_id,
         payment_terms="Immediate",
         payment_reference=ref,
         notes=f"POS Order {ref}",
@@ -703,17 +766,101 @@ def pos_products(
     company_id: int,
     search: str = "",
     category_id: Optional[int] = None,
+    till_id: Optional[int] = None,
+    employee_id: Optional[int] = None,
     limit: int = Query(100, le=500),
     db: Session = Depends(get_db),
     user=Depends(require_portal_user),
 ):
     """Quick product lookup for POS – returns id, name, price, barcode, tax info, category."""
     ensure_company_access(db, user, company_id)
+    emp = None
+    if employee_id is not None:
+        emp = (
+            db.query(POSEmployee)
+            .filter(
+                POSEmployee.id == employee_id,
+                POSEmployee.company_id == company_id,
+                POSEmployee.is_active == True,
+            )
+            .first()
+        )
+        if not emp:
+            raise HTTPException(404, "POS employee not found")
+
+    selected_till = None
+    if till_id is not None:
+        selected_till = (
+            db.query(POSTill)
+            .filter(
+                POSTill.id == till_id,
+                POSTill.company_id == company_id,
+            )
+            .first()
+        )
+        if not selected_till:
+            raise HTTPException(404, "POS till not found")
+        if not selected_till.is_active:
+            raise HTTPException(400, "POS till is inactive")
+        if employee_id is not None:
+            assigned = (
+                db.query(POSTill.id)
+                .filter(
+                    POSTill.id == selected_till.id,
+                    POSTill.employees.any(POSEmployee.id == employee_id),
+                )
+                .first()
+            )
+            if not assigned:
+                raise HTTPException(403, "Employee is not assigned to this POS till")
+    elif emp is not None:
+        assigned_tills = (
+            db.query(POSTill)
+            .filter(
+                POSTill.company_id == company_id,
+                POSTill.is_active == True,
+                POSTill.employees.any(POSEmployee.id == emp.id),
+            )
+            .order_by(POSTill.sort_order, POSTill.name)
+            .all()
+        )
+        if not assigned_tills:
+            raise HTTPException(403, "Employee is not assigned to any active POS till")
+        if len(assigned_tills) > 1:
+            raise HTTPException(400, "Select a POS till for this employee")
+        selected_till = assigned_tills[0]
     q = db.query(Product).filter(
         Product.company_id == company_id,
         Product.is_active == True,
         Product.can_be_sold == True,
     )
+    if selected_till and selected_till.warehouse_id is not None:
+        in_warehouse = {
+            pid
+            for (pid,) in db.query(StockQuant.product_id)
+            .filter(
+                StockQuant.company_id == company_id,
+                StockQuant.warehouse_id == selected_till.warehouse_id,
+                StockQuant.available_quantity > 0,
+            )
+            .distinct()
+            .all()
+        }
+        if in_warehouse:
+            q = q.filter(
+                or_(
+                    Product.track_inventory == False,
+                    Product.product_type != "storable",
+                    Product.id.in_(in_warehouse),
+                )
+            )
+        else:
+            q = q.filter(
+                or_(
+                    Product.track_inventory == False,
+                    Product.product_type != "storable",
+                )
+            )
     if search:
         like = f"%{search}%"
         q = q.filter(
@@ -730,12 +877,18 @@ def pos_products(
     product_ids = [p.id for p in products]
     stock_map: dict[int, float] = {}
     if product_ids:
-        quants = (
-            db.query(StockQuant.product_id, func.sum(StockQuant.available_quantity))
-            .filter(StockQuant.product_id.in_(product_ids), StockQuant.company_id == company_id)
-            .group_by(StockQuant.product_id)
-            .all()
+        quant_q = db.query(
+            StockQuant.product_id,
+            func.sum(StockQuant.available_quantity),
+        ).filter(
+            StockQuant.product_id.in_(product_ids),
+            StockQuant.company_id == company_id,
         )
+        if selected_till and selected_till.warehouse_id is not None:
+            quant_q = quant_q.filter(
+                StockQuant.warehouse_id == selected_till.warehouse_id,
+            )
+        quants = quant_q.group_by(StockQuant.product_id).all()
         stock_map = {pid: qty for pid, qty in quants}
 
     result = []
@@ -974,12 +1127,25 @@ def verify_pos_pin(
 def list_tills(
     company_id: int,
     include_inactive: bool = False,
+    employee_id: Optional[int] = None,
     db: Session = Depends(get_db),
     user=Depends(require_portal_user),
 ):
     """List POS tills for a company."""
     ensure_company_access(db, user, company_id)
     q = db.query(POSTill).filter(POSTill.company_id == company_id)
+    if employee_id is not None:
+        emp = (
+            db.query(POSEmployee)
+            .filter(
+                POSEmployee.id == employee_id,
+                POSEmployee.company_id == company_id,
+            )
+            .first()
+        )
+        if not emp:
+            raise HTTPException(404, "POS employee not found")
+        q = q.filter(POSTill.employees.any(POSEmployee.id == employee_id))
     if not include_inactive:
         q = q.filter(POSTill.is_active == True)
     return q.order_by(POSTill.sort_order, POSTill.name).all()

@@ -38,6 +38,7 @@ class POSOrderCreate(BaseModel):
     session_id: int
     company_id: int
     customer_id: int | None = None
+    cashier_id: int | None = None
     currency: str = "USD"
     payment_method: str = "cash"
     cash_amount: float = 0

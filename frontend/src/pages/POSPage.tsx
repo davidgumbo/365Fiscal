@@ -487,13 +487,14 @@ export default function POSPage() {
   }, [companyId]);
 
   useEffect(() => {
-    if (!companyId) {
+    if (!companyId || !currentCashier?.id) {
       setPosTills([]);
+      setSelectedTillId(null);
       return;
     }
     let cancelled = false;
     apiFetch<POSTillInfo[]>(
-      `/pos/tills?company_id=${companyId}&include_inactive=true`,
+      `/pos/tills?company_id=${companyId}&employee_id=${currentCashier.id}`,
     )
       .then((list) => {
         if (!cancelled) setPosTills(list || []);
@@ -504,7 +505,7 @@ export default function POSPage() {
     return () => {
       cancelled = true;
     };
-  }, [companyId]);
+  }, [companyId, currentCashier?.id]);
 
   useEffect(() => {
     if (!companyId) {
@@ -618,6 +619,16 @@ export default function POSPage() {
     return Number.isFinite(n) ? n : 0;
   }, []);
 
+  const productsUrl = useMemo(() => {
+    if (!companyId || !currentCashier?.id || !selectedTillId) return null;
+    const params = new URLSearchParams({
+      company_id: String(companyId),
+      employee_id: String(currentCashier.id),
+      till_id: String(selectedTillId),
+    });
+    return `/pos/products?${params.toString()}`;
+  }, [companyId, currentCashier?.id, selectedTillId]);
+
   const changePosCurrency = useCallback(
     async (nextCodeRaw: string) => {
       if (!companyId) return;
@@ -728,7 +739,6 @@ export default function POSPage() {
     if (!companyId) return;
     setLoading(true);
     Promise.all([
-      apiFetch<POSProduct[]>(`/pos/products?company_id=${companyId}`),
       apiFetch<Category[]>(`/pos/categories?company_id=${companyId}`),
       apiFetch<Device[]>(`/pos/devices?company_id=${companyId}`),
       apiFetch<POSSession[]>(
@@ -736,8 +746,7 @@ export default function POSPage() {
       ),
       apiFetch<CompanyInfo>(`/pos/company-info?company_id=${companyId}`),
     ])
-      .then(([prods, cats, devs, sessions, ci]) => {
-        setProducts(prods);
+      .then(([cats, devs, sessions, ci]) => {
         setCategories(cats);
         setDevices(devs);
         setCompanyInfo(ci);
@@ -759,6 +768,27 @@ export default function POSPage() {
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [companyId]);
+
+  useEffect(() => {
+    if (!productsUrl) {
+      setProducts([]);
+      return;
+    }
+    let cancelled = false;
+    apiFetch<POSProduct[]>(productsUrl)
+      .then((list) => {
+        if (!cancelled) setProducts(list || []);
+      })
+      .catch((e: any) => {
+        if (!cancelled) {
+          setProducts([]);
+          setError(e.message || "Failed to load POS products");
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [productsUrl]);
 
   // ── auto-load orders when session is active ──
   useEffect(() => {
@@ -808,6 +838,7 @@ export default function POSPage() {
           body: JSON.stringify({ company_id: companyId, pin: pinValue }),
         },
       );
+      setSelectedTillId(null);
       setCurrentCashier(resp);
       setShowPinDialog(false);
       setPinValue("");
@@ -987,6 +1018,14 @@ export default function POSPage() {
   // ── payment ──
   const submitPayment = async () => {
     if (!session || cart.length === 0) return;
+    if (!currentCashier?.id) {
+      setError("Cashier PIN verification is required");
+      return;
+    }
+    if (!selectedTillId) {
+      setError("No active POS till assigned to this cashier");
+      return;
+    }
     setProcessing(true);
     setError("");
 
@@ -1012,6 +1051,7 @@ export default function POSPage() {
           session_id: session.id,
           company_id: session.company_id,
           customer_id: selectedCustomer?.id || null,
+          cashier_id: currentCashier.id,
           currency: posCurrencyCode,
           payment_method: payMethod,
           cash_amount: cash,
@@ -1045,10 +1085,15 @@ export default function POSPage() {
         ordersFilter === "session"
           ? `/pos/orders?company_id=${session.company_id}&session_id=${session.id}&limit=200`
           : `/pos/orders?company_id=${session.company_id}&limit=200`;
+      const productParams = new URLSearchParams({
+        company_id: String(session.company_id),
+        employee_id: String(currentCashier.id),
+        till_id: String(selectedTillId),
+      });
       const [updated, prods, ords] = await Promise.all([
         apiFetch<any>(`/pos/sessions/${session.id}`),
         apiFetch<POSProduct[]>(
-          `/pos/products?company_id=${session.company_id}`,
+          `/pos/products?${productParams.toString()}`,
         ),
         apiFetch<POSOrder[]>(ordUrl),
       ]);
