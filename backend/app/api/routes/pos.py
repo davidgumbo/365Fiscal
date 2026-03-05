@@ -256,6 +256,8 @@ def create_order(
 
     if not payload.lines:
         raise HTTPException(400, "Order must have at least one line")
+    if payload.till_id is not None and payload.cashier_id is None:
+        raise HTTPException(400, "cashier_id is required when till_id is provided")
 
     cashier = None
     if payload.cashier_id is not None:
@@ -774,6 +776,8 @@ def pos_products(
 ):
     """Quick product lookup for POS – returns id, name, price, barcode, tax info, category."""
     ensure_company_access(db, user, company_id)
+    if till_id is not None and employee_id is None:
+        raise HTTPException(400, "employee_id is required when till_id is provided")
     emp = None
     if employee_id is not None:
         emp = (

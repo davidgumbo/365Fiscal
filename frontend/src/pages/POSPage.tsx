@@ -74,6 +74,7 @@ type OrderLine = {
 };
 type POSOrder = {
   id: number;
+  session_id?: number;
   reference: string;
   status: string;
   subtotal: number;
@@ -411,6 +412,9 @@ export default function POSPage() {
   const [payMethod, setPayMethod] = useState<
     "cash" | "card" | "mobile" | "split"
   >("cash");
+  const [paymentCurrencyCode, setPaymentCurrencyCode] = useState("USD");
+  const [paymentCurrencySymbol, setPaymentCurrencySymbol] = useState("");
+  const [paymentFxRate, setPaymentFxRate] = useState(1);
   const [cashTendered, setCashTendered] = useState("");
   const [cardAmount, setCardAmount] = useState("");
   const [mobileAmount, setMobileAmount] = useState("");
@@ -424,6 +428,13 @@ export default function POSPage() {
   // Close session dialog
   const [showCloseDialog, setShowCloseDialog] = useState(false);
   const [closingBalance, setClosingBalance] = useState("");
+  const [closeSessionOrders, setCloseSessionOrders] = useState<POSOrder[]>([]);
+  const [closeCurrencyAmounts, setCloseCurrencyAmounts] = useState<
+    Record<string, string>
+  >({});
+  const [closeCurrencyRates, setCloseCurrencyRates] = useState<
+    Record<string, number>
+  >({});
 
   // Orders history
   const [orders, setOrders] = useState<POSOrder[]>([]);
@@ -619,6 +630,24 @@ export default function POSPage() {
     return Number.isFinite(n) ? n : 0;
   }, []);
 
+  const resolveCurrencyRate = useCallback(
+    async (codeRaw: string): Promise<number> => {
+      const code = normalizeCurrency(codeRaw) || effectiveBaseCode;
+      if (code === effectiveBaseCode) return 1;
+      const cur = currencyList.find((c) => normalizeCurrency(c.code) === code);
+      if (!cur?.id) return 1;
+      try {
+        const r = await apiFetch<CurrencyRateRead | null>(
+          `/currencies/${cur.id}/rate`,
+        );
+        return r?.rate || 1;
+      } catch {
+        return 1;
+      }
+    },
+    [currencyList, effectiveBaseCode],
+  );
+
   const productsUrl = useMemo(() => {
     if (!companyId || !currentCashier?.id || !selectedTillId) return null;
     const params = new URLSearchParams({
@@ -708,6 +737,31 @@ export default function POSPage() {
     [posCurrencyCode, posCurrencySymbol],
   );
 
+  const moneyPayment = useCallback(
+    (amount: number) => {
+      const prefix = (
+        paymentCurrencyCode ||
+        paymentCurrencySymbol ||
+        posCurrencyCode ||
+        "USD"
+      ).trim();
+      const gap = prefix.length === 1 ? "" : " ";
+      return `${prefix}${gap}${fmt(amount)}`;
+    },
+    [paymentCurrencyCode, paymentCurrencySymbol, posCurrencyCode],
+  );
+
+  const moneyByCode = useCallback(
+    (amount: number, codeRaw: string) => {
+      const code = normalizeCurrency(codeRaw) || effectiveBaseCode;
+      const cur = currencyList.find((c) => normalizeCurrency(c.code) === code);
+      const prefix = (cur?.symbol || code).trim();
+      const gap = prefix.length === 1 ? "" : " ";
+      return `${prefix}${gap}${fmt(amount)}`;
+    },
+    [currencyList, effectiveBaseCode],
+  );
+
 
   const formatBaseCurrency = useCallback(
     (amount: number) => {
@@ -732,7 +786,69 @@ export default function POSPage() {
   const cartTax = toSale(cartTaxBase);
   const cartTotal = toSale(cartTotalBase);
   const cartDiscount = toSale(cartDiscountBase);
+  const cartSubtotalPayment = cartSubtotalBase * (paymentFxRate || 1);
+  const cartTaxPayment = cartTaxBase * (paymentFxRate || 1);
+  const cartTotalPayment = cartTotalBase * (paymentFxRate || 1);
+  const cartDiscountPayment = cartDiscountBase * (paymentFxRate || 1);
   const itemCount = cart.reduce((s, l) => s + l.qty, 0);
+
+  const closeExpectedCashByCurrency = useMemo(() => {
+    const sums: Record<string, number> = {};
+    for (const o of closeSessionOrders) {
+      const code = normalizeCurrency(o.currency) || effectiveBaseCode;
+      sums[code] = (sums[code] || 0) + (o.cash_amount || 0);
+    }
+    sums[effectiveBaseCode] =
+      (sums[effectiveBaseCode] || 0) + (session?.opening_balance || 0);
+    return sums;
+  }, [closeSessionOrders, effectiveBaseCode, session?.opening_balance]);
+
+  const closeCurrencyCodes = useMemo(() => {
+    const keys = new Set<string>([
+      ...Object.keys(closeExpectedCashByCurrency),
+      ...Object.keys(closeCurrencyAmounts),
+      normalizeCurrency(posCurrencyCode) || effectiveBaseCode,
+      effectiveBaseCode,
+    ]);
+    return Array.from(keys).sort();
+  }, [
+    closeCurrencyAmounts,
+    closeExpectedCashByCurrency,
+    effectiveBaseCode,
+    posCurrencyCode,
+  ]);
+
+  const closeExpectedBaseTotal = useMemo(() => {
+    return closeCurrencyCodes.reduce((sum, code) => {
+      const rate =
+        closeCurrencyRates[code] ??
+        (normalizeCurrency(code) === effectiveBaseCode ? 1 : 1);
+      return sum + (closeExpectedCashByCurrency[code] || 0) / (rate || 1);
+    }, 0);
+  }, [
+    closeCurrencyCodes,
+    closeCurrencyRates,
+    closeExpectedCashByCurrency,
+    effectiveBaseCode,
+  ]);
+
+  const closeEnteredBaseTotal = useMemo(() => {
+    return closeCurrencyCodes.reduce((sum, code) => {
+      const amount = parseAmount(closeCurrencyAmounts[code] || "");
+      const rate =
+        closeCurrencyRates[code] ??
+        (normalizeCurrency(code) === effectiveBaseCode ? 1 : 1);
+      return sum + amount / (rate || 1);
+    }, 0);
+  }, [
+    closeCurrencyAmounts,
+    closeCurrencyCodes,
+    closeCurrencyRates,
+    effectiveBaseCode,
+    parseAmount,
+  ]);
+
+  const closeDifferenceBase = closeEnteredBaseTotal - closeExpectedBaseTotal;
 
   // ── data loading ──
   useEffect(() => {
@@ -1015,6 +1131,89 @@ export default function POSPage() {
     }
   };
 
+  const openPaymentDialog = useCallback(async () => {
+    const initialCode = normalizeCurrency(posCurrencyCode) || effectiveBaseCode;
+    const initialRate = await resolveCurrencyRate(initialCode);
+    const cur = currencyList.find(
+      (c) => normalizeCurrency(c.code) === initialCode,
+    );
+    const symbol = (
+      cur?.symbol ||
+      (initialCode === effectiveBaseCode ? effectiveBaseSymbol : initialCode)
+    ).trim();
+
+    setPaymentCurrencyCode(initialCode);
+    setPaymentCurrencySymbol(symbol);
+    setPaymentFxRate(initialRate || 1);
+    setCashTendered((cartTotalBase * (initialRate || 1)).toFixed(2));
+    setCardAmount("");
+    setMobileAmount("");
+    setShowPayment(true);
+  }, [
+    cartTotalBase,
+    currencyList,
+    effectiveBaseCode,
+    effectiveBaseSymbol,
+    posCurrencyCode,
+    resolveCurrencyRate,
+  ]);
+
+  const changePaymentCurrency = useCallback(
+    async (nextCodeRaw: string) => {
+      const oldCode =
+        normalizeCurrency(paymentCurrencyCode) || effectiveBaseCode;
+      const nextCode = normalizeCurrency(nextCodeRaw) || effectiveBaseCode;
+      if (!nextCode || nextCode === oldCode) return;
+
+      const oldRate = paymentFxRate || 1;
+      const nextRate = await resolveCurrencyRate(nextCode);
+      const nextCur = currencyList.find(
+        (c) => normalizeCurrency(c.code) === nextCode,
+      );
+      const nextSymbol = (
+        nextCur?.symbol ||
+        (nextCode === effectiveBaseCode ? effectiveBaseSymbol : nextCode)
+      ).trim();
+
+      const cash = parseAmount(cashTendered);
+      const card = parseAmount(cardAmount);
+      const mobile = parseAmount(mobileAmount);
+
+      if (cashTendered.trim()) {
+        setCashTendered(
+          convertBetweenSaleCurrencies(cash, oldRate, nextRate).toFixed(2),
+        );
+      }
+      if (cardAmount.trim()) {
+        setCardAmount(
+          convertBetweenSaleCurrencies(card, oldRate, nextRate).toFixed(2),
+        );
+      }
+      if (mobileAmount.trim()) {
+        setMobileAmount(
+          convertBetweenSaleCurrencies(mobile, oldRate, nextRate).toFixed(2),
+        );
+      }
+
+      setPaymentCurrencyCode(nextCode);
+      setPaymentCurrencySymbol(nextSymbol);
+      setPaymentFxRate(nextRate || 1);
+    },
+    [
+      cardAmount,
+      cashTendered,
+      convertBetweenSaleCurrencies,
+      currencyList,
+      effectiveBaseCode,
+      effectiveBaseSymbol,
+      mobileAmount,
+      parseAmount,
+      paymentCurrencyCode,
+      paymentFxRate,
+      resolveCurrencyRate,
+    ],
+  );
+
   // ── payment ──
   const submitPayment = async () => {
     if (!session || cart.length === 0) return;
@@ -1033,11 +1232,11 @@ export default function POSPage() {
       card = 0,
       mobile = 0;
     if (payMethod === "cash") {
-      cash = parseFloat(cashTendered) || cartTotal;
+      cash = parseFloat(cashTendered) || cartTotalPayment;
     } else if (payMethod === "card") {
-      card = cartTotal;
+      card = cartTotalPayment;
     } else if (payMethod === "mobile") {
-      mobile = cartTotal;
+      mobile = cartTotalPayment;
     } else {
       cash = parseFloat(cashTendered) || 0;
       card = parseFloat(cardAmount) || 0;
@@ -1052,7 +1251,7 @@ export default function POSPage() {
           company_id: session.company_id,
           customer_id: selectedCustomer?.id || null,
           cashier_id: currentCashier.id,
-          currency: posCurrencyCode,
+          currency: paymentCurrencyCode || posCurrencyCode,
           payment_method: payMethod,
           cash_amount: cash,
           card_amount: card,
@@ -1065,7 +1264,9 @@ export default function POSPage() {
             description: l.product.name,
             quantity: l.qty,
             uom: l.product.uom,
-            unit_price: parseFloat((toSale(l.price) || 0).toFixed(2)),
+            unit_price: parseFloat(
+              ((l.price || 0) * (paymentFxRate || 1)).toFixed(2),
+            ),
             discount: l.discount,
             vat_rate: l.vat_rate,
           })),
@@ -1107,17 +1308,79 @@ export default function POSPage() {
     }
   };
 
+  const openCloseDialog = async () => {
+    if (!session) return;
+    try {
+      const list = await apiFetch<POSOrder[]>(
+        `/pos/orders?company_id=${session.company_id}&session_id=${session.id}&limit=500`,
+      );
+      const sessionOrders = list || [];
+      setCloseSessionOrders(sessionOrders);
+
+      const expected: Record<string, number> = {};
+      for (const o of sessionOrders) {
+        const code = normalizeCurrency(o.currency) || effectiveBaseCode;
+        expected[code] = (expected[code] || 0) + (o.cash_amount || 0);
+      }
+      expected[effectiveBaseCode] =
+        (expected[effectiveBaseCode] || 0) + (session.opening_balance || 0);
+
+      const codes = Array.from(
+        new Set<string>([
+          ...Object.keys(expected),
+          normalizeCurrency(posCurrencyCode) || effectiveBaseCode,
+          effectiveBaseCode,
+        ]),
+      ).sort();
+
+      const rateEntries = await Promise.all(
+        codes.map(async (code) => [code, await resolveCurrencyRate(code)] as const),
+      );
+      const rates: Record<string, number> = {};
+      for (const [code, rate] of rateEntries) rates[code] = rate || 1;
+      setCloseCurrencyRates(rates);
+
+      const amounts: Record<string, string> = {};
+      for (const code of codes) {
+        amounts[code] = (expected[code] || 0).toFixed(2);
+      }
+      setCloseCurrencyAmounts(amounts);
+      setShowCloseDialog(true);
+    } catch (e: any) {
+      setError(e.message || "Failed to load close session totals");
+    }
+  };
+
+  useEffect(() => {
+    if (!showCloseDialog) return;
+    setClosingBalance(closeEnteredBaseTotal.toFixed(2));
+  }, [closeEnteredBaseTotal, showCloseDialog]);
+
   const closeSession = async () => {
     if (!session) return;
     try {
+      const closeLines = closeCurrencyCodes
+        .map((code) => {
+          const amount = parseAmount(closeCurrencyAmounts[code] || "");
+          if (amount <= 0) return "";
+          return `${code}: ${amount.toFixed(2)}`;
+        })
+        .filter(Boolean);
+      const closeNotes = closeLines.length
+        ? `Closing balances by currency -> ${closeLines.join(", ")}`
+        : "";
       await apiFetch(`/pos/sessions/${session.id}/close`, {
         method: "POST",
         body: JSON.stringify({
-          closing_balance: parseFloat(closingBalance) || 0,
+          closing_balance: parseFloat(closeEnteredBaseTotal.toFixed(2)) || 0,
+          notes: closeNotes,
         }),
       });
       setSession(null);
       setShowCloseDialog(false);
+      setCloseSessionOrders([]);
+      setCloseCurrencyAmounts({});
+      setCloseCurrencyRates({});
       setCurrentCashier(null);
       setPinValue("");
       setPinError("");
@@ -1640,8 +1903,10 @@ export default function POSPage() {
                   title={selectedTill?.name || "Select Point of Sale"}
                 >
                   <span className="pos-session-dot" />
+                  <span className="pos-till-label">POS:</span>
                   <select
                     value={selectedTillId ?? ""}
+                    disabled={sortedPosTills.length <= 1}
                     onChange={(e) => {
                       const val = e.target.value;
                       setSelectedTillId(val === "" ? null : Number(val));
@@ -1849,7 +2114,7 @@ export default function POSPage() {
             </button>
             <button
               className="pos-btn pos-btn-sm pos-btn-close-session"
-              onClick={() => setShowCloseDialog(true)}
+              onClick={openCloseDialog}
             >
               <svg
                 width="14"
@@ -2003,7 +2268,7 @@ export default function POSPage() {
                   style={{ color: "var(--red-600" }}
                   className="pos-mobile-menu-item"
                   onClick={() => {
-                    setShowCloseDialog(true);
+                    openCloseDialog();
                     setShowMobileMenu(false);
                   }}
                 >
@@ -2436,10 +2701,7 @@ export default function POSPage() {
           <div className="pos-cart-actions">
             <button
               className="pos-btn pos-btn-success pos-btn-full pos-btn-pay"
-              onClick={() => {
-                setCashTendered(cartTotal.toFixed(2));
-                setShowPayment(true);
-              }}
+              onClick={openPaymentDialog}
               disabled={cart.length === 0}
             >
               <svg
@@ -2972,8 +3234,8 @@ export default function POSPage() {
               <h2>Payment</h2>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <select
-                  value={posCurrencyCode}
-                  onChange={(e) => changePosCurrency(e.target.value)}
+                  value={paymentCurrencyCode}
+                  onChange={(e) => changePaymentCurrency(e.target.value)}
                   style={{
                     padding: "6px 10px",
                     borderRadius: 10,
@@ -3010,7 +3272,9 @@ export default function POSPage() {
                     );
                   })}
                 </select>
-                <div className="pos-payment-total">{money(cartTotal)}</div>
+                <div className="pos-payment-total">
+                  {moneyPayment(cartTotalPayment)}
+                </div>
               </div>
             </div>
             <div className="pos-dialog-body">
@@ -3092,18 +3356,18 @@ export default function POSPage() {
                     step={0.01}
                     autoFocus={payMethod === "cash"}
                   />
-                  {payMethod === "cash" && (
-                    <div className="pos-change">
-                      Change:{" "}
-                      <strong>
-                        {money(
-                          Math.max(
-                            0,
-                            (parseFloat(cashTendered) || 0) - cartTotal,
-                          ),
-                        )}
-                      </strong>
-                    </div>
+                    {payMethod === "cash" && (
+                      <div className="pos-change">
+                        Change:{" "}
+                        <strong>
+                          {moneyPayment(
+                            Math.max(
+                              0,
+                              (parseFloat(cashTendered) || 0) - cartTotalPayment,
+                            ),
+                          )}
+                        </strong>
+                      </div>
                   )}
                 </div>
               )}
@@ -3116,7 +3380,9 @@ export default function POSPage() {
                     type="number"
                     className="pos-input pos-input-lg"
                     value={
-                      payMethod === "card" ? cartTotal.toFixed(2) : cardAmount
+                      payMethod === "card"
+                        ? cartTotalPayment.toFixed(2)
+                        : cardAmount
                     }
                     onChange={(e) => setCardAmount(e.target.value)}
                     disabled={payMethod === "card"}
@@ -3135,7 +3401,7 @@ export default function POSPage() {
                     className="pos-input pos-input-lg"
                     value={
                       payMethod === "mobile"
-                        ? cartTotal.toFixed(2)
+                        ? cartTotalPayment.toFixed(2)
                         : mobileAmount
                     }
                     onChange={(e) => setMobileAmount(e.target.value)}
@@ -3149,7 +3415,7 @@ export default function POSPage() {
               {payMethod === "split" && (
                 <div className="pos-split-summary">
                   Split total:{" "}
-                  {money(
+                  {moneyPayment(
                     (parseFloat(cashTendered) || 0) +
                       (parseFloat(cardAmount) || 0) +
                       (parseFloat(mobileAmount) || 0),
@@ -3157,7 +3423,7 @@ export default function POSPage() {
                   {(parseFloat(cashTendered) || 0) +
                     (parseFloat(cardAmount) || 0) +
                     (parseFloat(mobileAmount) || 0) <
-                    cartTotal && (
+                    cartTotalPayment && (
                     <span className="pos-split-warning"> (Insufficient)</span>
                   )}
                 </div>
@@ -3522,38 +3788,47 @@ export default function POSPage() {
                   <span>{session?.transaction_count || 0}</span>
                 </div>
                 <div className="pos-close-row pos-close-expected">
-                  <span>Expected Cash</span>
-                  <span>
-                    {money(
-                      (session?.opening_balance || 0) +
-                        (session?.total_cash || 0),
-                    )}
-                  </span>
+                  <span>Expected Cash (Base)</span>
+                  <span>{formatBaseCurrency(closeExpectedBaseTotal)}</span>
                 </div>
               </div>
-              <label className="pos-label">
-                Closing Cash Balance
-                <input
-                  type="number"
-                  className="pos-input pos-input-lg"
-                  value={closingBalance}
-                  onChange={(e) => setClosingBalance(e.target.value)}
-                  placeholder="Count your cash…"
-                  min={0}
-                  step={0.01}
-                  autoFocus
-                />
-              </label>
-              {closingBalance && (
+              <div style={{ display: "grid", gap: 8, marginTop: 8 }}>
+                {closeCurrencyCodes.map((code, idx) => (
+                  <label className="pos-label" key={code}>
+                    Closing Cash Balance ({code})
+                    <input
+                      type="number"
+                      className="pos-input pos-input-lg"
+                      value={closeCurrencyAmounts[code] ?? ""}
+                      onChange={(e) =>
+                        setCloseCurrencyAmounts((prev) => ({
+                          ...prev,
+                          [code]: e.target.value,
+                        }))
+                      }
+                      placeholder={`Count your ${code} cash...`}
+                      min={0}
+                      step={0.01}
+                      autoFocus={idx === 0}
+                    />
+                    <small
+                      style={{
+                        display: "block",
+                        marginTop: 4,
+                        color: "var(--slate-500, #64748b)",
+                      }}
+                    >
+                      Expected:{" "}
+                      {moneyByCode(closeExpectedCashByCurrency[code] || 0, code)}
+                    </small>
+                  </label>
+                ))}
+              </div>
+              {showCloseDialog && (
                 <div
-                  className={`pos-close-diff ${Math.abs(parseFloat(closingBalance) - ((session?.opening_balance || 0) + (session?.total_cash || 0))) > 0.01 ? "pos-diff-warn" : "pos-diff-ok"}`}
+                  className={`pos-close-diff ${Math.abs(closeDifferenceBase) > 0.01 ? "pos-diff-warn" : "pos-diff-ok"}`}
                 >
-                  Difference:{" "}
-                  {money(
-                    parseFloat(closingBalance) -
-                      ((session?.opening_balance || 0) +
-                        (session?.total_cash || 0)),
-                  )}
+                  Difference: {formatBaseCurrency(closeDifferenceBase)}
                 </div>
               )}
               {error && <div className="pos-error">{error}</div>}
@@ -3747,3 +4022,4 @@ export default function POSPage() {
     </div>
   );
 }
+

@@ -8957,7 +8957,7 @@ button.danger:not(.icon-btn):not(.device-icon-btn):disabled {
   align-items: center;
   gap: 5px;
   font-size: 0.7rem;
-  color: rgba(255,255,255,0.6);
+  color: rgba(255,255,255,0.92);
   font-weight: 500;
 }
 .pos-company-name {
@@ -8978,20 +8978,30 @@ button.danger:not(.icon-btn):not(.device-icon-btn):disabled {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.7);
-  font-weight: 500;
+  font-size: 0.78rem;
+  color: #ffffff;
+  font-weight: 600;
   letter-spacing: 0.4px;
+}
+.pos-till-label {
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 700;
 }
 .pos-till-selector select {
   background: transparent;
   border: none;
   padding: 0;
   margin: 0;
-  color: inherit;
+  color: #ffffff;
   font: inherit;
   cursor: pointer;
   text-transform: none;
+  min-width: 120px;
+}
+.pos-till-selector select:disabled {
+  opacity: 1;
+  cursor: default;
+  -webkit-text-fill-color: #ffffff;
 }
 .pos-till-selector select:focus {
   outline: none;
