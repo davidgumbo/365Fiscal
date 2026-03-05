@@ -1395,6 +1395,7 @@ export default function POSPage() {
         amounts[code] = (expected[code] || 0).toFixed(2);
       }
       setCloseCurrencyAmounts(amounts);
+      setError("");
       setShowCloseDialog(true);
     } catch (e: any) {
       setError(e.message || "Failed to load close session totals");
@@ -1405,6 +1406,15 @@ export default function POSPage() {
     if (!showCloseDialog) return;
     setClosingBalance(closeEnteredBaseTotal.toFixed(2));
   }, [closeEnteredBaseTotal, showCloseDialog]);
+
+  const clearCloseDialogState = useCallback(() => {
+    setShowCloseDialog(false);
+    setCloseSessionOrders([]);
+    setCloseCurrencyAmounts({});
+    setCloseCurrencyRates({});
+    setClosingBalance("");
+    setError("");
+  }, []);
 
   const closeSession = async () => {
     if (!session) return;
@@ -1427,10 +1437,7 @@ export default function POSPage() {
         }),
       });
       setSession(null);
-      setShowCloseDialog(false);
-      setCloseSessionOrders([]);
-      setCloseCurrencyAmounts({});
-      setCloseCurrencyRates({});
+      clearCloseDialogState();
       setCurrentCashier(null);
       setPinValue("");
       setPinError("");
@@ -3803,7 +3810,7 @@ export default function POSPage() {
 
       {/* ─── CLOSE SESSION DIALOG ─── */}
       {showCloseDialog && (
-        <div className="pos-overlay" onClick={() => setShowCloseDialog(false)}>
+        <div className="pos-overlay" onClick={clearCloseDialogState}>
           <div
             className="pos-dialog pos-dialog-close"
             onClick={(e) => e.stopPropagation()}
@@ -3894,7 +3901,7 @@ export default function POSPage() {
             <div className="pos-dialog-footer">
               <button
                 className="pos-btn pos-btn-ghost"
-                onClick={() => setShowCloseDialog(false)}
+                onClick={clearCloseDialogState}
               >
                 Cancel
               </button>

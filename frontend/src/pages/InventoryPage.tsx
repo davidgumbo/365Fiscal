@@ -1227,6 +1227,33 @@ export default function InventoryPage() {
     (w) => w.id === selectedWarehouseId,
   );
   const selectedMove = stockMoves.find((m) => m.id === selectedMoveId);
+  const selectedProductStock = useMemo(() => {
+    if (!selectedProductId) {
+      return { onHand: 0, available: 0, reserved: 0 };
+    }
+    const toFinite = (value: unknown) => {
+      const num = typeof value === "number" ? value : Number(value);
+      return Number.isFinite(num) ? num : 0;
+    };
+    const quantTotals = stockQuants
+      .filter((q) => q.product_id === selectedProductId)
+      .reduce(
+        (acc, quant) => ({
+          onHand: acc.onHand + toFinite(quant.quantity),
+          available: acc.available + toFinite(quant.available_quantity),
+          reserved: acc.reserved + toFinite(quant.reserved_quantity),
+        }),
+        { onHand: 0, available: 0, reserved: 0 },
+      );
+
+    return {
+      onHand: toFinite(selectedProduct?.quantity_on_hand) || quantTotals.onHand,
+      available:
+        toFinite(selectedProduct?.quantity_available) || quantTotals.available,
+      reserved:
+        toFinite(selectedProduct?.quantity_reserved) || quantTotals.reserved,
+    };
+  }, [selectedProductId, selectedProduct, stockQuants]);
 
   const filteredProducts = products.filter((p) => {
     if (filterCategoryId !== null && p.category_id !== filterCategoryId)
@@ -2136,7 +2163,10 @@ export default function InventoryPage() {
                             >
                               <span style={{ fontWeight: 500 }}>{p.name}</span>
                               <span style={{ color: "var(--yellow-800)" }}>
-                                {p.quantity_on_hand} / {p.reorder_point} {p.uom}
+                                {Number.isFinite(p.quantity_on_hand)
+                                  ? p.quantity_on_hand
+                                  : 0}{" "}
+                                / {p.reorder_point} {p.uom}
                               </span>
                             </div>
                           ))}
@@ -2402,7 +2432,10 @@ export default function InventoryPage() {
                                       event.stopPropagation()
                                     }
                                   >
-                                    {p.quantity_on_hand} {p.uom}
+                                    {Number.isFinite(p.quantity_on_hand)
+                                      ? p.quantity_on_hand
+                                      : 0}{" "}
+                                    {p.uom}
                                   </button>
                                 </td>
                                 <td style={{ color: "var(--green-600)" }}>
@@ -2596,7 +2629,10 @@ export default function InventoryPage() {
                                     openOnHandAdjustment(p);
                                   }}
                                 >
-                                  {p.quantity_on_hand} {p.uom}
+                                  {Number.isFinite(p.quantity_on_hand)
+                                    ? p.quantity_on_hand
+                                    : 0}{" "}
+                                  {p.uom}
                                 </button>
                               </span>
                             </div>
@@ -3198,6 +3234,55 @@ export default function InventoryPage() {
                                 Inventory
                               </span>
                               <div className="o-group-separator-line" />
+                            </div>
+
+                            <div
+                              style={{
+                                display: "grid",
+                                gridTemplateColumns: "1fr 1fr 1fr",
+                                gap: 24,
+                                marginBottom: 16,
+                              }}
+                            >
+                              <div className="o-form-group">
+                                <label className="o-form-label">
+                                  On Hand ({selectedProduct?.uom || productForm.uom})
+                                </label>
+                                <div className="o-form-field">
+                                  <input
+                                    type="text"
+                                    className="o-form-input"
+                                    value={selectedProductStock.onHand.toFixed(2)}
+                                    readOnly
+                                  />
+                                </div>
+                              </div>
+                              <div className="o-form-group">
+                                <label className="o-form-label">
+                                  Available ({selectedProduct?.uom || productForm.uom})
+                                </label>
+                                <div className="o-form-field">
+                                  <input
+                                    type="text"
+                                    className="o-form-input"
+                                    value={selectedProductStock.available.toFixed(2)}
+                                    readOnly
+                                  />
+                                </div>
+                              </div>
+                              <div className="o-form-group">
+                                <label className="o-form-label">
+                                  Reserved ({selectedProduct?.uom || productForm.uom})
+                                </label>
+                                <div className="o-form-field">
+                                  <input
+                                    type="text"
+                                    className="o-form-input"
+                                    value={selectedProductStock.reserved.toFixed(2)}
+                                    readOnly
+                                  />
+                                </div>
+                              </div>
                             </div>
 
                             <div

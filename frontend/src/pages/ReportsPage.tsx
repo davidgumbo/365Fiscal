@@ -301,6 +301,56 @@ interface PurchaseReportData {
   }[];
 }
 
+interface POSOrderReportItem {
+  reference: string;
+  cashier: string;
+  till: string;
+  date: string;
+  status: string;
+  currency: string;
+  total: number;
+  cash: number;
+  card: number;
+  mobile: number;
+  fiscalized: boolean;
+}
+
+interface POSOrdersReportData {
+  total_orders: number;
+  fiscalized_orders: number;
+  refunded_orders: number;
+  by_currency: {
+    currency: string;
+    count: number;
+    total: number;
+    cash: number;
+    card: number;
+    mobile: number;
+  }[];
+  by_status: { status: string; count: number }[];
+  recent_orders: POSOrderReportItem[];
+}
+
+interface POSOrderReportRaw {
+  id: number;
+  reference: string;
+  status: string;
+  order_date: string;
+  total_amount: number;
+  cash_amount: number;
+  card_amount: number;
+  mobile_amount: number;
+  currency: string;
+  is_fiscalized: boolean;
+  cashier_name: string;
+  till_id: number | null;
+}
+
+interface POSTillListItem {
+  id: number;
+  name: string;
+}
+
 type ReportType =
   | "sales"
   | "stock"
@@ -308,7 +358,8 @@ type ReportType =
   | "creditors"
   | "income_statement"
   | "vat"
-  | "purchases";
+  | "purchases"
+  | "pos_orders";
 
 type VatSectionTab =
   | "sales_vat"
@@ -395,6 +446,8 @@ export default function ReportsPage() {
   const [vatReport, setVatReport] = useState<VatReport | null>(null);
   const [purchaseReport, setPurchaseReport] =
     useState<PurchaseReportData | null>(null);
+  const [posOrdersReport, setPosOrdersReport] =
+    useState<POSOrdersReportData | null>(null);
   const [companySettings, setCompanySettings] =
     useState<CompanySettings | null>(null);
   const [currencyList, setCurrencyList] = useState<CurrencyItem[]>([]);
@@ -1256,6 +1309,111 @@ export default function ReportsPage() {
     });
   }, [companyId, dateRange, reportCurrency]);
 
+  const loadPosOrdersReport = useCallback(async () => {
+    if (!companyId) return;
+
+    const currencyParam = reportCurrency
+      ? `&currency=${encodeURIComponent(reportCurrency)}`
+      : "";
+
+    const [orders, tills] = await Promise.all([
+      apiFetch<POSOrderReportRaw[]>(
+        `/pos/orders?company_id=${companyId}${currencyParam}&limit=500`,
+      ).catch(() => [] as POSOrderReportRaw[]),
+      apiFetch<POSTillListItem[]>(`/pos/tills?company_id=${companyId}`).catch(
+        () => [] as POSTillListItem[],
+      ),
+    ]);
+
+    const tillNameById = new Map(tills.map((till) => [till.id, till.name]));
+    const fromDate = dateRange.from ? new Date(dateRange.from) : null;
+    const toDate = dateRange.to ? new Date(dateRange.to + "T23:59:59") : null;
+
+    const filtered = orders.filter((order) => {
+      const orderDate = new Date(order.order_date);
+      if (Number.isNaN(orderDate.getTime())) return false;
+      if (fromDate && orderDate < fromDate) return false;
+      if (toDate && orderDate > toDate) return false;
+      return true;
+    });
+
+    const byCurrency = new Map<
+      string,
+      { count: number; total: number; cash: number; card: number; mobile: number }
+    >();
+    const byStatus = new Map<string, number>();
+
+    let fiscalizedOrders = 0;
+    let refundedOrders = 0;
+
+    for (const order of filtered) {
+      const currency = normalizeCurrency(order.currency) || effectiveBaseCode;
+      const existing = byCurrency.get(currency) || {
+        count: 0,
+        total: 0,
+        cash: 0,
+        card: 0,
+        mobile: 0,
+      };
+      existing.count += 1;
+      existing.total += order.total_amount || 0;
+      existing.cash += order.cash_amount || 0;
+      existing.card += order.card_amount || 0;
+      existing.mobile += order.mobile_amount || 0;
+      byCurrency.set(currency, existing);
+
+      const status = (order.status || "draft").toLowerCase();
+      byStatus.set(status, (byStatus.get(status) || 0) + 1);
+
+      if (order.is_fiscalized || status === "fiscalized") fiscalizedOrders += 1;
+      if (status === "refunded") refundedOrders += 1;
+    }
+
+    const recentOrders = [...filtered]
+      .sort(
+        (a, b) =>
+          new Date(b.order_date).getTime() - new Date(a.order_date).getTime(),
+      )
+      .slice(0, 100)
+      .map((order) => ({
+        reference: order.reference,
+        cashier: order.cashier_name || "-",
+        till: order.till_id
+          ? tillNameById.get(order.till_id) || `Till #${order.till_id}`
+          : "-",
+        date: order.order_date
+          ? new Date(order.order_date).toLocaleString()
+          : "-",
+        status: order.status || "-",
+        currency: normalizeCurrency(order.currency) || effectiveBaseCode,
+        total: order.total_amount || 0,
+        cash: order.cash_amount || 0,
+        card: order.card_amount || 0,
+        mobile: order.mobile_amount || 0,
+        fiscalized: Boolean(order.is_fiscalized),
+      }));
+
+    setPosOrdersReport({
+      total_orders: filtered.length,
+      fiscalized_orders: fiscalizedOrders,
+      refunded_orders: refundedOrders,
+      by_currency: Array.from(byCurrency.entries())
+        .map(([currency, value]) => ({
+          currency,
+          count: value.count,
+          total: value.total,
+          cash: value.cash,
+          card: value.card,
+          mobile: value.mobile,
+        }))
+        .sort((a, b) => b.total - a.total),
+      by_status: Array.from(byStatus.entries())
+        .map(([status, count]) => ({ status, count }))
+        .sort((a, b) => b.count - a.count),
+      recent_orders: recentOrders,
+    });
+  }, [companyId, dateRange, reportCurrency, effectiveBaseCode]);
+
   const loadReport = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -1268,6 +1426,7 @@ export default function ReportsPage() {
       else if (activeReport === "creditors") await loadCreditorsReport();
       else if (activeReport === "vat") await loadVatReport();
       else if (activeReport === "purchases") await loadPurchaseReport();
+      else if (activeReport === "pos_orders") await loadPosOrdersReport();
     } catch (err: any) {
       console.error("Report load error:", err);
       setError(err?.message || "Failed to load report data");
@@ -1283,6 +1442,7 @@ export default function ReportsPage() {
     loadCreditorsReport,
     loadVatReport,
     loadPurchaseReport,
+    loadPosOrdersReport,
   ]);
 
   useEffect(() => {
@@ -1619,6 +1779,73 @@ export default function ReportsPage() {
       purchaseReport.by_month.forEach((m) =>
         rows.push([m.month, m.amount.toFixed(2), String(m.count)]),
       );
+    } else if (activeReport === "pos_orders" && posOrdersReport) {
+      filename = `point-orders-report-${dateRange.from}-to-${dateRange.to}.csv`;
+      rows.push([
+        "Point Orders Report",
+        `${dateRange.from} to ${dateRange.to}`,
+      ]);
+      rows.push([]);
+      rows.push(["Total Orders", String(posOrdersReport.total_orders)]);
+      rows.push(["Fiscalized Orders", String(posOrdersReport.fiscalized_orders)]);
+      rows.push(["Refunded Orders", String(posOrdersReport.refunded_orders)]);
+      rows.push(["Currencies", String(posOrdersReport.by_currency.length)]);
+      rows.push([]);
+      rows.push(["Sales by Currency"]);
+      rows.push([
+        "Currency",
+        "Orders",
+        "Total Sales",
+        "Cash Sales",
+        "Card Sales",
+        "Mobile Sales",
+      ]);
+      posOrdersReport.by_currency.forEach((entry) =>
+        rows.push([
+          entry.currency,
+          String(entry.count),
+          entry.total.toFixed(2),
+          entry.cash.toFixed(2),
+          entry.card.toFixed(2),
+          entry.mobile.toFixed(2),
+        ]),
+      );
+      rows.push([]);
+      rows.push(["Orders by Status"]);
+      rows.push(["Status", "Count"]);
+      posOrdersReport.by_status.forEach((entry) =>
+        rows.push([entry.status, String(entry.count)]),
+      );
+      rows.push([]);
+      rows.push(["Recent POS Orders"]);
+      rows.push([
+        "Reference",
+        "Date",
+        "Cashier",
+        "Till",
+        "Status",
+        "Currency",
+        "Total",
+        "Cash",
+        "Card",
+        "Mobile",
+        "Fiscalized",
+      ]);
+      posOrdersReport.recent_orders.forEach((order) =>
+        rows.push([
+          order.reference,
+          order.date,
+          order.cashier,
+          order.till,
+          order.status,
+          order.currency,
+          order.total.toFixed(2),
+          order.cash.toFixed(2),
+          order.card.toFixed(2),
+          order.mobile.toFixed(2),
+          order.fiscalized ? "Yes" : "No",
+        ]),
+      );
     }
 
     const csv = rows
@@ -1641,7 +1868,9 @@ export default function ReportsPage() {
                 ? "Income Statement"
                 : activeReport === "purchases"
                   ? "Purchase Report"
-                  : "VAT RETURN";
+                  : activeReport === "pos_orders"
+                    ? "Point Orders Report"
+                    : "VAT RETURN";
     const period =
       activeReport === "stock"
         ? new Date().toLocaleDateString()
@@ -1754,6 +1983,22 @@ export default function ReportsPage() {
         <h3>Monthly Trend</h3>
         <table><thead><tr><th>Month</th><th style="text-align:right">Amount</th><th style="text-align:right">Orders</th></tr></thead><tbody>
           ${purchaseReport.by_month.map((m) => `<tr><td>${m.month}</td><td style="text-align:right">${formatCurrency(m.amount)}</td><td style="text-align:right">${m.count}</td></tr>`).join("")}
+        </tbody></table>`;
+    } else if (activeReport === "pos_orders" && posOrdersReport) {
+      bodyHTML = `
+        <div class="summary-grid">
+          <div class="summary-box"><div class="label">Total Orders</div><div class="val">${posOrdersReport.total_orders}</div></div>
+          <div class="summary-box"><div class="label">Fiscalized Orders</div><div class="val">${posOrdersReport.fiscalized_orders}</div></div>
+          <div class="summary-box"><div class="label">Refunded Orders</div><div class="val">${posOrdersReport.refunded_orders}</div></div>
+          <div class="summary-box"><div class="label">Currencies</div><div class="val">${posOrdersReport.by_currency.length}</div></div>
+        </div>
+        <h3>Sales by Currency</h3>
+        <table><thead><tr><th>Currency</th><th style="text-align:right">Orders</th><th style="text-align:right">Total Sales</th><th style="text-align:right">Cash</th><th style="text-align:right">Card</th><th style="text-align:right">Mobile</th></tr></thead><tbody>
+          ${posOrdersReport.by_currency.map((entry) => `<tr><td>${entry.currency}</td><td style="text-align:right">${entry.count}</td><td style="text-align:right">${entry.currency} ${entry.total.toFixed(2)}</td><td style="text-align:right">${entry.currency} ${entry.cash.toFixed(2)}</td><td style="text-align:right">${entry.currency} ${entry.card.toFixed(2)}</td><td style="text-align:right">${entry.currency} ${entry.mobile.toFixed(2)}</td></tr>`).join("")}
+        </tbody></table>
+        <h3>Recent Orders</h3>
+        <table><thead><tr><th>Reference</th><th>Date</th><th>Cashier</th><th>Till</th><th>Status</th><th>Currency</th><th style="text-align:right">Total</th><th style="text-align:right">Cash</th><th style="text-align:right">Card</th><th style="text-align:right">Mobile</th><th>Fiscalized</th></tr></thead><tbody>
+          ${posOrdersReport.recent_orders.map((order) => `<tr><td>${order.reference}</td><td>${order.date}</td><td>${order.cashier}</td><td>${order.till}</td><td>${order.status}</td><td>${order.currency}</td><td style="text-align:right">${order.currency} ${order.total.toFixed(2)}</td><td style="text-align:right">${order.currency} ${order.cash.toFixed(2)}</td><td style="text-align:right">${order.currency} ${order.card.toFixed(2)}</td><td style="text-align:right">${order.currency} ${order.mobile.toFixed(2)}</td><td>${order.fiscalized ? "Yes" : "No"}</td></tr>`).join("")}
         </tbody></table>`;
     } else if (activeReport === "vat" && vatReport) {
       const vatPeriod = `${vatReport.period_from || dateRange.from} to ${vatReport.period_to || dateRange.to}`;
@@ -1918,6 +2163,18 @@ export default function ReportsPage() {
     "purchases_recent",
     purchaseReport?.recent_orders ?? [],
   );
+  const posOrdersByCurrencyTable = getPaginatedTable(
+    "pos_orders_by_currency",
+    posOrdersReport?.by_currency ?? [],
+  );
+  const posOrdersByStatusTable = getPaginatedTable(
+    "pos_orders_by_status",
+    posOrdersReport?.by_status ?? [],
+  );
+  const posOrdersRecentTable = getPaginatedTable(
+    "pos_orders_recent",
+    posOrdersReport?.recent_orders ?? [],
+  );
 
   const goBackToCompanies = () => {
     setSelectedCompanyId(null);
@@ -1927,6 +2184,7 @@ export default function ReportsPage() {
     setCreditorsReport(null);
     setVatReport(null);
     setPurchaseReport(null);
+    setPosOrdersReport(null);
     navigate("/reports");
   };
 
@@ -2201,6 +2459,27 @@ export default function ReportsPage() {
                     <circle cx="9" cy="21" r="1" />
                     <circle cx="20" cy="21" r="1" />
                     <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                  </svg>
+                ),
+              },
+              {
+                key: "pos_orders",
+                label: "POINT ORDERS REPORT",
+                icon: (
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="var(--emerald-600)"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect x="3" y="4" width="18" height="14" rx="2" />
+                    <path d="M7 20h10" />
+                    <path d="M9 8h6" />
+                    <path d="M9 12h6" />
                   </svg>
                 ),
               },
@@ -3899,6 +4178,191 @@ export default function ReportsPage() {
             </div>
           )}
 
+          {/* ─── Point Orders Report ─── */}
+          {!loading && activeReport === "pos_orders" && posOrdersReport && (
+            <div className="report-content">
+              <div className="metrics-row">
+                <MetricCard
+                  label="Total Orders"
+                  value={String(posOrdersReport.total_orders)}
+                />
+                <MetricCard
+                  label="Fiscalized"
+                  value={String(posOrdersReport.fiscalized_orders)}
+                />
+                <MetricCard
+                  label="Refunded"
+                  value={String(posOrdersReport.refunded_orders)}
+                />
+                <MetricCard
+                  label="Currencies"
+                  value={String(posOrdersReport.by_currency.length)}
+                />
+              </div>
+
+              <div className="report-grid">
+                <div className="report-card">
+                  <h3>Sales by Currency</h3>
+                  {posOrdersReport.by_currency.length === 0 ? (
+                    <p className="empty-state">No POS orders in this period.</p>
+                  ) : (
+                    <>
+                      <table className="report-table">
+                        <thead>
+                          <tr>
+                            <th>Currency</th>
+                            <th className="text-right">Orders</th>
+                            <th className="text-right">Total Sales</th>
+                            <th className="text-right">Cash</th>
+                            <th className="text-right">Card</th>
+                            <th className="text-right">Mobile</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {posOrdersByCurrencyTable.rows.map((entry) => (
+                            <tr key={entry.currency}>
+                              <td>{entry.currency}</td>
+                              <td className="text-right">{entry.count}</td>
+                              <td className="text-right">
+                                {entry.currency} {entry.total.toFixed(2)}
+                              </td>
+                              <td className="text-right">
+                                {entry.currency} {entry.cash.toFixed(2)}
+                              </td>
+                              <td className="text-right">
+                                {entry.currency} {entry.card.toFixed(2)}
+                              </td>
+                              <td className="text-right">
+                                {entry.currency} {entry.mobile.toFixed(2)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      <TablePagination
+                        page={posOrdersByCurrencyTable.page}
+                        pageSize={posOrdersByCurrencyTable.pageSize}
+                        totalItems={posOrdersByCurrencyTable.totalItems}
+                        onPageChange={posOrdersByCurrencyTable.setPage}
+                        onPageSizeChange={posOrdersByCurrencyTable.setPageSize}
+                      />
+                    </>
+                  )}
+                </div>
+
+                <div className="report-card">
+                  <h3>Orders by Status</h3>
+                  {posOrdersReport.by_status.length === 0 ? (
+                    <p className="empty-state">No status data.</p>
+                  ) : (
+                    <>
+                      <table className="report-table">
+                        <thead>
+                          <tr>
+                            <th>Status</th>
+                            <th className="text-right">Count</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {posOrdersByStatusTable.rows.map((entry) => (
+                            <tr key={entry.status}>
+                              <td>
+                                <span
+                                  className={`badge ${entry.status === "fiscalized" ? "badge-success" : entry.status === "refunded" ? "badge-danger" : entry.status === "paid" ? "badge-info" : "badge-secondary"}`}
+                                  style={{ textTransform: "capitalize" }}
+                                >
+                                  {entry.status}
+                                </span>
+                              </td>
+                              <td className="text-right">{entry.count}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      <TablePagination
+                        page={posOrdersByStatusTable.page}
+                        pageSize={posOrdersByStatusTable.pageSize}
+                        totalItems={posOrdersByStatusTable.totalItems}
+                        onPageChange={posOrdersByStatusTable.setPage}
+                        onPageSizeChange={posOrdersByStatusTable.setPageSize}
+                      />
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div className="report-card" style={{ marginTop: 20 }}>
+                <h3>Recent POS Orders</h3>
+                {posOrdersReport.recent_orders.length === 0 ? (
+                  <p className="empty-state">No POS orders in this period.</p>
+                ) : (
+                  <>
+                    <table className="report-table">
+                      <thead>
+                        <tr>
+                          <th>Reference</th>
+                          <th>Date</th>
+                          <th>Cashier</th>
+                          <th>Till</th>
+                          <th>Status</th>
+                          <th>Currency</th>
+                          <th className="text-right">Total</th>
+                          <th className="text-right">Cash</th>
+                          <th className="text-right">Card</th>
+                          <th className="text-right">Mobile</th>
+                          <th>Fiscalized</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {posOrdersRecentTable.rows.map((order) => (
+                          <tr key={order.reference + order.date}>
+                            <td
+                              style={{ fontFamily: "monospace", fontSize: 12 }}
+                            >
+                              {order.reference}
+                            </td>
+                            <td>{order.date}</td>
+                            <td>{order.cashier}</td>
+                            <td>{order.till}</td>
+                            <td>
+                              <span
+                                className={`badge ${order.status === "fiscalized" ? "badge-success" : order.status === "refunded" ? "badge-danger" : order.status === "paid" ? "badge-info" : "badge-secondary"}`}
+                                style={{ textTransform: "capitalize" }}
+                              >
+                                {order.status}
+                              </span>
+                            </td>
+                            <td>{order.currency}</td>
+                            <td className="text-right">
+                              {order.currency} {order.total.toFixed(2)}
+                            </td>
+                            <td className="text-right">
+                              {order.currency} {order.cash.toFixed(2)}
+                            </td>
+                            <td className="text-right">
+                              {order.currency} {order.card.toFixed(2)}
+                            </td>
+                            <td className="text-right">
+                              {order.currency} {order.mobile.toFixed(2)}
+                            </td>
+                            <td>{order.fiscalized ? "Yes" : "No"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <TablePagination
+                      page={posOrdersRecentTable.page}
+                      pageSize={posOrdersRecentTable.pageSize}
+                      totalItems={posOrdersRecentTable.totalItems}
+                      onPageChange={posOrdersRecentTable.setPage}
+                      onPageSizeChange={posOrdersRecentTable.setPageSize}
+                    />
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Empty state when no data */}
           {!loading &&
             !error &&
@@ -3908,7 +4372,8 @@ export default function ReportsPage() {
               (activeReport === "debtors" && !debtorsReport) ||
               (activeReport === "creditors" && !creditorsReport) ||
               (activeReport === "vat" && !vatReport) ||
-              (activeReport === "purchases" && !purchaseReport)) && (
+              (activeReport === "purchases" && !purchaseReport) ||
+              (activeReport === "pos_orders" && !posOrdersReport)) && (
               <div
                 style={{
                   textAlign: "center",
