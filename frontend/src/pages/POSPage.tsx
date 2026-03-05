@@ -30,6 +30,9 @@ type CartLine = {
   price: number;
   discount: number;
   vat_rate: number;
+  display_currency_code: string;
+  display_currency_symbol: string;
+  display_rate: number;
 };
 
 type Category = { id: number; name: string };
@@ -803,6 +806,30 @@ export default function POSPage() {
     return sums;
   }, [closeSessionOrders, effectiveBaseCode, session?.opening_balance]);
 
+  const closeSalesByCurrency = useMemo(() => {
+    const sums: Record<
+      string,
+      { total: number; cash: number; card: number; mobile: number; tx: number }
+    > = {};
+    for (const o of closeSessionOrders) {
+      const code = normalizeCurrency(o.currency) || effectiveBaseCode;
+      if (!sums[code]) {
+        sums[code] = { total: 0, cash: 0, card: 0, mobile: 0, tx: 0 };
+      }
+      sums[code].total += o.total_amount || 0;
+      sums[code].cash += o.cash_amount || 0;
+      sums[code].card += o.card_amount || 0;
+      sums[code].mobile += o.mobile_amount || 0;
+      sums[code].tx += 1;
+    }
+    return sums;
+  }, [closeSessionOrders, effectiveBaseCode]);
+
+  const closeSalesCodes = useMemo(
+    () => Object.keys(closeSalesByCurrency).sort(),
+    [closeSalesByCurrency],
+  );
+
   const closeCurrencyCodes = useMemo(() => {
     const keys = new Set<string>([
       ...Object.keys(closeExpectedCashByCurrency),
@@ -849,6 +876,15 @@ export default function POSPage() {
   ]);
 
   const closeDifferenceBase = closeEnteredBaseTotal - closeExpectedBaseTotal;
+
+  const lineMoney = useCallback(
+    (line: CartLine, amountBase: number) =>
+      moneyByCode(
+        amountBase * (line.display_rate || 1),
+        line.display_currency_code || effectiveBaseCode,
+      ),
+    [effectiveBaseCode, moneyByCode],
+  );
 
   // ── data loading ──
   useEffect(() => {
@@ -1078,7 +1114,18 @@ export default function POSPage() {
 
   const addToCart = useCallback((product: POSProduct) => {
     setCart((prev) => {
-      const existing = prev.find((l) => l.product.id === product.id);
+      const currentCode = normalizeCurrency(posCurrencyCode) || effectiveBaseCode;
+      const currentSymbol = (
+        posCurrencySymbol ||
+        (currentCode === effectiveBaseCode ? effectiveBaseSymbol : currentCode)
+      ).trim();
+      const currentRate = fxRate || 1;
+      const existing = prev.find(
+        (l) =>
+          l.product.id === product.id &&
+          l.display_currency_code === currentCode &&
+          Math.abs((l.display_rate || 1) - currentRate) < 0.000001,
+      );
       if (existing) {
         return prev.map((l) =>
           l.uid === existing.uid ? { ...l, qty: l.qty + 1 } : l,
@@ -1093,10 +1140,13 @@ export default function POSPage() {
           price: product.sale_price,
           discount: 0,
           vat_rate: product.vat_rate,
+          display_currency_code: currentCode,
+          display_currency_symbol: currentSymbol,
+          display_rate: currentRate,
         },
       ];
     });
-  }, []);
+  }, [effectiveBaseCode, effectiveBaseSymbol, fxRate, posCurrencyCode, posCurrencySymbol]);
 
   const updateQty = (lineUid: string, qty: number) => {
     if (qty <= 0) {
@@ -2617,7 +2667,7 @@ export default function POSPage() {
                 <div className="pos-cart-line-info">
                   <div className="pos-cart-line-name">{line.product.name}</div>
                   <div className="pos-cart-line-meta">
-                    {money(toSale(line.price))} × {line.qty}
+                    {lineMoney(line, line.price)} × {line.qty}
                     {line.discount > 0 && (
                       <span className="pos-discount-tag">
                         -{line.discount}%
@@ -2652,7 +2702,7 @@ export default function POSPage() {
                   </button>
                 </div>
                 <div className="pos-cart-line-total">
-                  {money(toSale(lineTotal(line)))}
+                  {lineMoney(line, lineTotal(line))}
                 </div>
                 <button
                   className="pos-cart-line-remove"
@@ -3477,7 +3527,7 @@ export default function POSPage() {
                     Processing…
                   </>
                 ) : (
-                  `Validate ${money(cartTotal)}`
+                  `Validate ${moneyPayment(cartTotalPayment)}`
                 )}
               </button>
             </div>
@@ -3764,29 +3814,37 @@ export default function POSPage() {
             <div className="pos-dialog-body">
               <div className="pos-close-summary">
                 <div className="pos-close-row">
-                  <span>Opening Balance</span>
-                  <span>{money(session?.opening_balance || 0)}</span>
-                </div>
-                <div className="pos-close-row">
-                  <span>Total Sales</span>
-                  <span>{money(session?.total_sales || 0)}</span>
-                </div>
-                <div className="pos-close-row">
-                  <span>Cash Sales</span>
-                  <span>{money(session?.total_cash || 0)}</span>
-                </div>
-                <div className="pos-close-row">
-                  <span>Card Sales</span>
-                  <span>{money(session?.total_card || 0)}</span>
-                </div>
-                <div className="pos-close-row">
-                  <span>Mobile Sales</span>
-                  <span>{money(session?.total_mobile || 0)}</span>
+                  <span>Opening Balance (Base)</span>
+                  <span>{formatBaseCurrency(session?.opening_balance || 0)}</span>
                 </div>
                 <div className="pos-close-row">
                   <span>Transactions</span>
-                  <span>{session?.transaction_count || 0}</span>
+                  <span>{closeSessionOrders.length || session?.transaction_count || 0}</span>
                 </div>
+                {closeSalesCodes.map((code) => (
+                  <div key={`total-${code}`} className="pos-close-row">
+                    <span>Total Sales ({code})</span>
+                    <span>{moneyByCode(closeSalesByCurrency[code]?.total || 0, code)}</span>
+                  </div>
+                ))}
+                {closeSalesCodes.map((code) => (
+                  <div key={`cash-${code}`} className="pos-close-row">
+                    <span>Cash Sales ({code})</span>
+                    <span>{moneyByCode(closeSalesByCurrency[code]?.cash || 0, code)}</span>
+                  </div>
+                ))}
+                {closeSalesCodes.map((code) => (
+                  <div key={`card-${code}`} className="pos-close-row">
+                    <span>Card Sales ({code})</span>
+                    <span>{moneyByCode(closeSalesByCurrency[code]?.card || 0, code)}</span>
+                  </div>
+                ))}
+                {closeSalesCodes.map((code) => (
+                  <div key={`mobile-${code}`} className="pos-close-row">
+                    <span>Mobile Sales ({code})</span>
+                    <span>{moneyByCode(closeSalesByCurrency[code]?.mobile || 0, code)}</span>
+                  </div>
+                ))}
                 <div className="pos-close-row pos-close-expected">
                   <span>Expected Cash (Base)</span>
                   <span>{formatBaseCurrency(closeExpectedBaseTotal)}</span>
