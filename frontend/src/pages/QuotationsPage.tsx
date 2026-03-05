@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { apiFetch } from "../api";
 import { useMe } from "../hooks/useMe";
 import { useCompanies, Company } from "../hooks/useCompanies";
+import ValidationAlert from "../components/ValidationAlert";
 import ValidatedField from "../components/ValidatedField";
 import {
   getDocumentLinesError,
@@ -153,6 +154,7 @@ export default function QuotationsPage({
   });
   const [lines, setLines] = useState<QuotationLine[]>([emptyLine()]);
   const [invalidFields, setInvalidFields] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   // Portal users auto-select their first company
@@ -310,11 +312,14 @@ export default function QuotationsPage({
     const missingFields = getMissingRequiredFields(requiredFields);
     if (missingFields.length) {
       const message = getRequiredFieldError(requiredFields);
-      if (message) alert(message);
+      if (message) {
+        setError(message);
+      }
       setInvalidFields(missingFields.map((field) => field.key));
       return false;
     }
     setInvalidFields([]);
+    setError(null);
     return true;
   };
 
@@ -1329,6 +1334,7 @@ export default function QuotationsPage({
 
           <div className="card shadow-sm">
             <div className="card-body invoice-form">
+              <ValidationAlert message={error} onClose={() => setError(null)} />
               <div className="row g-3 mb-4">
                 <div className="col-md-6">
                   <label className="form-label fw-semibold">Company</label>

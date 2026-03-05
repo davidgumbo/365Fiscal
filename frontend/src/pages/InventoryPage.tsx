@@ -4,6 +4,7 @@ import { apiFetch } from "../api";
 import { useMe } from "../hooks/useMe";
 import { useCompanies, Company } from "../hooks/useCompanies";
 import { Trash2 } from "lucide-react";
+import ValidationAlert from "../components/ValidationAlert";
 import ValidatedField from "../components/ValidatedField";
 import {
   getMissingRequiredFields,
@@ -325,6 +326,7 @@ export default function InventoryPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Form states
   const [selectedProductId, setSelectedProductId] = useState<number | null>(
@@ -582,11 +584,14 @@ export default function InventoryPage() {
     const missingFields = getMissingRequiredFields(requiredFields);
     if (missingFields.length) {
       const message = getRequiredFieldError(requiredFields);
-      if (message) alert(message);
+      if (message) {
+        setError(message);
+      }
       setInvalidProductFields(missingFields.map((field) => field.key));
       return false;
     }
     setInvalidProductFields([]);
+    setError(null);
     return true;
   };
 
@@ -869,11 +874,14 @@ export default function InventoryPage() {
     const missingFields = getMissingRequiredFields(requiredFields);
     if (missingFields.length) {
       const message = getRequiredFieldError(requiredFields);
-      if (message) alert(message);
+      if (message) {
+        setError(message);
+      }
       setInvalidLocationFields(missingFields.map((field) => field.key));
       return false;
     }
     setInvalidLocationFields([]);
+    setError(null);
     return true;
   };
 
@@ -972,11 +980,14 @@ export default function InventoryPage() {
     const missingFields = getMissingRequiredFields(requiredFields);
     if (missingFields.length) {
       const message = getRequiredFieldError(requiredFields);
-      if (message) alert(message);
+      if (message) {
+        setError(message);
+      }
       setInvalidMoveFields(missingFields.map((field) => field.key));
       return false;
     }
     setInvalidMoveFields([]);
+    setError(null);
     return true;
   };
 
@@ -1051,11 +1062,14 @@ export default function InventoryPage() {
     const missingFields = getMissingRequiredFields(requiredFields);
     if (missingFields.length) {
       const message = getRequiredFieldError(requiredFields);
-      if (message) alert(message);
+      if (message) {
+        setError(message);
+      }
       setInvalidCategoryFields(missingFields.map((field) => field.key));
       return false;
     }
     setInvalidCategoryFields([]);
+    setError(null);
     return true;
   };
 
@@ -1376,6 +1390,7 @@ export default function InventoryPage() {
   // ============= RENDER =============
   return (
     <>
+      <ValidationAlert message={error} onClose={() => setError(null)} />
       {/* Company breadcrumb for admin */}
       {isAdmin && companyId && (
         <div
