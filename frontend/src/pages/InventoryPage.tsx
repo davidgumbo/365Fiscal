@@ -927,14 +927,103 @@ export default function InventoryPage() {
   };
 
   // ============= STOCK MOVE ACTIONS =============
+  const resolveMoveWarehouseLocation = (
+    productId: number,
+    preferredWarehouseId: number | null = null,
+    preferredLocationId: number | null = null,
+  ) => {
+    const locationById = new Map(locations.map((loc) => [loc.id, loc]));
+    let warehouseId = preferredWarehouseId;
+    let locationId = preferredLocationId;
+
+    if (!warehouseId || !locationId) {
+      const bestQuant = stockQuants
+        .filter((q) => q.product_id === productId)
+        .sort((a, b) => {
+          const left = Number.isFinite(a.available_quantity)
+            ? a.available_quantity
+            : a.quantity;
+          const right = Number.isFinite(b.available_quantity)
+            ? b.available_quantity
+            : b.quantity;
+          return right - left;
+        })[0];
+
+      warehouseId = warehouseId ?? bestQuant?.warehouse_id ?? null;
+      locationId = locationId ?? bestQuant?.location_id ?? null;
+    }
+
+    if (!warehouseId && locationId) {
+      warehouseId = locationById.get(locationId)?.warehouse_id ?? null;
+    }
+
+    if (warehouseId && !locationId) {
+      const defaultLocation =
+        locations.find((l) => l.warehouse_id === warehouseId && l.is_primary) ??
+        locations.find((l) => l.warehouse_id === warehouseId) ??
+        null;
+      locationId = defaultLocation?.id ?? null;
+    }
+
+    if (!warehouseId) {
+      warehouseId = warehouses[0]?.id ?? null;
+    }
+    if (!locationId) {
+      locationId =
+        locations.find((l) => l.warehouse_id === warehouseId)?.id ??
+        locations[0]?.id ??
+        null;
+    }
+    if (!warehouseId && locationId) {
+      warehouseId = locationById.get(locationId)?.warehouse_id ?? null;
+    }
+
+    return { warehouseId, locationId };
+  };
+
+  const openOnHandAdjustment = (
+    product: ProductWithStock,
+    preferredWarehouseId: number | null = null,
+    preferredLocationId: number | null = null,
+  ) => {
+    const { warehouseId, locationId } = resolveMoveWarehouseLocation(
+      product.id,
+      preferredWarehouseId,
+      preferredLocationId,
+    );
+    setMainView("operations");
+    setOperationsTab("moves");
+    setSelectedMoveId(null);
+    setIsNew(true);
+    setMoveForm({
+      product_id: product.id,
+      warehouse_id: warehouseId,
+      location_id: locationId,
+      move_type: "adjustment",
+      quantity: 0,
+      unit_cost: product.purchase_cost ?? 0,
+      reference: "",
+      source_document: "",
+      notes: "",
+    });
+    setSubView("form");
+    setInvalidMoveFields([]);
+    setError(null);
+  };
+
   const startNewMove = (moveType: string = "in") => {
     setSelectedMoveId(null);
     setIsNew(true);
     const defaultProduct = products[0];
+    const defaultWarehouseId = warehouses[0]?.id ?? null;
+    const defaultLocationId =
+      locations.find((l) => l.warehouse_id === defaultWarehouseId)?.id ??
+      locations[0]?.id ??
+      null;
     setMoveForm({
       product_id: defaultProduct?.id ?? null,
-      warehouse_id: warehouses[0]?.id ?? null,
-      location_id: locations[0]?.id ?? null,
+      warehouse_id: defaultWarehouseId,
+      location_id: defaultLocationId,
       move_type: moveType,
       quantity: 0,
       unit_cost: defaultProduct?.purchase_cost ?? 0,
@@ -984,6 +1073,16 @@ export default function InventoryPage() {
         setError(message);
       }
       setInvalidMoveFields(missingFields.map((field) => field.key));
+      return false;
+    }
+    const selectedLocation = locations.find((l) => l.id === moveForm.location_id);
+    if (
+      moveForm.warehouse_id &&
+      selectedLocation &&
+      selectedLocation.warehouse_id !== moveForm.warehouse_id
+    ) {
+      setError("Selected location must belong to the selected warehouse.");
+      setInvalidMoveFields(["warehouse", "location"]);
       return false;
     }
     setInvalidMoveFields([]);
@@ -2290,8 +2389,21 @@ export default function InventoryPage() {
                                     }
                                   </span>
                                 </td>
-                                <td style={{ fontWeight: 600 }}>
-                                  {p.quantity_on_hand} {p.uom}
+                                <td>
+                                  <button
+                                    type="button"
+                                    className="o-btn o-btn-link"
+                                    style={{ fontWeight: 600 }}
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      openOnHandAdjustment(p);
+                                    }}
+                                    onDoubleClick={(event) =>
+                                      event.stopPropagation()
+                                    }
+                                  >
+                                    {p.quantity_on_hand} {p.uom}
+                                  </button>
                                 </td>
                                 <td style={{ color: "var(--green-600)" }}>
                                   {p.quantity_available} {p.uom}
@@ -2474,8 +2586,18 @@ export default function InventoryPage() {
                               <span style={{ color: "var(--muted)" }}>
                                 On Hand
                               </span>
-                              <span style={{ fontWeight: 600 }}>
-                                {p.quantity_on_hand} {p.uom}
+                              <span>
+                                <button
+                                  type="button"
+                                  className="o-btn o-btn-link"
+                                  style={{ fontWeight: 600 }}
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    openOnHandAdjustment(p);
+                                  }}
+                                >
+                                  {p.quantity_on_hand} {p.uom}
+                                </button>
                               </span>
                             </div>
                             <div
@@ -3916,8 +4038,27 @@ export default function InventoryPage() {
                                   </td>
                                   <td>{warehouse?.name || "-"}</td>
                                   <td>{location?.name || "-"}</td>
-                                  <td style={{ fontWeight: 600 }}>
-                                    {q.quantity}
+                                  <td>
+                                    {product ? (
+                                      <button
+                                        type="button"
+                                        className="o-btn o-btn-link"
+                                        style={{ fontWeight: 600 }}
+                                        onClick={() =>
+                                          openOnHandAdjustment(
+                                            product,
+                                            q.warehouse_id,
+                                            q.location_id,
+                                          )
+                                        }
+                                      >
+                                        {q.quantity}
+                                      </button>
+                                    ) : (
+                                      <span style={{ fontWeight: 600 }}>
+                                        {q.quantity}
+                                      </span>
+                                    )}
                                   </td>
                                   <td
                                     style={{
