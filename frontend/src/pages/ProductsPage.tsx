@@ -1,6 +1,7 @@
 ﻿import { useEffect, useState, useRef } from "react";
 import { apiFetch } from "../api";
 import { useCompanies, Company } from "../hooks/useCompanies";
+import ValidationAlert from "../components/ValidationAlert";
 import ValidatedField from "../components/ValidatedField";
 import {
   getMissingRequiredFields,
@@ -85,6 +86,7 @@ export default function ProductsPage() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [invalidFields, setInvalidFields] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (companies.length && companyId === null) {
@@ -152,11 +154,14 @@ export default function ProductsPage() {
     const missingFields = getMissingRequiredFields(requiredFields);
     if (missingFields.length) {
       const message = getRequiredFieldError(requiredFields);
-      if (message) alert(message);
+      if (message) {
+        setError(message);
+      }
       setInvalidFields(missingFields.map((field) => field.key));
       return false;
     }
     setInvalidFields([]);
+    setError(null);
     return true;
   };
 
@@ -391,6 +396,8 @@ export default function ProductsPage() {
               )}
             </div>
           </div>
+
+          <ValidationAlert message={error} onClose={() => setError(null)} />
 
           <div className="tabs-nav">
             <button

@@ -376,13 +376,13 @@ export default function ExpensesPage() {
     if (missingFields.length) {
       const message = getRequiredFieldError(requiredFields);
       if (message) {
-        alert(message);
         setError(message);
       }
       setInvalidFields(missingFields.map((field) => field.key));
       return false;
     }
     setInvalidFields([]);
+    setError(null);
     return true;
   };
 
