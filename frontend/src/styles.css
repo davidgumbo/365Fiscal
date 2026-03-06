@@ -9065,6 +9065,35 @@ button.danger:not(.icon-btn):not(.device-icon-btn):disabled {
   );
   border-color: rgba(125, 211, 252, 0.45);
 }
+.pos-currency-selector {
+  gap: 8px;
+  padding-right: 8px;
+}
+.pos-currency-label {
+  font-size: 0.64rem;
+  letter-spacing: 0.48px;
+  color: rgba(255, 255, 255, 0.74);
+  font-weight: 800;
+}
+.pos-currency-select {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.35px;
+  min-width: 62px;
+  cursor: pointer;
+  padding: 0;
+}
+.pos-currency-select:focus {
+  outline: none;
+}
+.pos-currency-select option {
+  background: #1e1b4b;
+  color: #ffffff;
+}
 .pos-till-selector {
   display: inline-flex;
   align-items: center;

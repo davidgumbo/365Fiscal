@@ -691,26 +691,49 @@ export default function POSPage() {
         }
       }
 
-      // Convert any already-entered amounts to the new sale currency.
+      // Re-label existing cart lines so the whole POS follows the selected currency.
+      setCart((prev) =>
+        prev.map((line) => ({
+          ...line,
+          display_currency_code: nextCode,
+          display_currency_symbol: nextSymbol || nextCode,
+          display_rate: nextRate || 1,
+        })),
+      );
+
+      // Keep payment amounts aligned when currency changes from the top selector.
+      const conversionRate = showPayment ? paymentFxRate || oldRate : oldRate;
       const cash = parseAmount(cashTendered);
       const card = parseAmount(cardAmount);
       const mobile = parseAmount(mobileAmount);
-
-      if (cashTendered.trim()) {
-        setCashTendered(
-          convertBetweenSaleCurrencies(cash, oldRate, nextRate).toFixed(2),
-        );
+      if (showPayment) {
+        if (cashTendered.trim()) {
+          setCashTendered(
+            convertBetweenSaleCurrencies(cash, conversionRate, nextRate).toFixed(
+              2,
+            ),
+          );
+        }
+        if (cardAmount.trim()) {
+          setCardAmount(
+            convertBetweenSaleCurrencies(card, conversionRate, nextRate).toFixed(
+              2,
+            ),
+          );
+        }
+        if (mobileAmount.trim()) {
+          setMobileAmount(
+            convertBetweenSaleCurrencies(
+              mobile,
+              conversionRate,
+              nextRate,
+            ).toFixed(2),
+          );
+        }
       }
-      if (cardAmount.trim()) {
-        setCardAmount(
-          convertBetweenSaleCurrencies(card, oldRate, nextRate).toFixed(2),
-        );
-      }
-      if (mobileAmount.trim()) {
-        setMobileAmount(
-          convertBetweenSaleCurrencies(mobile, oldRate, nextRate).toFixed(2),
-        );
-      }
+      setPaymentCurrencyCode(nextCode);
+      setPaymentCurrencySymbol(nextSymbol || nextCode);
+      setPaymentFxRate(nextRate || 1);
 
       setPosCurrencyCode(nextCode);
       setPosCurrencySymbol(nextSymbol);
@@ -727,7 +750,9 @@ export default function POSPage() {
       fxRate,
       mobileAmount,
       parseAmount,
+      paymentFxRate,
       posCurrencyCode,
+      showPayment,
     ],
   );
 
@@ -1783,7 +1808,9 @@ export default function POSPage() {
                 </label>
                 <select
                   value={posCurrencyCode}
-                  onChange={(e) => setPosCurrencyCode(e.target.value)}
+                  onChange={(e) => {
+                    void changePosCurrency(e.target.value);
+                  }}
                   style={{
                     width: "100%",
                     padding: "12px 14px",
@@ -2028,8 +2055,37 @@ export default function POSPage() {
               <span className="pos-session-dot" />
               {session?.name}
             </div>
-            <div className="pos-session-badge pos-currency-badge">
-              {posCurrencyCode}
+            <div
+              className="pos-session-badge pos-currency-badge pos-currency-selector"
+              title="Sale currency"
+            >
+              <span className="pos-currency-label">CUR</span>
+              <select
+                className="pos-currency-select"
+                value={posCurrencyCode}
+                onChange={(e) => {
+                  void changePosCurrency(e.target.value);
+                }}
+                aria-label="Select sale currency"
+              >
+                {(currencyList.length
+                  ? currencyList
+                  : [
+                      {
+                        code: baseCurrencyCode || "USD",
+                        name: baseCurrencyCode || "USD",
+                        symbol: baseCurrencySymbol || baseCurrencyCode || "USD",
+                      },
+                    ]
+                ).map((c) => {
+                  const code = normalizeCurrency(c.code);
+                  return (
+                    <option key={`${(c as any).id ?? code}-${c.code}`} value={code}>
+                      {code}
+                    </option>
+                  );
+                })}
+              </select>
             </div>
             {sortedPosTills.length > 0 && (
               <div
