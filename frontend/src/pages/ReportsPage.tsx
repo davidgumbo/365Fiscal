@@ -1339,7 +1339,13 @@ export default function ReportsPage() {
 
     const byCurrency = new Map<
       string,
-      { count: number; total: number; cash: number; card: number; mobile: number }
+      {
+        count: number;
+        total: number;
+        cash: number;
+        card: number;
+        mobile: number;
+      }
     >();
     const byStatus = new Map<string, number>();
 
@@ -1781,13 +1787,13 @@ export default function ReportsPage() {
       );
     } else if (activeReport === "pos_orders" && posOrdersReport) {
       filename = `point-orders-report-${dateRange.from}-to-${dateRange.to}.csv`;
-      rows.push([
-        "Point Orders Report",
-        `${dateRange.from} to ${dateRange.to}`,
-      ]);
+      rows.push(["POS Orders Report", `${dateRange.from} to ${dateRange.to}`]);
       rows.push([]);
       rows.push(["Total Orders", String(posOrdersReport.total_orders)]);
-      rows.push(["Fiscalized Orders", String(posOrdersReport.fiscalized_orders)]);
+      rows.push([
+        "Fiscalized Orders",
+        String(posOrdersReport.fiscalized_orders),
+      ]);
       rows.push(["Refunded Orders", String(posOrdersReport.refunded_orders)]);
       rows.push(["Currencies", String(posOrdersReport.by_currency.length)]);
       rows.push([]);
