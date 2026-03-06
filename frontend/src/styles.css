@@ -8956,10 +8956,9 @@ button.danger:not(.icon-btn):not(.device-icon-btn):disabled {
 }
 .pos-topbar-brand {
   display: flex;
-  /* flex-direction: column; */
+  align-items: center;
   gap: 8px;
-  margin: 0 1rem;
-  justify-items: center;
+  margin-left: 6px;
 }
 
 .pos-topbar-center {
@@ -8971,7 +8970,14 @@ button.danger:not(.icon-btn):not(.device-icon-btn):disabled {
 .pos-topbar-right {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
+  margin-left: auto;
+}
+.pos-topbar-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 2px;
 }
 .pos-topbar-actions {
   display: flex;
@@ -9018,10 +9024,23 @@ button.danger:not(.icon-btn):not(.device-icon-btn):disabled {
 .pos-session-badge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  font-size: 0.7rem;
-  color: rgba(255,255,255,0.92);
-  font-weight: 500;
+  gap: 6px;
+  padding: 6px 11px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.2) 0%,
+    rgba(255, 255, 255, 0.08) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    0 4px 12px rgba(2, 6, 23, 0.28);
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.97);
+  font-weight: 700;
+  letter-spacing: 0.28px;
+  white-space: nowrap;
 }
 .pos-company-name {
   font-weight: 700;
@@ -9030,25 +9049,36 @@ button.danger:not(.icon-btn):not(.device-icon-btn):disabled {
   color: #fff;
 }
 .pos-session-dot {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   background: var(--green-400, #4ade80);
   border-radius: 50%;
   display: inline-block;
   animation: posPulse 2s ease-in-out infinite;
+  box-shadow: 0 0 10px rgba(74, 222, 128, 0.75);
+}
+.pos-currency-badge {
+  background: linear-gradient(
+    135deg,
+    rgba(56, 189, 248, 0.32) 0%,
+    rgba(14, 165, 233, 0.15) 100%
+  );
+  border-color: rgba(125, 211, 252, 0.45);
 }
 .pos-till-selector {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.78rem;
-  color: #ffffff;
+  gap: 7px;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.98);
   font-weight: 600;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.3px;
 }
 .pos-till-label {
-  color: rgba(255, 255, 255, 0.95);
+  color: rgba(255, 255, 255, 0.9);
   font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.66rem;
 }
 .pos-till-selector select {
   background: transparent;
@@ -9057,9 +9087,11 @@ button.danger:not(.icon-btn):not(.device-icon-btn):disabled {
   margin: 0;
   color: #ffffff;
   font: inherit;
+  font-weight: 700;
   cursor: pointer;
   text-transform: none;
-  min-width: 120px;
+  min-width: 132px;
+  max-width: 180px;
 }
 .pos-till-selector select:disabled {
   opacity: 1;
@@ -9610,6 +9642,9 @@ button.danger:not(.icon-btn):not(.device-icon-btn):disabled {
     flex: 1;
   }
   .pos-topbar-brand {
+    display: none;
+  }
+  .pos-topbar-meta {
     display: none;
   }
   .pos-barcode-wrapper {

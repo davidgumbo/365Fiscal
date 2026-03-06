@@ -1935,7 +1935,7 @@ export default function POSPage() {
     <div className="pos-page">
       {/* ─── TOP BAR ─── */}
       <header className="pos-topbar">
-        <div className="flex">
+        <div className="pos-topbar-left">
           <button
             className="pos-btn pos-btn-icon"
             onClick={backToHome}
@@ -1947,46 +1947,10 @@ export default function POSPage() {
           {companyInfo && (
             <div className="pos-topbar-brand">
               <span className="pos-company-name">{companyInfo.name}</span>
-              <div className="pos-session-badge">
-                <span className="pos-session-dot" />
-                {session?.name}
-              </div>
-              <div className="pos-session-badge" style={{ marginLeft: 8 }}>
-                {posCurrencyCode}
-              </div>
-              {sortedPosTills.length > 0 && (
-                <div
-                  className="pos-session-badge pos-till-selector"
-                  title={selectedTill?.name || "Select Point of Sale"}
-                >
-                  <span className="pos-session-dot" />
-                  <span className="pos-till-label">POS:</span>
-                  <select
-                    value={selectedTillId ?? ""}
-                    disabled={sortedPosTills.length <= 1}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setSelectedTillId(val === "" ? null : Number(val));
-                    }}
-                    aria-label="Select Point of Sale"
-                  >
-                    {sortedPosTills.map((till) => (
-                      <option
-                        key={till.id}
-                        value={till.id}
-                        disabled={!till.is_active}
-                      >
-                        {till.name}
-                        {!till.is_active ? " (inactive)" : ""}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
             </div>
           )}
         </div>
-        <div className="">
+        <div className="pos-topbar-center">
           <div
             className={`pos-barcode-wrapper ${
               showMobileSearch ? "pos-barcode-open" : "pos-barcode-collapsed"
@@ -2058,7 +2022,45 @@ export default function POSPage() {
             )}
           </div>
         </div>
-        <div className="" style={{ display: "flex" }}>
+        <div className="pos-topbar-right">
+          <div className="pos-topbar-meta">
+            <div className="pos-session-badge">
+              <span className="pos-session-dot" />
+              {session?.name}
+            </div>
+            <div className="pos-session-badge pos-currency-badge">
+              {posCurrencyCode}
+            </div>
+            {sortedPosTills.length > 0 && (
+              <div
+                className="pos-session-badge pos-till-selector"
+                title={selectedTill?.name || "Select Point of Sale"}
+              >
+                <span className="pos-session-dot" />
+                <span className="pos-till-label">POS:</span>
+                <select
+                  value={selectedTillId ?? ""}
+                  disabled={sortedPosTills.length <= 1}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setSelectedTillId(val === "" ? null : Number(val));
+                  }}
+                  aria-label="Select Point of Sale"
+                >
+                  {sortedPosTills.map((till) => (
+                    <option
+                      key={till.id}
+                      value={till.id}
+                      disabled={!till.is_active}
+                    >
+                      {till.name}
+                      {!till.is_active ? " (inactive)" : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
           <div className="pos-topbar-actions">
             {/* Cashier / PIN login */}
             <button
