@@ -1487,6 +1487,347 @@ export default function ReportsPage() {
 
   /* ── Export functions ──────────────────────────── */
 
+  const exportVatExcel = () => {
+    if (!(activeReport === "vat" && vatReport)) return;
+
+    const periodFrom = vatReport.period_from || dateRange.from;
+    const periodTo = vatReport.period_to || dateRange.to;
+    const reportCode = reportCurrencyCode || effectiveBaseCode || "USD";
+    const generatedAt = new Date().toLocaleString();
+
+    const escapeXml = (value: string) =>
+      value
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&apos;");
+
+    const safeNum = (value: number) =>
+      Number.isFinite(value) ? value.toFixed(2) : "0.00";
+    const safeInt = (value: number) =>
+      Number.isFinite(value) ? Math.round(value).toString() : "0";
+
+    const cellText = (
+      value: string,
+      styleId = "Text",
+      mergeAcross?: number,
+    ) =>
+      `<Cell ss:StyleID="${styleId}"${
+        typeof mergeAcross === "number" ? ` ss:MergeAcross="${mergeAcross}"` : ""
+      }><Data ss:Type="String">${escapeXml(value)}</Data></Cell>`;
+
+    const cellNum = (
+      value: number,
+      styleId = "Number",
+      mergeAcross?: number,
+    ) =>
+      `<Cell ss:StyleID="${styleId}"${
+        typeof mergeAcross === "number" ? ` ss:MergeAcross="${mergeAcross}"` : ""
+      }><Data ss:Type="Number">${safeNum(value)}</Data></Cell>`;
+
+    const cellInt = (value: number, styleId = "Integer") =>
+      `<Cell ss:StyleID="${styleId}"><Data ss:Type="Number">${safeInt(value)}</Data></Cell>`;
+
+    const rows: string[] = [];
+
+    rows.push(`<Row ss:Height="28">${cellText("VAT RETURN", "Title", 4)}</Row>`);
+    rows.push(
+      `<Row>${cellText(
+        `Reporting Period: ${periodFrom} to ${periodTo}`,
+        "SubTitle",
+        4,
+      )}</Row>`,
+    );
+    rows.push(
+      `<Row>${cellText(
+        `Currency: ${reportCode}    Generated: ${generatedAt}`,
+        "Meta",
+        4,
+      )}</Row>`,
+    );
+    rows.push("<Row ss:Height=\"10\"/>");
+
+    rows.push(
+      `<Row ss:Height="22">${cellText("OUTPUT VAT (SALES)", "Section", 4)}</Row>`,
+    );
+    rows.push(
+      `<Row>${cellText("Rate", "Header")}${cellText(
+        "Taxable Amount",
+        "Header",
+      )}${cellText("VAT Amount", "Header")}${cellText("Total", "Header")}${cellText(
+        "Transactions",
+        "Header",
+      )}</Row>`,
+    );
+    vatReport.sales_by_rate.forEach((bucket) => {
+      rows.push(
+        `<Row>${cellNum((bucket.rate || 0) / 100, "PercentCenter")}${cellNum(
+          bucket.taxable_amount,
+        )}${cellNum(bucket.tax_amount)}${cellNum(bucket.total)}${cellInt(
+          bucket.count,
+        )}</Row>`,
+      );
+    });
+    rows.push(
+      `<Row>${cellText("TOTAL OUTPUT VAT", "TotalLabel")}${cellNum(
+        vatReport.sales_total - vatReport.output_tax,
+        "TotalNumber",
+      )}${cellNum(vatReport.output_tax, "TotalNumber")}${cellNum(
+        vatReport.sales_total,
+        "TotalNumber",
+      )}${cellInt(vatReport.invoices_count, "TotalInteger")}</Row>`,
+    );
+
+    rows.push("<Row ss:Height=\"8\"/>");
+    rows.push(
+      `<Row ss:Height="22">${cellText("INPUT VAT (PURCHASES)", "Section", 4)}</Row>`,
+    );
+    rows.push(
+      `<Row>${cellText("Rate", "Header")}${cellText(
+        "Taxable Amount",
+        "Header",
+      )}${cellText("VAT Amount", "Header")}${cellText("Total", "Header")}${cellText(
+        "Transactions",
+        "Header",
+      )}</Row>`,
+    );
+    vatReport.purchases_by_rate.forEach((bucket) => {
+      rows.push(
+        `<Row>${cellNum((bucket.rate || 0) / 100, "PercentCenter")}${cellNum(
+          bucket.taxable_amount,
+        )}${cellNum(bucket.tax_amount)}${cellNum(bucket.total)}${cellInt(
+          bucket.count,
+        )}</Row>`,
+      );
+    });
+    rows.push(
+      `<Row>${cellText("TOTAL INPUT VAT", "TotalLabel")}${cellNum(
+        vatReport.purchases_total - vatReport.input_tax,
+        "TotalNumber",
+      )}${cellNum(vatReport.input_tax, "TotalNumber")}${cellNum(
+        vatReport.purchases_total,
+        "TotalNumber",
+      )}${cellInt(vatReport.purchases_count, "TotalInteger")}</Row>`,
+    );
+
+    if (vatReport.credit_notes_count > 0 || vatReport.credit_notes_tax > 0) {
+      rows.push("<Row ss:Height=\"8\"/>");
+      rows.push(
+        `<Row ss:Height="22">${cellText("CREDIT NOTES", "Section", 4)}</Row>`,
+      );
+      rows.push(
+        `<Row>${cellText("Credit Notes Issued", "TextBold", 3)}${cellInt(
+          vatReport.credit_notes_count,
+        )}</Row>`,
+      );
+      rows.push(
+        `<Row>${cellText("VAT on Credit Notes", "TextBold", 2)}${cellNum(
+          vatReport.credit_notes_tax,
+          "Number",
+          1,
+        )}${cellText("", "Text")}</Row>`,
+      );
+    }
+
+    rows.push("<Row ss:Height=\"10\"/>");
+    rows.push(
+      `<Row ss:Height="22">${cellText("NET VAT SUMMARY", "Section", 4)}</Row>`,
+    );
+    rows.push(
+      `<Row>${cellText("Output VAT (Sales)", "SummaryLabel", 2)}${cellNum(
+        vatReport.output_tax,
+        "SummaryNumber",
+        1,
+      )}${cellText("", "Text")}</Row>`,
+    );
+    rows.push(
+      `<Row>${cellText(
+        "Less: Input VAT (Purchases)",
+        "SummaryLabel",
+        2,
+      )}${cellNum(-vatReport.input_tax, "SummaryNumber", 1)}${cellText(
+        "",
+        "Text",
+      )}</Row>`,
+    );
+    rows.push(
+      `<Row>${cellText(
+        "Less: Credit Note VAT",
+        "SummaryLabel",
+        2,
+      )}${cellNum(-vatReport.credit_notes_tax, "SummaryNumber", 1)}${cellText(
+        "",
+        "Text",
+      )}</Row>`,
+    );
+    rows.push(
+      `<Row>${cellText(
+        `Net VAT ${vatReport.net_tax >= 0 ? "Payable" : "Refundable"}`,
+        "NetLabel",
+        2,
+      )}${cellNum(
+        vatReport.net_tax,
+        vatReport.net_tax >= 0 ? "NetPayable" : "NetRefundable",
+        1,
+      )}${cellText("", "Text")}</Row>`,
+    );
+
+    const workbookXml = `<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40">
+  <Styles>
+    <Style ss:ID="Default" ss:Name="Normal">
+      <Alignment ss:Vertical="Center"/>
+      <Borders/>
+      <Font ss:FontName="Calibri" ss:Size="11"/>
+      <Interior/>
+      <NumberFormat/>
+      <Protection/>
+    </Style>
+    <Style ss:ID="Title">
+      <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+      <Font ss:FontName="Calibri" ss:Size="16" ss:Bold="1" ss:Color="#FFFFFF"/>
+      <Interior ss:Color="#1F4E78" ss:Pattern="Solid"/>
+    </Style>
+    <Style ss:ID="SubTitle">
+      <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+      <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#1F2937"/>
+      <Interior ss:Color="#E5E7EB" ss:Pattern="Solid"/>
+    </Style>
+    <Style ss:ID="Meta">
+      <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+      <Font ss:FontName="Calibri" ss:Size="10" ss:Color="#334155"/>
+    </Style>
+    <Style ss:ID="Section">
+      <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+      </Borders>
+      <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#FFFFFF"/>
+      <Interior ss:Color="#2F75B5" ss:Pattern="Solid"/>
+    </Style>
+    <Style ss:ID="Header">
+      <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+      </Borders>
+      <Font ss:FontName="Calibri" ss:Size="10" ss:Bold="1" ss:Color="#111827"/>
+      <Interior ss:Color="#DCE6F1" ss:Pattern="Solid"/>
+    </Style>
+    <Style ss:ID="Text">
+      <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
+      <Font ss:FontName="Calibri" ss:Size="10"/>
+    </Style>
+    <Style ss:ID="TextBold">
+      <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
+      <Font ss:FontName="Calibri" ss:Size="10" ss:Bold="1"/>
+    </Style>
+    <Style ss:ID="Number">
+      <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>
+      <Font ss:FontName="Calibri" ss:Size="10"/>
+      <NumberFormat ss:Format="#,##0.00"/>
+    </Style>
+    <Style ss:ID="Integer">
+      <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+      <Font ss:FontName="Calibri" ss:Size="10"/>
+      <NumberFormat ss:Format="#,##0"/>
+    </Style>
+    <Style ss:ID="PercentCenter">
+      <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+      <Font ss:FontName="Calibri" ss:Size="10"/>
+      <NumberFormat ss:Format="0.00%"/>
+    </Style>
+    <Style ss:ID="TotalLabel">
+      <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
+      <Borders>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+      </Borders>
+      <Font ss:FontName="Calibri" ss:Size="10" ss:Bold="1"/>
+      <Interior ss:Color="#F3F4F6" ss:Pattern="Solid"/>
+    </Style>
+    <Style ss:ID="TotalNumber">
+      <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>
+      <Borders>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+      </Borders>
+      <Font ss:FontName="Calibri" ss:Size="10" ss:Bold="1"/>
+      <Interior ss:Color="#F3F4F6" ss:Pattern="Solid"/>
+      <NumberFormat ss:Format="#,##0.00"/>
+    </Style>
+    <Style ss:ID="TotalInteger">
+      <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+      <Borders>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+      </Borders>
+      <Font ss:FontName="Calibri" ss:Size="10" ss:Bold="1"/>
+      <Interior ss:Color="#F3F4F6" ss:Pattern="Solid"/>
+      <NumberFormat ss:Format="#,##0"/>
+    </Style>
+    <Style ss:ID="SummaryLabel">
+      <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
+      <Font ss:FontName="Calibri" ss:Size="10" ss:Bold="1"/>
+    </Style>
+    <Style ss:ID="SummaryNumber">
+      <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>
+      <Font ss:FontName="Calibri" ss:Size="10" ss:Bold="1"/>
+      <NumberFormat ss:Format="#,##0.00"/>
+    </Style>
+    <Style ss:ID="NetLabel">
+      <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
+      <Borders>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+      </Borders>
+      <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1"/>
+      <Interior ss:Color="#E5E7EB" ss:Pattern="Solid"/>
+    </Style>
+    <Style ss:ID="NetPayable">
+      <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>
+      <Borders>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+      </Borders>
+      <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#991B1B"/>
+      <Interior ss:Color="#FEE2E2" ss:Pattern="Solid"/>
+      <NumberFormat ss:Format="#,##0.00"/>
+    </Style>
+    <Style ss:ID="NetRefundable">
+      <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>
+      <Borders>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+      </Borders>
+      <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#065F46"/>
+      <Interior ss:Color="#D1FAE5" ss:Pattern="Solid"/>
+      <NumberFormat ss:Format="#,##0.00"/>
+    </Style>
+  </Styles>
+  <Worksheet ss:Name="VAT Return">
+    <Table>
+      <Column ss:Width="160"/>
+      <Column ss:Width="145"/>
+      <Column ss:Width="125"/>
+      <Column ss:Width="125"/>
+      <Column ss:Width="105"/>
+      ${rows.join("")}
+    </Table>
+    <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+      <Selected/>
+      <ProtectObjects>False</ProtectObjects>
+      <ProtectScenarios>False</ProtectScenarios>
+    </WorksheetOptions>
+  </Worksheet>
+</Workbook>`;
+
+    downloadBlob(
+      workbookXml,
+      `vat-return-${periodFrom}-to-${periodTo}.xls`,
+      "application/vnd.ms-excel;charset=utf-8",
+    );
+  };
+
   const exportCSV = () => {
     let rows: string[][] = [];
     let filename = "report.csv";
@@ -2591,7 +2932,7 @@ export default function ReportsPage() {
               <button
                 className="o-btn o-btn-secondary"
                 style={{ display: "flex", alignItems: "center", gap: 6 }}
-                onClick={exportCSV}
+                onClick={activeReport === "vat" ? exportVatExcel : exportCSV}
                 disabled={loading}
               >
                 <svg
@@ -2608,7 +2949,7 @@ export default function ReportsPage() {
                   <polyline points="7 10 12 15 17 10" />
                   <line x1="12" y1="15" x2="12" y2="3" />
                 </svg>
-                Export CSV
+                {activeReport === "vat" ? "Export Excel" : "Export CSV"}
               </button>
               <button
                 className="o-btn o-btn-secondary"
