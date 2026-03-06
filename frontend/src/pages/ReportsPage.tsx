@@ -452,14 +452,14 @@ export default function ReportsPage() {
     useState<CompanySettings | null>(null);
   const [currencyList, setCurrencyList] = useState<CurrencyItem[]>([]);
 
-  // Set default date range
+  // Set default date range to cover the last six months so trends show prior data
   useEffect(() => {
     const now = new Date();
-    const first = new Date(now.getFullYear(), now.getMonth(), 1);
-    const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const from = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+    const to = new Date(now.getFullYear(), now.getMonth() + 1, 0);
     setDateRange({
-      from: first.toISOString().split("T")[0],
-      to: last.toISOString().split("T")[0],
+      from: from.toISOString().split("T")[0],
+      to: to.toISOString().split("T")[0],
     });
   }, []);
 
