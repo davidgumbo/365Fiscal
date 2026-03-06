@@ -2819,31 +2819,48 @@ export default function InventoryPage() {
                         </div>
 
                         <div style={{ flex: 1 }}>
-                          <input
-                            type="text"
-                            className={`o-form-input ${
-                              invalidProductFields.includes("name")
-                                ? "input-field-error"
-                                : ""
-                            }`}
-                            placeholder="Product Name"
-                            value={productForm.name}
-                            onChange={(e) => {
-                              setProductForm({
-                                ...productForm,
-                                name: e.target.value,
-                              });
-                              clearInvalidProductField("name", e.target.value);
-                            }}
+                          <div
                             style={{
-                              fontSize: 24,
-                              fontWeight: 600,
-                              border: "none",
-                              borderBottom: "2px solid var(--zinc-200)",
-                              borderRadius: 0,
-                              padding: "8px 0",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 12,
                             }}
-                          />
+                          >
+                            <input
+                              type="text"
+                              className={`o-form-input ${
+                                invalidProductFields.includes("name")
+                                  ? "input-field-error"
+                                  : ""
+                              }`}
+                              placeholder="Product Name"
+                              value={productForm.name}
+                              onChange={(e) => {
+                                setProductForm({
+                                  ...productForm,
+                                  name: e.target.value,
+                                });
+                                clearInvalidProductField("name", e.target.value);
+                              }}
+                              style={{
+                                flex: 1,
+                                minWidth: 0,
+                                fontSize: 24,
+                                fontWeight: 600,
+                                border: "none",
+                                borderBottom: "2px solid var(--zinc-200)",
+                                borderRadius: 0,
+                                padding: "8px 0",
+                              }}
+                            />
+                            <span
+                              className="o-tag o-tag-confirmed"
+                              style={{ whiteSpace: "nowrap" }}
+                            >
+                              On Hand: {selectedProductStock.onHand.toFixed(2)}{" "}
+                              {selectedProduct?.uom || productForm.uom}
+                            </span>
+                          </div>
                           <div
                             style={{ marginTop: 8, display: "flex", gap: 8 }}
                           >
