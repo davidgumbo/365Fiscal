@@ -27,6 +27,7 @@ class ProductCreate(BaseModel):
     is_active: bool = True
     can_be_sold: bool = True
     can_be_purchased: bool = True
+    show_in_pos: bool = True
 
 
 class ProductRead(ORMBase):
@@ -55,6 +56,7 @@ class ProductRead(ORMBase):
     is_active: bool
     can_be_sold: bool
     can_be_purchased: bool
+    show_in_pos: bool
 
 
 class ProductUpdate(BaseModel):
@@ -81,6 +83,7 @@ class ProductUpdate(BaseModel):
     is_active: bool | None = None
     can_be_sold: bool | None = None
     can_be_purchased: bool | None = None
+    show_in_pos: bool | None = None
 
 
 class ProductWithStock(ProductRead):

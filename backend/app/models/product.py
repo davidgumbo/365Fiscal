@@ -37,6 +37,7 @@ class Product(Base, TimestampMixin):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     can_be_sold: Mapped[bool] = mapped_column(Boolean, default=True)
     can_be_purchased: Mapped[bool] = mapped_column(Boolean, default=True)
+    show_in_pos: Mapped[bool] = mapped_column(Boolean, default=True)
 
     company = relationship("Company", back_populates="products")
     category = relationship("Category", back_populates="products")

@@ -32,6 +32,7 @@ type Product = {
   is_active: boolean;
   can_be_sold: boolean;
   can_be_purchased: boolean;
+  show_in_pos: boolean;
   category_id: number | null;
 };
 
@@ -81,6 +82,7 @@ export default function ProductsPage() {
     is_active: true,
     can_be_sold: true,
     can_be_purchased: true,
+    show_in_pos: true,
   });
   const [productImageUrl, setProductImageUrl] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -123,6 +125,7 @@ export default function ProductsPage() {
         is_active: first.is_active ?? true,
         can_be_sold: first.can_be_sold ?? true,
         can_be_purchased: first.can_be_purchased ?? true,
+        show_in_pos: first.show_in_pos ?? true,
       });
     }
   };
@@ -187,6 +190,7 @@ export default function ProductsPage() {
     is_active: true,
     can_be_sold: true,
     can_be_purchased: true,
+    show_in_pos: true,
   });
 
   const createProduct = async () => {
@@ -260,6 +264,7 @@ export default function ProductsPage() {
       is_active: product.is_active ?? true,
       can_be_sold: product.can_be_sold ?? true,
       can_be_purchased: product.can_be_purchased ?? true,
+      show_in_pos: product.show_in_pos ?? true,
     });
     setInvalidFields([]);
     setIsEditing(false);
@@ -812,6 +817,18 @@ export default function ProductsPage() {
                   disabled={!isEditing}
                 />
                 <label htmlFor="can_be_purchased">Can be Purchased</label>
+              </div>
+              <div className="checkbox-group">
+                <input
+                  type="checkbox"
+                  id="show_in_pos"
+                  checked={form.show_in_pos}
+                  onChange={(e) =>
+                    setForm({ ...form, show_in_pos: e.target.checked })
+                  }
+                  disabled={!isEditing}
+                />
+                <label htmlFor="show_in_pos">Show in POS</label>
               </div>
             </div>
           )}

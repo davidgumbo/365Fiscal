@@ -44,6 +44,7 @@ type Product = {
   is_active: boolean;
   can_be_sold: boolean;
   can_be_purchased: boolean;
+  show_in_pos: boolean;
 };
 
 type TaxSetting = {
@@ -365,6 +366,7 @@ export default function InventoryPage() {
     is_active: true,
     can_be_sold: true,
     can_be_purchased: true,
+    show_in_pos: true,
   });
   const [invalidProductFields, setInvalidProductFields] = useState<string[]>([]);
   const [productInfoTab, setProductInfoTab] = useState<
@@ -572,6 +574,7 @@ export default function InventoryPage() {
       is_active: true,
       can_be_sold: true,
       can_be_purchased: true,
+      show_in_pos: true,
     });
     setSubView("form");
     setInvalidProductFields([]);
@@ -631,6 +634,7 @@ export default function InventoryPage() {
       is_active: product.is_active,
       can_be_sold: product.can_be_sold,
       can_be_purchased: product.can_be_purchased,
+      show_in_pos: product.show_in_pos ?? true,
     });
     setInvalidProductFields([]);
     setSubView("form");
@@ -1340,6 +1344,7 @@ export default function InventoryPage() {
           reserved: Number.isFinite(q.reserved_quantity) ? q.reserved_quantity : 0,
         };
       })
+      .filter((row) => row.onHand > 0)
       .sort((a, b) => {
         if (b.available !== a.available) return b.available - a.available;
         return a.warehouseName.localeCompare(b.warehouseName);
@@ -2995,6 +3000,13 @@ export default function InventoryPage() {
                                 ? "Can be Purchased"
                                 : "Not for Purchase"}
                             </span>
+                            <span
+                              className={`o-tag ${productForm.show_in_pos ? "o-tag-confirmed" : "o-tag-draft"}`}
+                            >
+                              {productForm.show_in_pos
+                                ? "Visible in POS"
+                                : "Hidden in POS"}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -3038,6 +3050,26 @@ export default function InventoryPage() {
                             }
                           />
                           Can be Purchased
+                        </label>
+                        <label
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                            cursor: "pointer",
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={productForm.show_in_pos}
+                            onChange={(e) =>
+                              setProductForm({
+                                ...productForm,
+                                show_in_pos: e.target.checked,
+                              })
+                            }
+                          />
+                          Show in POS
                         </label>
                         <label
                           style={{

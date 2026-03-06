@@ -837,6 +837,7 @@ def pos_products(
         Product.company_id == company_id,
         Product.is_active == True,
         Product.can_be_sold == True,
+        Product.show_in_pos == True,
     )
     if selected_till and selected_till.warehouse_id is not None:
         in_warehouse = {
