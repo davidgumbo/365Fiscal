@@ -434,6 +434,14 @@ export default function InventoryPage() {
     notes: "",
   });
   const [invalidMoveFields, setInvalidMoveFields] = useState<string[]>([]);
+  const [quickStockWarehouseId, setQuickStockWarehouseId] = useState<
+    number | null
+  >(null);
+  const [quickStockLocationId, setQuickStockLocationId] = useState<
+    number | null
+  >(null);
+  const [quickStockQuantity, setQuickStockQuantity] = useState("0");
+  const [quickAdjustingStock, setQuickAdjustingStock] = useState(false);
 
   // Category form
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -1011,6 +1019,56 @@ export default function InventoryPage() {
     setError(null);
   };
 
+  const applyQuickStockAdjustment = async () => {
+    if (!companyId || !selectedProductId) {
+      alert("Please select a company and product first.");
+      return;
+    }
+    if (!quickStockWarehouseId || !quickStockLocationId) {
+      alert("Please select both warehouse and location.");
+      return;
+    }
+
+    const selectedLocation = locations.find((l) => l.id === quickStockLocationId);
+    if (
+      !selectedLocation ||
+      selectedLocation.warehouse_id !== quickStockWarehouseId
+    ) {
+      alert("Selected location must belong to selected warehouse.");
+      return;
+    }
+
+    const quantity = Number(quickStockQuantity);
+    if (!Number.isFinite(quantity) || quantity < 0) {
+      alert("Quantity must be 0 or more.");
+      return;
+    }
+
+    const unitCost = Number(productForm.purchase_cost);
+    setQuickAdjustingStock(true);
+    try {
+      const move = await apiFetch<StockMove>("/stock/moves", {
+        method: "POST",
+        body: JSON.stringify({
+          company_id: companyId,
+          product_id: selectedProductId,
+          warehouse_id: quickStockWarehouseId,
+          location_id: quickStockLocationId,
+          move_type: "adjustment",
+          quantity,
+          unit_cost: Number.isFinite(unitCost) && unitCost > 0 ? unitCost : 0,
+          reference: "",
+          source_document: "",
+          notes: "Quick adjustment from product form",
+        }),
+      });
+      await apiFetch(`/stock/moves/${move.id}/confirm`, { method: "POST" });
+      await loadAllData();
+    } finally {
+      setQuickAdjustingStock(false);
+    }
+  };
+
   const startNewMove = (moveType: string = "in") => {
     setSelectedMoveId(null);
     setIsNew(true);
@@ -1254,6 +1312,39 @@ export default function InventoryPage() {
         toFinite(selectedProduct?.quantity_reserved) || quantTotals.reserved,
     };
   }, [selectedProductId, selectedProduct, stockQuants]);
+  const selectedProductWarehouseRows = useMemo(() => {
+    if (!selectedProductId) return [];
+    const locationById = new Map(locations.map((l) => [l.id, l]));
+    const warehouseById = new Map(warehouses.map((w) => [w.id, w]));
+
+    return stockQuants
+      .filter((q) => q.product_id === selectedProductId)
+      .map((q) => {
+        const location = q.location_id ? locationById.get(q.location_id) : null;
+        const warehouse =
+          q.warehouse_id
+            ? warehouseById.get(q.warehouse_id)
+            : location?.warehouse_id
+              ? warehouseById.get(location.warehouse_id)
+              : null;
+        return {
+          quantId: q.id,
+          warehouseId: warehouse?.id ?? q.warehouse_id ?? null,
+          warehouseName: warehouse?.name || "-",
+          locationId: location?.id ?? q.location_id ?? null,
+          locationName: location?.name || "-",
+          onHand: Number.isFinite(q.quantity) ? q.quantity : 0,
+          available: Number.isFinite(q.available_quantity)
+            ? q.available_quantity
+            : 0,
+          reserved: Number.isFinite(q.reserved_quantity) ? q.reserved_quantity : 0,
+        };
+      })
+      .sort((a, b) => {
+        if (b.available !== a.available) return b.available - a.available;
+        return a.warehouseName.localeCompare(b.warehouseName);
+      });
+  }, [selectedProductId, stockQuants, locations, warehouses]);
 
   const filteredProducts = products.filter((p) => {
     if (filterCategoryId !== null && p.category_id !== filterCategoryId)
@@ -1391,6 +1482,32 @@ export default function InventoryPage() {
 
   const warehouseLocations = (warehouseId: number) =>
     locations.filter((l) => l.warehouse_id === warehouseId);
+
+  useEffect(() => {
+    if (!selectedProductId) {
+      setQuickStockWarehouseId(null);
+      setQuickStockLocationId(null);
+      setQuickStockQuantity("0");
+      return;
+    }
+
+    const topRow = selectedProductWarehouseRows[0];
+    if (topRow) {
+      setQuickStockWarehouseId(topRow.warehouseId);
+      setQuickStockLocationId(topRow.locationId);
+      setQuickStockQuantity(String(topRow.onHand));
+      return;
+    }
+
+    const defaultWarehouseId = warehouses[0]?.id ?? null;
+    const defaultLocationId =
+      locations.find((l) => l.warehouse_id === defaultWarehouseId)?.id ??
+      locations[0]?.id ??
+      null;
+    setQuickStockWarehouseId(defaultWarehouseId);
+    setQuickStockLocationId(defaultLocationId);
+    setQuickStockQuantity("0");
+  }, [selectedProductId, selectedProductWarehouseRows, warehouses, locations]);
 
   const goBackToCompanies = () => {
     setCompanyId(null);
@@ -3299,6 +3416,221 @@ export default function InventoryPage() {
                                     readOnly
                                   />
                                 </div>
+                              </div>
+                            </div>
+
+                            <div
+                              style={{
+                                marginBottom: 18,
+                                border: "1px solid var(--zinc-200)",
+                                borderRadius: 10,
+                                padding: 14,
+                                background: "var(--zinc-50)",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "center",
+                                  marginBottom: 10,
+                                  gap: 12,
+                                  flexWrap: "wrap",
+                                }}
+                              >
+                                <span style={{ fontWeight: 600, fontSize: 14 }}>
+                                  Stock by Warehouse / Location
+                                </span>
+                                <span
+                                  style={{ color: "var(--muted)", fontSize: 12 }}
+                                >
+                                  Use multiple warehouses by adjusting stock per
+                                  location below.
+                                </span>
+                              </div>
+
+                              <div className="o-inline-table">
+                                <table>
+                                  <thead>
+                                    <tr>
+                                      <th>Warehouse</th>
+                                      <th>Location</th>
+                                      <th>On Hand</th>
+                                      <th>Available</th>
+                                      <th>Reserved</th>
+                                      <th style={{ width: 170 }}>Action</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {selectedProductWarehouseRows.map((row) => (
+                                      <tr key={row.quantId}>
+                                        <td>{row.warehouseName}</td>
+                                        <td>{row.locationName}</td>
+                                        <td>{row.onHand.toFixed(2)}</td>
+                                        <td>{row.available.toFixed(2)}</td>
+                                        <td>{row.reserved.toFixed(2)}</td>
+                                        <td>
+                                          <button
+                                            className="o-btn o-btn-link"
+                                            style={{
+                                              padding: "4px 8px",
+                                              fontSize: 12,
+                                            }}
+                                            onClick={() => {
+                                              setQuickStockWarehouseId(
+                                                row.warehouseId,
+                                              );
+                                              setQuickStockLocationId(
+                                                row.locationId,
+                                              );
+                                              setQuickStockQuantity(
+                                                String(row.onHand),
+                                              );
+                                            }}
+                                          >
+                                            Use
+                                          </button>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                    {selectedProductWarehouseRows.length === 0 && (
+                                      <tr>
+                                        <td
+                                          colSpan={6}
+                                          style={{
+                                            textAlign: "center",
+                                            color: "var(--muted)",
+                                          }}
+                                        >
+                                          No warehouse stock yet. Pick a warehouse
+                                          and set quantity below.
+                                        </td>
+                                      </tr>
+                                    )}
+                                  </tbody>
+                                </table>
+                              </div>
+
+                              <div
+                                style={{
+                                  marginTop: 12,
+                                  display: "grid",
+                                  gridTemplateColumns: "1fr 1fr 1fr auto",
+                                  gap: 10,
+                                  alignItems: "end",
+                                }}
+                              >
+                                <div className="o-form-group" style={{ margin: 0 }}>
+                                  <label className="o-form-label">Warehouse</label>
+                                  <div className="o-form-field">
+                                    <select
+                                      className="o-form-select"
+                                      value={quickStockWarehouseId ?? ""}
+                                      onChange={(e) => {
+                                        const warehouseId = e.target.value
+                                          ? Number(e.target.value)
+                                          : null;
+                                        const firstLocation =
+                                          locations.find(
+                                            (l) =>
+                                              l.warehouse_id === warehouseId,
+                                          ) ?? null;
+                                        const currentQuant =
+                                          selectedProductWarehouseRows.find(
+                                            (row) =>
+                                              row.warehouseId === warehouseId &&
+                                              row.locationId === firstLocation?.id,
+                                          );
+                                        setQuickStockWarehouseId(warehouseId);
+                                        setQuickStockLocationId(
+                                          firstLocation?.id ?? null,
+                                        );
+                                        setQuickStockQuantity(
+                                          String(currentQuant?.onHand ?? 0),
+                                        );
+                                      }}
+                                    >
+                                      <option value="">Select warehouse...</option>
+                                      {warehouses.map((w) => (
+                                        <option key={w.id} value={w.id}>
+                                          {w.name}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                </div>
+
+                                <div className="o-form-group" style={{ margin: 0 }}>
+                                  <label className="o-form-label">Location</label>
+                                  <div className="o-form-field">
+                                    <select
+                                      className="o-form-select"
+                                      value={quickStockLocationId ?? ""}
+                                      onChange={(e) => {
+                                        const locationId = e.target.value
+                                          ? Number(e.target.value)
+                                          : null;
+                                        const currentQuant =
+                                          selectedProductWarehouseRows.find(
+                                            (row) =>
+                                              row.warehouseId ===
+                                                quickStockWarehouseId &&
+                                              row.locationId === locationId,
+                                          );
+                                        setQuickStockLocationId(locationId);
+                                        setQuickStockQuantity(
+                                          String(currentQuant?.onHand ?? 0),
+                                        );
+                                      }}
+                                    >
+                                      <option value="">Select location...</option>
+                                      {locations
+                                        .filter(
+                                          (l) =>
+                                            !quickStockWarehouseId ||
+                                            l.warehouse_id ===
+                                              quickStockWarehouseId,
+                                        )
+                                        .map((l) => (
+                                          <option key={l.id} value={l.id}>
+                                            {l.name}
+                                          </option>
+                                        ))}
+                                    </select>
+                                  </div>
+                                </div>
+
+                                <div className="o-form-group" style={{ margin: 0 }}>
+                                  <label className="o-form-label">
+                                    Set Quantity
+                                  </label>
+                                  <div className="o-form-field">
+                                    <input
+                                      type="number"
+                                      className="o-form-input"
+                                      value={quickStockQuantity}
+                                      onChange={(e) =>
+                                        setQuickStockQuantity(e.target.value)
+                                      }
+                                      min="0"
+                                      step="0.01"
+                                    />
+                                  </div>
+                                </div>
+
+                                <button
+                                  className="o-btn o-btn-primary"
+                                  onClick={applyQuickStockAdjustment}
+                                  disabled={
+                                    quickAdjustingStock ||
+                                    !quickStockWarehouseId ||
+                                    !quickStockLocationId
+                                  }
+                                >
+                                  {quickAdjustingStock
+                                    ? "Applying..."
+                                    : "Apply Adjustment"}
+                                </button>
                               </div>
                             </div>
 
