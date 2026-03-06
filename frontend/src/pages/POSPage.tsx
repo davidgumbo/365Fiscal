@@ -901,6 +901,27 @@ export default function POSPage() {
   ]);
 
   const closeDifferenceBase = closeEnteredBaseTotal - closeExpectedBaseTotal;
+  const closeDifferenceByCurrency = useMemo(() => {
+    const diffs: Record<string, number> = {};
+    for (const code of closeCurrencyCodes) {
+      const entered = parseAmount(closeCurrencyAmounts[code] || "");
+      const expected = closeExpectedCashByCurrency[code] || 0;
+      diffs[code] = entered - expected;
+    }
+    return diffs;
+  }, [
+    closeCurrencyAmounts,
+    closeCurrencyCodes,
+    closeExpectedCashByCurrency,
+    parseAmount,
+  ]);
+  const closeNegativeCurrencies = useMemo(
+    () =>
+      closeCurrencyCodes.filter(
+        (code) => (closeDifferenceByCurrency[code] || 0) < -0.009,
+      ),
+    [closeCurrencyCodes, closeDifferenceByCurrency],
+  );
 
   const lineMoney = useCallback(
     (line: CartLine, amountBase: number) =>
@@ -1443,6 +1464,23 @@ export default function POSPage() {
 
   const closeSession = async () => {
     if (!session) return;
+    if (closeNegativeCurrencies.length > 0 || closeDifferenceBase < -0.009) {
+      const negativeDetails = closeNegativeCurrencies
+        .map(
+          (code) =>
+            `${code}: ${moneyByCode(closeDifferenceByCurrency[code] || 0, code)}`,
+        )
+        .join("\n");
+      const warningMessage = [
+        "Warning: Closing balance is short (negative difference).",
+        "",
+        negativeDetails || `Base Difference: ${formatBaseCurrency(closeDifferenceBase)}`,
+        "",
+        "Do you want to close the session anyway?",
+      ].join("\n");
+      const proceed = window.confirm(warningMessage);
+      if (!proceed) return;
+    }
     try {
       const closeLines = closeCurrencyCodes
         .map((code) => {
@@ -1497,6 +1535,7 @@ export default function POSPage() {
       );
       setOrders((prev) => prev.map((o) => (o.id === updated.id ? updated : o)));
       if (lastOrder?.id === orderId) setLastOrder(updated);
+      if (selectedOrder?.id === orderId) setSelectedOrder(updated);
     } catch (e: any) {
       setError(e.message);
     }
@@ -3033,6 +3072,22 @@ export default function POSPage() {
                   </div>
                 )}
 
+                {selectedOrder.fiscal_errors && (
+                  <div className="pos-order-detail-errors">
+                    <strong>Error:</strong> {selectedOrder.fiscal_errors}
+                    {selectedOrder.status !== "refunded" &&
+                      selectedOrder.total_amount > 0 && (
+                        <button
+                          className="pos-btn pos-btn-sm pos-btn-outline"
+                          style={{ marginTop: 8 }}
+                          onClick={() => fiscalizeOrder(selectedOrder.id)}
+                        >
+                          Retry Fiscalization
+                        </button>
+                      )}
+                  </div>
+                )}
+
                 {selectedOrder.notes && (
                   <div className="pos-order-detail-notes">
                     {selectedOrder.notes}
@@ -3916,36 +3971,48 @@ export default function POSPage() {
                 </div>
               </div>
               <div style={{ display: "grid", gap: 8, marginTop: 8 }}>
-                {closeCurrencyCodes.map((code, idx) => (
-                  <label className="pos-label" key={code}>
-                    Closing Cash Balance ({code})
-                    <input
-                      type="number"
-                      className="pos-input pos-input-lg"
-                      value={closeCurrencyAmounts[code] ?? ""}
-                      onChange={(e) =>
-                        setCloseCurrencyAmounts((prev) => ({
-                          ...prev,
-                          [code]: e.target.value,
-                        }))
-                      }
-                      placeholder={`Count your ${code} cash...`}
-                      min={0}
-                      step={0.01}
-                      autoFocus={idx === 0}
-                    />
-                    <small
-                      style={{
-                        display: "block",
-                        marginTop: 4,
-                        color: "var(--slate-500, #64748b)",
-                      }}
-                    >
-                      Expected:{" "}
-                      {moneyByCode(closeExpectedCashByCurrency[code] || 0, code)}
-                    </small>
-                  </label>
-                ))}
+                {closeCurrencyCodes.map((code, idx) => {
+                  const currencyDiff = closeDifferenceByCurrency[code] || 0;
+                  const diffClass =
+                    currencyDiff < -0.009
+                      ? "neg"
+                      : Math.abs(currencyDiff) > 0.009
+                        ? "warn"
+                        : "ok";
+                  return (
+                    <label className="pos-label" key={code}>
+                      Closing Cash Balance ({code})
+                      <input
+                        type="number"
+                        className="pos-input pos-input-lg"
+                        value={closeCurrencyAmounts[code] ?? ""}
+                        onChange={(e) =>
+                          setCloseCurrencyAmounts((prev) => ({
+                            ...prev,
+                            [code]: e.target.value,
+                          }))
+                        }
+                        placeholder={`Count your ${code} cash...`}
+                        min={0}
+                        step={0.01}
+                        autoFocus={idx === 0}
+                      />
+                      <small
+                        style={{
+                          display: "block",
+                          marginTop: 4,
+                          color: "var(--slate-500, #64748b)",
+                        }}
+                      >
+                        Expected:{" "}
+                        {moneyByCode(closeExpectedCashByCurrency[code] || 0, code)}
+                      </small>
+                      <small className={`pos-close-currency-diff ${diffClass}`}>
+                        Difference: {moneyByCode(currencyDiff, code)}
+                      </small>
+                    </label>
+                  );
+                })}
               </div>
               {showCloseDialog && (
                 <div
