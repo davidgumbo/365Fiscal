@@ -452,14 +452,14 @@ export default function ReportsPage() {
     useState<CompanySettings | null>(null);
   const [currencyList, setCurrencyList] = useState<CurrencyItem[]>([]);
 
-  // Set default date range
+  // Set default date range to cover the last six months so trends show prior data
   useEffect(() => {
     const now = new Date();
-    const first = new Date(now.getFullYear(), now.getMonth(), 1);
-    const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const from = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+    const to = new Date(now.getFullYear(), now.getMonth() + 1, 0);
     setDateRange({
-      from: first.toISOString().split("T")[0],
-      to: last.toISOString().split("T")[0],
+      from: from.toISOString().split("T")[0],
+      to: to.toISOString().split("T")[0],
     });
   }, []);
 
@@ -1339,7 +1339,13 @@ export default function ReportsPage() {
 
     const byCurrency = new Map<
       string,
-      { count: number; total: number; cash: number; card: number; mobile: number }
+      {
+        count: number;
+        total: number;
+        cash: number;
+        card: number;
+        mobile: number;
+      }
     >();
     const byStatus = new Map<string, number>();
 
@@ -1781,13 +1787,13 @@ export default function ReportsPage() {
       );
     } else if (activeReport === "pos_orders" && posOrdersReport) {
       filename = `point-orders-report-${dateRange.from}-to-${dateRange.to}.csv`;
-      rows.push([
-        "Point Orders Report",
-        `${dateRange.from} to ${dateRange.to}`,
-      ]);
+      rows.push(["POS Orders Report", `${dateRange.from} to ${dateRange.to}`]);
       rows.push([]);
       rows.push(["Total Orders", String(posOrdersReport.total_orders)]);
-      rows.push(["Fiscalized Orders", String(posOrdersReport.fiscalized_orders)]);
+      rows.push([
+        "Fiscalized Orders",
+        String(posOrdersReport.fiscalized_orders),
+      ]);
       rows.push(["Refunded Orders", String(posOrdersReport.refunded_orders)]);
       rows.push(["Currencies", String(posOrdersReport.by_currency.length)]);
       rows.push([]);
@@ -1869,7 +1875,7 @@ export default function ReportsPage() {
                 : activeReport === "purchases"
                   ? "Purchase Report"
                   : activeReport === "pos_orders"
-                    ? "Point Orders Report"
+                    ? "POS Orders Report"
                     : "VAT RETURN";
     const period =
       activeReport === "stock"
@@ -2464,7 +2470,7 @@ export default function ReportsPage() {
               },
               {
                 key: "pos_orders",
-                label: "POINT ORDERS REPORT",
+                label: "POS ORDERS REPORT",
                 icon: (
                   <svg
                     width="18"
@@ -2647,7 +2653,7 @@ export default function ReportsPage() {
                 }
                 aria-label="Filter reports by currency"
               >
-                {/* <option value="">All currencies</option> */}
+                <option value="">All currencies</option>
                 {currencyOptions.map((currency) => (
                   <option key={currency.code} value={currency.code}>
                     {currency.label}

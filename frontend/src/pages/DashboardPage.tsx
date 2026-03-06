@@ -23,6 +23,14 @@ interface Trends {
   quotations: TrendPoint[];
 }
 
+interface RevenueTrendPoint {
+  key: string;
+  label: string;
+  value: number;
+  x: number;
+  y: number;
+}
+
 interface DeviceHealth {
   online: number;
   attention: number;
@@ -58,6 +66,7 @@ interface Invoice {
   amount_due?: number;
   fiscalized_at?: string | null;
   created_at?: string;
+  invoice_date?: string;
 }
 
 interface Quotation {
@@ -102,6 +111,35 @@ interface AuditLog {
   user_email: string;
   action_at: string;
 }
+
+const formatDateRangeLabel = (isoDate?: string) => {
+  if (!isoDate) return "";
+  const parsed = new Date(isoDate);
+  if (Number.isNaN(parsed.getTime())) return isoDate;
+  return parsed.toLocaleDateString("default", {
+    month: "short",
+    day: "numeric",
+  });
+};
+
+const getInvoiceEffectiveDate = (invoice: Invoice): Date | null => {
+  if (invoice.fiscalized_at) return new Date(invoice.fiscalized_at);
+  if (invoice.invoice_date) return new Date(invoice.invoice_date);
+  if (invoice.created_at) return new Date(invoice.created_at);
+  return null;
+};
+
+const formatTrendLabel = (key: string, isMonthly: boolean) => {
+  const parts = key.split("-");
+  const year = Number(parts[0]);
+  const month = Number(parts[1]);
+  const day = isMonthly ? 1 : Number(parts[2]);
+  const date = new Date(year, month, Number.isNaN(day) ? 1 : day);
+  if (Number.isNaN(date.getTime())) return key;
+  return isMonthly
+    ? date.toLocaleString("default", { month: "short", year: "numeric" })
+    : date.toLocaleString("default", { month: "short", day: "numeric" });
+};
 
 // SVG Icons
 const BuildingIcon = () => (
@@ -537,28 +575,100 @@ export default function DashboardPage() {
     setAuditPage(1);
   }, [companyId, dateRange.from, dateRange.to]);
 
-  // Chart data - Monthly invoices (last 6 months)
-  const monthlyData = useMemo(() => {
-    const months: { [key: string]: number } = {};
-    const now = new Date();
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const key = d.toLocaleString("default", { month: "short" });
-      months[key] = 0;
+  const revenueTrendChart = useMemo(() => {
+    if (!dateRange.from || !dateRange.to) {
+      return {
+        chartPoints: [] as RevenueTrendPoint[],
+        totalRevenue: 0,
+        latestValue: 0,
+        latestLabel: "",
+      };
     }
-    invoices.forEach((inv) => {
-      if (inv.created_at || inv.fiscalized_at) {
-        const date = new Date(inv.fiscalized_at || inv.created_at!);
-        const key = date.toLocaleString("default", { month: "short" });
-        if (key in months) {
-          months[key] += inv.total_amount || 0;
-        }
-      }
-    });
-    return Object.entries(months).map(([label, value]) => ({ label, value }));
-  }, [invoices]);
+    const startDate = new Date(dateRange.from);
+    const endDate = new Date(`${dateRange.to}T23:59:59`);
+    if (
+      Number.isNaN(startDate.getTime()) ||
+      Number.isNaN(endDate.getTime()) ||
+      startDate > endDate
+    ) {
+      return {
+        chartPoints: [] as RevenueTrendPoint[],
+        totalRevenue: 0,
+        latestValue: 0,
+        latestLabel: "",
+      };
+    }
 
-  const maxMonthly = Math.max(1, ...monthlyData.map((d) => d.value));
+    const diffDays = Math.max(
+      1,
+      Math.ceil((endDate.getTime() - startDate.getTime() + 1) / (1000 * 60 * 60 * 24)),
+    );
+    const isMonthly = diffDays > 90;
+    const buildKey = (date: Date) =>
+      isMonthly
+        ? `${date.getFullYear()}-${date.getMonth()}`
+        : `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+
+    const buckets = new Map<string, number>();
+    if (isMonthly) {
+      let cursor = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+      while (cursor <= endDate) {
+        buckets.set(buildKey(cursor), 0);
+        cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
+      }
+    } else {
+      let cursor = new Date(
+        startDate.getFullYear(),
+        startDate.getMonth(),
+        startDate.getDate(),
+      );
+      while (cursor <= endDate) {
+        buckets.set(buildKey(cursor), 0);
+        cursor.setDate(cursor.getDate() + 1);
+      }
+    }
+
+    filteredInvoices.forEach((inv) => {
+      const date = getInvoiceEffectiveDate(inv);
+      if (!date || date < startDate || date > endDate) {
+        return;
+      }
+      const key = buildKey(date);
+      buckets.set(key, (buckets.get(key) || 0) + (inv.total_amount || 0));
+    });
+
+    const basePoints = Array.from(buckets.entries()).map(([key, value]) => ({
+      key,
+      label: formatTrendLabel(key, isMonthly),
+      value,
+    }));
+    const maxValue = Math.max(1, ...basePoints.map((point) => point.value));
+    const totalRevenue = basePoints.reduce((sum, point) => sum + point.value, 0);
+    const divisor = Math.max(1, basePoints.length - 1);
+    const chartPoints: RevenueTrendPoint[] = basePoints.map((point, index) => ({
+      ...point,
+      x: basePoints.length <= 1 ? 0 : (index / divisor) * 100,
+      y: 100 - (point.value / maxValue) * 100,
+    }));
+
+    const latestPoint = chartPoints[chartPoints.length - 1];
+    return {
+      chartPoints,
+      totalRevenue,
+      latestValue: latestPoint?.value || 0,
+      latestLabel: latestPoint?.label || "",
+    };
+  }, [filteredInvoices, dateRange.from, dateRange.to]);
+  const hasRevenueTrend = revenueTrendChart.chartPoints.length > 0;
+  const trendLinePoints = revenueTrendChart.chartPoints
+    .map((point) => `${point.x},${point.y}`)
+    .join(" ");
+  const trendPeriodLabel =
+    dateRange.from && dateRange.to
+      ? `${formatDateRangeLabel(dateRange.from)} – ${formatDateRangeLabel(
+          dateRange.to,
+        )}`
+      : "Select a date range";
 
   // Get device stats for user's company
   const deviceStats = useMemo(() => {
@@ -812,33 +922,83 @@ export default function DashboardPage() {
       <div className="dashboard-charts ">
         <div className="chart-card card-bg-shadow">
           <div className="chart-header">
-            <h3 className="bg-gray-200 py-1 px-2 rounded-lg">
-              Revenue Overview
-            </h3>
-            <span className="chart-period">Last 6 months</span>
+            <h3 className="bg-gray-200 py-1 px-2 rounded-lg">Revenue Trend</h3>
+            <span className="chart-period">{trendPeriodLabel}</span>
           </div>
-          <div className="bar-chart">
-            {monthlyData.map((item, index) => (
-              <div key={item.label} className="bar-item">
-                <div className="bar-container">
-                  <div
-                    className="bar-fill"
-                    style={{
-                      height: `${(item.value / maxMonthly) * 100}%`,
-                      animationDelay: `${index * 0.1}s`,
-                    }}
-                  >
-                    {item.value > 0 && (
-                      <span className="bar-value">
-                        ${(item.value / 1000).toFixed(0)}k
-                      </span>
-                    )}
-                  </div>
+          {hasRevenueTrend ? (
+            <>
+              <div className="line-chart-wrapper">
+                <div className="line-chart-grid">
+                  {[0, 1, 2, 3].map((line) => (
+                    <span
+                      key={line}
+                      style={{ top: `${(line / 4) * 100}%` }}
+                    ></span>
+                  ))}
                 </div>
-                <span className="bar-label">{item.label}</span>
+                <svg
+                  viewBox="0 0 100 100"
+                  className="line-chart-svg"
+                  role="img"
+                  aria-label="Revenue trend"
+                >
+                  {trendLinePoints && (
+                    <polyline
+                      className="line-chart-path"
+                      points={trendLinePoints}
+                    />
+                  )}
+                  {revenueTrendChart.chartPoints.map((point) => (
+                    <circle
+                      key={point.key}
+                      className="line-chart-point"
+                      cx={`${point.x}%`}
+                      cy={`${point.y}%`}
+                      r="1.8"
+                    >
+                      <title>
+                        {`${point.label}: $${point.value.toLocaleString(undefined, {
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 0,
+                        })}`}
+                      </title>
+                    </circle>
+                  ))}
+                </svg>
               </div>
-            ))}
-          </div>
+              <div className="line-chart-summary">
+                <div>
+                  <span>Total revenue</span>
+                  <strong>
+                    $
+                    {revenueTrendChart.totalRevenue.toLocaleString(undefined, {
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 0,
+                    })}
+                  </strong>
+                </div>
+                <div>
+                  <span>
+                    Latest
+                    {revenueTrendChart.latestLabel
+                      ? ` (${revenueTrendChart.latestLabel})`
+                      : ""}
+                  </span>
+                  <strong>
+                    $
+                    {revenueTrendChart.latestValue.toLocaleString(undefined, {
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 0,
+                    })}
+                  </strong>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="empty-state" style={{ margin: "24px 0" }}>
+              No invoices exist in the selected period to display revenue.
+            </div>
+          )}
         </div>
 
         <div className="chart-card card-bg-shadow">
