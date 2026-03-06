@@ -2653,7 +2653,7 @@ export default function ReportsPage() {
                 }
                 aria-label="Filter reports by currency"
               >
-                {/* <option value="">All currencies</option> */}
+                <option value="">All currencies</option>
                 {currencyOptions.map((currency) => (
                   <option key={currency.code} value={currency.code}>
                     {currency.label}
