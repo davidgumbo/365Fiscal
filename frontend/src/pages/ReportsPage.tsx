@@ -1875,7 +1875,7 @@ export default function ReportsPage() {
                 : activeReport === "purchases"
                   ? "Purchase Report"
                   : activeReport === "pos_orders"
-                    ? "Point Orders Report"
+                    ? "POS Orders Report"
                     : "VAT RETURN";
     const period =
       activeReport === "stock"
