@@ -2090,10 +2090,6 @@ export default function POSPage() {
         </div>
         <div className="pos-topbar-right">
           <div className="pos-topbar-meta">
-            <div className="pos-session-badge">
-              <span className="pos-session-dot" />
-              {session?.name}
-            </div>
             <div
               className="pos-session-badge pos-currency-badge pos-currency-selector"
               title="Sale currency"
