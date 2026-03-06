@@ -2470,7 +2470,7 @@ export default function ReportsPage() {
               },
               {
                 key: "pos_orders",
-                label: "POINT ORDERS REPORT",
+                label: "POS ORDERS REPORT",
                 icon: (
                   <svg
                     width="18"
