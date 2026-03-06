@@ -52,7 +52,7 @@ export const getDocumentLinesError = (
       !line.product_id &&
       isBlank(line.description ?? "")
     ) {
-      return `Enter product/s in product line/s.`;
+      return `Enter products into the product lines`;
     }
 
     if (!Number.isFinite(quantity) || quantity <= 0) {
