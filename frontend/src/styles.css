@@ -6367,6 +6367,8 @@ tr:hover .o-quick-actions {
   gap: 16px;
   margin-top: 16px;
   align-items: stretch;
+  min-height: 220px;
+  max-height: 240px;
 }
 
 .axis-labels {
@@ -6503,6 +6505,8 @@ tr:hover .o-quick-actions {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  max-height: 420px;
+  overflow: hidden;
 }
 
 .trend-card-header .chart-period {

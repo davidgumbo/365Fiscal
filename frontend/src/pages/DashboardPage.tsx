@@ -815,7 +815,7 @@ export default function DashboardPage() {
     <div className="dashboard-page">
       {error && <div className="dashboard-error">{error}</div>}
 
-      {/* <div className="dashboard-header">
+      <div className="dashboard-header">
         <div>
           <h1>Dashboard</h1>
           <p className="dashboard-subtitle">
@@ -824,16 +824,18 @@ export default function DashboardPage() {
         </div>
         <div className="dashboard-actions">
           <div className="date-range">
-            <label>From:</label>
+            <label htmlFor="from-date">From:</label>
             <input
+              id="from-date"
               type="date"
               value={dateRange.from}
               onChange={(e) =>
                 setDateRange((prev) => ({ ...prev, from: e.target.value }))
               }
             />
-            <label>To:</label>
+            <label htmlFor="to-date">To:</label>
             <input
+              id="to-date"
               type="date"
               value={dateRange.to}
               onChange={(e) =>
@@ -845,7 +847,7 @@ export default function DashboardPage() {
             <PlusIcon /> New Invoice
           </NavLink>
         </div>
-      </div> */}
+      </div>
 
       {/* KPI Cards */}
       <div className="dashboard-kpis">
