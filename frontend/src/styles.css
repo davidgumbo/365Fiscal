@@ -6410,8 +6410,22 @@ tr:hover .o-quick-actions {
   justify-content: flex-start;
   padding: 0 4px;
   scroll-behavior: smooth;
+  position: relative;
 }
 
+.trend-bar-chart::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: linear-gradient(
+    to top,
+    rgba(15, 23, 42, 0.08) 0,
+    rgba(15, 23, 42, 0.08) 1px,
+    transparent 1px
+  );
+  background-size: 100% calc(100% / var(--trend-grid-count, 4));
+}
 
 .trend-bar-item {
   flex: 1;

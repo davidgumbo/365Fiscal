@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import type { CSSProperties } from "react";
 import { NavLink } from "react-router-dom";
 import { apiFetch } from "../api";
 import { TablePagination } from "../components/TablePagination";
@@ -29,6 +30,27 @@ interface RevenueTrendBar {
   value: number;
   heightPercent: number;
 }
+
+const niceNumber = (value: number, round: boolean): number => {
+  if (value <= 0) return 0;
+  const exponent = Math.floor(Math.log10(value));
+  const base = 10 ** exponent;
+  const fraction = value / base;
+
+  let niceFraction;
+  if (round) {
+    if (fraction < 1.5) niceFraction = 1;
+    else if (fraction < 3) niceFraction = 2;
+    else if (fraction < 7) niceFraction = 5;
+    else niceFraction = 10;
+  } else {
+    if (fraction <= 1) niceFraction = 1;
+    else if (fraction <= 2) niceFraction = 2;
+    else if (fraction <= 5) niceFraction = 5;
+    else niceFraction = 10;
+  }
+  return niceFraction * base;
+};
 
 interface DeviceHealth {
   online: number;
@@ -653,23 +675,30 @@ export default function DashboardPage() {
       (sum, point) => sum + point.value,
       0,
     );
+
+    const axisSteps = 4;
+    const rawStep = axisSteps ? maxValue / axisSteps : maxValue || 1;
+    const stepSize = niceNumber(rawStep, false) || 1;
+    const axisMax = stepSize * axisSteps;
+    const axisTicks =
+      axisMax === 0
+        ? Array(axisSteps + 1).fill(0)
+        : Array.from({ length: axisSteps + 1 }, (_, idx) => stepSize * (axisSteps - idx));
+
+    const referenceValue = axisMax || 1;
     const bars = basePoints.map((point) => ({
       ...point,
-      heightPercent: Math.max(1, (point.value / maxValue) * 100),
+      heightPercent: referenceValue > 0 ? Math.max(1, (point.value / referenceValue) * 100) : 0,
     }));
 
     const latestPoint = bars[bars.length - 1];
-    const axisSteps = 4;
-    const axisTicks = Array.from({ length: axisSteps + 1 }, (_, idx) =>
-      Math.round((maxValue * (axisSteps - idx)) / axisSteps),
-    );
-
     return {
       bars,
       totalRevenue,
       latestValue: latestPoint?.value || 0,
       latestLabel: latestPoint?.label || "",
       axisTicks,
+      axisSteps,
     };
   }, [filteredInvoices, dateRange.from, dateRange.to]);
   const hasRevenueTrend = revenueTrendChart.bars.length > 0;
@@ -679,6 +708,10 @@ export default function DashboardPage() {
           dateRange.to,
         )}`
       : "Select a date range";
+
+  const axisGridStyle = {
+    "--trend-grid-count": revenueTrendChart.axisSteps ?? 4,
+  } as CSSProperties;
 
   // Get device stats for user's company
   const deviceStats = useMemo(() => {
@@ -941,12 +974,10 @@ export default function DashboardPage() {
                     className="trend-bar-chart"
                     role="img"
                     aria-label="Revenue trend bars"
+                    style={axisGridStyle}
                   >
                     {revenueTrendChart.bars.map((bar) => (
                       <div key={bar.key} className="trend-bar-item">
-                        <span className="trend-bar-value">
-                          {formatCurrency(bar.value)}
-                        </span>
                         <div className="trend-bar-track">
                           <div
                             className="bar"
