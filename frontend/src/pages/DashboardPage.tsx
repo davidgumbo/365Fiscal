@@ -683,12 +683,18 @@ export default function DashboardPage() {
     const axisTicks =
       axisMax === 0
         ? Array(axisSteps + 1).fill(0)
-        : Array.from({ length: axisSteps + 1 }, (_, idx) => stepSize * (axisSteps - idx));
+        : Array.from(
+            { length: axisSteps + 1 },
+            (_, idx) => stepSize * (axisSteps - idx),
+          );
 
     const referenceValue = axisMax || 1;
     const bars = basePoints.map((point) => ({
       ...point,
-      heightPercent: referenceValue > 0 ? Math.max(1, (point.value / referenceValue) * 100) : 0,
+      heightPercent:
+        referenceValue > 0
+          ? Math.max(1, (point.value / referenceValue) * 100)
+          : 0,
     }));
 
     const latestPoint = bars[bars.length - 1];
@@ -978,10 +984,10 @@ export default function DashboardPage() {
                   >
                     {revenueTrendChart.bars.map((bar) => (
                       <div key={bar.key} className="trend-bar-column">
-                        <span className="trend-bar-value">
-                          {formatCurrency(bar.value)}
-                        </span>
                         <div className="trend-bar-track">
+                          <span className="trend-bar-tooltip">
+                            {formatCurrency(bar.value)}
+                          </span>
                           <div
                             className="bar"
                             style={{ height: `${bar.heightPercent}%` }}

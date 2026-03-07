@@ -6439,6 +6439,7 @@ tr:hover .o-quick-actions {
   align-items: flex-end;
   flex: 1;
   justify-content: center;
+  position: relative;
 }
 
 .trend-bar-column .bar {
@@ -6448,6 +6449,27 @@ tr:hover .o-quick-actions {
   border-radius: 4px 4px 0 0;
   transition: height 0.3s ease;
   min-height: 4px;
+}
+
+.trend-bar-tooltip {
+  position: absolute;
+  top: -26px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--ink);
+  color: var(--white-500);
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.trend-bar-track:hover .trend-bar-tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-4px);
 }
 
 .trend-bar-column .trend-bar-value {
