@@ -816,12 +816,6 @@ export default function DashboardPage() {
       {error && <div className="dashboard-error">{error}</div>}
 
       <div className="dashboard-header">
-        <div>
-          <h1>Dashboard</h1>
-          <p className="dashboard-subtitle">
-            Welcome back! Here's an overview of your fiscal operations.
-          </p>
-        </div>
         <div className="dashboard-actions">
           <div className="date-range">
             <label htmlFor="from-date">From:</label>
@@ -843,9 +837,6 @@ export default function DashboardPage() {
               }
             />
           </div>
-          <NavLink to="/invoices" className="btn-primary">
-            <PlusIcon /> New Invoice
-          </NavLink>
         </div>
       </div>
 
@@ -974,7 +965,9 @@ export default function DashboardPage() {
               <div className="trend-summary">
                 <div>
                   <span>Total revenue</span>
-                  <strong>{formatCurrency(revenueTrendChart.totalRevenue)}</strong>
+                  <strong>
+                    {formatCurrency(revenueTrendChart.totalRevenue)}
+                  </strong>
                 </div>
                 <div>
                   <span>
@@ -983,7 +976,9 @@ export default function DashboardPage() {
                       ? ` (${revenueTrendChart.latestLabel})`
                       : ""}
                   </span>
-                  <strong>{formatCurrency(revenueTrendChart.latestValue)}</strong>
+                  <strong>
+                    {formatCurrency(revenueTrendChart.latestValue)}
+                  </strong>
                 </div>
               </div>
             </div>
