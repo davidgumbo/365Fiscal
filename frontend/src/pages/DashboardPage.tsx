@@ -23,12 +23,11 @@ interface Trends {
   quotations: TrendPoint[];
 }
 
-interface RevenueTrendPoint {
+interface RevenueTrendBar {
   key: string;
   label: string;
   value: number;
-  x: number;
-  y: number;
+  heightPercent: number;
 }
 
 interface DeviceHealth {
@@ -573,12 +572,12 @@ export default function DashboardPage() {
 
   const revenueTrendChart = useMemo(() => {
     if (!dateRange.from || !dateRange.to) {
-      return {
-        chartPoints: [] as RevenueTrendPoint[],
-        totalRevenue: 0,
-        latestValue: 0,
-        latestLabel: "",
-      };
+    return {
+      bars: [] as RevenueTrendBar[],
+      totalRevenue: 0,
+      latestValue: 0,
+      latestLabel: "",
+    };
     }
     const startDate = new Date(dateRange.from);
     const endDate = new Date(`${dateRange.to}T23:59:59`);
@@ -588,7 +587,7 @@ export default function DashboardPage() {
       startDate > endDate
     ) {
       return {
-        chartPoints: [] as RevenueTrendPoint[],
+        bars: [] as RevenueTrendBar[],
         totalRevenue: 0,
         latestValue: 0,
         latestLabel: "",
@@ -645,25 +644,20 @@ export default function DashboardPage() {
       (sum, point) => sum + point.value,
       0,
     );
-    const divisor = Math.max(1, basePoints.length - 1);
-    const chartPoints: RevenueTrendPoint[] = basePoints.map((point, index) => ({
+    const bars = basePoints.map((point) => ({
       ...point,
-      x: basePoints.length <= 1 ? 0 : (index / divisor) * 100,
-      y: 100 - (point.value / maxValue) * 100,
+      heightPercent: Math.max(1, (point.value / maxValue) * 100),
     }));
 
-    const latestPoint = chartPoints[chartPoints.length - 1];
+    const latestPoint = bars[bars.length - 1];
     return {
-      chartPoints,
+      bars,
       totalRevenue,
       latestValue: latestPoint?.value || 0,
       latestLabel: latestPoint?.label || "",
     };
   }, [filteredInvoices, dateRange.from, dateRange.to]);
-  const hasRevenueTrend = revenueTrendChart.chartPoints.length > 0;
-  const trendLinePoints = revenueTrendChart.chartPoints
-    .map((point) => `${point.x},${point.y}`)
-    .join(" ");
+  const hasRevenueTrend = revenueTrendChart.bars.length > 0;
   const trendPeriodLabel =
     dateRange.from && dateRange.to
       ? `${formatDateRangeLabel(dateRange.from)} – ${formatDateRangeLabel(
@@ -928,49 +922,31 @@ export default function DashboardPage() {
           </div>
           {hasRevenueTrend ? (
             <>
-              <div className="line-chart-wrapper">
-                <div className="line-chart-grid">
-                  {[0, 1, 2, 3].map((line) => (
-                    <span
-                      key={line}
-                      style={{ top: `${(line / 4) * 100}%` }}
-                    ></span>
-                  ))}
-                </div>
-                <svg
-                  viewBox="0 0 100 100"
-                  className="line-chart-svg"
+              <div className="bar-chart-wrapper">
+                <div
+                  className="bar-chart"
                   role="img"
-                  aria-label="Revenue trend"
+                  aria-label="Revenue trend bars"
                 >
-                  {trendLinePoints && (
-                    <polyline
-                      className="line-chart-path"
-                      points={trendLinePoints}
-                    />
-                  )}
-                  {revenueTrendChart.chartPoints.map((point) => (
-                    <circle
-                      key={point.key}
-                      className="line-chart-point"
-                      cx={`${point.x}%`}
-                      cy={`${point.y}%`}
-                      r="1.8"
-                    >
-                      <title>
-                        {`${point.label}: $${point.value.toLocaleString(
+                  {revenueTrendChart.bars.map((bar) => (
+                    <div key={bar.key} className="bar-item">
+                      <div
+                        className="bar"
+                        style={{ height: `${bar.heightPercent}%` }}
+                        title={`${bar.label}: $${bar.value.toLocaleString(
                           undefined,
                           {
                             minimumFractionDigits: 0,
                             maximumFractionDigits: 0,
                           },
                         )}`}
-                      </title>
-                    </circle>
+                      />
+                      <span className="bar-label">{bar.label}</span>
+                    </div>
                   ))}
-                </svg>
+                </div>
               </div>
-              <div className="line-chart-summary">
+              <div className="trend-summary">
                 <div>
                   <span>Total revenue</span>
                   <strong>
