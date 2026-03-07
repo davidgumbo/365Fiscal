@@ -245,6 +245,10 @@ textarea {
   overflow: hidden;
 }
 
+.page-content--overflow-auto {
+  overflow: auto;
+}
+
 .sidebar {
   background: var(--white-500);
   color: var(--ink);

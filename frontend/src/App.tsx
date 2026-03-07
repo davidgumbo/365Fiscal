@@ -129,6 +129,7 @@ function POSWindowLauncher() {
 function AppContent() {
   const location = useLocation();
   const { me } = useMe();
+  const isDashboardRoute = location.pathname === "/dashboard";
   const isPortalMode = !me?.is_admin;
   const [listViewByPath, setListViewByPath] = useState<
     Record<string, ListViewState>
@@ -285,7 +286,14 @@ function AppContent() {
               </div>
             </div>
           </header>
-          <div className="page-content">
+          <div
+            className={[
+              "page-content",
+              isDashboardRoute && "page-content--overflow-auto",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+          >
             <Routes>
               <Route path="/" element={<AppLauncherPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
