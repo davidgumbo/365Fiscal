@@ -6414,7 +6414,8 @@ tr:hover .o-quick-actions {
 
 
 .trend-bar-item {
-  flex: 0 0 42px;
+  flex: 1;
+  min-width: 42px;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
