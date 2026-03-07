@@ -486,23 +486,19 @@ export default function DashboardPage() {
   }, [invoices]);
 
   const sortedInvoicesForTable = useMemo(() => {
-    return filteredInvoices
-      .slice()
-      .sort((a, b) => {
-        const ad = a.fiscalized_at || a.created_at || "";
-        const bd = b.fiscalized_at || b.created_at || "";
-        return new Date(bd).getTime() - new Date(ad).getTime();
-      });
+    return filteredInvoices.slice().sort((a, b) => {
+      const ad = a.fiscalized_at || a.created_at || "";
+      const bd = b.fiscalized_at || b.created_at || "";
+      return new Date(bd).getTime() - new Date(ad).getTime();
+    });
   }, [filteredInvoices]);
 
   const sortedQuotationsForTable = useMemo(() => {
-    return quotations
-      .slice()
-      .sort((a, b) => {
-        const ad = a.created_at || "";
-        const bd = b.created_at || "";
-        return new Date(bd).getTime() - new Date(ad).getTime();
-      });
+    return quotations.slice().sort((a, b) => {
+      const ad = a.created_at || "";
+      const bd = b.created_at || "";
+      return new Date(bd).getTime() - new Date(ad).getTime();
+    });
   }, [quotations]);
 
   const sortedAuditLogs = useMemo(() => {
@@ -601,7 +597,9 @@ export default function DashboardPage() {
 
     const diffDays = Math.max(
       1,
-      Math.ceil((endDate.getTime() - startDate.getTime() + 1) / (1000 * 60 * 60 * 24)),
+      Math.ceil(
+        (endDate.getTime() - startDate.getTime() + 1) / (1000 * 60 * 60 * 24),
+      ),
     );
     const isMonthly = diffDays > 90;
     const buildKey = (date: Date) =>
@@ -643,7 +641,10 @@ export default function DashboardPage() {
       value,
     }));
     const maxValue = Math.max(1, ...basePoints.map((point) => point.value));
-    const totalRevenue = basePoints.reduce((sum, point) => sum + point.value, 0);
+    const totalRevenue = basePoints.reduce(
+      (sum, point) => sum + point.value,
+      0,
+    );
     const divisor = Math.max(1, basePoints.length - 1);
     const chartPoints: RevenueTrendPoint[] = basePoints.map((point, index) => ({
       ...point,
@@ -805,7 +806,7 @@ export default function DashboardPage() {
     <div className="dashboard-page">
       {error && <div className="dashboard-error">{error}</div>}
 
-      <div className="dashboard-header">
+      {/* <div className="dashboard-header">
         <div>
           <h1>Dashboard</h1>
           <p className="dashboard-subtitle">
@@ -835,7 +836,7 @@ export default function DashboardPage() {
             <PlusIcon /> New Invoice
           </NavLink>
         </div>
-      </div>
+      </div> */}
 
       {/* KPI Cards */}
       <div className="dashboard-kpis">
@@ -957,10 +958,13 @@ export default function DashboardPage() {
                       r="1.8"
                     >
                       <title>
-                        {`${point.label}: $${point.value.toLocaleString(undefined, {
-                          minimumFractionDigits: 0,
-                          maximumFractionDigits: 0,
-                        })}`}
+                        {`${point.label}: $${point.value.toLocaleString(
+                          undefined,
+                          {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0,
+                          },
+                        )}`}
                       </title>
                     </circle>
                   ))}
