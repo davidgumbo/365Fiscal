@@ -6362,24 +6362,50 @@ tr:hover .o-quick-actions {
   align-items: flex-end;
 }
 
-.bar-chart {
+.trend-chart-grid {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-around;
-  width: 100%;
-  height: 100%;
-  gap: 8px;
+  gap: 16px;
+  margin-top: 16px;
+  align-items: stretch;
 }
 
-.bar-item {
+.axis-labels {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  flex: 1;
-  height: 100%;
+  justify-content: space-between;
+  min-width: 70px;
+  text-align: right;
+  color: var(--muted);
+  font-size: 12px;
 }
 
-.bar-item .bar {
+.axis-labels span {
+  line-height: 1.2;
+}
+
+.bar-axis {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.trend-bar-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 200px;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+
+.trend-bar-item {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.trend-bar-item .bar {
   width: 100%;
   max-width: 40px;
   background: linear-gradient(180deg, var(--blue-700) 0%, var(--blue-500) 100%);
@@ -6388,16 +6414,77 @@ tr:hover .o-quick-actions {
   min-height: 4px;
 }
 
-.bar-item .bar-label {
-  margin-top: 6px;
+.bar-axis-labels {
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.bar-axis-labels span {
+  flex: 1;
+  text-align: center;
   font-size: 10px;
   color: var(--muted);
 }
 
-.bar-chart-wrapper {
-  width: 100%;
-  height: 220px;
-  margin-top: 12px;
+.trend-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.trend-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 16px 0;
+}
+
+.trend-card-icon {
+  width: 48px;
+  height: 48px;
+  background: #0f172a;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.trend-card-svg {
+  width: 24px;
+  height: 24px;
+  color: #fff;
+}
+
+.trend-card-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.trend-card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--ink);
+}
+
+.trend-card-description {
+  margin: 4px 0 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.trend-card-body {
+  padding: 0 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.trend-card-header .chart-period {
+  margin-left: auto;
+  font-size: 0.75rem;
 }
 
 .trend-summary {

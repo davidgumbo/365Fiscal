@@ -570,15 +570,23 @@ export default function DashboardPage() {
     setAuditPage(1);
   }, [companyId, dateRange.from, dateRange.to]);
 
+  const formatCurrency = (value: number) =>
+    `$${value.toLocaleString(undefined, {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    })}`;
+
   const revenueTrendChart = useMemo(() => {
     if (!dateRange.from || !dateRange.to) {
-    return {
-      bars: [] as RevenueTrendBar[],
-      totalRevenue: 0,
-      latestValue: 0,
-      latestLabel: "",
-    };
+      return {
+        bars: [] as RevenueTrendBar[],
+        totalRevenue: 0,
+        latestValue: 0,
+        latestLabel: "",
+        axisTicks: [] as number[],
+      };
     }
+
     const startDate = new Date(dateRange.from);
     const endDate = new Date(`${dateRange.to}T23:59:59`);
     if (
@@ -591,6 +599,7 @@ export default function DashboardPage() {
         totalRevenue: 0,
         latestValue: 0,
         latestLabel: "",
+        axisTicks: [] as number[],
       };
     }
 
@@ -650,11 +659,17 @@ export default function DashboardPage() {
     }));
 
     const latestPoint = bars[bars.length - 1];
+    const axisSteps = 4;
+    const axisTicks = Array.from({ length: axisSteps + 1 }, (_, idx) =>
+      Math.round((maxValue * (axisSteps - idx)) / axisSteps),
+    );
+
     return {
       bars,
       totalRevenue,
       latestValue: latestPoint?.value || 0,
       latestLabel: latestPoint?.label || "",
+      axisTicks,
     };
   }, [filteredInvoices, dateRange.from, dateRange.to]);
   const hasRevenueTrend = revenueTrendChart.bars.length > 0;
@@ -921,41 +936,40 @@ export default function DashboardPage() {
             <span className="chart-period">{trendPeriodLabel}</span>
           </div>
           {hasRevenueTrend ? (
-            <>
-              <div className="bar-chart-wrapper">
-                <div
-                  className="bar-chart"
-                  role="img"
-                  aria-label="Revenue trend bars"
-                >
-                  {revenueTrendChart.bars.map((bar) => (
-                    <div key={bar.key} className="bar-item">
-                      <div
-                        className="bar"
-                        style={{ height: `${bar.heightPercent}%` }}
-                        title={`${bar.label}: $${bar.value.toLocaleString(
-                          undefined,
-                          {
-                            minimumFractionDigits: 0,
-                            maximumFractionDigits: 0,
-                          },
-                        )}`}
-                      />
-                      <span className="bar-label">{bar.label}</span>
-                    </div>
+            <div className="trend-card-body">
+              <div className="trend-chart-grid">
+                <div className="axis-labels" aria-hidden="true">
+                  {revenueTrendChart.axisTicks.map((value) => (
+                    <span key={value}>{formatCurrency(value)}</span>
                   ))}
+                </div>
+                <div className="bar-axis">
+                  <div
+                    className="trend-bar-chart"
+                    role="img"
+                    aria-label="Revenue trend bars"
+                  >
+                    {revenueTrendChart.bars.map((bar) => (
+                      <div key={bar.key} className="trend-bar-item">
+                        <div
+                          className="bar"
+                          style={{ height: `${bar.heightPercent}%` }}
+                          title={`${bar.label}: ${formatCurrency(bar.value)}`}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="bar-axis-labels" aria-hidden="true">
+                    {revenueTrendChart.bars.map((bar) => (
+                      <span key={bar.key}>{bar.label}</span>
+                    ))}
+                  </div>
                 </div>
               </div>
               <div className="trend-summary">
                 <div>
                   <span>Total revenue</span>
-                  <strong>
-                    $
-                    {revenueTrendChart.totalRevenue.toLocaleString(undefined, {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    })}
-                  </strong>
+                  <strong>{formatCurrency(revenueTrendChart.totalRevenue)}</strong>
                 </div>
                 <div>
                   <span>
@@ -964,16 +978,10 @@ export default function DashboardPage() {
                       ? ` (${revenueTrendChart.latestLabel})`
                       : ""}
                   </span>
-                  <strong>
-                    $
-                    {revenueTrendChart.latestValue.toLocaleString(undefined, {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    })}
-                  </strong>
+                  <strong>{formatCurrency(revenueTrendChart.latestValue)}</strong>
                 </div>
               </div>
-            </>
+            </div>
           ) : (
             <div className="empty-state" style={{ margin: "24px 0" }}>
               No invoices exist in the selected period to display revenue.
