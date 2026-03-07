@@ -6387,6 +6387,17 @@ tr:hover .o-quick-actions {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+}
+
+.bar-axis::-webkit-scrollbar {
+  height: 4px;
+}
+
+.trend-bar-chart,
+.bar-axis-labels {
+  min-width: max-content;
 }
 
 .trend-bar-chart {
@@ -6394,15 +6405,19 @@ tr:hover .o-quick-actions {
   align-items: flex-end;
   gap: 8px;
   height: 200px;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding: 0 4px;
+  scroll-behavior: smooth;
 }
 
+
 .trend-bar-item {
-  flex: 1;
+  flex: 0 0 42px;
   display: flex;
-  align-items: flex-end;
-  justify-content: center;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
 }
 
 .trend-bar-item .bar {
@@ -6414,14 +6429,22 @@ tr:hover .o-quick-actions {
   min-height: 4px;
 }
 
+.trend-bar-item .trend-bar-value {
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
 .bar-axis-labels {
   display: flex;
-  gap: 8px;
-  justify-content: space-between;
+  gap: 12px;
+  padding-top: 4px;
+  border-top: 1px dashed var(--stroke-light);
+  justify-content: flex-start;
 }
 
 .bar-axis-labels span {
-  flex: 1;
+  min-width: 42px;
   text-align: center;
   font-size: 10px;
   color: var(--muted);

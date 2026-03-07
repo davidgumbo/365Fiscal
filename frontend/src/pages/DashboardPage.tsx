@@ -951,6 +951,9 @@ export default function DashboardPage() {
                   >
                     {revenueTrendChart.bars.map((bar) => (
                       <div key={bar.key} className="trend-bar-item">
+                        <span className="trend-bar-value">
+                          {formatCurrency(bar.value)}
+                        </span>
                         <div
                           className="bar"
                           style={{ height: `${bar.heightPercent}%` }}
