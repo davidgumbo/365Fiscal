@@ -947,11 +947,13 @@ export default function DashboardPage() {
                         <span className="trend-bar-value">
                           {formatCurrency(bar.value)}
                         </span>
-                        <div
-                          className="bar"
-                          style={{ height: `${bar.heightPercent}%` }}
-                          title={`${bar.label}: ${formatCurrency(bar.value)}`}
-                        />
+                        <div className="trend-bar-track">
+                          <div
+                            className="bar"
+                            style={{ height: `${bar.heightPercent}%` }}
+                            title={`${bar.label}: ${formatCurrency(bar.value)}`}
+                          />
+                        </div>
                       </div>
                     ))}
                   </div>

@@ -6421,6 +6421,15 @@ tr:hover .o-quick-actions {
   justify-content: flex-end;
   align-items: center;
   gap: 4px;
+  height: 100%;
+}
+
+.trend-bar-track {
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  flex: 1;
+  justify-content: center;
 }
 
 .trend-bar-item .bar {
