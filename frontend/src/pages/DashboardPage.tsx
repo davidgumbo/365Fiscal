@@ -971,13 +971,16 @@ export default function DashboardPage() {
                 </div>
                 <div className="bar-axis">
                   <div
-                    className="trend-bar-chart"
+                    className="trend-bar-columns"
                     role="img"
                     aria-label="Revenue trend bars"
                     style={axisGridStyle}
                   >
                     {revenueTrendChart.bars.map((bar) => (
-                      <div key={bar.key} className="trend-bar-item">
+                      <div key={bar.key} className="trend-bar-column">
+                        <span className="trend-bar-value">
+                          {formatCurrency(bar.value)}
+                        </span>
                         <div className="trend-bar-track">
                           <div
                             className="bar"
@@ -985,12 +988,8 @@ export default function DashboardPage() {
                             title={`${bar.label}: ${formatCurrency(bar.value)}`}
                           />
                         </div>
+                        <span className="trend-bar-label">{bar.label}</span>
                       </div>
-                    ))}
-                  </div>
-                  <div className="bar-axis-labels" aria-hidden="true">
-                    {revenueTrendChart.bars.map((bar) => (
-                      <span key={bar.key}>{bar.label}</span>
                     ))}
                   </div>
                 </div>
