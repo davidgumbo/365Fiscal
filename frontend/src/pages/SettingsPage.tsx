@@ -3052,6 +3052,8 @@ export default function SettingsPage() {
                     </div>
                   </div> */}
 
+                    </div>
+
                   <div
                     className="tabs-nav"
                     style={{ marginTop: 16, marginBottom: 20 }}
@@ -3061,6 +3063,7 @@ export default function SettingsPage() {
                       onClick={() => setPosConfigTab("employees")}
                     >
                       Employees &amp; Login
+                    </button>
                     <button
                       className={`tab-btn ${posConfigTab === "payments" ? "tab active" : "tab"}`}
                       onClick={() => setPosConfigTab("payments")}
