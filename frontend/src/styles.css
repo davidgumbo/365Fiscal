@@ -3759,7 +3759,7 @@ button.danger:hover {
   margin-bottom: 24px;
 }
 
-.tabs-nav .tab-btn {
+.tabs-nav .tab-btn .tabs-nav-settings{
   flex: 1;
   padding: 10px 16px;
   border: none;
