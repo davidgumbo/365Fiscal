@@ -691,38 +691,33 @@ textarea {
   justify-content: space-between;
   gap: 16px;
   width: 100%;
-  background: linear-gradient(135deg, #1d4ed8, #2563eb 45%, #4c1d95);
-  border-radius: 24px;
-  padding: 16px 24px;
-  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);
+  background: var(--card);
+  border: 1px solid var(--stroke);
+  border-radius: 14px;
+  padding: 10px 14px;
+  box-shadow: var(--shadow-soft);
   position: sticky;
-  top: 18px;
-  z-index: 2;
+  top: 0;
+  z-index: 1;
 }
 
 .topbar-left,
 .topbar-right {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 12px;
 }
 
 .app-switcher {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  color: #fff;
-  transition: background 0.2s ease, transform 0.2s ease;
-}
-
-.app-switcher:hover {
-  background: rgba(255, 255, 255, 0.25);
-  transform: translateY(-1px);
+  gap: 8px;
+  background: var(--white-500);
+  border: 1px solid var(--stroke);
+  border-radius: 10px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-weight: 600;
 }
 
 .app-switcher-icon svg {
@@ -733,38 +728,38 @@ textarea {
 
 .topbar-brand {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  align-items: baseline;
+  gap: 8px;
 }
 
 .topbar-brand-mark {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--stroke);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.2em;
-  color: #fff;
+  color: var(--ink);
 }
 
 .topbar-subtitle {
   margin: 0;
   font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--muted);
   text-transform: uppercase;
-  letter-spacing: 0.3em;
-  color: rgba(255, 255, 255, 0.75);
 }
 
 .topbar-title {
   margin: 0;
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1.2;
-  color: #fff;
+  color: var(--ink);
   font-weight: 600;
 }
 
@@ -839,25 +834,23 @@ textarea {
   gap: 8px;
   border-radius: 999px;
   padding: 5px 12px;
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.45);
-  color: #fff;
+  background: var(--surface);
+  border: 1px solid var(--stroke);
+  color: var(--ink);
   cursor: pointer;
   transition: background 0.2s ease, border-color 0.2s ease;
 }
 
 .user-menu:hover {
-  background: rgba(255, 255, 255, 0.25);
-  border-color: rgba(255, 255, 255, 0.65);
+  background: var(--card);
 }
 
 .user-avatar-sm {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  color: #fff;
+  background: var(--blue-600);
+  color: var(--white-500);
   display: grid;
   place-items: center;
   font-size: 12px;
@@ -867,7 +860,7 @@ textarea {
 .user-name-sm {
   font-size: 12px;
   font-weight: 600;
-  color: #fff;
+  color: var(--ink);
 }
 
 
