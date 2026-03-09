@@ -3759,7 +3759,7 @@ button.danger:hover {
   margin-bottom: 24px;
 }
 
-.tabs-nav .tab-btn .tabs-nav-settings{
+.tabs-nav .tab-btn {
   flex: 1;
   padding: 10px 16px;
   border: none;
@@ -3779,12 +3779,6 @@ button.danger:hover {
 .tabs-nav .tab-btn.active {
   background: var(--card);
   color: var(--blue-700);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-
-.tabs-nav-settings .tab-btn.active {
-  background: var(--card);
-  color: var(--violet-700);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
