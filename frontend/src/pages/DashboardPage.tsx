@@ -5,6 +5,7 @@ import { apiFetch } from "../api";
 import { TablePagination } from "../components/TablePagination";
 import { useMe } from "../hooks/useMe";
 import { useCompanies } from "../hooks/useCompanies";
+import { buildRevenueTrendChart } from "../utils/revenueTrend";
 
 interface DashboardMetrics {
   active_companies: number;
@@ -23,34 +24,6 @@ interface Trends {
   invoices: TrendPoint[];
   quotations: TrendPoint[];
 }
-
-interface RevenueTrendBar {
-  key: string;
-  label: string;
-  value: number;
-  heightPercent: number;
-}
-
-const niceNumber = (value: number, round: boolean): number => {
-  if (value <= 0) return 0;
-  const exponent = Math.floor(Math.log10(value));
-  const base = 10 ** exponent;
-  const fraction = value / base;
-
-  let niceFraction;
-  if (round) {
-    if (fraction < 1.5) niceFraction = 1;
-    else if (fraction < 3) niceFraction = 2;
-    else if (fraction < 7) niceFraction = 5;
-    else niceFraction = 10;
-  } else {
-    if (fraction <= 1) niceFraction = 1;
-    else if (fraction <= 2) niceFraction = 2;
-    else if (fraction <= 5) niceFraction = 5;
-    else niceFraction = 10;
-  }
-  return niceFraction * base;
-};
 
 interface DeviceHealth {
   online: number;
@@ -141,25 +114,6 @@ const formatDateRangeLabel = (isoDate?: string) => {
     month: "short",
     day: "numeric",
   });
-};
-
-const getInvoiceEffectiveDate = (invoice: Invoice): Date | null => {
-  if (invoice.fiscalized_at) return new Date(invoice.fiscalized_at);
-  if (invoice.invoice_date) return new Date(invoice.invoice_date);
-  if (invoice.created_at) return new Date(invoice.created_at);
-  return null;
-};
-
-const formatTrendLabel = (key: string, isMonthly: boolean) => {
-  const parts = key.split("-");
-  const year = Number(parts[0]);
-  const month = Number(parts[1]);
-  const day = isMonthly ? 1 : Number(parts[2]);
-  const date = new Date(year, month, Number.isNaN(day) ? 1 : day);
-  if (Number.isNaN(date.getTime())) return key;
-  return isMonthly
-    ? date.toLocaleString("default", { month: "short", year: "numeric" })
-    : date.toLocaleString("default", { month: "short", day: "numeric" });
 };
 
 // SVG Icons
@@ -598,115 +552,15 @@ export default function DashboardPage() {
       maximumFractionDigits: 0,
     })}`;
 
-  const revenueTrendChart = useMemo(() => {
-    if (!dateRange.from || !dateRange.to) {
-      return {
-        bars: [] as RevenueTrendBar[],
-        totalRevenue: 0,
-        latestValue: 0,
-        latestLabel: "",
-        axisTicks: [] as number[],
-      };
-    }
-
-    const startDate = new Date(dateRange.from);
-    const endDate = new Date(`${dateRange.to}T23:59:59`);
-    if (
-      Number.isNaN(startDate.getTime()) ||
-      Number.isNaN(endDate.getTime()) ||
-      startDate > endDate
-    ) {
-      return {
-        bars: [] as RevenueTrendBar[],
-        totalRevenue: 0,
-        latestValue: 0,
-        latestLabel: "",
-        axisTicks: [] as number[],
-      };
-    }
-
-    const diffDays = Math.max(
-      1,
-      Math.ceil(
-        (endDate.getTime() - startDate.getTime() + 1) / (1000 * 60 * 60 * 24),
-      ),
-    );
-    const isMonthly = diffDays > 90;
-    const buildKey = (date: Date) =>
-      isMonthly
-        ? `${date.getFullYear()}-${date.getMonth()}`
-        : `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
-
-    const buckets = new Map<string, number>();
-    if (isMonthly) {
-      let cursor = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
-      while (cursor <= endDate) {
-        buckets.set(buildKey(cursor), 0);
-        cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
-      }
-    } else {
-      let cursor = new Date(
-        startDate.getFullYear(),
-        startDate.getMonth(),
-        startDate.getDate(),
-      );
-      while (cursor <= endDate) {
-        buckets.set(buildKey(cursor), 0);
-        cursor.setDate(cursor.getDate() + 1);
-      }
-    }
-
-    filteredInvoices.forEach((inv) => {
-      const date = getInvoiceEffectiveDate(inv);
-      if (!date || date < startDate || date > endDate) {
-        return;
-      }
-      const key = buildKey(date);
-      buckets.set(key, (buckets.get(key) || 0) + (inv.total_amount || 0));
-    });
-
-    const basePoints = Array.from(buckets.entries()).map(([key, value]) => ({
-      key,
-      label: formatTrendLabel(key, isMonthly),
-      value,
-    }));
-    const maxValue = Math.max(1, ...basePoints.map((point) => point.value));
-    const totalRevenue = basePoints.reduce(
-      (sum, point) => sum + point.value,
-      0,
-    );
-
-    const axisSteps = 4;
-    const rawStep = axisSteps ? maxValue / axisSteps : maxValue || 1;
-    const stepSize = niceNumber(rawStep, false) || 1;
-    const axisMax = stepSize * axisSteps;
-    const axisTicks =
-      axisMax === 0
-        ? Array(axisSteps + 1).fill(0)
-        : Array.from(
-            { length: axisSteps + 1 },
-            (_, idx) => stepSize * (axisSteps - idx),
-          );
-
-    const referenceValue = axisMax || 1;
-    const bars = basePoints.map((point) => ({
-      ...point,
-      heightPercent:
-        referenceValue > 0
-          ? Math.max(1, (point.value / referenceValue) * 100)
-          : 0,
-    }));
-
-    const latestPoint = bars[bars.length - 1];
-    return {
-      bars,
-      totalRevenue,
-      latestValue: latestPoint?.value || 0,
-      latestLabel: latestPoint?.label || "",
-      axisTicks,
-      axisSteps,
-    };
-  }, [filteredInvoices, dateRange.from, dateRange.to]);
+  const revenueTrendChart = useMemo(
+    () =>
+      buildRevenueTrendChart({
+        invoices: filteredInvoices,
+        from: dateRange.from,
+        to: dateRange.to,
+      }),
+    [filteredInvoices, dateRange.from, dateRange.to],
+  );
   const hasRevenueTrend = revenueTrendChart.bars.length > 0;
   const trendPeriodLabel =
     dateRange.from && dateRange.to

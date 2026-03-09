@@ -4,6 +4,10 @@ import { apiFetch } from "../api";
 import { TablePagination } from "../components/TablePagination";
 import { useMe } from "../hooks/useMe";
 import { useCompanies, Company } from "../hooks/useCompanies";
+import {
+  buildRevenueTrendChart,
+  RevenueTrendChart,
+} from "../utils/revenueTrend";
 
 /* ── Interfaces ──────────────────────────────────────── */
 
@@ -173,6 +177,15 @@ interface SalesReport {
   top_products: TopProduct[];
   sales_by_month: MonthlySales[];
 }
+
+const EMPTY_REVENUE_TREND_CHART: RevenueTrendChart = {
+  bars: [],
+  axisTicks: [],
+  axisSteps: 4,
+  totalRevenue: 0,
+  latestValue: 0,
+  latestLabel: "",
+};
 
 interface IncomeStatementReport {
   gross_revenue_ex_vat: number;
@@ -435,6 +448,9 @@ export default function ReportsPage() {
   const [reportCurrency, setReportCurrency] = useState("");
 
   const [salesReport, setSalesReport] = useState<SalesReport | null>(null);
+  const [salesTrendChart, setSalesTrendChart] = useState<RevenueTrendChart>(() => ({
+    ...EMPTY_REVENUE_TREND_CHART,
+  }));
   const [stockReport, setStockReport] = useState<StockReport | null>(null);
   const [debtorsReport, setDebtorsReport] = useState<DebtorsReport | null>(
     null,
@@ -646,6 +662,14 @@ export default function ReportsPage() {
           count: val.count,
         };
       });
+
+    setSalesTrendChart(
+      buildRevenueTrendChart({
+        invoices: filtered,
+        from: dateRange.from,
+        to: dateRange.to,
+      }),
+    );
 
     setSalesReport({
       total_sales: totalSales,
@@ -2430,29 +2454,6 @@ export default function ReportsPage() {
 
   /* ── Render ────────────────────────────────────── */
 
-  const maxBarValue = salesReport
-    ? Math.max(...salesReport.sales_by_month.map((m) => m.amount), 1)
-    : 1;
-
-  const salesTrendChart = useMemo(() => {
-    const referenceValue = Math.max(maxBarValue, 1);
-    const axisSteps = 4;
-    const bars =
-      salesReport?.sales_by_month.map((item) => ({
-        key: item.month,
-        label: item.month,
-        value: item.amount,
-        heightPercent:
-          referenceValue > 0
-            ? Math.max(1, (item.amount / referenceValue) * 100)
-            : 0,
-      })) ?? [];
-    const axisTicks = Array.from({ length: axisSteps + 1 }, (_, idx) =>
-      (referenceValue / axisSteps) * (axisSteps - idx),
-    );
-    return { axisTicks, axisSteps, bars };
-  }, [maxBarValue, salesReport]);
-
   const getPaginatedTable = <T,>(key: string, rows: T[]) => {
     const pageSize = tablePageSizes[key] || 10;
     const totalItems = rows.length;
@@ -2474,7 +2475,7 @@ export default function ReportsPage() {
   };
 
   const reportAxisGridStyle = {
-    "--trend-grid-count": salesTrendChart.axisSteps,
+    "--trend-grid-count": salesTrendChart.axisSteps || 4,
   } as CSSProperties;
 
   const salesTopProductsTable = getPaginatedTable(
