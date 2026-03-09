@@ -7,9 +7,9 @@ import {
   Calculator,
   ChartColumn,
   CreditCard,
-  FilePlus2,
+  FilePenLine,
   FileText,
-  LayoutGrid,
+  LayoutDashboard,
   Monitor,
   ReceiptText,
   Settings,
@@ -29,11 +29,11 @@ type ActivationStatus = {
 };
 
 // App icons powered by Lucide
-const DashboardIcon = LayoutGrid;
+const DashboardIcon = LayoutDashboard;
 const InvoiceIcon = FileText;
 const PurchaseIcon = ShoppingCart;
 const ContactIcon = UsersRound;
-const QuoteIcon = FilePlus2;
+const QuoteIcon = FilePenLine;
 const InventoryIcon = Boxes;
 const DeviceIcon = Monitor;
 const ReportsIcon = ChartColumn;
@@ -520,7 +520,7 @@ export default function AppLauncherPage() {
                 style={{ backgroundColor: app.bgColor }}
               >
                 <div className="app-tile-icon" style={{ color: app.color }}>
-                  <app.icon size={38} strokeWidth={1.8} />
+                  <app.icon size={34} strokeWidth={2} />
                 </div>
               </div>
               <span className="app-tile-label">{app.label}</span>

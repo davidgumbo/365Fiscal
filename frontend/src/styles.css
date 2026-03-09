@@ -6913,14 +6913,14 @@ tr:hover .o-quick-actions {
 }
 
 .app-tile-icon-wrapper {
-  width: 80px;
-  height: 80px;
-  border-radius: 22px;
+  width: 76px;
+  height: 76px;
+  border-radius: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.16);
 }
 
 .app-tile:hover .app-tile-icon-wrapper {
@@ -6929,17 +6929,17 @@ tr:hover .o-quick-actions {
 }
 
 .app-tile-icon {
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .app-tile-icon svg {
-  width: 48px;
-  height: 48px;
-  stroke-width: 1.5;
+  width: 40px;
+  height: 40px;
+  stroke-width: 2;
 }
 
 .app-tile-label {
