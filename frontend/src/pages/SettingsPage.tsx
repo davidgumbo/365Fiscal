@@ -336,9 +336,9 @@ export default function SettingsPage() {
   });
   const [posPmEditing, setPosPmEditing] = useState<number | null>(null);
   const [posError, setPosError] = useState<string | null>(null);
-  const [posConfigTab, setPosConfigTab] = useState<"employees" | "payments" | "tills">(
-    "employees",
-  );
+  const [posConfigTab, setPosConfigTab] = useState<
+    "employees" | "payments" | "tills"
+  >("employees");
   const [showPinField, setShowPinField] = useState<number | null>(null);
   const [posEmpSaving, setPosEmpSaving] = useState(false);
   const [posPmSaving, setPosPmSaving] = useState(false);
@@ -346,7 +346,11 @@ export default function SettingsPage() {
   // Till state
   const [posTills, setPosTills] = useState<POSTillItem[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
-  const [tillForm, setTillForm] = useState<{ name: string; employee_ids: number[]; warehouse_id: number | null }>({
+  const [tillForm, setTillForm] = useState<{
+    name: string;
+    employee_ids: number[];
+    warehouse_id: number | null;
+  }>({
     name: "",
     employee_ids: [],
     warehouse_id: null,
@@ -360,7 +364,10 @@ export default function SettingsPage() {
   useEffect(() => {
     if (!tillDropdownOpen) return;
     const handler = (e: MouseEvent) => {
-      if (tillDropdownRef.current && !tillDropdownRef.current.contains(e.target as Node)) {
+      if (
+        tillDropdownRef.current &&
+        !tillDropdownRef.current.contains(e.target as Node)
+      ) {
         setTillDropdownOpen(false);
       }
     };
@@ -540,19 +547,19 @@ export default function SettingsPage() {
     setPosError(null);
     setTillSaving(true);
     try {
-    if (tillEditing) {
-      await apiFetch(`/pos/tills/${tillEditing}`, {
-        method: "PUT",
-        body: JSON.stringify(tillForm),
-      });
-      setStatus("Point Of Sales updated");
-    } else {
-      await apiFetch("/pos/tills", {
-        method: "POST",
-        body: JSON.stringify({ ...tillForm, company_id: companyId }),
-      });
-      setStatus("Point Of Sales added");
-    }
+      if (tillEditing) {
+        await apiFetch(`/pos/tills/${tillEditing}`, {
+          method: "PUT",
+          body: JSON.stringify(tillForm),
+        });
+        setStatus("Point Of Sales updated");
+      } else {
+        await apiFetch("/pos/tills", {
+          method: "POST",
+          body: JSON.stringify({ ...tillForm, company_id: companyId }),
+        });
+        setStatus("Point Of Sales added");
+      }
       setTillForm({ name: "", employee_ids: [], warehouse_id: null });
       setTillEditing(null);
       setTillDropdownOpen(false);
@@ -566,7 +573,8 @@ export default function SettingsPage() {
 
   const deletePosTill = async (id: number) => {
     if (!companyId) return;
-    if (!confirm("Are you sure you want to remove this Point Of Sales?")) return;
+    if (!confirm("Are you sure you want to remove this Point Of Sales?"))
+      return;
     try {
       await apiFetch(`/pos/tills/${id}`, { method: "DELETE" });
       setStatus("Point Of Sales deleted");
@@ -1165,7 +1173,9 @@ export default function SettingsPage() {
                     </div>
                   </div>
                   <p className="settings-section-desc">
-                    Control how invoice references are formatted and incremented. The preview shows what the next invoice number will look like.
+                    Control how invoice references are formatted and
+                    incremented. The preview shows what the next invoice number
+                    will look like.
                   </p>
                   <div
                     style={{
@@ -1186,8 +1196,15 @@ export default function SettingsPage() {
                         {invoiceSequencePreview}
                       </div>
                     </div>
-                    <div style={{ fontSize: 11, textAlign: "right", color: "var(--slate-500)" }}>
-                      Sequence Size controls the padding of the numeric portion. Step and Next Number determine how the counter advances.
+                    <div
+                      style={{
+                        fontSize: 11,
+                        textAlign: "right",
+                        color: "var(--slate-500)",
+                      }}
+                    >
+                      Sequence Size controls the padding of the numeric portion.
+                      Step and Next Number determine how the counter advances.
                     </div>
                   </div>
                   <div className="settings-company">
@@ -1201,20 +1218,34 @@ export default function SettingsPage() {
                     </div>
                   </div>
                   <div className="settings-company">
-                    <div className="settings-company-logo" style={{ minWidth: 260 }}>
+                    <div
+                      className="settings-company-logo"
+                      style={{ minWidth: 260 }}
+                    >
                       <div style={{ padding: 12 }}>
-                        <div style={{ fontWeight: 600, marginBottom: 8 }}>Customer Invoice Numbering</div>
-                        <div style={{ color: "#666", marginBottom: 8 }}>
-                          Implementation: Standard sequence (prefix + step-based counter)
+                        <div style={{ fontWeight: 600, marginBottom: 8 }}>
+                          Customer Invoice Numbering
                         </div>
-                        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                          <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                        <div style={{ color: "#666", marginBottom: 8 }}>
+                          Implementation: Standard sequence (prefix + step-based
+                          counter)
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: 8,
+                            alignItems: "center",
+                          }}
+                        >
+                          <label
+                            style={{
+                              display: "flex",
+                              gap: 8,
+                              alignItems: "center",
+                            }}
+                          >
                             Active
-                            <input
-                              type="checkbox"
-                              checked={true}
-                              readOnly
-                            />
+                            <input type="checkbox" checked={true} readOnly />
                           </label>
                         </div>
                       </div>
@@ -1229,7 +1260,10 @@ export default function SettingsPage() {
                               type="text"
                               value={settingsForm.invoice_prefix}
                               onChange={(e) =>
-                                setSettingsForm({ ...settingsForm, invoice_prefix: e.target.value })
+                                setSettingsForm({
+                                  ...settingsForm,
+                                  invoice_prefix: e.target.value,
+                                })
                               }
                               placeholder="e.g., INV"
                             />
@@ -1240,7 +1274,10 @@ export default function SettingsPage() {
                               type="text"
                               value={settingsForm.quotation_prefix}
                               onChange={(e) =>
-                                setSettingsForm({ ...settingsForm, quotation_prefix: e.target.value })
+                                setSettingsForm({
+                                  ...settingsForm,
+                                  quotation_prefix: e.target.value,
+                                })
                               }
                               placeholder="e.g., /%{year}s/"
                             />
@@ -1253,7 +1290,10 @@ export default function SettingsPage() {
                                 min={1}
                                 value={settingsForm.sequence_size}
                                 onChange={(e) =>
-                                  setSettingsForm({ ...settingsForm, sequence_size: Number(e.target.value) })
+                                  setSettingsForm({
+                                    ...settingsForm,
+                                    sequence_size: Number(e.target.value),
+                                  })
                                 }
                               />
                             </label>
@@ -1264,7 +1304,10 @@ export default function SettingsPage() {
                                 min={1}
                                 value={settingsForm.sequence_step}
                                 onChange={(e) =>
-                                  setSettingsForm({ ...settingsForm, sequence_step: Number(e.target.value) })
+                                  setSettingsForm({
+                                    ...settingsForm,
+                                    sequence_step: Number(e.target.value),
+                                  })
                                 }
                               />
                             </label>
@@ -1277,7 +1320,10 @@ export default function SettingsPage() {
                                 min={1}
                                 value={settingsForm.sequence_next}
                                 onChange={(e) =>
-                                  setSettingsForm({ ...settingsForm, sequence_next: Number(e.target.value) })
+                                  setSettingsForm({
+                                    ...settingsForm,
+                                    sequence_next: Number(e.target.value),
+                                  })
                                 }
                               />
                             </label>
@@ -1290,9 +1336,18 @@ export default function SettingsPage() {
                               lineHeight: 1.4,
                             }}
                           >
-                            <div>Sequence Size determines how many digits appear after the prefix.</div>
-                            <div>Step controls how much the counter increases each time an invoice is created.</div>
-                            <div>Next Number is the raw numeric value that will be used for the next invoice.</div>
+                            <div>
+                              Sequence Size determines how many digits appear
+                              after the prefix.
+                            </div>
+                            <div>
+                              Step controls how much the counter increases each
+                              time an invoice is created.
+                            </div>
+                            <div>
+                              Next Number is the raw numeric value that will be
+                              used for the next invoice.
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -2076,14 +2131,23 @@ export default function SettingsPage() {
                       {renderGeneralSaveActions()}
                     </div>
                   </div>
-                  <p className="settings-section-desc">Configure per-company invoice numbering and sequence options.</p>
+                  <p className="settings-section-desc">
+                    Configure per-company invoice numbering and sequence
+                    options.
+                  </p>
 
                   <div className="settings-doc-layout">
                     <div className="settings-doc-col">
-                      <div className="settings-doc-group-title">Customer Invoice Numbering</div>
+                      <div className="settings-doc-group-title">
+                        Customer Invoice Numbering
+                      </div>
                       <div className="settings-doc-fields">
-                        <div style={{ fontWeight: 600 }}>{selectedCompany?.name ?? "—"}</div>
-                        <div style={{ color: "#666", marginBottom: 8 }}>Company: {selectedCompany?.name || "—"}</div>
+                        <div style={{ fontWeight: 600 }}>
+                          {selectedCompany?.name ?? "—"}
+                        </div>
+                        <div style={{ color: "#666", marginBottom: 8 }}>
+                          Company: {selectedCompany?.name || "—"}
+                        </div>
                         <label className="input">
                           Implementation
                           <input value="Standard" readOnly />
@@ -2103,7 +2167,12 @@ export default function SettingsPage() {
                           <input
                             type="text"
                             value={settingsForm.invoice_prefix}
-                            onChange={(e) => setSettingsForm({ ...settingsForm, invoice_prefix: e.target.value })}
+                            onChange={(e) =>
+                              setSettingsForm({
+                                ...settingsForm,
+                                invoice_prefix: e.target.value,
+                              })
+                            }
                             placeholder="e.g., INV"
                           />
                         </label>
@@ -2113,7 +2182,12 @@ export default function SettingsPage() {
                           <input
                             type="text"
                             value={settingsForm.quotation_prefix}
-                            onChange={(e) => setSettingsForm({ ...settingsForm, quotation_prefix: e.target.value })}
+                            onChange={(e) =>
+                              setSettingsForm({
+                                ...settingsForm,
+                                quotation_prefix: e.target.value,
+                              })
+                            }
                             placeholder="e.g., /%{year}s/"
                           />
                         </label>
@@ -2125,7 +2199,12 @@ export default function SettingsPage() {
                               type="number"
                               min={1}
                               value={settingsForm.sequence_size}
-                              onChange={(e) => setSettingsForm({ ...settingsForm, sequence_size: Number(e.target.value) })}
+                              onChange={(e) =>
+                                setSettingsForm({
+                                  ...settingsForm,
+                                  sequence_size: Number(e.target.value),
+                                })
+                              }
                             />
                           </label>
 
@@ -2135,7 +2214,12 @@ export default function SettingsPage() {
                               type="number"
                               min={1}
                               value={settingsForm.sequence_step}
-                              onChange={(e) => setSettingsForm({ ...settingsForm, sequence_step: Number(e.target.value) })}
+                              onChange={(e) =>
+                                setSettingsForm({
+                                  ...settingsForm,
+                                  sequence_step: Number(e.target.value),
+                                })
+                              }
                             />
                           </label>
                         </div>
@@ -2146,7 +2230,12 @@ export default function SettingsPage() {
                             type="number"
                             min={1}
                             value={settingsForm.sequence_next}
-                            onChange={(e) => setSettingsForm({ ...settingsForm, sequence_next: Number(e.target.value) })}
+                            onChange={(e) =>
+                              setSettingsForm({
+                                ...settingsForm,
+                                sequence_next: Number(e.target.value),
+                              })
+                            }
                           />
                         </label>
                       </div>
@@ -2307,9 +2396,7 @@ export default function SettingsPage() {
                                     setSelectedTax(tax);
                                     setShowForm(true);
                                   }}
-                                >
-                                  
-                                </button>
+                                ></button>
                                 <button
                                   className="icon-btn"
                                   title="Delete"
@@ -2937,7 +3024,7 @@ export default function SettingsPage() {
                         {renderGeneralSaveActions()}
                       </div>
                     </div>
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    {/* <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                       <button
                         className={
                           posConfigTab === "employees" ? "tab active" : "tab"
@@ -2963,6 +3050,29 @@ export default function SettingsPage() {
                         Point Of Sales
                       </button>
                     </div>
+                  </div> */}
+
+                  <div
+                    className="tabs-nav"
+                    style={{ marginTop: 16, marginBottom: 20 }}
+                  >
+                    <button
+                      className={`tab-btn ${posConfigTab === "employees" ? "tab active" : "tab"}`}
+                      onClick={() => setPosConfigTab("employees")}
+                    >
+                      Employees &amp; Login
+                    <button
+                      className={`tab-btn ${posConfigTab === "payments" ? "tab active" : "tab"}`}
+                      onClick={() => setPosConfigTab("payments")}
+                    >
+                      Payment Methods
+                    </button>
+                    <button
+                      className={`tab-btn ${posConfigTab === "tills" ? "tab active" : "tab"}`}
+                      onClick={() => setPosConfigTab("tills")}
+                    >
+                      Point Of Sales
+                    </button>
                   </div>
 
                   {posError && (
@@ -3654,9 +3764,7 @@ export default function SettingsPage() {
                                           height: 30,
                                           borderRadius: 6,
                                         }}
-                                      >
-                                     
-                                      </button>
+                                      ></button>
                                       <button
                                         className="icon-btn"
                                         title="Delete employee"
@@ -4452,13 +4560,35 @@ export default function SettingsPage() {
                           background: "var(--gray-50, #f9fafb)",
                         }}
                       >
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--slate-600)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                          }}
+                        >
+                          <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="var(--slate-600)"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
                             <rect x="2" y="3" width="20" height="14" rx="2" />
                             <path d="M8 21h8" />
                             <path d="M12 17v4" />
                           </svg>
-                          <h5 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "var(--slate-700)" }}>
+                          <h5
+                            style={{
+                              margin: 0,
+                              fontSize: 15,
+                              fontWeight: 700,
+                              color: "var(--slate-700)",
+                            }}
+                          >
                             Point Of Sales / Registers
                           </h5>
                         </div>
@@ -4473,7 +4603,9 @@ export default function SettingsPage() {
                           }}
                         >
                           {posTills.length}{" "}
-                          {posTills.length === 1 ? "Point Of Sales" : "Points Of Sales"}
+                          {posTills.length === 1
+                            ? "Point Of Sales"
+                            : "Points Of Sales"}
                         </span>
                       </div>
 
@@ -4482,32 +4614,76 @@ export default function SettingsPage() {
                         style={{
                           padding: "16px 20px",
                           borderBottom: "1px solid var(--gray-100, #f3f4f6)",
-                          background: tillEditing ? "var(--violet-50, #f5f3ff)" : "transparent",
+                          background: tillEditing
+                            ? "var(--violet-50, #f5f3ff)"
+                            : "transparent",
                         }}
                       >
                         {tillEditing && (
-                          <div style={{ fontSize: 12, fontWeight: 600, color: "var(--violet-600)", marginBottom: 8 }}>
-                            <EditIcon /> Editing: {posTills.find((t) => t.id === tillEditing)?.name}
+                          <div
+                            style={{
+                              fontSize: 12,
+                              fontWeight: 600,
+                              color: "var(--violet-600)",
+                              marginBottom: 8,
+                            }}
+                          >
+                            <EditIcon /> Editing:{" "}
+                            {posTills.find((t) => t.id === tillEditing)?.name}
                           </div>
                         )}
-                        <div style={{ display: "grid", gridTemplateColumns: "2fr 2fr 2fr auto", gap: 10, alignItems: "end" }}>
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "2fr 2fr 2fr auto",
+                            gap: 10,
+                            alignItems: "end",
+                          }}
+                        >
                           <label className="input" style={{ margin: 0 }}>
-                            <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-500)" }}>
+                            <span
+                              style={{
+                                fontSize: 11,
+                                fontWeight: 600,
+                                textTransform: "uppercase",
+                                letterSpacing: "0.5px",
+                                color: "var(--slate-500)",
+                              }}
+                            >
                               Point Of Sales Name
                             </span>
                             <input
                               value={tillForm.name}
-                              onChange={(e) => setTillForm({ ...tillForm, name: e.target.value })}
+                              onChange={(e) =>
+                                setTillForm({
+                                  ...tillForm,
+                                  name: e.target.value,
+                                })
+                              }
                               placeholder="e.g. Point Of Sales 1, Register A"
                             />
                           </label>
-                          <label ref={tillDropdownRef} className="input" style={{ margin: 0, position: "relative" }}>
-                            <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-500)" }}>
+                          <label
+                            ref={tillDropdownRef}
+                            className="input"
+                            style={{ margin: 0, position: "relative" }}
+                          >
+                            <span
+                              style={{
+                                fontSize: 11,
+                                fontWeight: 600,
+                                textTransform: "uppercase",
+                                letterSpacing: "0.5px",
+                                color: "var(--slate-500)",
+                              }}
+                            >
                               Employees (select who can use this Point Of Sales)
                             </span>
                             {/* Selected tags + trigger */}
                             <div
-                              onClick={() => setTillDropdownOpen(!tillDropdownOpen)}
+                              onClick={() =>
+                                setTillDropdownOpen(!tillDropdownOpen)
+                              }
                               style={{
                                 display: "flex",
                                 flexWrap: "wrap",
@@ -4523,12 +4699,19 @@ export default function SettingsPage() {
                               }}
                             >
                               {tillForm.employee_ids.length === 0 && (
-                                <span style={{ fontSize: 13, color: "var(--slate-400)" }}>
+                                <span
+                                  style={{
+                                    fontSize: 13,
+                                    color: "var(--slate-400)",
+                                  }}
+                                >
                                   Select employees…
                                 </span>
                               )}
-                              {tillForm.employee_ids.map(eid => {
-                                const emp = posEmployees.find(e => e.id === eid);
+                              {tillForm.employee_ids.map((eid) => {
+                                const emp = posEmployees.find(
+                                  (e) => e.id === eid,
+                                );
                                 if (!emp) return null;
                                 return (
                                   <span
@@ -4543,7 +4726,8 @@ export default function SettingsPage() {
                                       fontWeight: 500,
                                       background: "var(--violet-100, #ede9fe)",
                                       color: "var(--violet-700)",
-                                      border: "1px solid var(--violet-200, #ddd6fe)",
+                                      border:
+                                        "1px solid var(--violet-200, #ddd6fe)",
                                     }}
                                   >
                                     {emp.name}
@@ -4551,7 +4735,13 @@ export default function SettingsPage() {
                                       type="button"
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        setTillForm({ ...tillForm, employee_ids: tillForm.employee_ids.filter(id => id !== eid) });
+                                        setTillForm({
+                                          ...tillForm,
+                                          employee_ids:
+                                            tillForm.employee_ids.filter(
+                                              (id) => id !== eid,
+                                            ),
+                                        });
                                       }}
                                       style={{
                                         border: "none",
@@ -4571,9 +4761,22 @@ export default function SettingsPage() {
                               })}
                               {/* Chevron */}
                               <svg
-                                width="14" height="14" viewBox="0 0 24 24" fill="none"
-                                stroke="var(--slate-400)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                                style={{ position: "absolute", right: 10, top: "50%", transform: `translateY(-50%) rotate(${tillDropdownOpen ? 180 : 0}deg)`, transition: "transform 150ms", pointerEvents: "none" }}
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="var(--slate-400)"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                style={{
+                                  position: "absolute",
+                                  right: 10,
+                                  top: "50%",
+                                  transform: `translateY(-50%) rotate(${tillDropdownOpen ? 180 : 0}deg)`,
+                                  transition: "transform 150ms",
+                                  pointerEvents: "none",
+                                }}
                               >
                                 <polyline points="6 9 12 15 18 9" />
                               </svg>
@@ -4596,61 +4799,136 @@ export default function SettingsPage() {
                                   overflowY: "auto",
                                 }}
                               >
-                                {posEmployees.filter(emp => emp.is_active).length === 0 ? (
-                                  <div style={{ padding: "12px 16px", fontSize: 13, color: "var(--slate-400)" }}>
-                                    No employees — add employees first in the "Employees &amp; Login" tab
+                                {posEmployees.filter((emp) => emp.is_active)
+                                  .length === 0 ? (
+                                  <div
+                                    style={{
+                                      padding: "12px 16px",
+                                      fontSize: 13,
+                                      color: "var(--slate-400)",
+                                    }}
+                                  >
+                                    No employees — add employees first in the
+                                    "Employees &amp; Login" tab
                                   </div>
                                 ) : (
-                                  posEmployees.filter(emp => emp.is_active).map(emp => {
-                                    const checked = tillForm.employee_ids.includes(emp.id);
-                                    return (
-                                      <div
-                                        key={emp.id}
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          if (checked) {
-                                            setTillForm({ ...tillForm, employee_ids: tillForm.employee_ids.filter(id => id !== emp.id) });
-                                          } else {
-                                            setTillForm({ ...tillForm, employee_ids: [...tillForm.employee_ids, emp.id] });
-                                          }
-                                        }}
-                                        style={{
-                                          display: "flex",
-                                          alignItems: "center",
-                                          gap: 10,
-                                          padding: "8px 16px",
-                                          cursor: "pointer",
-                                          transition: "background 100ms",
-                                          background: checked ? "var(--violet-50, #f5f3ff)" : "transparent",
-                                          borderBottom: "1px solid var(--gray-50, #f9fafb)",
-                                        }}
-                                        onMouseEnter={(e) => { if (!checked) e.currentTarget.style.background = "var(--gray-50)"; }}
-                                        onMouseLeave={(e) => { e.currentTarget.style.background = checked ? "var(--violet-50, #f5f3ff)" : "transparent"; }}
-                                      >
-                                        <input
-                                          type="checkbox"
-                                          checked={checked}
-                                          readOnly
-                                          style={{ accentColor: "var(--violet-600)", width: 16, height: 16, cursor: "pointer" }}
-                                        />
-                                        <div style={{ flex: 1 }}>
-                                          <div style={{ fontSize: 13, fontWeight: 500, color: "var(--slate-700)" }}>{emp.name}</div>
-                                          <div style={{ fontSize: 11, color: "var(--slate-400)" }}>{emp.role}{emp.email ? ` · ${emp.email}` : ""}</div>
+                                  posEmployees
+                                    .filter((emp) => emp.is_active)
+                                    .map((emp) => {
+                                      const checked =
+                                        tillForm.employee_ids.includes(emp.id);
+                                      return (
+                                        <div
+                                          key={emp.id}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (checked) {
+                                              setTillForm({
+                                                ...tillForm,
+                                                employee_ids:
+                                                  tillForm.employee_ids.filter(
+                                                    (id) => id !== emp.id,
+                                                  ),
+                                              });
+                                            } else {
+                                              setTillForm({
+                                                ...tillForm,
+                                                employee_ids: [
+                                                  ...tillForm.employee_ids,
+                                                  emp.id,
+                                                ],
+                                              });
+                                            }
+                                          }}
+                                          style={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 10,
+                                            padding: "8px 16px",
+                                            cursor: "pointer",
+                                            transition: "background 100ms",
+                                            background: checked
+                                              ? "var(--violet-50, #f5f3ff)"
+                                              : "transparent",
+                                            borderBottom:
+                                              "1px solid var(--gray-50, #f9fafb)",
+                                          }}
+                                          onMouseEnter={(e) => {
+                                            if (!checked)
+                                              e.currentTarget.style.background =
+                                                "var(--gray-50)";
+                                          }}
+                                          onMouseLeave={(e) => {
+                                            e.currentTarget.style.background =
+                                              checked
+                                                ? "var(--violet-50, #f5f3ff)"
+                                                : "transparent";
+                                          }}
+                                        >
+                                          <input
+                                            type="checkbox"
+                                            checked={checked}
+                                            readOnly
+                                            style={{
+                                              accentColor: "var(--violet-600)",
+                                              width: 16,
+                                              height: 16,
+                                              cursor: "pointer",
+                                            }}
+                                          />
+                                          <div style={{ flex: 1 }}>
+                                            <div
+                                              style={{
+                                                fontSize: 13,
+                                                fontWeight: 500,
+                                                color: "var(--slate-700)",
+                                              }}
+                                            >
+                                              {emp.name}
+                                            </div>
+                                            <div
+                                              style={{
+                                                fontSize: 11,
+                                                color: "var(--slate-400)",
+                                              }}
+                                            >
+                                              {emp.role}
+                                              {emp.email
+                                                ? ` · ${emp.email}`
+                                                : ""}
+                                            </div>
+                                          </div>
+                                          {checked && (
+                                            <svg
+                                              width="14"
+                                              height="14"
+                                              viewBox="0 0 24 24"
+                                              fill="none"
+                                              stroke="var(--violet-500)"
+                                              strokeWidth="3"
+                                              strokeLinecap="round"
+                                              strokeLinejoin="round"
+                                            >
+                                              <polyline points="20 6 9 17 4 12" />
+                                            </svg>
+                                          )}
                                         </div>
-                                        {checked && (
-                                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--violet-500)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                            <polyline points="20 6 9 17 4 12" />
-                                          </svg>
-                                        )}
-                                      </div>
-                                    );
-                                  })
+                                      );
+                                    })
                                 )}
                               </div>
                             )}
                           </label>
                           <label className="input" style={{ margin: 0 }}>
-                            <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-500)" }}>
+                            <span
+                              style={{
+                                fontSize: 11,
+                                fontWeight: 600,
+                                textTransform: "uppercase",
+                                letterSpacing: "0.5px",
+                                color: "var(--slate-500)",
+                              }}
+                            >
                               Warehouse (optional)
                             </span>
                             <select
@@ -4697,17 +4975,34 @@ export default function SettingsPage() {
                                 gap: 6,
                               }}
                             >
-                              {tillSaving ? "Saving…" : tillEditing ? "Update" : <><PlusIcon /> Add</>}
+                              {tillSaving ? (
+                                "Saving…"
+                              ) : tillEditing ? (
+                                "Update"
+                              ) : (
+                                <>
+                                  <PlusIcon /> Add
+                                </>
+                              )}
                             </button>
                             {tillEditing && (
                               <button
                                 className="outline"
                                 onClick={() => {
                                   setTillEditing(null);
-                                  setTillForm({ name: "", employee_ids: [], warehouse_id: null });
+                                  setTillForm({
+                                    name: "",
+                                    employee_ids: [],
+                                    warehouse_id: null,
+                                  });
                                   setTillDropdownOpen(false);
                                 }}
-                                style={{ height: 38, padding: "0 12px", borderRadius: 8, fontSize: 13 }}
+                                style={{
+                                  height: 38,
+                                  padding: "0 12px",
+                                  borderRadius: 8,
+                                  fontSize: 13,
+                                }}
                               >
                                 Cancel
                               </button>
@@ -4719,98 +5014,259 @@ export default function SettingsPage() {
                       {/* Tills list */}
                       {posTills.length > 0 ? (
                         <div style={{ overflow: "auto" }}>
-                          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                          <table
+                            style={{
+                              width: "100%",
+                              borderCollapse: "collapse",
+                            }}
+                          >
                             <thead>
                               <tr>
-                                <th style={{ padding: "10px 20px", textAlign: "left", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-400)", borderBottom: "1px solid var(--gray-200)" }}>
+                                <th
+                                  style={{
+                                    padding: "10px 20px",
+                                    textAlign: "left",
+                                    fontSize: 11,
+                                    fontWeight: 600,
+                                    textTransform: "uppercase",
+                                    letterSpacing: "0.5px",
+                                    color: "var(--slate-400)",
+                                    borderBottom: "1px solid var(--gray-200)",
+                                  }}
+                                >
                                   Point Of Sales Name
                                 </th>
-                                <th style={{ padding: "10px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-400)", borderBottom: "1px solid var(--gray-200)" }}>
+                                <th
+                                  style={{
+                                    padding: "10px 16px",
+                                    textAlign: "left",
+                                    fontSize: 11,
+                                    fontWeight: 600,
+                                    textTransform: "uppercase",
+                                    letterSpacing: "0.5px",
+                                    color: "var(--slate-400)",
+                                    borderBottom: "1px solid var(--gray-200)",
+                                  }}
+                                >
                                   Warehouse
                                 </th>
-                                <th style={{ padding: "10px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-400)", borderBottom: "1px solid var(--gray-200)" }}>
+                                <th
+                                  style={{
+                                    padding: "10px 16px",
+                                    textAlign: "left",
+                                    fontSize: 11,
+                                    fontWeight: 600,
+                                    textTransform: "uppercase",
+                                    letterSpacing: "0.5px",
+                                    color: "var(--slate-400)",
+                                    borderBottom: "1px solid var(--gray-200)",
+                                  }}
+                                >
                                   Assigned Employees
                                 </th>
-                                <th style={{ padding: "10px 16px", textAlign: "center", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-400)", borderBottom: "1px solid var(--gray-200)" }}>
+                                <th
+                                  style={{
+                                    padding: "10px 16px",
+                                    textAlign: "center",
+                                    fontSize: 11,
+                                    fontWeight: 600,
+                                    textTransform: "uppercase",
+                                    letterSpacing: "0.5px",
+                                    color: "var(--slate-400)",
+                                    borderBottom: "1px solid var(--gray-200)",
+                                  }}
+                                >
                                   Status
                                 </th>
-                                <th style={{ padding: "10px 20px", textAlign: "right", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--slate-400)", borderBottom: "1px solid var(--gray-200)" }}>
+                                <th
+                                  style={{
+                                    padding: "10px 20px",
+                                    textAlign: "right",
+                                    fontSize: 11,
+                                    fontWeight: 600,
+                                    textTransform: "uppercase",
+                                    letterSpacing: "0.5px",
+                                    color: "var(--slate-400)",
+                                    borderBottom: "1px solid var(--gray-200)",
+                                  }}
+                                >
                                   Actions
                                 </th>
                               </tr>
                             </thead>
                             <tbody>
                               {posTills.map((till) => (
-                                <tr key={till.id} style={{ transition: "background 150ms" }} onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gray-50)")} onMouseLeave={(e) => (e.currentTarget.style.background = "")}>
-                                  <td style={{ padding: "12px 20px", fontWeight: 600, fontSize: 14, color: "var(--slate-700)", borderBottom: "1px solid var(--gray-100)" }}>
-                                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                      <div style={{
-                                        width: 32,
-                                        height: 32,
-                                        borderRadius: 8,
-                                        background: "var(--violet-100, #ede9fe)",
+                                <tr
+                                  key={till.id}
+                                  style={{ transition: "background 150ms" }}
+                                  onMouseEnter={(e) =>
+                                    (e.currentTarget.style.background =
+                                      "var(--gray-50)")
+                                  }
+                                  onMouseLeave={(e) =>
+                                    (e.currentTarget.style.background = "")
+                                  }
+                                >
+                                  <td
+                                    style={{
+                                      padding: "12px 20px",
+                                      fontWeight: 600,
+                                      fontSize: 14,
+                                      color: "var(--slate-700)",
+                                      borderBottom: "1px solid var(--gray-100)",
+                                    }}
+                                  >
+                                    <div
+                                      style={{
                                         display: "flex",
                                         alignItems: "center",
-                                        justifyContent: "center",
-                                      }}>
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--violet-600)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                          <rect x="2" y="3" width="20" height="14" rx="2" />
+                                        gap: 8,
+                                      }}
+                                    >
+                                      <div
+                                        style={{
+                                          width: 32,
+                                          height: 32,
+                                          borderRadius: 8,
+                                          background:
+                                            "var(--violet-100, #ede9fe)",
+                                          display: "flex",
+                                          alignItems: "center",
+                                          justifyContent: "center",
+                                        }}
+                                      >
+                                        <svg
+                                          width="16"
+                                          height="16"
+                                          viewBox="0 0 24 24"
+                                          fill="none"
+                                          stroke="var(--violet-600)"
+                                          strokeWidth="2"
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                        >
+                                          <rect
+                                            x="2"
+                                            y="3"
+                                            width="20"
+                                            height="14"
+                                            rx="2"
+                                          />
                                           <path d="M8 21h8" />
                                           <path d="M12 17v4" />
                                         </svg>
                                       </div>
                                       {till.name}
                                     </div>
-                                </td>
-                                <td style={{ padding: "12px 16px", fontSize: 13, color: "var(--slate-600)", borderBottom: "1px solid var(--gray-100)" }}>
-                                  {till.warehouse?.name || (
-                                    <span style={{ color: "var(--slate-400)" }}>
-                                      Unassigned
-                                    </span>
-                                  )}
-                                </td>
-                                <td style={{ padding: "12px 16px", borderBottom: "1px solid var(--gray-100)" }}>
-                                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                                      {till.employees.length > 0 ? till.employees.map(emp => (
+                                  </td>
+                                  <td
+                                    style={{
+                                      padding: "12px 16px",
+                                      fontSize: 13,
+                                      color: "var(--slate-600)",
+                                      borderBottom: "1px solid var(--gray-100)",
+                                    }}
+                                  >
+                                    {till.warehouse?.name || (
+                                      <span
+                                        style={{ color: "var(--slate-400)" }}
+                                      >
+                                        Unassigned
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td
+                                    style={{
+                                      padding: "12px 16px",
+                                      borderBottom: "1px solid var(--gray-100)",
+                                    }}
+                                  >
+                                    <div
+                                      style={{
+                                        display: "flex",
+                                        flexWrap: "wrap",
+                                        gap: 4,
+                                      }}
+                                    >
+                                      {till.employees.length > 0 ? (
+                                        till.employees.map((emp) => (
+                                          <span
+                                            key={emp.id}
+                                            style={{
+                                              padding: "2px 8px",
+                                              borderRadius: 12,
+                                              fontSize: 11,
+                                              fontWeight: 500,
+                                              background: emp.is_active
+                                                ? "var(--green-50, #f0fdf4)"
+                                                : "var(--gray-100)",
+                                              color: emp.is_active
+                                                ? "var(--green-700, #15803d)"
+                                                : "var(--slate-400)",
+                                              border: `1px solid ${emp.is_active ? "var(--green-200, #bbf7d0)" : "var(--gray-200)"}`,
+                                            }}
+                                          >
+                                            {emp.name} ({emp.role})
+                                          </span>
+                                        ))
+                                      ) : (
                                         <span
-                                          key={emp.id}
                                           style={{
-                                            padding: "2px 8px",
-                                            borderRadius: 12,
-                                            fontSize: 11,
-                                            fontWeight: 500,
-                                            background: emp.is_active ? "var(--green-50, #f0fdf4)" : "var(--gray-100)",
-                                            color: emp.is_active ? "var(--green-700, #15803d)" : "var(--slate-400)",
-                                            border: `1px solid ${emp.is_active ? "var(--green-200, #bbf7d0)" : "var(--gray-200)"}`,
+                                            fontSize: 12,
+                                            color: "var(--slate-400)",
+                                            fontStyle: "italic",
                                           }}
                                         >
-                                          {emp.name} ({emp.role})
-                                        </span>
-                                      )) : (
-                                        <span style={{ fontSize: 12, color: "var(--slate-400)", fontStyle: "italic" }}>
                                           No employees assigned
                                         </span>
                                       )}
                                     </div>
                                   </td>
-                                  <td style={{ padding: "12px 16px", textAlign: "center", borderBottom: "1px solid var(--gray-100)" }}>
-                                    <label className="switch" style={{ margin: "0 auto" }}>
+                                  <td
+                                    style={{
+                                      padding: "12px 16px",
+                                      textAlign: "center",
+                                      borderBottom: "1px solid var(--gray-100)",
+                                    }}
+                                  >
+                                    <label
+                                      className="switch"
+                                      style={{ margin: "0 auto" }}
+                                    >
                                       <input
                                         type="checkbox"
                                         checked={till.is_active}
                                         onChange={async (e) => {
-                                          await apiFetch(`/pos/tills/${till.id}`, {
-                                            method: "PUT",
-                                            body: JSON.stringify({ is_active: e.target.checked }),
-                                          });
-                                          if (companyId) loadPosTills(companyId);
+                                          await apiFetch(
+                                            `/pos/tills/${till.id}`,
+                                            {
+                                              method: "PUT",
+                                              body: JSON.stringify({
+                                                is_active: e.target.checked,
+                                              }),
+                                            },
+                                          );
+                                          if (companyId)
+                                            loadPosTills(companyId);
                                         }}
                                       />
                                       <span className="slider" />
                                     </label>
                                   </td>
-                                  <td style={{ padding: "12px 20px", textAlign: "right", borderBottom: "1px solid var(--gray-100)" }}>
-                                    <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                                  <td
+                                    style={{
+                                      padding: "12px 20px",
+                                      textAlign: "right",
+                                      borderBottom: "1px solid var(--gray-100)",
+                                    }}
+                                  >
+                                    <div
+                                      style={{
+                                        display: "flex",
+                                        gap: 6,
+                                        justifyContent: "flex-end",
+                                      }}
+                                    >
                                       <button
                                         className="icon-btn"
                                         title="Edit Point Of Sales"
@@ -4818,11 +5274,18 @@ export default function SettingsPage() {
                                           setTillEditing(till.id);
                                           setTillForm({
                                             name: till.name,
-                                            employee_ids: till.employees.map(e => e.id),
-                                            warehouse_id: till.warehouse_id ?? null,
+                                            employee_ids: till.employees.map(
+                                              (e) => e.id,
+                                            ),
+                                            warehouse_id:
+                                              till.warehouse_id ?? null,
                                           });
                                         }}
-                                        style={{ width: 30, height: 30, borderRadius: 6 }}
+                                        style={{
+                                          width: 30,
+                                          height: 30,
+                                          borderRadius: 6,
+                                        }}
                                       >
                                         <EditIcon />
                                       </button>
@@ -4830,7 +5293,11 @@ export default function SettingsPage() {
                                         className="icon-btn danger"
                                         title="Delete Point Of Sales"
                                         onClick={() => deletePosTill(till.id)}
-                                        style={{ width: 30, height: 30, borderRadius: 6 }}
+                                        style={{
+                                          width: 30,
+                                          height: 30,
+                                          borderRadius: 6,
+                                        }}
                                       >
                                         <TrashIcon />
                                       </button>
@@ -4842,17 +5309,37 @@ export default function SettingsPage() {
                           </table>
                         </div>
                       ) : (
-                        <div style={{ padding: "32px 20px", textAlign: "center" }}>
-                          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--slate-300)" strokeWidth="1.5" strokeLinecap="round" style={{ marginBottom: 8 }}>
+                        <div
+                          style={{ padding: "32px 20px", textAlign: "center" }}
+                        >
+                          <svg
+                            width="40"
+                            height="40"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="var(--slate-300)"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            style={{ marginBottom: 8 }}
+                          >
                             <rect x="2" y="3" width="20" height="14" rx="2" />
                             <path d="M8 21h8" />
                             <path d="M12 17v4" />
                           </svg>
-                          <div style={{ color: "var(--slate-400)", fontSize: 13, marginBottom: 4 }}>
+                          <div
+                            style={{
+                              color: "var(--slate-400)",
+                              fontSize: 13,
+                              marginBottom: 4,
+                            }}
+                          >
                             No Point Of Sales configured yet
                           </div>
-                          <div style={{ color: "var(--slate-300)", fontSize: 12 }}>
-                            Add a Point Of Sales above and assign employees who can use it
+                          <div
+                            style={{ color: "var(--slate-300)", fontSize: 12 }}
+                          >
+                            Add a Point Of Sales above and assign employees who
+                            can use it
                           </div>
                         </div>
                       )}

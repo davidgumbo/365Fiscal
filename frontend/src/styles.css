@@ -689,36 +689,40 @@ textarea {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
   width: 100%;
-  background: var(--card);
-  border: 1px solid var(--stroke);
-  border-radius: 14px;
-  padding: 10px 14px;
-  box-shadow: var(--shadow-soft);
-  position: sticky
+  background: linear-gradient(135deg, #1d4ed8, #2563eb 45%, #4c1d95);
+  border-radius: 24px;
+  padding: 16px 24px;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);
+  position: sticky;
+  top: 18px;
+  z-index: 2;
 }
 
 .topbar-left,
 .topbar-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 18px;
 }
 
 .app-switcher {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  background: var(--white-500);
-  border: 1px solid var(--stroke);
-  border-radius: 10px;
-  padding: 6px 10px;
-  cursor: pointer;
-  font-weight: 600;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #fff;
+  transition: background 0.2s ease, transform 0.2s ease;
 }
 
-.app-switcher-icon {
-  font-size: 1rem;
+.app-switcher:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
 }
 
 .app-switcher-icon svg {
@@ -727,11 +731,40 @@ textarea {
   display: block;
 }
 
+.topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar-brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: #fff;
+}
+
+.topbar-subtitle {
+  margin: 0;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  color: rgba(255, 255, 255, 0.75);
+}
+
 .topbar-title {
   margin: 0;
-  font-size: 18px;
+  font-size: 20px;
   line-height: 1.2;
-  color: var(--ink);
+  color: #fff;
   font-weight: 600;
 }
 
@@ -805,15 +838,26 @@ textarea {
   align-items: center;
   gap: 8px;
   border-radius: 999px;
+  padding: 5px 12px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  color: #fff;
   cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.user-menu:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.65);
 }
 
 .user-avatar-sm {
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  background: var(--blue-700);
-  color: var(--white-500);
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  color: #fff;
   display: grid;
   place-items: center;
   font-size: 12px;
@@ -823,6 +867,7 @@ textarea {
 .user-name-sm {
   font-size: 12px;
   font-weight: 600;
+  color: #fff;
 }
 
 

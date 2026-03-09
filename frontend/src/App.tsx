@@ -243,14 +243,24 @@ function AppContent() {
       <div className="app-shell no-sidebar">
         <main className="main-content">
           <header className="main-header">
-            <div className="topbar" ref={topbarRef}>
+            <nav
+              className="topbar"
+              ref={topbarRef}
+              aria-label="Primary navigation"
+            >
               <div className="topbar-left">
                 <NavLink to="/" className="app-switcher">
                   <span className="app-switcher-icon">
                     <BackIcon aria-hidden="true" focusable="false" />
                   </span>
                 </NavLink>
-                <h1 className="topbar-title">{appTitle}</h1>
+                <div className="topbar-brand">
+                  <span className="topbar-brand-mark">FMS</span>
+                  <div>
+                    <p className="topbar-subtitle">Finance Control</p>
+                    <h1 className="topbar-title">{appTitle}</h1>
+                  </div>
+                </div>
               </div>
               <div className="topbar-right">
                 <button
@@ -284,7 +294,7 @@ function AppContent() {
                   </div>
                 )}
               </div>
-            </div>
+            </nav>
           </header>
           <div
             className={[
