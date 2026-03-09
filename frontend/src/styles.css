@@ -6403,7 +6403,7 @@ tr:hover .o-quick-actions {
 .trend-chart-grid {
   display: flex;
   gap: 16px;
-  margin-top: 16px;
+  margin: auto 0;
   align-items: stretch;
   min-height: 220px;
   max-height: 240px;
@@ -6436,6 +6436,7 @@ tr:hover .o-quick-actions {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-width: 32vw;
 }
 
 .trend-bar-scroll::-webkit-scrollbar {
