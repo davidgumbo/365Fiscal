@@ -1,10 +1,26 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import type { LucideIcon } from "lucide-react";
+import {
+  CalendarDays,
+  CarFront,
+  Check,
+  CircleHelp,
+  Clapperboard,
+  Plus,
+  ReceiptText,
+  RefreshCw,
+  ShoppingBag,
+  UtensilsCrossed,
+  WalletCards,
+  X,
+} from "lucide-react";
 import { apiFetch, apiRequest } from "../api";
 import { useMe } from "../hooks/useMe";
 import { useCompanies, Company } from "../hooks/useCompanies";
 import ValidationAlert from "../components/ValidationAlert";
 import ValidatedField from "../components/ValidatedField";
+import "./ExpensesPage.css";
 
 import {
   getMissingRequiredFields,
@@ -42,6 +58,54 @@ type Expense = {
 };
 
 type MainView = "expenses" | "suppliers" | "categories";
+type DateFilter = "this_month" | "last_month" | "this_year" | "all_time";
+
+type CategoryVisual = {
+  icon: LucideIcon;
+  key: string;
+  color: string;
+};
+
+const CATEGORY_VISUALS: Record<string, CategoryVisual> = {
+  food: { icon: UtensilsCrossed, key: "food", color: "#4B82F0" },
+  transport: { icon: CarFront, key: "transport", color: "#F35B32" },
+  shopping: { icon: ShoppingBag, key: "shopping", color: "#7C56D8" },
+  bills: { icon: ReceiptText, key: "bills", color: "#2AAE59" },
+  entertainment: { icon: Clapperboard, key: "entertainment", color: "#F3A11C" },
+  other: { icon: CircleHelp, key: "other", color: "#A5ACC8" },
+};
+
+const QUICK_ADD_CATEGORIES = [
+  "Food",
+  "Transport",
+  "Shopping",
+  "Bills",
+  "Entertainment",
+  "Other",
+] as const;
+
+const normalizeCategoryKey = (name: string): keyof typeof CATEGORY_VISUALS => {
+  const value = (name || "").trim().toLowerCase();
+  if (!value) return "other";
+  if (value.includes("food")) return "food";
+  if (
+    value.includes("transport") ||
+    value.includes("uber") ||
+    value.includes("taxi")
+  ) {
+    return "transport";
+  }
+  if (value.includes("shop")) return "shopping";
+  if (value.includes("bill") || value.includes("utility")) return "bills";
+  if (
+    value.includes("entertainment") ||
+    value.includes("movie") ||
+    value.includes("music")
+  ) {
+    return "entertainment";
+  }
+  return "other";
+};
 
 const toDateInputValue = (value: string | null) => {
   if (!value) return "";
@@ -145,7 +209,15 @@ export default function ExpensesPage() {
   const [supplierFilter, setSupplierFilter] = useState<number | "">("");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [categoryFilter, setCategoryFilter] = useState<string>("");
+  const [dateFilter, setDateFilter] = useState<DateFilter>("this_month");
   const [searchQuery, setSearchQuery] = useState("");
+  const [showQuickAddModal, setShowQuickAddModal] = useState(false);
+  const [quickCategory, setQuickCategory] = useState<string>("Food");
+  const [quickAmount, setQuickAmount] = useState<string>("");
+  const [quickDate, setQuickDate] = useState<string>(
+    new Date().toISOString().split("T")[0],
+  );
+  const [quickNotes, setQuickNotes] = useState<string>("");
 
   /* ── Expense form ── */
   const [selectedExpenseId, setSelectedExpenseId] = useState<number | null>(
@@ -247,6 +319,184 @@ export default function ExpensesPage() {
     categoryFilter,
     contacts,
   ]);
+
+  const dateFilteredExpenses = useMemo(() => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    const previousMonthDate = new Date(currentYear, currentMonth - 1, 1);
+    const previousYear = previousMonthDate.getFullYear();
+    const previousMonth = previousMonthDate.getMonth();
+
+    return filteredExpenses.filter((expense) => {
+      if (!expense.expense_date) return false;
+      const date = new Date(expense.expense_date);
+      if (Number.isNaN(date.getTime())) return false;
+
+      if (dateFilter === "all_time") return true;
+      if (dateFilter === "this_year") return date.getFullYear() === currentYear;
+      if (dateFilter === "last_month") {
+        return (
+          date.getFullYear() === previousYear && date.getMonth() === previousMonth
+        );
+      }
+      return (
+        date.getFullYear() === currentYear && date.getMonth() === currentMonth
+      );
+    });
+  }, [filteredExpenses, dateFilter]);
+
+  const totalExpense = useMemo(
+    () =>
+      dateFilteredExpenses.reduce(
+        (sum, expense) => sum + (expense.total_amount || 0),
+        0,
+      ),
+    [dateFilteredExpenses],
+  );
+
+  const currentMonthTotal = useMemo(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    return filteredExpenses.reduce((sum, expense) => {
+      if (!expense.expense_date) return sum;
+      const date = new Date(expense.expense_date);
+      if (Number.isNaN(date.getTime())) return sum;
+      if (date.getFullYear() !== year || date.getMonth() !== month) return sum;
+      return sum + (expense.total_amount || 0);
+    }, 0);
+  }, [filteredExpenses]);
+
+  const previousMonthTotal = useMemo(() => {
+    const now = new Date();
+    const previousMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const year = previousMonthDate.getFullYear();
+    const month = previousMonthDate.getMonth();
+    return filteredExpenses.reduce((sum, expense) => {
+      if (!expense.expense_date) return sum;
+      const date = new Date(expense.expense_date);
+      if (Number.isNaN(date.getTime())) return sum;
+      if (date.getFullYear() !== year || date.getMonth() !== month) return sum;
+      return sum + (expense.total_amount || 0);
+    }, 0);
+  }, [filteredExpenses]);
+
+  const monthlyBudget = useMemo(() => {
+    const baseline = Math.max(currentMonthTotal, previousMonthTotal, totalExpense, 1);
+    return Math.max(500, Math.ceil((baseline * 1.6) / 250) * 250);
+  }, [currentMonthTotal, previousMonthTotal, totalExpense]);
+
+  const budgetUsedPercent =
+    monthlyBudget > 0 ? Math.min((currentMonthTotal / monthlyBudget) * 100, 100) : 0;
+  const remainingBalance = Math.max(monthlyBudget - currentMonthTotal, 0);
+  const isOnTrack = currentMonthTotal <= monthlyBudget;
+  const monthChangePercent =
+    previousMonthTotal > 0
+      ? ((currentMonthTotal - previousMonthTotal) / previousMonthTotal) * 100
+      : currentMonthTotal > 0
+        ? 100
+        : 0;
+
+  const categoryBreakdown = useMemo(() => {
+    const total = dateFilteredExpenses.reduce(
+      (sum, expense) => sum + (expense.total_amount || 0),
+      0,
+    );
+    const grouped = new Map<string, number>();
+    dateFilteredExpenses.forEach((expense) => {
+      const category = (expense.category || "Other").trim() || "Other";
+      grouped.set(category, (grouped.get(category) || 0) + (expense.total_amount || 0));
+    });
+
+    const rows = Array.from(grouped.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([name, amount]) => {
+        const visual = CATEGORY_VISUALS[normalizeCategoryKey(name)];
+        const percent = total > 0 ? Math.round((amount / total) * 100) : 0;
+        return {
+          name,
+          amount,
+          percent,
+          color: visual.color,
+          icon: visual.icon,
+        };
+      });
+
+    if (rows.length === 0) {
+      const fallbackVisual = CATEGORY_VISUALS.food;
+      return [
+        {
+          name: "No Data",
+          amount: 0,
+          percent: 0,
+          color: fallbackVisual.color,
+          icon: fallbackVisual.icon,
+        },
+      ];
+    }
+    return rows;
+  }, [dateFilteredExpenses]);
+
+  const donutGradient = useMemo(() => {
+    if (categoryBreakdown.length === 1 && categoryBreakdown[0].amount === 0) {
+      return "#E1E5F4";
+    }
+    let cursor = 0;
+    const steps = categoryBreakdown
+      .map((item) => {
+        const start = cursor;
+        cursor += item.percent;
+        return `${item.color} ${start}% ${cursor}%`;
+      })
+      .join(", ");
+    return `conic-gradient(${steps})`;
+  }, [categoryBreakdown]);
+
+  const weeklyTrend = useMemo(() => {
+    const totals = [0, 0, 0, 0];
+    const now = new Date();
+    const thisMonth = now.getMonth();
+    const thisYear = now.getFullYear();
+
+    dateFilteredExpenses.forEach((expense) => {
+      if (!expense.expense_date) return;
+      const date = new Date(expense.expense_date);
+      if (Number.isNaN(date.getTime())) return;
+      if (dateFilter === "this_month") {
+        if (date.getMonth() !== thisMonth || date.getFullYear() !== thisYear) return;
+      }
+      const weekIndex = Math.min(3, Math.max(0, Math.floor((date.getDate() - 1) / 7)));
+      totals[weekIndex] += expense.total_amount || 0;
+    });
+
+    return totals.map((amount, index) => ({
+      label: `Week ${index + 1}`,
+      amount,
+    }));
+  }, [dateFilteredExpenses, dateFilter]);
+
+  const maxWeeklyAmount = Math.max(...weeklyTrend.map((row) => row.amount), 1);
+
+  const recentTransactions = useMemo(
+    () =>
+      [...dateFilteredExpenses]
+        .sort((a, b) => {
+          const left = a.expense_date ? new Date(a.expense_date).getTime() : 0;
+          const right = b.expense_date ? new Date(b.expense_date).getTime() : 0;
+          return right - left;
+        })
+        .slice(0, 6),
+    [dateFilteredExpenses],
+  );
+
+  useEffect(() => {
+    if (mainView !== "expenses" || subView !== "list") return;
+    if (statusFilter !== "") setStatusFilter("");
+    if (supplierFilter !== "") setSupplierFilter("");
+    if (search) setSearch("");
+  }, [mainView, subView, statusFilter, supplierFilter, search]);
 
   const filteredCategories = useMemo(() => {
     if (!searchQuery.trim()) return categories;
@@ -454,6 +704,58 @@ export default function ExpensesPage() {
       goBack();
     } catch (err: any) {
       setError(err.message || "Failed to delete expense");
+    }
+  };
+
+  const openQuickAddModal = () => {
+    setQuickCategory("Food");
+    setQuickAmount("");
+    setQuickDate(new Date().toISOString().split("T")[0]);
+    setQuickNotes("");
+    setShowQuickAddModal(true);
+  };
+
+  const closeQuickAddModal = () => {
+    setShowQuickAddModal(false);
+  };
+
+  const saveQuickExpense = async () => {
+    if (!companyId) return;
+    const amount = Number(quickAmount);
+    if (!quickDate) {
+      setError("Expense date is required.");
+      return;
+    }
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setError("Amount must be greater than 0.");
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    try {
+      await apiFetch<Expense>("/expenses", {
+        method: "POST",
+        body: JSON.stringify({
+          company_id: companyId,
+          supplier_id: null,
+          reference: null,
+          expense_date: fromDateInputValue(quickDate),
+          category: quickCategory,
+          description: quickNotes.trim() || `${quickCategory} expense`,
+          subtotal: amount,
+          vat_rate: 0,
+          currency: "USD",
+          status: "posted",
+          notes: quickNotes,
+        }),
+      });
+      await loadData();
+      closeQuickAddModal();
+    } catch (err: any) {
+      setError(err.message || "Failed to add expense");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -683,6 +985,366 @@ export default function ExpensesPage() {
   /* ═══════════════════════════════════════
      MAIN PAGE — matches Inventory structure
      ═══════════════════════════════════════ */
+  if (mainView === "expenses" && subView === "list" && companyId) {
+    return (
+      <>
+        {isAdmin && company && (
+          <div className="o-control-panel expense-breadcrumb-panel">
+            <div className="o-breadcrumb">
+              <span
+                className="o-breadcrumb-item"
+                style={{ cursor: "pointer" }}
+                onClick={goBackToCompanies}
+              >
+                Expenses
+              </span>
+              <span className="o-breadcrumb-separator">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </span>
+              <span className="o-breadcrumb-current">{company.name}</span>
+            </div>
+          </div>
+        )}
+
+        <ValidationAlert message={error} onClose={() => setError(null)} />
+
+        <div className="expense-dashboard-shell">
+          <div className="expense-dashboard-toolbar">
+            <h1>Expenses</h1>
+            <div className="expense-toolbar-actions">
+              <label className="expense-toolbar-select">
+                <span>Filter:</span>
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                >
+                  <option value="">All</option>
+                  {categories
+                    .slice()
+                    .sort((a, b) => a.name.localeCompare(b.name))
+                    .map((category) => (
+                      <option key={category.id} value={category.name}>
+                        {category.name}
+                      </option>
+                    ))}
+                </select>
+              </label>
+
+              <label className="expense-toolbar-select">
+                <span>Date:</span>
+                <select
+                  value={dateFilter}
+                  onChange={(e) => setDateFilter(e.target.value as DateFilter)}
+                >
+                  <option value="this_month">This Month</option>
+                  <option value="last_month">Last Month</option>
+                  <option value="this_year">This Year</option>
+                  <option value="all_time">All Time</option>
+                </select>
+              </label>
+
+              <button
+                className="expense-refresh-btn"
+                type="button"
+                title="Refresh"
+                onClick={loadData}
+                disabled={loading}
+              >
+                <RefreshCw size={18} />
+              </button>
+
+              <button
+                className="expense-add-btn"
+                type="button"
+                onClick={openQuickAddModal}
+              >
+                <Plus size={18} /> Add Expense
+              </button>
+            </div>
+          </div>
+
+          <div className="expense-stat-grid">
+            <article className="expense-stat-card">
+              <h3>Total Expense</h3>
+              <p className="expense-stat-value">{formatCurrency(totalExpense)}</p>
+              <p className="expense-stat-foot expense-trend-up">
+                <span>{monthChangePercent >= 0 ? "▲" : "▼"}</span>
+                {Math.abs(monthChangePercent).toFixed(0)}% from last month
+              </p>
+            </article>
+            <article className="expense-stat-card">
+              <h3>Monthly Budget</h3>
+              <p className="expense-stat-value">{formatCurrency(monthlyBudget)}</p>
+              <div className="expense-budget-track">
+                <div
+                  className="expense-budget-fill"
+                  style={{ width: `${budgetUsedPercent}%` }}
+                />
+              </div>
+              <p className="expense-budget-label">
+                {Math.round(budgetUsedPercent)}% Used
+              </p>
+            </article>
+            <article className="expense-stat-card">
+              <h3>Remaining Balance</h3>
+              <p className="expense-stat-value">{formatCurrency(remainingBalance)}</p>
+              <p className={`expense-stat-foot ${isOnTrack ? "on-track" : "off-track"}`}>
+                <Check size={16} /> {isOnTrack ? "On Track" : "Over Budget"}
+              </p>
+            </article>
+          </div>
+
+          <div className="expense-chart-grid">
+            <section className="expense-panel-card">
+              <h3>Expense Breakdown</h3>
+              <div className="expense-breakdown-content">
+                <div
+                  className="expense-donut-chart"
+                  style={{ background: donutGradient }}
+                  aria-label="Expense category breakdown"
+                />
+                <div className="expense-legend-list">
+                  {categoryBreakdown.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <div key={item.name} className="expense-legend-item">
+                        <span
+                          className="expense-legend-icon"
+                          style={{ background: item.color }}
+                        >
+                          <Icon size={14} />
+                        </span>
+                        <span className="expense-legend-name">{item.name}</span>
+                        <span className="expense-legend-percent">{item.percent}%</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </section>
+
+            <section className="expense-panel-card">
+              <h3>Spending Trend</h3>
+              <div className="expense-trend-chart">
+                {weeklyTrend.map((row) => (
+                  <div key={row.label} className="expense-trend-bar-wrap">
+                    <div
+                      className="expense-trend-bar"
+                      style={{
+                        height: `${(row.amount / maxWeeklyAmount) * 100}%`,
+                      }}
+                      title={`${row.label}: ${formatCurrency(row.amount)}`}
+                    />
+                    <span>{row.label}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
+
+          <section className="expense-panel-card expense-transactions">
+            <h3>Recent Transactions</h3>
+            <div className="expense-transactions-table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Category</th>
+                    <th>Description</th>
+                    <th className="amount">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading && (
+                    <tr>
+                      <td colSpan={4} className="expense-empty-row">
+                        Loading expenses...
+                      </td>
+                    </tr>
+                  )}
+                  {!loading && recentTransactions.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="expense-empty-row">
+                        No expenses for this filter.
+                      </td>
+                    </tr>
+                  )}
+                  {!loading &&
+                    recentTransactions.map((expense) => {
+                      const categoryName = expense.category || "Other";
+                      const visual =
+                        CATEGORY_VISUALS[normalizeCategoryKey(categoryName)];
+                      const Icon = visual.icon;
+                      return (
+                        <tr
+                          key={expense.id}
+                          onClick={() => openExpense(expense.id)}
+                          className="expense-clickable-row"
+                        >
+                          <td>
+                            {expense.expense_date
+                              ? new Date(expense.expense_date).toLocaleDateString(
+                                  undefined,
+                                  {
+                                    day: "2-digit",
+                                    month: "short",
+                                  },
+                                )
+                              : "-"}
+                          </td>
+                          <td>
+                            <div className="expense-category-cell">
+                              <span
+                                className="expense-category-icon"
+                                style={{ background: visual.color }}
+                              >
+                                <Icon size={13} />
+                              </span>
+                              {categoryName}
+                            </div>
+                          </td>
+                          <td>{expense.description || expense.notes || "-"}</td>
+                          <td className="amount negative">
+                            -{formatCurrency(expense.total_amount, expense.currency)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            </div>
+            <div className="expense-pagination">
+              <span>
+                Page 1 of {recentTransactions.length > 0 ? 1 : 0}
+              </span>
+              <div>
+                <button type="button" disabled>
+                  Prev
+                </button>
+                <button type="button" disabled>
+                  Next
+                </button>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        {showQuickAddModal && (
+          <div className="expense-modal-overlay" onClick={closeQuickAddModal}>
+            <div
+              className="expense-modal"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="expense-modal-head">
+                <h2>Add Expense</h2>
+                <button
+                  type="button"
+                  className="expense-modal-close"
+                  onClick={closeQuickAddModal}
+                >
+                  <X size={26} />
+                </button>
+              </div>
+
+              <div className="expense-modal-body">
+                <label className="expense-modal-label">Category</label>
+                <div className="expense-category-choices">
+                  {QUICK_ADD_CATEGORIES.map((category) => {
+                    const visual = CATEGORY_VISUALS[normalizeCategoryKey(category)];
+                    const Icon = visual.icon;
+                    return (
+                      <button
+                        key={category}
+                        type="button"
+                        className={`expense-category-choice ${quickCategory === category ? "selected" : ""}`}
+                        onClick={() => setQuickCategory(category)}
+                        style={{
+                          color: quickCategory === category ? visual.color : undefined,
+                        }}
+                      >
+                        <span
+                          className="choice-icon"
+                          style={{ background: visual.color }}
+                        >
+                          <Icon size={16} />
+                        </span>
+                        <span>{category}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <label className="expense-modal-label">Amount</label>
+                <div className="expense-input expense-input-money">
+                  <span>
+                    <WalletCards size={20} />
+                  </span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={quickAmount}
+                    onChange={(e) => setQuickAmount(e.target.value)}
+                    placeholder="0.00"
+                  />
+                </div>
+
+                <label className="expense-modal-label">Date</label>
+                <div className="expense-input">
+                  <span>
+                    <CalendarDays size={20} />
+                  </span>
+                  <input
+                    type="date"
+                    value={quickDate}
+                    onChange={(e) => setQuickDate(e.target.value)}
+                  />
+                </div>
+
+                <label className="expense-modal-label">Notes</label>
+                <textarea
+                  rows={3}
+                  value={quickNotes}
+                  onChange={(e) => setQuickNotes(e.target.value)}
+                  placeholder="Optional"
+                />
+              </div>
+
+              <div className="expense-modal-footer">
+                <button
+                  type="button"
+                  className="expense-modal-cancel"
+                  onClick={closeQuickAddModal}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="expense-modal-submit"
+                  onClick={saveQuickExpense}
+                  disabled={saving}
+                >
+                  {saving ? "Saving..." : "Add Expense"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
+
   return (
     <>
       {/* Admin breadcrumb */}
