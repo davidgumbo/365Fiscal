@@ -3,13 +3,23 @@ import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../api";
 import { useMe } from "../hooks/useMe";
 import { useCompanies, Company } from "../hooks/useCompanies";
-import { Trash2 } from "lucide-react";
+import {
+  ArrowUpRight,
+  Boxes,
+  Clock3,
+  DollarSign,
+  Package,
+  TriangleAlert,
+  Warehouse as WarehouseGlyph,
+  Zap,
+} from "lucide-react";
 import ValidationAlert from "../components/ValidationAlert";
 import ValidatedField from "../components/ValidatedField";
 import {
   getMissingRequiredFields,
   getRequiredFieldError,
 } from "../utils/formValidation";
+import "./InventoryPage.css";
 
 // ============= TYPES =============
 type Category = {
@@ -1504,6 +1514,18 @@ export default function InventoryPage() {
     totalStockValue: stockQuants.reduce((sum, q) => sum + q.total_value, 0),
   };
 
+  const lowStockProducts = useMemo(
+    () =>
+      products
+        .filter(
+          (p) => p.quantity_on_hand <= p.reorder_point && p.track_inventory,
+        )
+        .slice(0, 6),
+    [products],
+  );
+
+  const recentStockMoves = useMemo(() => stockMoves.slice(0, 6), [stockMoves]);
+
   const warehouseLocations = (warehouseId: number) =>
     locations.filter((l) => l.warehouse_id === warehouseId);
 
@@ -1953,441 +1975,188 @@ export default function InventoryPage() {
               )}
               {/* ============= OVERVIEW ============= */}
               {mainView === "overview" && (
-                <div style={{ padding: 20, width: "100%" }}>
-                  {/* Stats Row */}
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(5, 1fr)",
-                      gap: 1,
-                      background: "var(--zinc-200)",
-                      borderRadius: 8,
-                      overflow: "hidden",
-                      marginBottom: 20,
-                    }}
-                  >
-                    <div
-                      style={{
-                        background: "var(--white-500)",
-                        padding: "16px 20px",
-                        cursor: "pointer",
-                        textAlign: "center",
-                      }}
+                <div className="inventory-overview">
+                  <div className="inventory-stats-grid">
+                    <button
+                      className="inventory-stat-card clickable"
                       onClick={() => setMainView("products")}
+                      type="button"
                     >
-                      <div
-                        style={{
-                          fontSize: 24,
-                          fontWeight: 700,
-                          color: "var(--blue-600)",
-                        }}
-                      >
-                        {stats.totalProducts}
-                      </div>
-                      <div
-                        style={{
-                          fontSize: 11,
-                          fontWeight: 600,
-                          color: "var(--gray-500)",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.5px",
-                          marginTop: 4,
-                        }}
-                      >
-                        Products
-                      </div>
-                    </div>
+                      <span className="inventory-stat-icon">
+                        <Package size={16} />
+                      </span>
+                      <div className="inventory-stat-value">{stats.totalProducts}</div>
+                      <div className="inventory-stat-label">Products</div>
+                    </button>
+
                     <div
-                      style={{
-                        background:
-                          stats.lowStock > 0
-                            ? "var(--amber-100)"
-                            : "var(--white-500)",
-                        padding: "16px 20px",
-                        textAlign: "center",
-                      }}
+                      className={`inventory-stat-card ${stats.lowStock > 0 ? "warning" : ""}`}
                     >
-                      <div
-                        style={{
-                          fontSize: 24,
-                          fontWeight: 700,
-                          color:
-                            stats.lowStock > 0
-                              ? "var(--yellow-800)"
-                              : "var(--blue-600)",
-                        }}
-                      >
-                        {stats.lowStock}
-                      </div>
-                      <div
-                        style={{
-                          fontSize: 11,
-                          fontWeight: 600,
-                          color: "var(--gray-500)",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.5px",
-                          marginTop: 4,
-                        }}
-                      >
-                        Low Stock
-                      </div>
+                      <span className="inventory-stat-icon warning">
+                        <TriangleAlert size={16} />
+                      </span>
+                      <div className="inventory-stat-value">{stats.lowStock}</div>
+                      <div className="inventory-stat-label">Low Stock</div>
                     </div>
-                    <div
-                      style={{
-                        background: "var(--white-500)",
-                        padding: "16px 20px",
-                        cursor: "pointer",
-                        textAlign: "center",
-                      }}
+
+                    <button
+                      className="inventory-stat-card clickable"
                       onClick={() => setMainView("warehouses")}
+                      type="button"
                     >
-                      <div
-                        style={{
-                          fontSize: 24,
-                          fontWeight: 700,
-                          color: "var(--blue-600)",
-                        }}
-                      >
-                        {stats.totalWarehouses}
-                      </div>
-                      <div
-                        style={{
-                          fontSize: 11,
-                          fontWeight: 600,
-                          color: "var(--gray-500)",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.5px",
-                          marginTop: 4,
-                        }}
-                      >
-                        Warehouses
-                      </div>
-                    </div>
-                    <div
-                      style={{
-                        background: "var(--white-500)",
-                        padding: "16px 20px",
-                        cursor: "pointer",
-                        textAlign: "center",
-                      }}
+                      <span className="inventory-stat-icon">
+                        <WarehouseGlyph size={16} />
+                      </span>
+                      <div className="inventory-stat-value">{stats.totalWarehouses}</div>
+                      <div className="inventory-stat-label">Warehouses</div>
+                    </button>
+
+                    <button
+                      className="inventory-stat-card clickable"
                       onClick={() => setMainView("operations")}
+                      type="button"
                     >
-                      <div
-                        style={{
-                          fontSize: 24,
-                          fontWeight: 700,
-                          color: "var(--blue-600)",
-                        }}
-                      >
-                        {stats.pendingMoves}
-                      </div>
-                      <div
-                        style={{
-                          fontSize: 11,
-                          fontWeight: 600,
-                          color: "var(--gray-500)",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.5px",
-                          marginTop: 4,
-                        }}
-                      >
-                        Pending Moves
-                      </div>
-                    </div>
-                    <div
-                      style={{
-                        background: "var(--white-500)",
-                        padding: "16px 20px",
-                        textAlign: "center",
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontSize: 24,
-                          fontWeight: 700,
-                          color: "var(--blue-600)",
-                        }}
-                      >
+                      <span className="inventory-stat-icon">
+                        <Clock3 size={16} />
+                      </span>
+                      <div className="inventory-stat-value">{stats.pendingMoves}</div>
+                      <div className="inventory-stat-label">Pending Moves</div>
+                    </button>
+
+                    <div className="inventory-stat-card">
+                      <span className="inventory-stat-icon">
+                        <DollarSign size={16} />
+                      </span>
+                      <div className="inventory-stat-value">
                         ${stats.totalStockValue.toFixed(2)}
                       </div>
-                      <div
-                        style={{
-                          fontSize: 11,
-                          fontWeight: 600,
-                          color: "var(--gray-500)",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.5px",
-                          marginTop: 4,
-                        }}
-                      >
-                        Stock Value
-                      </div>
+                      <div className="inventory-stat-label">Stock Value</div>
                     </div>
                   </div>
 
-                  {/* Three Column Grid */}
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr 1fr",
-                      gap: 16,
-                      marginBottom: 16,
-                    }}
-                  >
-                    {/* Quick Actions */}
-                    <div
-                      style={{
-                        background: "var(--white-500)",
-                        border: "1px solid var(--zinc-200)",
-                        borderRadius: 8,
-                        padding: 20,
-                      }}
-                    >
-                      <h4
-                        style={{
-                          margin: "0 0 16px 0",
-                          fontSize: 14,
-                          fontWeight: 600,
-                        }}
-                      >
-                        Quick Actions
-                      </h4>
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "1fr 1fr",
-                          gap: 10,
-                        }}
-                      >
+                  <div className="inventory-overview-grid">
+                    <section className="inventory-overview-panel">
+                      <header className="inventory-panel-header">
+                        <h4>
+                          <Zap size={16} />
+                          Quick Actions
+                        </h4>
+                      </header>
+                      <div className="inventory-quick-actions">
                         {MOVE_TYPES.map((t) => (
                           <button
                             key={t.value}
-                            className="o-btn o-btn-secondary"
-                            style={{
-                              justifyContent: "flex-start",
-                              padding: "12px 16px",
-                              fontSize: 13,
-                            }}
+                            className="inventory-quick-btn"
                             onClick={() => {
                               setMainView("operations");
                               startNewMove(t.value);
                             }}
+                            type="button"
                           >
-                            {t.label}
+                            <span>{t.label}</span>
+                            <ArrowUpRight size={14} />
                           </button>
                         ))}
                       </div>
-                    </div>
+                    </section>
 
-                    {/* Recent Activity */}
-                    <div
-                      style={{
-                        background: "var(--white-500)",
-                        border: "1px solid var(--zinc-200)",
-                        borderRadius: 8,
-                        padding: 20,
-                      }}
-                    >
-                      <h4
-                        style={{
-                          margin: "0 0 16px 0",
-                          fontSize: 14,
-                          fontWeight: 600,
-                        }}
-                      >
-                        Recent Stock Moves
-                      </h4>
-                      <div
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: 8,
-                        }}
-                      >
-                        {stockMoves.slice(0, 5).map((m) => {
-                          const product = products.find(
-                            (p) => p.id === m.product_id,
-                          );
+                    <section className="inventory-overview-panel">
+                      <header className="inventory-panel-header">
+                        <h4>
+                          <Clock3 size={16} />
+                          Recent Stock Moves
+                        </h4>
+                      </header>
+                      <div className="inventory-list">
+                        {recentStockMoves.map((m) => {
+                          const product = products.find((p) => p.id === m.product_id);
                           return (
-                            <div
-                              key={m.id}
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "space-between",
-                                padding: "8px 12px",
-                                background: "var(--gray-50)",
-                                borderRadius: 4,
-                                fontSize: 13,
-                              }}
-                            >
-                              <div>
-                                <span style={{ fontWeight: 500 }}>
-                                  {m.reference ||
-                                    `MOV/${String(m.id).padStart(5, "0")}`}
+                            <div key={m.id} className="inventory-list-row">
+                              <div className="inventory-list-meta">
+                                <span className="inventory-list-title">
+                                  {m.reference || `MOV/${String(m.id).padStart(5, "0")}`}
                                 </span>
-                                <span
-                                  style={{
-                                    color: "var(--gray-500)",
-                                    marginLeft: 8,
-                                  }}
-                                >
-                                  {product?.name}
+                                <span className="inventory-list-sub">
+                                  {product?.name || "Unknown product"}
                                 </span>
                               </div>
-                              <span className={`o-tag o-tag-${m.state}`}>
-                                {STATES.find((s) => s.value === m.state)?.label}
+                              <span
+                                className={`inventory-state state-${m.state || "draft"}`}
+                              >
+                                {STATES.find((s) => s.value === m.state)?.label ||
+                                  m.state}
                               </span>
                             </div>
                           );
                         })}
-                        {stockMoves.length === 0 && (
-                          <div
-                            style={{
-                              color: "var(--gray-500)",
-                              textAlign: "center",
-                              padding: 20,
-                              fontSize: 13,
-                            }}
-                          >
-                            No stock moves yet
-                          </div>
+                        {recentStockMoves.length === 0 && (
+                          <div className="inventory-empty-state">No stock moves yet</div>
                         )}
                       </div>
-                    </div>
+                    </section>
 
-                    {/* Low Stock Alert */}
-                    <div
-                      style={{
-                        background: "var(--white-500)",
-                        border: "1px solid var(--zinc-200)",
-                        borderRadius: 8,
-                        padding: 20,
-                      }}
-                    >
-                      <h4
-                        style={{
-                          margin: "0 0 16px 0",
-                          fontSize: 14,
-                          fontWeight: 600,
-                          color: "var(--yellow-800)",
-                        }}
-                      >
-                        Low Stock Products
-                      </h4>
-                      <div
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: 8,
-                        }}
-                      >
-                        {products
-                          .filter(
-                            (p) =>
-                              p.quantity_on_hand <= p.reorder_point &&
-                              p.track_inventory,
-                          )
-                          .slice(0, 5)
-                          .map((p) => (
-                            <div
-                              key={p.id}
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "space-between",
-                                padding: "8px 12px",
-                                background: "var(--amber-100)",
-                                borderRadius: 4,
-                                fontSize: 13,
-                              }}
-                            >
-                              <span style={{ fontWeight: 500 }}>{p.name}</span>
-                              <span style={{ color: "var(--yellow-800)" }}>
-                                {Number.isFinite(p.quantity_on_hand)
-                                  ? p.quantity_on_hand
-                                  : 0}{" "}
-                                / {p.reorder_point} {p.uom}
+                    <section className="inventory-overview-panel">
+                      <header className="inventory-panel-header warning">
+                        <h4>
+                          <TriangleAlert size={16} />
+                          Low Stock Products
+                        </h4>
+                      </header>
+                      <div className="inventory-list">
+                        {lowStockProducts.map((p) => (
+                          <div key={p.id} className="inventory-list-row warning">
+                            <div className="inventory-list-meta">
+                              <span className="inventory-list-title">{p.name}</span>
+                              <span className="inventory-list-sub">
+                                Reorder point: {p.reorder_point} {p.uom}
                               </span>
                             </div>
-                          ))}
-                        {stats.lowStock === 0 && (
-                          <div
-                            style={{
-                              color: "var(--gray-500)",
-                              textAlign: "center",
-                              padding: 20,
-                              fontSize: 13,
-                            }}
-                          >
+                            <span className="inventory-low-stock-count">
+                              {Number.isFinite(p.quantity_on_hand)
+                                ? p.quantity_on_hand
+                                : 0}{" "}
+                              / {p.reorder_point} {p.uom}
+                            </span>
+                          </div>
+                        ))}
+                        {lowStockProducts.length === 0 && (
+                          <div className="inventory-empty-state success">
                             All products have sufficient stock
                           </div>
                         )}
                       </div>
-                    </div>
+                    </section>
                   </div>
 
-                  {/* Warehouses Summary - Full Width */}
-                  <div
-                    style={{
-                      background: "var(--white-500)",
-                      border: "1px solid var(--zinc-200)",
-                      borderRadius: 8,
-                      padding: 20,
-                    }}
-                  >
-                    <h4
-                      style={{
-                        margin: "0 0 16px 0",
-                        fontSize: 14,
-                        fontWeight: 600,
-                      }}
-                    >
-                      Warehouses
-                    </h4>
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 8,
-                      }}
-                    >
+                  <section className="inventory-overview-panel inventory-warehouse-panel">
+                    <header className="inventory-panel-header">
+                      <h4>
+                        <Boxes size={16} />
+                        Warehouses
+                      </h4>
+                    </header>
+                    <div className="inventory-list">
                       {warehouses.map((w) => (
-                        <div
+                        <button
                           key={w.id}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            padding: "10px 14px",
-                            background: "var(--gray-50)",
-                            borderRadius: 4,
-                            cursor: "pointer",
-                            fontSize: 13,
-                          }}
+                          className="inventory-list-row warehouse"
                           onClick={() => {
                             setMainView("warehouses");
                             openWarehouse(w);
                           }}
+                          type="button"
                         >
-                          <div>
-                            <span style={{ fontWeight: 500 }}>{w.name}</span>
-                            <span
-                              style={{
-                                color: "var(--gray-500)",
-                                marginLeft: 8,
-                              }}
-                            >
-                              ({w.code})
-                            </span>
+                          <div className="inventory-list-meta">
+                            <span className="inventory-list-title">{w.name}</span>
+                            <span className="inventory-list-sub">Code: {w.code}</span>
                           </div>
-                          <span style={{ color: "var(--gray-500)" }}>
+                          <span className="inventory-list-sub">
                             {warehouseLocations(w.id).length} locations
                           </span>
-                        </div>
+                        </button>
                       ))}
                       {warehouses.length === 0 && (
-                        <div style={{ textAlign: "center", padding: 20 }}>
+                        <div className="inventory-empty-state">
                           <button
                             className="o-btn o-btn-primary"
                             onClick={() => {
@@ -2400,7 +2169,7 @@ export default function InventoryPage() {
                         </div>
                       )}
                     </div>
-                  </div>
+                  </section>
                 </div>
               )}
 
