@@ -6379,6 +6379,7 @@ tr:hover .o-quick-actions {
   text-align: right;
   color: var(--muted);
   font-size: 12px;
+  margin: 1rem
 }
 
 .axis-labels span {
@@ -6389,11 +6390,17 @@ tr:hover .o-quick-actions {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  overflow-x: auto;
-  scroll-behavior: smooth;
 }
 
-.bar-axis::-webkit-scrollbar {
+.trend-bar-scroll {
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.trend-bar-scroll::-webkit-scrollbar {
   height: 4px;
 }
 
@@ -6429,7 +6436,6 @@ tr:hover .o-quick-actions {
   flex-direction: column;
   justify-content: flex-end;
   align-items: center;
-  gap: 6px;
   height: 100%;
 }
 
@@ -6481,6 +6487,20 @@ tr:hover .o-quick-actions {
 .trend-bar-label {
   font-size: 10px;
   color: var(--muted);
+}
+
+.trend-bar-label-row {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(48px, 1fr);
+  gap: 8px;
+  justify-content: flex-start;
+  padding: 0 4px;
+}
+
+.trend-bar-label-row .trend-bar-label {
+  text-align: center;
+  line-height: 1.2;
 }
 
 .trend-card {

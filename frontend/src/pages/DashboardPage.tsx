@@ -977,26 +977,39 @@ export default function DashboardPage() {
                 </div>
                 <div className="bar-axis">
                   <div
-                    className="trend-bar-columns"
+                    className="trend-bar-scroll"
                     role="img"
                     aria-label="Revenue trend bars"
-                    style={axisGridStyle}
                   >
-                    {revenueTrendChart.bars.map((bar) => (
-                      <div key={bar.key} className="trend-bar-column">
-                        <div className="trend-bar-track">
-                          <span className="trend-bar-tooltip">
-                            {formatCurrency(bar.value)}
-                          </span>
-                          <div
-                            className="bar"
-                            style={{ height: `${bar.heightPercent}%` }}
-                            title={`${bar.label}: ${formatCurrency(bar.value)}`}
-                          />
+                    <div
+                      className="trend-bar-columns"
+                      style={axisGridStyle}
+                    >
+                      {revenueTrendChart.bars.map((bar) => (
+                        <div key={bar.key} className="trend-bar-column">
+                          <div className="trend-bar-track">
+                            <span className="trend-bar-tooltip">
+                              {formatCurrency(bar.value)}
+                            </span>
+                            <div
+                              className="bar"
+                              style={{ height: `${bar.heightPercent}%` }}
+                              title={`${bar.label}: ${formatCurrency(bar.value)}`}
+                            />
+                          </div>
                         </div>
-                        <span className="trend-bar-label">{bar.label}</span>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
+                    <div className="trend-bar-label-row" aria-hidden="true">
+                      {revenueTrendChart.bars.map((bar) => (
+                        <span
+                          key={`label-${bar.key}`}
+                          className="trend-bar-label"
+                        >
+                          {bar.label}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
