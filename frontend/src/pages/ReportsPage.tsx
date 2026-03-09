@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { CSSProperties, useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../api";
 import { TablePagination } from "../components/TablePagination";
@@ -2434,6 +2434,25 @@ export default function ReportsPage() {
     ? Math.max(...salesReport.sales_by_month.map((m) => m.amount), 1)
     : 1;
 
+  const salesTrendChart = useMemo(() => {
+    const referenceValue = Math.max(maxBarValue, 1);
+    const axisSteps = 4;
+    const bars =
+      salesReport?.sales_by_month.map((item) => ({
+        key: item.month,
+        label: item.month,
+        value: item.amount,
+        heightPercent:
+          referenceValue > 0
+            ? Math.max(1, (item.amount / referenceValue) * 100)
+            : 0,
+      })) ?? [];
+    const axisTicks = Array.from({ length: axisSteps + 1 }, (_, idx) =>
+      (referenceValue / axisSteps) * (axisSteps - idx),
+    );
+    return { axisTicks, axisSteps, bars };
+  }, [maxBarValue, salesReport]);
+
   const getPaginatedTable = <T,>(key: string, rows: T[]) => {
     const pageSize = tablePageSizes[key] || 10;
     const totalItems = rows.length;
@@ -2453,6 +2472,10 @@ export default function ReportsPage() {
       },
     };
   };
+
+  const reportAxisGridStyle = {
+    "--trend-grid-count": salesTrendChart.axisSteps,
+  } as CSSProperties;
 
   const salesTopProductsTable = getPaginatedTable(
     "sales_top_products",
@@ -3129,29 +3152,57 @@ export default function ReportsPage() {
 
                 <div className="report-card">
                   <h3>Revenue Trend</h3>
-                  {salesReport.sales_by_month.length === 0 ? (
+                  {salesTrendChart.bars.length === 0 ? (
                     <p className="empty-state">No sales data in this period.</p>
                   ) : (
-                    <div className="chart-container">
-                      <div className="bar-chart">
-                        {salesReport.sales_by_month.map((item, i) => (
-                          <div
-                            key={i}
-                            className="bar-item"
-                            title={`${item.month}: ${formatCurrency(item.amount)} (${item.count} invoices)`}
-                          >
-                            <div className="bar-value">
-                              {formatCurrency(item.amount)}
-                            </div>
-                            <div
-                              className="bar"
-                              style={{
-                                height: `${(item.amount / maxBarValue) * 100}%`,
-                              }}
-                            />
-                            <span className="bar-label">{item.month}</span>
-                          </div>
+                    <div className="trend-chart-grid">
+                      <div className="axis-labels" aria-hidden="true">
+                        {salesTrendChart.axisTicks.map((value, index) => (
+                          <span key={index}>
+                            {formatCurrency(value)}
+                          </span>
                         ))}
+                      </div>
+                      <div className="bar-axis">
+                        <div
+                          className="trend-bar-scroll"
+                          role="img"
+                          aria-label="Revenue trend bars"
+                        >
+                          <div
+                            className="trend-bar-columns"
+                            style={reportAxisGridStyle}
+                          >
+                            {salesTrendChart.bars.map((bar) => (
+                              <div key={bar.key} className="trend-bar-column">
+                                <div className="trend-bar-track">
+                                  <span className="trend-bar-tooltip">
+                                    {formatCurrency(bar.value)}
+                                  </span>
+                                  <div
+                                    className="bar"
+                                    style={{
+                                      height: `${bar.heightPercent}%`,
+                                    }}
+                                    title={`${bar.label}: ${formatCurrency(
+                                      bar.value,
+                                    )}`}
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="trend-bar-label-row" aria-hidden="true">
+                            {salesTrendChart.bars.map((bar) => (
+                              <span
+                                key={`label-${bar.key}`}
+                                className="trend-bar-label"
+                              >
+                                {bar.label}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
