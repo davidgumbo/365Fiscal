@@ -94,7 +94,11 @@ function POSWindowLauncher() {
   const [popupBlocked, setPopupBlocked] = useState(false);
 
   const openPOSWindow = useCallback(() => {
-    const posWindow = window.open("/pos/window", "_blank", "noopener,noreferrer");
+    const posWindow = window.open(
+      "/pos/window",
+      "_blank",
+      "noopener,noreferrer",
+    );
     if (posWindow) {
       try {
         posWindow.focus();
@@ -255,9 +259,7 @@ function AppContent() {
                   </span>
                 </NavLink>
                 <div className="topbar-brand">
-                  <span className="topbar-brand-mark">FMS</span>
                   <div>
-                    <p className="topbar-subtitle">Finance Control</p>
                     <h1 className="topbar-title">{appTitle}</h1>
                   </div>
                 </div>
@@ -316,7 +318,10 @@ function AppContent() {
                 path="/invoices/:invoiceId"
                 element={<InvoicesPage mode="detail" />}
               />
-              <Route path="/purchases" element={<PurchasesPage mode="list" />} />
+              <Route
+                path="/purchases"
+                element={<PurchasesPage mode="list" />}
+              />
               <Route
                 path="/purchases/new"
                 element={<PurchasesPage mode="new" />}
@@ -435,10 +440,7 @@ function getGroupOptions(path: string): { label: string; value: string }[] {
   return [];
 }
 
-function getAppTitle(
-  path: string,
-  navItems: { to: string; label: string }[],
-) {
+function getAppTitle(path: string, navItems: { to: string; label: string }[]) {
   const exactMatch = navItems.find((item) => item.to === path);
   if (exactMatch) return exactMatch.label;
 
