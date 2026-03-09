@@ -4646,7 +4646,7 @@ export default function InventoryPage() {
                             </div>
                           </div>
 
-                          <div className="o-form-group">
+                          {/* <div className="o-form-group">
                             <label className="o-form-label">Total Cost</label>
                             <div className="o-form-field">
                               <span
@@ -4663,7 +4663,7 @@ export default function InventoryPage() {
                                 ).toFixed(2)}
                               </span>
                             </div>
-                          </div>
+                          </div> */}
 
                           <div className="o-form-group">
                             <label className="o-form-label">Reference</label>
