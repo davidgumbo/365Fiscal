@@ -3053,7 +3053,7 @@ export default function SettingsPage() {
                   </div> */}
                   </div>
 
-                  <div className="tabs-nav">
+                  <div className="tabs-nav-settings">
                     <button
                       className={`tab-btn ${posConfigTab === "employees" ? "tab active" : "tab"}`}
                       onClick={() => setPosConfigTab("employees")}
