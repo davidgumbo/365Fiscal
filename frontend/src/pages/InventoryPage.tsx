@@ -387,6 +387,19 @@ export default function InventoryPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Operations sub-tab
+  const [operationsTab, setOperationsTab] = useState<
+    "moves" | "quants" | "adjustments"
+  >("moves");
+  const [filterState, setFilterState] = useState<string>("all");
+  const [filterMoveType, setFilterMoveType] = useState<string>("all");
+  const [countedByQuantId, setCountedByQuantId] = useState<
+    Record<number, string>
+  >({});
+  const [showOnlyChangedAdjustments, setShowOnlyChangedAdjustments] =
+    useState(false);
+  const [applyingAdjustments, setApplyingAdjustments] = useState(false);
+
   const menuSections = useMemo<SidebarSection[]>(() => {
     const baseItems = BASE_MENU_TABS.map((tab) => ({
       id: `menu-${tab.key}`,
@@ -412,23 +425,37 @@ export default function InventoryPage() {
       },
       dropdownItems: [
         {
-          id: "operations-list",
-          label: "List view",
-          isActive: mainView === "operations" && subView === "list",
+          id: "operations-moves",
+          label: "Stock Moves",
+          isActive: mainView === "operations" && operationsTab === "moves",
           onClick: () => {
             setMainView("operations");
             setSubView("list");
             setSearchQuery("");
+            setOperationsTab("moves");
           },
         },
         {
-          id: "operations-form",
-          label: "New operation",
-          isActive: mainView === "operations" && subView === "form",
+          id: "operations-quants",
+          label: "Stock On Hand",
+          isActive: mainView === "operations" && operationsTab === "quants",
           onClick: () => {
             setMainView("operations");
-            setSubView("form");
+            setSubView("list");
             setSearchQuery("");
+            setOperationsTab("quants");
+          },
+        },
+        {
+          id: "operations-adjustments",
+          label: "Adjustments",
+          isActive:
+            mainView === "operations" && operationsTab === "adjustments",
+          onClick: () => {
+            setMainView("operations");
+            setSubView("list");
+            setSearchQuery("");
+            setOperationsTab("adjustments");
           },
         },
       ],
@@ -441,7 +468,14 @@ export default function InventoryPage() {
         items: [...baseItems, operationsItem],
       },
     ];
-  }, [mainView, subView, setMainView, setSubView, setSearchQuery]);
+  }, [
+    mainView,
+    operationsTab,
+    setMainView,
+    setSubView,
+    setOperationsTab,
+    setSearchQuery,
+  ]);
 
   // Form states
   const [selectedProductId, setSelectedProductId] = useState<number | null>(
@@ -591,19 +625,6 @@ export default function InventoryPage() {
     null,
   );
   const [filterLocationId, setFilterLocationId] = useState<number | null>(null);
-
-  // Operations sub-tab
-  const [operationsTab, setOperationsTab] = useState<
-    "moves" | "quants" | "adjustments"
-  >("moves");
-  const [filterState, setFilterState] = useState<string>("all");
-  const [filterMoveType, setFilterMoveType] = useState<string>("all");
-  const [countedByQuantId, setCountedByQuantId] = useState<
-    Record<number, string>
-  >({});
-  const [showOnlyChangedAdjustments, setShowOnlyChangedAdjustments] =
-    useState(false);
-  const [applyingAdjustments, setApplyingAdjustments] = useState(false);
 
   // ============= EFFECTS =============
   // Portal users auto-select their first company
