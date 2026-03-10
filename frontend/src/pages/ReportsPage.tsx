@@ -1852,377 +1852,428 @@ export default function ReportsPage() {
     );
   };
 
-  const exportCSV = () => {
-    let rows: string[][] = [];
-    let filename = "report.csv";
+  const exportExcel = () => {
+    const escapeXml = (value: string) =>
+      value
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&apos;");
+
+    const buildWorkbookXml = (
+      worksheetName: string,
+      title: string,
+      subtitle: string,
+      sections: Array<{ title: string; headers?: string[]; rows: string[][] }>,
+      columnWidths: number[],
+    ) => {
+      const generatedAt = new Date().toLocaleString();
+      const maxColumns = Math.max(columnWidths.length, 1);
+      const mergeAcross = Math.max(0, maxColumns - 1);
+      const rowXml: string[] = [];
+
+      const textCell = (value: string, styleId = "Text", span = 0) =>
+        `<Cell ss:StyleID="${styleId}"${span > 0 ? ` ss:MergeAcross="${span}"` : ""}><Data ss:Type="String">${escapeXml(value)}</Data></Cell>`;
+
+      rowXml.push(
+        `<Row ss:Height="28">${textCell(title, "Title", mergeAcross)}</Row>`,
+      );
+      rowXml.push(`<Row>${textCell(subtitle, "SubTitle", mergeAcross)}</Row>`);
+      rowXml.push(
+        `<Row>${textCell(`Generated: ${generatedAt}`, "Meta", mergeAcross)}</Row>`,
+      );
+      rowXml.push('<Row ss:Height="10"/>');
+
+      sections.forEach((section, sectionIndex) => {
+        rowXml.push(
+          `<Row ss:Height="22">${textCell(section.title, "Section", mergeAcross)}</Row>`,
+        );
+        if (section.headers?.length) {
+          rowXml.push(
+            `<Row>${section.headers.map((header) => textCell(header, "Header")).join("")}</Row>`,
+          );
+        }
+        section.rows.forEach((row, rowIndex) => {
+          const styleId =
+            rowIndex === section.rows.length - 1 &&
+            row[0]?.toUpperCase().includes("TOTAL")
+              ? "Total"
+              : "Text";
+          rowXml.push(
+            `<Row>${row
+              .map((cell, cellIndex) =>
+                textCell(cell, cellIndex === 0 ? styleId : `${styleId}Right`),
+              )
+              .join("")}</Row>`,
+          );
+        });
+        if (sectionIndex < sections.length - 1) rowXml.push('<Row ss:Height="8"/>');
+      });
+
+      return `<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40">
+  <Styles>
+    <Style ss:ID="Default" ss:Name="Normal">
+      <Alignment ss:Vertical="Center"/>
+      <Font ss:FontName="Calibri" ss:Size="11"/>
+    </Style>
+    <Style ss:ID="Title">
+      <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+      <Font ss:FontName="Calibri" ss:Size="16" ss:Bold="1" ss:Color="#FFFFFF"/>
+      <Interior ss:Color="#1F4E78" ss:Pattern="Solid"/>
+    </Style>
+    <Style ss:ID="SubTitle">
+      <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+      <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#1F2937"/>
+      <Interior ss:Color="#E5E7EB" ss:Pattern="Solid"/>
+    </Style>
+    <Style ss:ID="Meta">
+      <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+      <Font ss:FontName="Calibri" ss:Size="10" ss:Color="#334155"/>
+    </Style>
+    <Style ss:ID="Section">
+      <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
+      <Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/></Borders>
+      <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#FFFFFF"/>
+      <Interior ss:Color="#2F75B5" ss:Pattern="Solid"/>
+    </Style>
+    <Style ss:ID="Header">
+      <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+      <Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/></Borders>
+      <Font ss:FontName="Calibri" ss:Size="10" ss:Bold="1" ss:Color="#111827"/>
+      <Interior ss:Color="#DCE6F1" ss:Pattern="Solid"/>
+    </Style>
+    <Style ss:ID="Text">
+      <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
+      <Font ss:FontName="Calibri" ss:Size="10"/>
+    </Style>
+    <Style ss:ID="TextRight">
+      <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>
+      <Font ss:FontName="Calibri" ss:Size="10"/>
+    </Style>
+    <Style ss:ID="Total">
+      <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
+      <Borders><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders>
+      <Font ss:FontName="Calibri" ss:Size="10" ss:Bold="1"/>
+      <Interior ss:Color="#F3F4F6" ss:Pattern="Solid"/>
+    </Style>
+    <Style ss:ID="TotalRight">
+      <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>
+      <Borders><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders>
+      <Font ss:FontName="Calibri" ss:Size="10" ss:Bold="1"/>
+      <Interior ss:Color="#F3F4F6" ss:Pattern="Solid"/>
+    </Style>
+  </Styles>
+  <Worksheet ss:Name="${escapeXml(worksheetName)}">
+    <Table>
+      ${columnWidths.map((width) => `<Column ss:Width="${width}"/>`).join("")}
+      ${rowXml.join("")}
+    </Table>
+  </Worksheet>
+</Workbook>`;
+    };
+
+    let workbookXml = "";
+    let filename = "report.xls";
 
     if (activeReport === "sales" && salesReport) {
-      filename = `revenue-${dateRange.from}-to-${dateRange.to}.csv`;
-      rows.push(["Revenue", `${dateRange.from} to ${dateRange.to}`]);
-      rows.push([]);
-      rows.push(["Total Revenue", salesReport.total_sales.toFixed(2)]);
-      rows.push(["Total Invoices", String(salesReport.total_invoices)]);
-      rows.push(["Paid Invoices", String(salesReport.paid_invoices)]);
-      rows.push(["Pending Invoices", String(salesReport.pending_invoices)]);
-      rows.push(["Total Tax", salesReport.total_tax.toFixed(2)]);
-      rows.push(["Average Invoice", salesReport.average_invoice.toFixed(2)]);
-      rows.push([]);
-      rows.push(["Top Products"]);
-      rows.push(["Product", "Qty Sold", "Revenue"]);
-      salesReport.top_products.forEach((p) =>
-        rows.push([p.name, String(p.quantity), p.revenue.toFixed(2)]),
-      );
-      rows.push([]);
-      rows.push(["Revenue by Month"]);
-      rows.push(["Month", "Amount", "Invoice Count"]);
-      salesReport.sales_by_month.forEach((m) =>
-        rows.push([m.month, m.amount.toFixed(2), String(m.count)]),
+      filename = `revenue-${dateRange.from}-to-${dateRange.to}.xls`;
+      workbookXml = buildWorkbookXml(
+        "Revenue",
+        "REVENUE REPORT",
+        `${dateRange.from} to ${dateRange.to}`,
+        [
+          {
+            title: "SUMMARY",
+            rows: [
+              ["Total Revenue", salesReport.total_sales.toFixed(2)],
+              ["Total Invoices", String(salesReport.total_invoices)],
+              ["Paid Invoices", String(salesReport.paid_invoices)],
+              ["Pending Invoices", String(salesReport.pending_invoices)],
+              ["Total Tax", salesReport.total_tax.toFixed(2)],
+              ["Average Invoice", salesReport.average_invoice.toFixed(2)],
+            ],
+          },
+          {
+            title: "TOP PRODUCTS",
+            headers: ["Product", "Qty Sold", "Revenue"],
+            rows: salesReport.top_products.map((p) => [
+              p.name,
+              String(p.quantity),
+              p.revenue.toFixed(2),
+            ]),
+          },
+          {
+            title: "REVENUE BY MONTH",
+            headers: ["Month", "Amount", "Invoice Count"],
+            rows: salesReport.sales_by_month.map((m) => [
+              m.month,
+              m.amount.toFixed(2),
+              String(m.count),
+            ]),
+          },
+        ],
+        [220, 120, 120],
       );
     } else if (activeReport === "income_statement" && incomeStatementReport) {
-      filename = `income-statement-${dateRange.from}-to-${dateRange.to}.csv`;
-      rows.push(["Income Statement", `${dateRange.from} to ${dateRange.to}`]);
-      rows.push([]);
-      rows.push([
-        "Gross Revenue (VAT excl.)",
-        incomeStatementReport.gross_revenue_ex_vat.toFixed(2),
-      ]);
-      rows.push([
-        "Expenses (VAT excl.)",
-        incomeStatementReport.expenses_ex_vat.toFixed(2),
-      ]);
-      rows.push([
-        "Net Revenue (VAT excl.)",
-        incomeStatementReport.net_revenue_ex_vat.toFixed(2),
-      ]);
-      rows.push([]);
-      rows.push(["REVENUE - Invoices"]);
-      rows.push([
-        "Reference",
-        "Customer",
-        "Date",
-        "Subtotal",
-        "Tax",
-        "Total",
-        "Status",
-      ]);
-      incomeStatementReport.invoices.forEach((inv) =>
-        rows.push([
-          inv.reference,
-          inv.customer,
-          inv.date,
-          inv.subtotal.toFixed(2),
-          inv.tax.toFixed(2),
-          inv.total.toFixed(2),
-          inv.status,
-        ]),
-      );
-      rows.push([]);
-      rows.push(["EXPENSES"]);
-      rows.push([
-        "Reference",
-        "Supplier",
-        "Category",
-        "Description",
-        "Date",
-        "Subtotal",
-        "Tax",
-        "Total",
-      ]);
-      incomeStatementReport.expenses.forEach((ex) =>
-        rows.push([
-          ex.reference,
-          ex.supplier,
-          ex.category,
-          ex.description,
-          ex.date,
-          ex.subtotal.toFixed(2),
-          ex.tax.toFixed(2),
-          ex.total.toFixed(2),
-        ]),
+      filename = `income-statement-${dateRange.from}-to-${dateRange.to}.xls`;
+      workbookXml = buildWorkbookXml(
+        "Income Statement",
+        "INCOME STATEMENT",
+        `${dateRange.from} to ${dateRange.to}`,
+        [
+          {
+            title: "SUMMARY",
+            rows: [
+              ["Gross Revenue (VAT excl.)", incomeStatementReport.gross_revenue_ex_vat.toFixed(2)],
+              ["Expenses (VAT excl.)", incomeStatementReport.expenses_ex_vat.toFixed(2)],
+              ["Net Revenue (VAT excl.)", incomeStatementReport.net_revenue_ex_vat.toFixed(2)],
+            ],
+          },
+          {
+            title: "REVENUE - INVOICES",
+            headers: ["Reference", "Customer", "Date", "Subtotal", "Tax", "Total", "Status"],
+            rows: incomeStatementReport.invoices.map((inv) => [
+              inv.reference,
+              inv.customer,
+              inv.date,
+              inv.subtotal.toFixed(2),
+              inv.tax.toFixed(2),
+              inv.total.toFixed(2),
+              inv.status,
+            ]),
+          },
+          {
+            title: "EXPENSES",
+            headers: ["Reference", "Supplier", "Category", "Description", "Date", "Subtotal", "Tax", "Total"],
+            rows: incomeStatementReport.expenses.map((ex) => [
+              ex.reference,
+              ex.supplier,
+              ex.category,
+              ex.description,
+              ex.date,
+              ex.subtotal.toFixed(2),
+              ex.tax.toFixed(2),
+              ex.total.toFixed(2),
+            ]),
+          },
+        ],
+        [130, 150, 110, 120, 110, 110, 110, 110],
       );
     } else if (activeReport === "stock" && stockReport) {
-      filename = `stock-report-${new Date().toISOString().split("T")[0]}.csv`;
-      rows.push(["Stock Valuation"]);
-      rows.push([]);
-      rows.push(["Total Products", String(stockReport.total_products)]);
-      rows.push(["Total Inventory Value", stockReport.total_value.toFixed(2)]);
-      rows.push([]);
-      rows.push(["Stock Summary"]);
-      rows.push(["Product", "On Hand", "Available", "Reserved", "Value"]);
-      stockReport.stock_summary.forEach((s) =>
-        rows.push([
-          s.name,
-          String(s.on_hand),
-          String(s.available),
-          String(s.reserved),
-          s.value.toFixed(2),
-        ]),
+      filename = `stock-report-${new Date().toISOString().split("T")[0]}.xls`;
+      workbookXml = buildWorkbookXml(
+        "Stock Valuation",
+        "STOCK VALUATION",
+        `Generated on ${new Date().toISOString().split("T")[0]}`,
+        [
+          {
+            title: "SUMMARY",
+            rows: [
+              ["Total Products", String(stockReport.total_products)],
+              ["Total Inventory Value", stockReport.total_value.toFixed(2)],
+            ],
+          },
+          {
+            title: "STOCK SUMMARY",
+            headers: ["Product", "On Hand", "Available", "Reserved", "Value"],
+            rows: stockReport.stock_summary.map((s) => [
+              s.name,
+              String(s.on_hand),
+              String(s.available),
+              String(s.reserved),
+              s.value.toFixed(2),
+            ]),
+          },
+          ...(stockReport.low_stock_items.length
+            ? [{
+                title: "LOW STOCK ALERTS",
+                headers: ["Product", "On Hand", "Available", "Reorder Level"],
+                rows: stockReport.low_stock_items.map((s) => [
+                  s.name,
+                  String(s.on_hand),
+                  String(s.available),
+                  String(s.reorder),
+                ]),
+              }]
+            : []),
+        ],
+        [220, 100, 100, 100, 120],
       );
-      if (stockReport.low_stock_items.length > 0) {
-        rows.push([]);
-        rows.push(["Low Stock Alerts"]);
-        rows.push(["Product", "On Hand", "Available", "Reorder Level"]);
-        stockReport.low_stock_items.forEach((s) =>
-          rows.push([
-            s.name,
-            String(s.on_hand),
-            String(s.available),
-            String(s.reorder),
-          ]),
-        );
-      }
     } else if (activeReport === "debtors" && debtorsReport) {
-      filename = `debtors-${dateRange.from}-to-${dateRange.to}.csv`;
-      rows.push(["Debtors", `${dateRange.from} to ${dateRange.to}`]);
-      rows.push([]);
-      rows.push(["Total Invoices", String(debtorsReport.total_invoices)]);
-      rows.push(["Unpaid Invoices", String(debtorsReport.unpaid_invoices)]);
-      rows.push(["Partial Invoices", String(debtorsReport.partial_invoices)]);
-      rows.push(["Total Invoiced", debtorsReport.total_invoiced.toFixed(2)]);
-      rows.push(["Total Outstanding", debtorsReport.total_due.toFixed(2)]);
-      rows.push([]);
-      rows.push(["Unpaid Invoices"]);
-      rows.push([
-        "Reference",
-        "Customer",
-        "Total",
-        "Paid",
-        "Due",
-        "Date",
-        "Status",
-      ]);
-      debtorsReport.recent_unpaid.forEach((i) =>
-        rows.push([
-          i.reference,
-          i.customer,
-          i.total.toFixed(2),
-          i.paid.toFixed(2),
-          i.due.toFixed(2),
-          i.date,
-          i.status,
-        ]),
+      filename = `debtors-${dateRange.from}-to-${dateRange.to}.xls`;
+      workbookXml = buildWorkbookXml(
+        "Debtors",
+        "DEBTORS REPORT",
+        `${dateRange.from} to ${dateRange.to}`,
+        [
+          {
+            title: "SUMMARY",
+            rows: [
+              ["Total Invoices", String(debtorsReport.total_invoices)],
+              ["Unpaid Invoices", String(debtorsReport.unpaid_invoices)],
+              ["Partial Invoices", String(debtorsReport.partial_invoices)],
+              ["Total Invoiced", debtorsReport.total_invoiced.toFixed(2)],
+              ["Total Outstanding", debtorsReport.total_due.toFixed(2)],
+            ],
+          },
+          {
+            title: "UNPAID INVOICES",
+            headers: ["Reference", "Customer", "Total", "Paid", "Due", "Date", "Status"],
+            rows: debtorsReport.recent_unpaid.map((i) => [
+              i.reference,
+              i.customer,
+              i.total.toFixed(2),
+              i.paid.toFixed(2),
+              i.due.toFixed(2),
+              i.date,
+              i.status,
+            ]),
+          },
+        ],
+        [130, 160, 100, 100, 100, 110, 110],
       );
     } else if (activeReport === "creditors" && creditorsReport) {
-      filename = `creditors-${dateRange.from}-to-${dateRange.to}.csv`;
-      rows.push([
-        "Creditors - Unpaid Purchase Orders",
+      filename = `creditors-${dateRange.from}-to-${dateRange.to}.xls`;
+      workbookXml = buildWorkbookXml(
+        "Creditors",
+        "CREDITORS REPORT",
         `${dateRange.from} to ${dateRange.to}`,
-      ]);
-      rows.push([]);
-      rows.push([
-        "Total Purchase Orders",
-        String(creditorsReport.total_orders),
-      ]);
-      rows.push([
-        "Unpaid Purchase Orders",
-        String(creditorsReport.open_orders),
-      ]);
-      rows.push(["Total Outstanding", creditorsReport.total_amount.toFixed(2)]);
-      rows.push([]);
-      rows.push(["By Supplier"]);
-      rows.push(["Supplier", "Orders", "Amount"]);
-      creditorsReport.by_supplier.forEach((v) =>
-        rows.push([v.name, String(v.count), v.amount.toFixed(2)]),
+        [
+          {
+            title: "SUMMARY",
+            rows: [
+              ["Total Purchase Orders", String(creditorsReport.total_orders)],
+              ["Unpaid Purchase Orders", String(creditorsReport.open_orders)],
+              ["Total Outstanding", creditorsReport.total_amount.toFixed(2)],
+            ],
+          },
+          {
+            title: "BY SUPPLIER",
+            headers: ["Supplier", "Orders", "Amount"],
+            rows: creditorsReport.by_supplier.map((v) => [v.name, String(v.count), v.amount.toFixed(2)]),
+          },
+          {
+            title: "BY STATUS",
+            headers: ["Status", "Count", "Amount"],
+            rows: creditorsReport.by_status.map((s) => [s.status, String(s.count), s.amount.toFixed(2)]),
+          },
+          {
+            title: "RECENT OPEN ORDERS",
+            headers: ["Reference", "Supplier", "Amount", "Date", "Status", "Paid State"],
+            rows: creditorsReport.recent_orders.map((o) => [
+              o.reference,
+              o.supplier,
+              o.amount.toFixed(2),
+              o.date,
+              o.status,
+              o.paid_state,
+            ]),
+          },
+        ],
+        [140, 160, 100, 110, 110, 110],
       );
-      rows.push([]);
-      rows.push(["By Status"]);
-      rows.push(["Status", "Count", "Amount"]);
-      creditorsReport.by_status.forEach((s) =>
-        rows.push([s.status, String(s.count), s.amount.toFixed(2)]),
-      );
-      rows.push([]);
-      rows.push(["Recent Open Orders"]);
-      rows.push([
-        "Reference",
-        "Supplier",
-        "Amount",
-        "Date",
-        "Status",
-        "Paid State",
-      ]);
-      creditorsReport.recent_orders.forEach((o) =>
-        rows.push([
-          o.reference,
-          o.supplier,
-          o.amount.toFixed(2),
-          o.date,
-          o.status,
-          o.paid_state,
-        ]),
-      );
-    } else if (activeReport === "vat" && vatReport) {
-      filename = `vat-return-${dateRange.from}-to-${dateRange.to}.csv`;
-      rows.push([
-        "VAT RETURN",
-        `Period: ${vatReport.period_from || dateRange.from} to ${vatReport.period_to || dateRange.to}`,
-      ]);
-      rows.push([]);
-      rows.push(["Sales VAT"]);
-      rows.push([
-        "Rate",
-        "Taxable Amount",
-        "VAT Amount",
-        "Total",
-        "Transactions",
-      ]);
-      vatReport.sales_by_rate.forEach((b) =>
-        rows.push([
-          `${b.rate}%`,
-          b.taxable_amount.toFixed(2),
-          b.tax_amount.toFixed(2),
-          b.total.toFixed(2),
-          String(b.count),
-        ]),
-      );
-      rows.push([
-        "TOTAL OUTPUT VAT",
-        "",
-        vatReport.output_tax.toFixed(2),
-        vatReport.sales_total.toFixed(2),
-        String(vatReport.invoices_count),
-      ]);
-      rows.push([]);
-      rows.push(["INPUT VAT (Purchases)"]);
-      rows.push([
-        "Rate",
-        "Taxable Amount",
-        "VAT Amount",
-        "Total",
-        "Transactions",
-      ]);
-      vatReport.purchases_by_rate.forEach((b) =>
-        rows.push([
-          `${b.rate}%`,
-          b.taxable_amount.toFixed(2),
-          b.tax_amount.toFixed(2),
-          b.total.toFixed(2),
-          String(b.count),
-        ]),
-      );
-      rows.push([
-        "TOTAL INPUT VAT",
-        "",
-        vatReport.input_tax.toFixed(2),
-        vatReport.purchases_total.toFixed(2),
-        String(vatReport.purchases_count),
-      ]);
-      rows.push([]);
-      rows.push([
-        "Credit Notes",
-        String(vatReport.credit_notes_count),
-        vatReport.credit_notes_tax.toFixed(2),
-      ]);
-      rows.push([]);
-      rows.push(["NET VAT SUMMARY"]);
-      rows.push(["Output VAT", vatReport.output_tax.toFixed(2)]);
-      rows.push(["Less: Input VAT", `(${vatReport.input_tax.toFixed(2)})`]);
-      rows.push([
-        "Less: Credit Note VAT",
-        `(${vatReport.credit_notes_tax.toFixed(2)})`,
-      ]);
-      rows.push([
-        "Net VAT " + (vatReport.net_tax >= 0 ? "Payable" : "Refundable"),
-        vatReport.net_tax.toFixed(2),
-      ]);
     } else if (activeReport === "purchases" && purchaseReport) {
-      filename = `purchase-report-${dateRange.from}-to-${dateRange.to}.csv`;
-      rows.push(["Purchase Report", `${dateRange.from} to ${dateRange.to}`]);
-      rows.push([]);
-      rows.push(["Total Orders", String(purchaseReport.total_orders)]);
-      rows.push(["Total Amount", purchaseReport.total_amount.toFixed(2)]);
-      rows.push(["Total Tax", purchaseReport.total_tax.toFixed(2)]);
-      rows.push(["Average Order", purchaseReport.average_order.toFixed(2)]);
-      rows.push([]);
-      rows.push(["By Supplier"]);
-      rows.push(["Supplier", "Orders", "Amount"]);
-      purchaseReport.by_supplier.forEach((v) =>
-        rows.push([v.name, String(v.count), v.amount.toFixed(2)]),
-      );
-      rows.push([]);
-      rows.push(["By Status"]);
-      rows.push(["Status", "Count", "Amount"]);
-      purchaseReport.by_status.forEach((s) =>
-        rows.push([s.status, String(s.count), s.amount.toFixed(2)]),
-      );
-      rows.push([]);
-      rows.push(["Monthly Trend"]);
-      rows.push(["Month", "Amount", "Orders"]);
-      purchaseReport.by_month.forEach((m) =>
-        rows.push([m.month, m.amount.toFixed(2), String(m.count)]),
+      filename = `purchase-report-${dateRange.from}-to-${dateRange.to}.xls`;
+      workbookXml = buildWorkbookXml(
+        "Purchases",
+        "PURCHASE REPORT",
+        `${dateRange.from} to ${dateRange.to}`,
+        [
+          {
+            title: "SUMMARY",
+            rows: [
+              ["Total Orders", String(purchaseReport.total_orders)],
+              ["Total Amount", purchaseReport.total_amount.toFixed(2)],
+              ["Total Tax", purchaseReport.total_tax.toFixed(2)],
+              ["Average Order", purchaseReport.average_order.toFixed(2)],
+            ],
+          },
+          {
+            title: "BY SUPPLIER",
+            headers: ["Supplier", "Orders", "Amount"],
+            rows: purchaseReport.by_supplier.map((v) => [v.name, String(v.count), v.amount.toFixed(2)]),
+          },
+          {
+            title: "BY STATUS",
+            headers: ["Status", "Count", "Amount"],
+            rows: purchaseReport.by_status.map((s) => [s.status, String(s.count), s.amount.toFixed(2)]),
+          },
+          {
+            title: "MONTHLY TREND",
+            headers: ["Month", "Amount", "Orders"],
+            rows: purchaseReport.by_month.map((m) => [m.month, m.amount.toFixed(2), String(m.count)]),
+          },
+        ],
+        [170, 100, 120],
       );
     } else if (activeReport === "pos_orders" && posOrdersReport) {
-      filename = `point-orders-report-${dateRange.from}-to-${dateRange.to}.csv`;
-      rows.push(["POS Orders Report", `${dateRange.from} to ${dateRange.to}`]);
-      rows.push([]);
-      rows.push(["Total Orders", String(posOrdersReport.total_orders)]);
-      rows.push([
-        "Fiscalized Orders",
-        String(posOrdersReport.fiscalized_orders),
-      ]);
-      rows.push(["Refunded Orders", String(posOrdersReport.refunded_orders)]);
-      rows.push(["Currencies", String(posOrdersReport.by_currency.length)]);
-      rows.push([]);
-      rows.push(["Sales by Currency"]);
-      rows.push([
-        "Currency",
-        "Orders",
-        "Total Sales",
-        "Cash Sales",
-        "Card Sales",
-        "Mobile Sales",
-      ]);
-      posOrdersReport.by_currency.forEach((entry) =>
-        rows.push([
-          entry.currency,
-          String(entry.count),
-          entry.total.toFixed(2),
-          entry.cash.toFixed(2),
-          entry.card.toFixed(2),
-          entry.mobile.toFixed(2),
-        ]),
-      );
-      rows.push([]);
-      rows.push(["Orders by Status"]);
-      rows.push(["Status", "Count"]);
-      posOrdersReport.by_status.forEach((entry) =>
-        rows.push([entry.status, String(entry.count)]),
-      );
-      rows.push([]);
-      rows.push(["Recent POS Orders"]);
-      rows.push([
-        "Reference",
-        "Date",
-        "Cashier",
-        "Till",
-        "Status",
-        "Currency",
-        "Total",
-        "Cash",
-        "Card",
-        "Mobile",
-        "Fiscalized",
-      ]);
-      posOrdersReport.recent_orders.forEach((order) =>
-        rows.push([
-          order.reference,
-          order.date,
-          order.cashier,
-          order.till,
-          order.status,
-          order.currency,
-          order.total.toFixed(2),
-          order.cash.toFixed(2),
-          order.card.toFixed(2),
-          order.mobile.toFixed(2),
-          order.fiscalized ? "Yes" : "No",
-        ]),
+      filename = `point-orders-report-${dateRange.from}-to-${dateRange.to}.xls`;
+      workbookXml = buildWorkbookXml(
+        "POS Orders",
+        "POS ORDERS REPORT",
+        `${dateRange.from} to ${dateRange.to}`,
+        [
+          {
+            title: "SUMMARY",
+            rows: [
+              ["Total Orders", String(posOrdersReport.total_orders)],
+              ["Fiscalized Orders", String(posOrdersReport.fiscalized_orders)],
+              ["Refunded Orders", String(posOrdersReport.refunded_orders)],
+              ["Currencies", String(posOrdersReport.by_currency.length)],
+            ],
+          },
+          {
+            title: "SALES BY CURRENCY",
+            headers: ["Currency", "Orders", "Total Sales", "Cash Sales", "Card Sales", "Mobile Sales"],
+            rows: posOrdersReport.by_currency.map((entry) => [
+              entry.currency,
+              String(entry.count),
+              entry.total.toFixed(2),
+              entry.cash.toFixed(2),
+              entry.card.toFixed(2),
+              entry.mobile.toFixed(2),
+            ]),
+          },
+          {
+            title: "ORDERS BY STATUS",
+            headers: ["Status", "Count"],
+            rows: posOrdersReport.by_status.map((entry) => [entry.status, String(entry.count)]),
+          },
+          {
+            title: "RECENT POS ORDERS",
+            headers: ["Reference", "Date", "Cashier", "Till", "Status", "Currency", "Total", "Cash", "Card", "Mobile", "Fiscalized"],
+            rows: posOrdersReport.recent_orders.map((order) => [
+              order.reference,
+              order.date,
+              order.cashier,
+              order.till,
+              order.status,
+              order.currency,
+              order.total.toFixed(2),
+              order.cash.toFixed(2),
+              order.card.toFixed(2),
+              order.mobile.toFixed(2),
+              order.fiscalized ? "Yes" : "No",
+            ]),
+          },
+        ],
+        [120, 100, 120, 120, 100, 90, 100, 90, 90, 90, 90],
       );
     }
 
-    const csv = rows
-      .map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(","))
-      .join("\n");
-    downloadBlob(csv, filename, "text/csv");
+    if (!workbookXml) return;
+    downloadBlob(
+      workbookXml,
+      filename,
+      "application/vnd.ms-excel;charset=utf-8",
+    );
   };
 
   const exportPDF = () => {
@@ -2956,7 +3007,7 @@ export default function ReportsPage() {
               <button
                 className="o-btn o-btn-secondary"
                 style={{ display: "flex", alignItems: "center", gap: 6 }}
-                onClick={activeReport === "vat" ? exportVatExcel : exportCSV}
+                onClick={activeReport === "vat" ? exportVatExcel : exportExcel}
                 disabled={loading}
               >
                 <svg
@@ -2973,7 +3024,7 @@ export default function ReportsPage() {
                   <polyline points="7 10 12 15 17 10" />
                   <line x1="12" y1="15" x2="12" y2="3" />
                 </svg>
-                {activeReport === "vat" ? "Export Excel" : "Export CSV"}
+                Export Excel
               </button>
               <button
                 className="o-btn o-btn-secondary"
