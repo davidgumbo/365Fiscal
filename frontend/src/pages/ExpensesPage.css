@@ -6,7 +6,7 @@
 }
 
 .expense-dashboard-shell {
-  padding: 24px 20px 28px;
+  padding: 28px 28px 34px;
   background: #f2f1fb;
   min-height: calc(100vh - 120px);
 }
@@ -15,27 +15,33 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
-  margin-bottom: 22px;
+  gap: 24px;
+  margin-bottom: 28px;
 }
 
 .expense-dashboard-title-block {
   display: flex;
-  align-items: baseline;
-  gap: 10px;
+  align-items: center;
 }
 
 .expense-dashboard-title-block h1 {
   margin: 0;
-  color: #1f2855;
-  font-size: clamp(34px, 4vw, 44px);
-  font-weight: 800;
-  letter-spacing: -0.03em;
+  color: #172244;
+  font-size: clamp(28px, 2.8vw, 38px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
 }
 
-.expense-dashboard-title-block span {
+.expense-dashboard-title-divider {
+  color: #8a94b8;
+  margin: 0 8px 0 10px;
+  font-weight: 500;
+}
+
+.expense-dashboard-title-muted {
   color: #63719e;
-  font-size: 18px;
+  font-size: 0.92em;
   font-weight: 600;
 }
 
@@ -47,17 +53,17 @@
 }
 
 .expense-dashboard-search {
-  min-width: 320px;
-  flex: 1 1 360px;
-  max-width: 520px;
-  height: 48px;
+  min-width: 280px;
+  flex: 1 1 340px;
+  max-width: 380px;
+  height: 44px;
   display: inline-flex;
   align-items: center;
   gap: 10px;
   border: 1px solid #d9deef;
-  border-radius: 12px;
+  border-radius: 10px;
   background: #fff;
-  padding: 0 14px;
+  padding: 0 12px;
   color: #7480a9;
 }
 
@@ -92,7 +98,7 @@
 .expense-dashboard-stat-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
+  gap: 16px;
   margin-bottom: 22px;
 }
 
@@ -103,8 +109,8 @@
   background: #fff;
   border: 1px solid #dde3f1;
   border-radius: 18px;
-  padding: 18px;
-  box-shadow: 0 8px 24px rgba(33, 45, 96, 0.06);
+  padding: 18px 20px;
+  box-shadow: 0 8px 24px rgba(33, 45, 96, 0.05);
 }
 
 .expense-dashboard-stat-icon {
@@ -147,7 +153,7 @@
 .expense-dashboard-layout {
   display: grid;
   grid-template-columns: 290px minmax(0, 1fr) 240px;
-  gap: 18px;
+  gap: 16px;
   align-items: start;
 }
 
@@ -310,28 +316,32 @@
 }
 
 .expense-dashboard-main-card {
-  padding: 16px 18px 0;
+  padding: 12px 16px 0;
 }
 
 .expense-dashboard-card-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
 .expense-dashboard-analytics-grid {
   display: grid;
   grid-template-columns: 1.15fr 1fr;
-  gap: 16px;
-  padding: 16px 0 18px;
+  gap: 12px;
+  padding: 14px 0 14px;
+}
+
+.expense-dashboard-analytics-grid-3 {
+  grid-template-columns: 1.18fr 0.96fr 0.82fr;
 }
 
 .expense-dashboard-chart-card {
   border: 1px solid #e5e9f5;
   border-radius: 16px;
   background: linear-gradient(180deg, #ffffff, #fbfcff);
-  padding: 18px;
+  padding: 16px;
 }
 
 .expense-dashboard-chart-card h4 {
@@ -347,18 +357,29 @@
   font-weight: 600;
 }
 
+.expense-breakdown-content-compact {
+  grid-template-columns: 170px 1fr;
+  align-items: start;
+  gap: 12px;
+}
+
+.expense-donut-chart-compact {
+  width: 148px;
+  height: 148px;
+}
+
 .expense-legend-main {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
 }
 
 .expense-dashboard-bar-chart {
-  min-height: 250px;
+  min-height: 220px;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
+  gap: 10px;
   align-items: end;
 }
 
@@ -384,7 +405,7 @@
 
 .expense-dashboard-bar-track {
   width: 100%;
-  height: 180px;
+  height: 148px;
   border-radius: 14px 14px 6px 6px;
   background:
     linear-gradient(to top, rgba(111, 133, 218, 0.08), rgba(111, 133, 218, 0.02)),
@@ -395,7 +416,7 @@
     );
   display: flex;
   align-items: flex-end;
-  padding: 0 14px;
+  padding: 0 12px;
 }
 
 .expense-dashboard-bar-fill {
@@ -406,9 +427,68 @@
   box-shadow: 0 10px 20px rgba(47, 105, 243, 0.22);
 }
 
+.expense-dashboard-mini-bars {
+  min-height: 220px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  align-items: end;
+}
+
+.expense-dashboard-mini-bar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.expense-dashboard-mini-bar-col span {
+  color: #62709f;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.expense-dashboard-mini-bar-col strong {
+  color: #4d5988;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.expense-dashboard-mini-bar-track {
+  width: 100%;
+  height: 148px;
+  border-radius: 14px 14px 6px 6px;
+  background:
+    linear-gradient(to top, rgba(111, 133, 218, 0.06), rgba(111, 133, 218, 0.01)),
+    repeating-linear-gradient(
+      to top,
+      transparent 0 44px,
+      rgba(210, 216, 238, 0.7) 44px 45px
+    );
+  display: flex;
+  align-items: flex-end;
+  padding: 0 8px;
+}
+
+.expense-dashboard-mini-bar-fill {
+  width: 100%;
+  min-height: 14px;
+  border-radius: 12px 12px 4px 4px;
+  background: linear-gradient(180deg, #7ea3ff, #4273ee);
+  box-shadow: 0 10px 18px rgba(66, 115, 238, 0.18);
+}
+
 .expense-dashboard-transactions {
   border-top: 1px solid #e7ebf6;
   margin: 0 -18px;
+}
+
+.expense-dashboard-transactions .expense-transactions-head {
+  padding: 12px 16px 10px;
+}
+
+.expense-dashboard-transactions .expense-transactions-table-wrap {
+  border-top: 1px solid #edf1f8;
 }
 
 .expense-dashboard-status-chip {
@@ -454,14 +534,15 @@
 .expense-dashboard-primary-action,
 .expense-dashboard-action-btn {
   width: 100%;
-  min-height: 48px;
+  min-height: 52px;
   border-radius: 12px;
   font-size: 15px;
   font-weight: 700;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 10px;
+  padding: 0 16px;
 }
 
 .expense-dashboard-primary-action {
@@ -775,9 +856,9 @@
   background: #eff1f9;
   color: #4f5889;
   text-align: left;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
-  padding: 9px 12px;
+  padding: 11px 16px;
   border-top: 1px solid #e0e5f3;
   border-bottom: 1px solid #e0e5f3;
 }
@@ -787,10 +868,10 @@
 }
 
 .expense-transactions tbody td {
-  padding: 9px 12px;
+  padding: 14px 16px;
   border-bottom: 1px solid #e6e8f4;
   color: #2d376b;
-  font-size: 16px;
+  font-size: 15px;
 }
 
 .expense-clickable-row {
@@ -834,7 +915,7 @@
 
 .expense-pagination {
   border-top: 1px solid #e4e8f4;
-  padding: 10px 14px;
+  padding: 12px 16px;
   display: flex;
   justify-content: flex-end;
   align-items: center;

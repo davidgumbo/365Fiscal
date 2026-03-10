@@ -240,6 +240,15 @@ export default function ExpensesPage() {
     null,
   );
   const [categoryFormName, setCategoryFormName] = useState("");
+  const [transactionsPage, setTransactionsPage] = useState(1);
+  const [transactionsPageSize, setTransactionsPageSize] = useState(8);
+
+  const quickCategoryOptions = useMemo(() => {
+    const dynamicCategories = categories
+      .map((category) => category.name.trim())
+      .filter(Boolean);
+    return Array.from(new Set([...dynamicCategories, ...QUICK_ADD_CATEGORIES]));
+  }, [categories]);
 
   const emptyForm = useMemo(
     () => ({
@@ -496,6 +505,49 @@ export default function ExpensesPage() {
         .slice(0, 6),
     [dateFilteredExpenses],
   );
+
+  const sortedTransactions = useMemo(
+    () =>
+      [...dateFilteredExpenses].sort((a, b) => {
+        const left = a.expense_date ? new Date(a.expense_date).getTime() : 0;
+        const right = b.expense_date ? new Date(b.expense_date).getTime() : 0;
+        return right - left;
+      }),
+    [dateFilteredExpenses],
+  );
+
+  const transactionTotalPages = Math.max(
+    1,
+    Math.ceil(sortedTransactions.length / transactionsPageSize),
+  );
+
+  const pagedTransactions = useMemo(() => {
+    const start = (transactionsPage - 1) * transactionsPageSize;
+    return sortedTransactions.slice(start, start + transactionsPageSize);
+  }, [sortedTransactions, transactionsPage, transactionsPageSize]);
+
+  const hasActiveFilters =
+    search.trim().length > 0 ||
+    supplierFilter !== "" ||
+    statusFilter !== "" ||
+    categoryFilter !== "" ||
+    dateFilter !== "this_month";
+
+  useEffect(() => {
+    setTransactionsPage(1);
+  }, [
+    search,
+    supplierFilter,
+    statusFilter,
+    categoryFilter,
+    dateFilter,
+    companyId,
+    transactionsPageSize,
+  ]);
+
+  useEffect(() => {
+    setTransactionsPage((prev) => Math.min(prev, transactionTotalPages));
+  }, [transactionTotalPages]);
 
   useEffect(() => {
     if (mainView !== "expenses" || subView !== "list") return;
@@ -824,7 +876,7 @@ export default function ExpensesPage() {
   };
 
   const openQuickAddModal = () => {
-    setQuickCategory("Food");
+    setQuickCategory(quickCategoryOptions[0] || "Other");
     setQuickAmount("");
     setQuickDate(new Date().toISOString().split("T")[0]);
     setQuickNotes("");
@@ -988,6 +1040,30 @@ export default function ExpensesPage() {
     link.click();
   };
 
+  const exportSummaryCSV = () => {
+    const rows = [
+      ["Metric", "Value"],
+      ["Total Expenses", totalExpense],
+      ["Posted Expenses", dashboardStats.postedCount],
+      ["Pending Approval", dashboardStats.draftCount],
+      ["Top Category", dashboardStats.topCategory?.name || "No Data"],
+      ["Top Category Amount", dashboardStats.topCategory?.amount || 0],
+      [],
+      ["Category", "Amount"],
+      ...categoryBreakdown.map((entry) => [entry.name, entry.amount]),
+    ];
+    const csvContent = rows
+      .map((row) =>
+        row.map((cell) => `"${String(cell ?? "").replace(/"/g, '""')}"`).join(","),
+      )
+      .join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `expense_summary_${new Date().toISOString().split("T")[0]}.csv`;
+    link.click();
+  };
+
   /* ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
      RENDER
      ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â */
@@ -1095,6 +1171,748 @@ export default function ExpensesPage() {
           )}
         </div>
       </div>
+    );
+  }
+
+  if (mainView === "expenses" && subView === "list") {
+    return (
+      <>
+        {isAdmin && company && (
+          <div className="o-control-panel expense-breadcrumb-panel">
+            <div className="o-breadcrumb">
+              <span
+                className="o-breadcrumb-item"
+                style={{ cursor: "pointer" }}
+                onClick={goBackToCompanies}
+              >
+                Expenses
+              </span>
+              <span className="o-breadcrumb-separator">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </span>
+              <span className="o-breadcrumb-current">{company.name}</span>
+            </div>
+          </div>
+        )}
+
+        <ValidationAlert message={error} onClose={() => setError(null)} />
+
+        <div className="expense-dashboard-shell">
+          <div className="expense-dashboard-topbar">
+            <div className="expense-dashboard-title-block">
+              <h1>
+                Expenses
+                <span className="expense-dashboard-title-divider">|</span>
+                <span className="expense-dashboard-title-muted">Dashboard</span>
+              </h1>
+            </div>
+
+            <div className="expense-dashboard-actions">
+              <label className="expense-dashboard-search">
+                <Search size={18} />
+                <input
+                  type="text"
+                  placeholder="Search expenses..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </label>
+              <button
+                className="expense-dashboard-secondary-btn"
+                type="button"
+                onClick={exportCSV}
+              >
+                <Download size={17} />
+                <span>Export</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="expense-dashboard-stat-grid">
+            <article className="expense-dashboard-stat-card">
+              <span
+                className="expense-dashboard-stat-icon"
+                style={{ background: "linear-gradient(135deg, #dff6ff, #c6ebff)" }}
+              >
+                <WalletCards size={22} color="#1b8cca" />
+              </span>
+              <div className="expense-dashboard-stat-copy">
+                <p>Total Expenses</p>
+                <strong>{formatCurrency(totalExpense)}</strong>
+                <span>
+                  {dateFilter === "this_month"
+                    ? "This Month"
+                    : dateFilter === "last_month"
+                      ? "Last Month"
+                      : dateFilter === "this_year"
+                        ? "This Year"
+                        : "All Time"}
+                </span>
+              </div>
+            </article>
+
+            <article className="expense-dashboard-stat-card">
+              <span
+                className="expense-dashboard-stat-icon"
+                style={{ background: "linear-gradient(135deg, #dff8ee, #cbf0df)" }}
+              >
+                <BadgeCheck size={22} color="#0ca678" />
+              </span>
+              <div className="expense-dashboard-stat-copy">
+                <p>Posted Expenses</p>
+                <strong>{dashboardStats.postedCount}</strong>
+                <span>Approved</span>
+              </div>
+            </article>
+
+            <article className="expense-dashboard-stat-card">
+              <span
+                className="expense-dashboard-stat-icon"
+                style={{ background: "linear-gradient(135deg, #fff0dc, #ffe4bf)" }}
+              >
+                <FileText size={22} color="#eb8a15" />
+              </span>
+              <div className="expense-dashboard-stat-copy">
+                <p>Pending Approval</p>
+                <strong>{dashboardStats.draftCount}</strong>
+                <span>Drafts</span>
+              </div>
+            </article>
+
+            <article className="expense-dashboard-stat-card">
+              <span
+                className="expense-dashboard-stat-icon"
+                style={{ background: "linear-gradient(135deg, #ece6ff, #ddd4ff)" }}
+              >
+                <PieChart size={22} color="#6d54e8" />
+              </span>
+              <div className="expense-dashboard-stat-copy">
+                <p>Top Category</p>
+                <strong>{dashboardStats.topCategory?.name || "No Data"}</strong>
+                <span>
+                  {dashboardStats.topCategory
+                    ? formatCurrency(dashboardStats.topCategory.amount)
+                    : "No expenses yet"}
+                </span>
+              </div>
+            </article>
+          </div>
+
+          <div className="expense-dashboard-layout">
+            <aside className="expense-panel-card expense-dashboard-filters">
+              <div className="expense-dashboard-panel-head">
+                <h3>Filters</h3>
+              </div>
+
+              <div className="expense-dashboard-filter-group">
+                <h4>Status</h4>
+                <div className="expense-dashboard-pill-grid">
+                  {[
+                    { label: "All", value: "" },
+                    { label: "Posted", value: "posted" },
+                    { label: "Draft", value: "draft" },
+                    { label: "Paid", value: "paid" },
+                  ].map((option) => (
+                    <button
+                      key={option.label}
+                      type="button"
+                      className={`expense-dashboard-pill ${statusFilter === option.value ? "active" : ""}`}
+                      onClick={() => setStatusFilter(option.value)}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="expense-dashboard-filter-group">
+                <div className="expense-dashboard-section-row">
+                  <h4>Category</h4>
+                  <button
+                    type="button"
+                    className="expense-dashboard-link-btn"
+                    onClick={() => openCategoryModal()}
+                  >
+                    <Plus size={14} />
+                  </button>
+                </div>
+                <div className="expense-dashboard-category-list">
+                  <button
+                    type="button"
+                    className={`expense-dashboard-category-item ${categoryFilter === "" ? "active" : ""}`}
+                    onClick={() => setCategoryFilter("")}
+                  >
+                    <span>All Expenses</span>
+                    <strong>{filteredExpenses.length}</strong>
+                  </button>
+                  {categories
+                    .slice()
+                    .sort((a, b) => a.name.localeCompare(b.name))
+                    .map((category) => {
+                      const visual =
+                        CATEGORY_VISUALS[normalizeCategoryKey(category.name)];
+                      const Icon = visual.icon;
+                      return (
+                        <button
+                          key={category.id}
+                          type="button"
+                          className={`expense-dashboard-category-item ${categoryFilter === category.name ? "active" : ""}`}
+                          onClick={() => setCategoryFilter(category.name)}
+                        >
+                          <span className="expense-dashboard-category-name">
+                            <span
+                              className="expense-dashboard-category-badge"
+                              style={{ background: visual.color }}
+                            >
+                              <Icon size={13} />
+                            </span>
+                            {category.name}
+                          </span>
+                          <strong>{categoryExpenseCount.get(category.name) || 0}</strong>
+                        </button>
+                      );
+                    })}
+                </div>
+              </div>
+
+              <div className="expense-dashboard-filter-group">
+                <h4>Supplier</h4>
+                <label className="expense-dashboard-select">
+                  <select
+                    value={supplierFilter}
+                    onChange={(e) =>
+                      setSupplierFilter(
+                        e.target.value ? Number(e.target.value) : "",
+                      )
+                    }
+                  >
+                    <option value="">All Suppliers</option>
+                    {contacts
+                      .slice()
+                      .sort((a, b) => a.name.localeCompare(b.name))
+                      .map((contact) => (
+                        <option key={contact.id} value={contact.id}>
+                          {contact.name}
+                        </option>
+                      ))}
+                  </select>
+                </label>
+              </div>
+
+              <div className="expense-dashboard-filter-group">
+                <h4>Period</h4>
+                <label className="expense-dashboard-select">
+                  <select
+                    value={dateFilter}
+                    onChange={(e) => setDateFilter(e.target.value as DateFilter)}
+                  >
+                    <option value="this_month">This Month</option>
+                    <option value="last_month">Last Month</option>
+                    <option value="this_year">This Year</option>
+                    <option value="all_time">All Time</option>
+                  </select>
+                </label>
+              </div>
+
+              {hasActiveFilters && (
+                <button
+                  className="expense-dashboard-clear-btn"
+                  type="button"
+                  onClick={() => {
+                    setSearch("");
+                    setSupplierFilter("");
+                    setStatusFilter("");
+                    setCategoryFilter("");
+                    setDateFilter("this_month");
+                  }}
+                >
+                  Reset Filters
+                </button>
+              )}
+            </aside>
+
+            <div className="expense-dashboard-center">
+              <section className="expense-panel-card expense-dashboard-main-card">
+                <div className="expense-dashboard-panel-head expense-dashboard-panel-head-wide">
+                  <h3>Expenses</h3>
+                  <div className="expense-dashboard-card-actions">
+                    <button
+                      className="expense-dashboard-secondary-btn"
+                      type="button"
+                      onClick={loadData}
+                      disabled={loading}
+                    >
+                      <BarChart3 size={17} />
+                      <span>Analytics</span>
+                    </button>
+                    <button
+                      className="expense-dashboard-secondary-btn"
+                      type="button"
+                      onClick={exportCSV}
+                    >
+                      <FileText size={17} />
+                      <span>Export Report</span>
+                    </button>
+                    <button
+                      className="expense-add-btn"
+                      type="button"
+                      onClick={openQuickAddModal}
+                    >
+                      <Plus size={18} />
+                      New Expense
+                    </button>
+                  </div>
+                </div>
+
+                <div className="expense-dashboard-analytics-grid expense-dashboard-analytics-grid-3">
+                  <article className="expense-dashboard-chart-card">
+                    <h4>Expenses by Category</h4>
+                    <div className="expense-breakdown-content expense-breakdown-content-compact">
+                      <div
+                        className="expense-donut-chart expense-donut-chart-compact"
+                        style={{ background: donutGradient }}
+                      />
+                      <div className="expense-legend-list">
+                        {categoryBreakdown.slice(0, 5).map((entry) => {
+                          const Icon = entry.icon;
+                          return (
+                            <div key={entry.name} className="expense-legend-item">
+                              <span
+                                className="expense-dashboard-category-badge"
+                                style={{ background: entry.color }}
+                              >
+                                <Icon size={12} />
+                              </span>
+                              <div className="expense-legend-main">
+                                <div className="expense-legend-name">
+                                  {entry.name}
+                                </div>
+                                <div className="expense-legend-percent">
+                                  {formatCurrency(entry.amount)}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </article>
+
+                  <article className="expense-dashboard-chart-card">
+                    <h4>Expenses by Month</h4>
+                    <div className="expense-dashboard-bar-chart">
+                      {dashboardMonthlyTrend.map((point) => (
+                        <div key={point.key} className="expense-dashboard-bar-col">
+                          <span>{formatCurrency(point.amount)}</span>
+                          <div className="expense-dashboard-bar-track">
+                            <div
+                              className="expense-dashboard-bar-fill"
+                              style={{ height: `${point.height}%` }}
+                            />
+                          </div>
+                          <strong>{point.label}</strong>
+                        </div>
+                      ))}
+                    </div>
+                  </article>
+
+                  <article className="expense-dashboard-chart-card">
+                    <h4>Spending Trend</h4>
+                    <div className="expense-dashboard-mini-bars">
+                      {weeklyTrend.map((point) => (
+                        <div key={point.label} className="expense-dashboard-mini-bar-col">
+                          <span>{formatCurrency(point.amount)}</span>
+                          <div className="expense-dashboard-mini-bar-track">
+                            <div
+                              className="expense-dashboard-mini-bar-fill"
+                              style={{
+                                height: `${Math.max(14, (point.amount / maxWeeklyAmount) * 100)}%`,
+                              }}
+                            />
+                          </div>
+                          <strong>{point.label.replace("Week ", "W")}</strong>
+                        </div>
+                      ))}
+                    </div>
+                  </article>
+                </div>
+
+                <section className="expense-transactions expense-dashboard-transactions">
+                  <div className="expense-transactions-head">
+                    <h3>Recent Expenses</h3>
+                    <span className="expense-transactions-meta">
+                      {sortedTransactions.length} matching expense
+                      {sortedTransactions.length === 1 ? "" : "s"}
+                    </span>
+                  </div>
+                  <div className="expense-transactions-table-wrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Reference</th>
+                          <th>Supplier</th>
+                          <th>Category</th>
+                          <th>Date</th>
+                          <th>Status</th>
+                          <th className="amount">Subtotal</th>
+                          <th className="amount">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {loading && (
+                          <tr>
+                            <td colSpan={7} className="expense-empty-row">
+                              Loading expenses...
+                            </td>
+                          </tr>
+                        )}
+                        {!loading && pagedTransactions.length === 0 && (
+                          <tr>
+                            <td colSpan={7} className="expense-empty-row">
+                              No expenses for this filter.
+                            </td>
+                          </tr>
+                        )}
+                        {!loading &&
+                          pagedTransactions.map((expense) => {
+                            const categoryName = expense.category || "Other";
+                            const supplierName =
+                              contacts.find((contact) => contact.id === expense.supplier_id)
+                                ?.name || "-";
+                            const visual =
+                              CATEGORY_VISUALS[normalizeCategoryKey(categoryName)];
+                            const Icon = visual.icon;
+                            return (
+                              <tr
+                                key={expense.id}
+                                onClick={() => openExpense(expense.id)}
+                                className="expense-clickable-row"
+                              >
+                                <td className="expense-cell-strong">
+                                  {expense.reference || `EXP-${expense.id}`}
+                                </td>
+                                <td>{supplierName}</td>
+                                <td>
+                                  <div className="expense-category-cell">
+                                    <span
+                                      className="expense-category-icon"
+                                      style={{ background: visual.color }}
+                                    >
+                                      <Icon size={13} />
+                                    </span>
+                                    {categoryName}
+                                  </div>
+                                </td>
+                                <td>
+                                  {expense.expense_date
+                                    ? new Date(expense.expense_date).toLocaleDateString()
+                                    : "-"}
+                                </td>
+                                <td>
+                                  <span
+                                    className={`expense-dashboard-status-chip status-${expense.status || "draft"}`}
+                                  >
+                                    {(expense.status || "draft").toUpperCase()}
+                                  </span>
+                                </td>
+                                <td className="amount">
+                                  {formatCurrency(expense.subtotal, expense.currency)}
+                                </td>
+                                <td className="amount expense-cell-strong">
+                                  {formatCurrency(expense.total_amount, expense.currency)}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                      </tbody>
+                      {pagedTransactions.length > 0 && (
+                        <tfoot>
+                          <tr className="expense-dashboard-total-row">
+                            <td colSpan={5}>Grand Total</td>
+                            <td className="amount">
+                              {formatCurrency(
+                                dateFilteredExpenses.reduce(
+                                  (sum, expense) => sum + (expense.subtotal || 0),
+                                  0,
+                                ),
+                              )}
+                            </td>
+                            <td className="amount">
+                              {formatCurrency(
+                                dateFilteredExpenses.reduce(
+                                  (sum, expense) => sum + (expense.total_amount || 0),
+                                  0,
+                                ),
+                              )}
+                            </td>
+                          </tr>
+                        </tfoot>
+                      )}
+                    </table>
+                  </div>
+                  <div className="expense-pagination">
+                    <label className="expense-pagination-size">
+                      <span>Rows</span>
+                      <select
+                        value={transactionsPageSize}
+                        onChange={(e) => setTransactionsPageSize(Number(e.target.value))}
+                      >
+                        <option value={8}>8</option>
+                        <option value={12}>12</option>
+                        <option value={20}>20</option>
+                      </select>
+                    </label>
+                    <span>
+                      Page {sortedTransactions.length === 0 ? 0 : transactionsPage} of{" "}
+                      {sortedTransactions.length === 0 ? 0 : transactionTotalPages}
+                    </span>
+                    <div>
+                      <button
+                        type="button"
+                        disabled={transactionsPage <= 1}
+                        onClick={() =>
+                          setTransactionsPage((prev) => Math.max(prev - 1, 1))
+                        }
+                      >
+                        Prev
+                      </button>
+                      <button
+                        type="button"
+                        disabled={
+                          transactionsPage >= transactionTotalPages ||
+                          sortedTransactions.length === 0
+                        }
+                        onClick={() =>
+                          setTransactionsPage((prev) =>
+                            Math.min(prev + 1, transactionTotalPages),
+                          )
+                        }
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                </section>
+              </section>
+            </div>
+
+            <aside className="expense-panel-card expense-dashboard-quick-actions">
+              <div className="expense-dashboard-panel-head">
+                <h3>Quick Actions</h3>
+              </div>
+              <button
+                type="button"
+                className="expense-dashboard-primary-action"
+                onClick={openQuickAddModal}
+              >
+                <Plus size={18} />
+                <span>New Expense</span>
+              </button>
+              <button
+                type="button"
+                className="expense-dashboard-action-btn"
+                onClick={startNew}
+              >
+                <ReceiptText size={18} />
+                <span>Upload Receipt</span>
+              </button>
+              <button
+                type="button"
+                className="expense-dashboard-action-btn"
+                onClick={exportCSV}
+              >
+                <Download size={18} />
+                <span>Export Report</span>
+              </button>
+              <button
+                type="button"
+                className="expense-dashboard-action-btn"
+                onClick={exportSummaryCSV}
+              >
+                <BarChart3 size={18} />
+                <span>Generate Summary</span>
+              </button>
+            </aside>
+          </div>
+        </div>
+
+        {showQuickAddModal && (
+          <div className="expense-modal-overlay" onClick={closeQuickAddModal}>
+            <div
+              className="expense-modal"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="expense-modal-head">
+                <h2>Add Expense</h2>
+                <button
+                  type="button"
+                  className="expense-modal-close"
+                  onClick={closeQuickAddModal}
+                >
+                  <X size={26} />
+                </button>
+              </div>
+
+              <div className="expense-modal-body">
+                <div className="expense-modal-label-row">
+                  <label className="expense-modal-label">Category</label>
+                  <button
+                    type="button"
+                    className="expense-modal-inline-btn"
+                    onClick={() => openCategoryModal()}
+                  >
+                    <Plus size={16} />
+                    <span>Add Category</span>
+                  </button>
+                </div>
+                <div className="expense-category-choices">
+                  {quickCategoryOptions.map((category) => {
+                    const visual = CATEGORY_VISUALS[normalizeCategoryKey(category)];
+                    const Icon = visual.icon;
+                    return (
+                      <button
+                        key={category}
+                        type="button"
+                        className={`expense-category-choice ${quickCategory === category ? "selected" : ""}`}
+                        onClick={() => setQuickCategory(category)}
+                        style={{
+                          color: quickCategory === category ? visual.color : undefined,
+                        }}
+                      >
+                        <span
+                          className="choice-icon"
+                          style={{ background: visual.color }}
+                        >
+                          <Icon size={16} />
+                        </span>
+                        <span>{category}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <label className="expense-modal-label">Amount</label>
+                <div className="expense-input expense-input-money">
+                  <span>
+                    <WalletCards size={20} />
+                  </span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={quickAmount}
+                    onChange={(e) => setQuickAmount(e.target.value)}
+                    placeholder="0.00"
+                  />
+                </div>
+
+                <label className="expense-modal-label">Date</label>
+                <div className="expense-input">
+                  <span>
+                    <CalendarDays size={20} />
+                  </span>
+                  <input
+                    type="date"
+                    value={quickDate}
+                    onChange={(e) => setQuickDate(e.target.value)}
+                  />
+                </div>
+
+                <label className="expense-modal-label">Notes</label>
+                <textarea
+                  rows={3}
+                  value={quickNotes}
+                  onChange={(e) => setQuickNotes(e.target.value)}
+                  placeholder="Optional"
+                />
+              </div>
+
+              <div className="expense-modal-footer">
+                <button
+                  type="button"
+                  className="expense-modal-cancel"
+                  onClick={closeQuickAddModal}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="expense-modal-submit"
+                  onClick={saveQuickExpense}
+                  disabled={saving}
+                >
+                  {saving ? "Saving..." : "Add Expense"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showCategoryModal && (
+          <div
+            className="expense-category-modal-overlay"
+            onClick={() => {
+              setShowCategoryModal(false);
+              setEditingCategoryId(null);
+              setCategoryFormName("");
+            }}
+          >
+            <div
+              className="expense-category-modal"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <h3 className="expense-category-modal-title">
+                {editingCategoryId ? "Edit Expense Category" : "New Expense Category"}
+              </h3>
+              <div className="o-form-group">
+                <label className="o-form-label">Name</label>
+                <div className="o-form-field">
+                  <input
+                    type="text"
+                    className="o-form-input"
+                    value={categoryFormName}
+                    onChange={(e) => setCategoryFormName(e.target.value)}
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") saveCategory();
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="expense-category-modal-actions">
+                <button
+                  className="o-btn o-btn-secondary"
+                  onClick={() => {
+                    setShowCategoryModal(false);
+                    setEditingCategoryId(null);
+                    setCategoryFormName("");
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="o-btn o-btn-primary"
+                  onClick={saveCategory}
+                  disabled={saving || !categoryFormName.trim()}
+                >
+                  {saving ? "Saving..." : editingCategoryId ? "Save" : "Create"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
     );
   }
 
