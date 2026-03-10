@@ -2,14 +2,20 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
 import {
+  BadgeCheck,
+  BarChart3,
   CalendarDays,
   CarFront,
-  Check,
   CircleHelp,
   Clapperboard,
+  Download,
+  FileText,
+  FolderPlus,
+  PieChart,
   Plus,
   ReceiptText,
   RefreshCw,
+  Search,
   ShoppingBag,
   UtensilsCrossed,
   WalletCards,
@@ -493,10 +499,10 @@ export default function ExpensesPage() {
 
   useEffect(() => {
     if (mainView !== "expenses" || subView !== "list") return;
-    if (statusFilter !== "") setStatusFilter("");
-    if (supplierFilter !== "") setSupplierFilter("");
-    if (search) setSearch("");
-  }, [mainView, subView, statusFilter, supplierFilter, search]);
+    setStatusFilter("");
+    setSupplierFilter("");
+    setSearch("");
+  }, [mainView, subView]);
 
   const filteredCategories = useMemo(() => {
     if (!searchQuery.trim()) return categories;
@@ -537,6 +543,116 @@ export default function ExpensesPage() {
     });
     return map;
   }, [expenses]);
+
+  const dashboardCategoryBreakdown = useMemo(() => {
+    const totals = new Map<
+      string,
+      { amount: number; count: number; color: string; icon: LucideIcon }
+    >();
+
+    filteredExpenses.forEach((expense) => {
+      const categoryName = expense.category || "Other";
+      const visual = CATEGORY_VISUALS[normalizeCategoryKey(categoryName)];
+      const existing = totals.get(categoryName);
+      if (existing) {
+        existing.amount += expense.total_amount || 0;
+        existing.count += 1;
+        return;
+      }
+      totals.set(categoryName, {
+        amount: expense.total_amount || 0,
+        count: 1,
+        color: visual.color,
+        icon: visual.icon,
+      });
+    });
+
+    const totalAmount = Array.from(totals.values()).reduce(
+      (sum, entry) => sum + entry.amount,
+      0,
+    );
+
+    return Array.from(totals.entries())
+      .map(([name, value]) => ({
+        name,
+        amount: value.amount,
+        count: value.count,
+        color: value.color,
+        icon: value.icon,
+        percent: totalAmount > 0 ? (value.amount / totalAmount) * 100 : 0,
+      }))
+      .sort((left, right) => right.amount - left.amount);
+  }, [filteredExpenses]);
+
+  const dashboardDonutGradient = useMemo(() => {
+    if (dashboardCategoryBreakdown.length === 0) {
+      return "conic-gradient(#dfe4f2 0deg 360deg)";
+    }
+
+    let progress = 0;
+    const stops = dashboardCategoryBreakdown.map((entry) => {
+      const start = progress;
+      const end = progress + (entry.percent / 100) * 360;
+      progress = end;
+      return `${entry.color} ${start}deg ${end}deg`;
+    });
+
+    if (progress < 360) {
+      stops.push(`#dfe4f2 ${progress}deg 360deg`);
+    }
+
+    return `conic-gradient(${stops.join(", ")})`;
+  }, [dashboardCategoryBreakdown]);
+
+  const dashboardMonthlyTrend = useMemo(() => {
+    const now = new Date();
+    const points = Array.from({ length: 4 }, (_, index) => {
+      const date = new Date(now.getFullYear(), now.getMonth() - (3 - index), 1);
+      return {
+        key: `${date.getFullYear()}-${date.getMonth()}`,
+        label: date.toLocaleDateString(undefined, { month: "short" }),
+        amount: 0,
+      };
+    });
+
+    filteredExpenses.forEach((expense) => {
+      if (!expense.expense_date) return;
+      const date = new Date(expense.expense_date);
+      if (Number.isNaN(date.getTime())) return;
+      const key = `${date.getFullYear()}-${date.getMonth()}`;
+      const target = points.find((point) => point.key === key);
+      if (target) {
+        target.amount += expense.total_amount || 0;
+      }
+    });
+
+    const maxAmount = Math.max(...points.map((point) => point.amount), 1);
+    return points.map((point) => ({
+      ...point,
+      height: Math.max(12, (point.amount / maxAmount) * 100),
+    }));
+  }, [filteredExpenses]);
+
+  const dashboardStats = useMemo(() => {
+    const total = dateFilteredExpenses.reduce(
+      (sum, expense) => sum + (expense.total_amount || 0),
+      0,
+    );
+    const postedCount = dateFilteredExpenses.filter(
+      (expense) => expense.status === "posted" || expense.status === "paid",
+    ).length;
+    const draftCount = dateFilteredExpenses.filter(
+      (expense) => expense.status === "draft",
+    ).length;
+    const topCategory = dashboardCategoryBreakdown[0] ?? null;
+
+    return {
+      total,
+      postedCount,
+      draftCount,
+      topCategory,
+    };
+  }, [dateFilteredExpenses, dashboardCategoryBreakdown]);
 
   const selectedExpense = useMemo(
     () => expenses.find((e) => e.id === selectedExpenseId) ?? null,
@@ -982,10 +1098,12 @@ export default function ExpensesPage() {
     );
   }
 
-  /* ═══════════════════════════════════════
-     MAIN PAGE — matches Inventory structure
-     ═══════════════════════════════════════ */
-  if (mainView === "expenses" && subView === "list" && companyId) {
+  /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+     MAIN PAGE â€” matches Inventory structure
+     â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+  const showCompactExpensesHome = false;
+
+  if (showCompactExpensesHome && mainView === "expenses" && subView === "list" && companyId) {
     return (
       <>
         {isAdmin && company && (
@@ -1021,10 +1139,54 @@ export default function ExpensesPage() {
 
         <div className="expense-dashboard-shell">
           <div className="expense-dashboard-toolbar">
-            <h1>Expenses</h1>
             <div className="expense-toolbar-actions">
+              <label className="expense-toolbar-search">
+                <input
+                  type="text"
+                  placeholder="Search expense, reference, supplier..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </label>
+
               <label className="expense-toolbar-select">
-                <span>Filter:</span>
+                <span>Supplier:</span>
+                <select
+                  value={supplierFilter}
+                  onChange={(e) =>
+                    setSupplierFilter(
+                      e.target.value ? Number(e.target.value) : "",
+                    )
+                  }
+                >
+                  <option value="">All</option>
+                  {contacts
+                    .slice()
+                    .sort((a, b) => a.name.localeCompare(b.name))
+                    .map((contact) => (
+                      <option key={contact.id} value={contact.id}>
+                        {contact.name}
+                      </option>
+                    ))}
+                </select>
+              </label>
+
+              <label className="expense-toolbar-select">
+                <span>Status:</span>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                >
+                  <option value="">All</option>
+                  <option value="draft">Draft</option>
+                  <option value="posted">Posted</option>
+                  <option value="paid">Paid</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </label>
+
+              <label className="expense-toolbar-select">
+                <span>Category:</span>
                 <select
                   value={categoryFilter}
                   onChange={(e) => setCategoryFilter(e.target.value)}
@@ -1054,112 +1216,68 @@ export default function ExpensesPage() {
                 </select>
               </label>
 
-              <button
-                className="expense-refresh-btn"
-                type="button"
-                title="Refresh"
-                onClick={loadData}
-                disabled={loading}
-              >
-                <RefreshCw size={18} />
-              </button>
+              {hasActiveFilters && (
+                <button
+                  className="expense-clear-btn"
+                  type="button"
+                  onClick={() => {
+                    setSearch("");
+                    setSupplierFilter("");
+                    setStatusFilter("");
+                    setCategoryFilter("");
+                    setDateFilter("this_month");
+                  }}
+                >
+                  Clear
+                </button>
+              )}
 
-              <button
-                className="expense-add-btn"
-                type="button"
-                onClick={openQuickAddModal}
-              >
-                <Plus size={18} /> Add Expense
-              </button>
-            </div>
-          </div>
-
-          <div className="expense-stat-grid">
-            <article className="expense-stat-card">
-              <h3>Total Expense</h3>
-              <p className="expense-stat-value">{formatCurrency(totalExpense)}</p>
-              <p className="expense-stat-foot expense-trend-up">
-                <span>{monthChangePercent >= 0 ? "▲" : "▼"}</span>
-                {Math.abs(monthChangePercent).toFixed(0)}% from last month
-              </p>
-            </article>
-            <article className="expense-stat-card">
-              <h3>Monthly Budget</h3>
-              <p className="expense-stat-value">{formatCurrency(monthlyBudget)}</p>
-              <div className="expense-budget-track">
-                <div
-                  className="expense-budget-fill"
-                  style={{ width: `${budgetUsedPercent}%` }}
-                />
-              </div>
-              <p className="expense-budget-label">
-                {Math.round(budgetUsedPercent)}% Used
-              </p>
-            </article>
-            <article className="expense-stat-card">
-              <h3>Remaining Balance</h3>
-              <p className="expense-stat-value">{formatCurrency(remainingBalance)}</p>
-              <p className={`expense-stat-foot ${isOnTrack ? "on-track" : "off-track"}`}>
-                <Check size={16} /> {isOnTrack ? "On Track" : "Over Budget"}
-              </p>
-            </article>
-          </div>
-
-          <div className="expense-chart-grid">
-            <section className="expense-panel-card">
-              <h3>Expense Breakdown</h3>
-              <div className="expense-breakdown-content">
-                <div
-                  className="expense-donut-chart"
-                  style={{ background: donutGradient }}
-                  aria-label="Expense category breakdown"
-                />
-                <div className="expense-legend-list">
-                  {categoryBreakdown.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <div key={item.name} className="expense-legend-item">
-                        <span
-                          className="expense-legend-icon"
-                          style={{ background: item.color }}
-                        >
-                          <Icon size={14} />
-                        </span>
-                        <span className="expense-legend-name">{item.name}</span>
-                        <span className="expense-legend-percent">{item.percent}%</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </section>
-
-            <section className="expense-panel-card">
-              <h3>Spending Trend</h3>
-              <div className="expense-trend-chart">
-                {weeklyTrend.map((row) => (
-                  <div key={row.label} className="expense-trend-bar-wrap">
-                    <div
-                      className="expense-trend-bar"
-                      style={{
-                        height: `${(row.amount / maxWeeklyAmount) * 100}%`,
-                      }}
-                      title={`${row.label}: ${formatCurrency(row.amount)}`}
-                    />
-                    <span>{row.label}</span>
+            <div className="expense-dashboard-center">
+              <section className="expense-panel-card expense-dashboard-main-card">
+                <div className="expense-dashboard-panel-head expense-dashboard-panel-head-wide">
+                  <h3>Expenses</h3>
+                  <div className="expense-dashboard-card-actions">
+                    <button
+                      className="expense-dashboard-secondary-btn"
+                      type="button"
+                      onClick={loadData}
+                      disabled={loading}
+                    >
+                      <BarChart3 size={17} />
+                      <span>Analytics</span>
+                    </button>
+                    <button
+                      className="expense-dashboard-secondary-btn"
+                      type="button"
+                      onClick={exportCSV}
+                    >
+                      <FileText size={17} />
+                      <span>Report</span>
+                    </button>
+                    <button
+                      className="expense-add-btn"
+                      type="button"
+                      onClick={openQuickAddModal}
+                    >
+                      <Plus size={18} /> New Expense
+                    </button>
                   </div>
-                ))}
-              </div>
-            </section>
-          </div>
+                </div>
 
           <section className="expense-panel-card expense-transactions">
-            <h3>Recent Transactions</h3>
+            <div className="expense-transactions-head">
+              <h3>Transactions</h3>
+              <span className="expense-transactions-meta">
+                {sortedTransactions.length} matching expense
+                {sortedTransactions.length === 1 ? "" : "s"}
+              </span>
+            </div>
             <div className="expense-transactions-table-wrap">
               <table>
                 <thead>
                   <tr>
                     <th>Date</th>
+                    <th>Supplier</th>
                     <th>Category</th>
                     <th>Description</th>
                     <th className="amount">Amount</th>
@@ -1168,21 +1286,24 @@ export default function ExpensesPage() {
                 <tbody>
                   {loading && (
                     <tr>
-                      <td colSpan={4} className="expense-empty-row">
+                      <td colSpan={5} className="expense-empty-row">
                         Loading expenses...
                       </td>
                     </tr>
                   )}
-                  {!loading && recentTransactions.length === 0 && (
+                  {!loading && pagedTransactions.length === 0 && (
                     <tr>
-                      <td colSpan={4} className="expense-empty-row">
+                      <td colSpan={5} className="expense-empty-row">
                         No expenses for this filter.
                       </td>
                     </tr>
                   )}
                   {!loading &&
-                    recentTransactions.map((expense) => {
+                    pagedTransactions.map((expense) => {
                       const categoryName = expense.category || "Other";
+                      const supplierName =
+                        contacts.find((contact) => contact.id === expense.supplier_id)
+                          ?.name || "-";
                       const visual =
                         CATEGORY_VISUALS[normalizeCategoryKey(categoryName)];
                       const Icon = visual.icon;
@@ -1203,6 +1324,7 @@ export default function ExpensesPage() {
                                 )
                               : "-"}
                           </td>
+                          <td>{supplierName}</td>
                           <td>
                             <div className="expense-category-cell">
                               <span
@@ -1225,14 +1347,43 @@ export default function ExpensesPage() {
               </table>
             </div>
             <div className="expense-pagination">
+              <label className="expense-pagination-size">
+                <span>Rows</span>
+                <select
+                  value={transactionsPageSize}
+                  onChange={(e) => setTransactionsPageSize(Number(e.target.value))}
+                >
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                </select>
+              </label>
               <span>
-                Page 1 of {recentTransactions.length > 0 ? 1 : 0}
+                Page {sortedTransactions.length === 0 ? 0 : transactionsPage} of{" "}
+                {sortedTransactions.length === 0 ? 0 : transactionTotalPages}
               </span>
               <div>
-                <button type="button" disabled>
+                <button
+                  type="button"
+                  disabled={transactionsPage <= 1}
+                  onClick={() =>
+                    setTransactionsPage((prev) => Math.max(prev - 1, 1))
+                  }
+                >
                   Prev
                 </button>
-                <button type="button" disabled>
+                <button
+                  type="button"
+                  disabled={
+                    transactionsPage >= transactionTotalPages ||
+                    sortedTransactions.length === 0
+                  }
+                  onClick={() =>
+                    setTransactionsPage((prev) =>
+                      Math.min(prev + 1, transactionTotalPages),
+                    )
+                  }
+                >
                   Next
                 </button>
               </div>
