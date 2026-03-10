@@ -134,7 +134,7 @@ const formatCurrency = (value: number, currency: string = "USD") => {
   }
 };
 
-/* ── SVG Icon helpers (matching Inventory) ── */
+/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ SVG Icon helpers (matching Inventory) ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
 const EditIcon = () => (
   <svg
     width="16"
@@ -172,7 +172,7 @@ export default function ExpensesPage() {
   const { companies: allCompanies, loading: companiesLoading } = useCompanies();
   const isAdmin = Boolean(me?.is_admin);
 
-  /* ── Company selection (admin) ── */
+  /* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Company selection (admin) ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(
     null,
   );
@@ -199,18 +199,18 @@ export default function ExpensesPage() {
   const company: Company | null =
     allCompanies.find((c) => c.id === selectedCompanyId) ?? null;
 
-  /* ── Data state ── */
+  /* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Data state ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [categories, setCategories] = useState<ExpenseCategory[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  /* ── View state (like Inventory mainView) ── */
+  /* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ View state (like Inventory mainView) ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
   const [mainView, setMainView] = useState<MainView>("expenses");
   const [subView, setSubView] = useState<"list" | "form">("list");
 
-  /* ── List filters ── */
+  /* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ List filters ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
   const [search, setSearch] = useState("");
   const [supplierFilter, setSupplierFilter] = useState<number | "">("");
   const [statusFilter, setStatusFilter] = useState<string>("");
@@ -225,7 +225,7 @@ export default function ExpensesPage() {
   );
   const [quickNotes, setQuickNotes] = useState<string>("");
 
-  /* ── Expense form ── */
+  /* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Expense form ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
   const [selectedExpenseId, setSelectedExpenseId] = useState<number | null>(
     null,
   );
@@ -234,7 +234,7 @@ export default function ExpensesPage() {
   const [saving, setSaving] = useState(false);
   const [invalidFields, setInvalidFields] = useState<string[]>([]);
 
-  /* ── Category modal ── */
+  /* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Category modal ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [editingCategoryId, setEditingCategoryId] = useState<number | null>(
     null,
@@ -266,7 +266,7 @@ export default function ExpensesPage() {
     return { tax, total: subtotal + tax };
   }, [form.subtotal, form.vat_rate]);
 
-  /* ── Data loading ── */
+  /* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Data loading ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
   const loadData = async () => {
     if (!companyId) return;
     setLoading(true);
@@ -299,7 +299,7 @@ export default function ExpensesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companyId]);
 
-  /* ── Filtering ── */
+  /* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Filtering ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
   const filteredExpenses = useMemo(() => {
     const term = search.trim().toLowerCase();
     return expenses.filter((e) => {
@@ -691,7 +691,7 @@ export default function ExpensesPage() {
     setIsEditing(false);
   }, [selectedExpense, emptyForm]);
 
-  /* ── Expense CRUD ── */
+  /* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Expense CRUD ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
   const startNew = () => {
     setSelectedExpenseId(null);
     setForm({
@@ -875,7 +875,7 @@ export default function ExpensesPage() {
     }
   };
 
-  /* ── Category CRUD ── */
+  /* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Category CRUD ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
   const openCategoryModal = (cat?: ExpenseCategory) => {
     if (cat) {
       setEditingCategoryId(cat.id);
@@ -937,7 +937,7 @@ export default function ExpensesPage() {
     }
   };
 
-  /* ── Navigation ── */
+  /* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Navigation ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
   const goBackToCompanies = () => {
     setSelectedCompanyId(null);
     setExpenses([]);
@@ -949,7 +949,7 @@ export default function ExpensesPage() {
     setMainView("expenses");
   };
 
-  /* ── CSV Export ── */
+  /* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ CSV Export ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
   const exportCSV = () => {
     const headers = [
       "Reference",
@@ -988,9 +988,9 @@ export default function ExpensesPage() {
     link.click();
   };
 
-  /* ══════════════════════════════════════════════
+  /* ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
      RENDER
-     ══════════════════════════════════════════════ */
+     ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â */
 
   if (companiesLoading && !companyId) {
     return <div className="loading-indicator">Loading companies...</div>;
@@ -999,7 +999,7 @@ export default function ExpensesPage() {
     return <div className="loading-indicator">Loading companies...</div>;
   }
 
-  /* ── Admin company picker ── */
+  /* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Admin company picker ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
   if (isAdmin && !companyId) {
     return (
       <div className="content">
@@ -1098,404 +1098,6 @@ export default function ExpensesPage() {
     );
   }
 
-  /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-     MAIN PAGE â€” matches Inventory structure
-     â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
-  const showCompactExpensesHome = false;
-
-  if (showCompactExpensesHome && mainView === "expenses" && subView === "list" && companyId) {
-    return (
-      <>
-        {isAdmin && company && (
-          <div className="o-control-panel expense-breadcrumb-panel">
-            <div className="o-breadcrumb">
-              <span
-                className="o-breadcrumb-item"
-                style={{ cursor: "pointer" }}
-                onClick={goBackToCompanies}
-              >
-                Expenses
-              </span>
-              <span className="o-breadcrumb-separator">
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
-              </span>
-              <span className="o-breadcrumb-current">{company.name}</span>
-            </div>
-          </div>
-        )}
-
-        <ValidationAlert message={error} onClose={() => setError(null)} />
-
-        <div className="expense-dashboard-shell">
-          <div className="expense-dashboard-toolbar">
-            <div className="expense-toolbar-actions">
-              <label className="expense-toolbar-search">
-                <input
-                  type="text"
-                  placeholder="Search expense, reference, supplier..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </label>
-
-              <label className="expense-toolbar-select">
-                <span>Supplier:</span>
-                <select
-                  value={supplierFilter}
-                  onChange={(e) =>
-                    setSupplierFilter(
-                      e.target.value ? Number(e.target.value) : "",
-                    )
-                  }
-                >
-                  <option value="">All</option>
-                  {contacts
-                    .slice()
-                    .sort((a, b) => a.name.localeCompare(b.name))
-                    .map((contact) => (
-                      <option key={contact.id} value={contact.id}>
-                        {contact.name}
-                      </option>
-                    ))}
-                </select>
-              </label>
-
-              <label className="expense-toolbar-select">
-                <span>Status:</span>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                >
-                  <option value="">All</option>
-                  <option value="draft">Draft</option>
-                  <option value="posted">Posted</option>
-                  <option value="paid">Paid</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
-              </label>
-
-              <label className="expense-toolbar-select">
-                <span>Category:</span>
-                <select
-                  value={categoryFilter}
-                  onChange={(e) => setCategoryFilter(e.target.value)}
-                >
-                  <option value="">All</option>
-                  {categories
-                    .slice()
-                    .sort((a, b) => a.name.localeCompare(b.name))
-                    .map((category) => (
-                      <option key={category.id} value={category.name}>
-                        {category.name}
-                      </option>
-                    ))}
-                </select>
-              </label>
-
-              <label className="expense-toolbar-select">
-                <span>Date:</span>
-                <select
-                  value={dateFilter}
-                  onChange={(e) => setDateFilter(e.target.value as DateFilter)}
-                >
-                  <option value="this_month">This Month</option>
-                  <option value="last_month">Last Month</option>
-                  <option value="this_year">This Year</option>
-                  <option value="all_time">All Time</option>
-                </select>
-              </label>
-
-              {hasActiveFilters && (
-                <button
-                  className="expense-clear-btn"
-                  type="button"
-                  onClick={() => {
-                    setSearch("");
-                    setSupplierFilter("");
-                    setStatusFilter("");
-                    setCategoryFilter("");
-                    setDateFilter("this_month");
-                  }}
-                >
-                  Clear
-                </button>
-              )}
-
-            <div className="expense-dashboard-center">
-              <section className="expense-panel-card expense-dashboard-main-card">
-                <div className="expense-dashboard-panel-head expense-dashboard-panel-head-wide">
-                  <h3>Expenses</h3>
-                  <div className="expense-dashboard-card-actions">
-                    <button
-                      className="expense-dashboard-secondary-btn"
-                      type="button"
-                      onClick={loadData}
-                      disabled={loading}
-                    >
-                      <BarChart3 size={17} />
-                      <span>Analytics</span>
-                    </button>
-                    <button
-                      className="expense-dashboard-secondary-btn"
-                      type="button"
-                      onClick={exportCSV}
-                    >
-                      <FileText size={17} />
-                      <span>Report</span>
-                    </button>
-                    <button
-                      className="expense-add-btn"
-                      type="button"
-                      onClick={openQuickAddModal}
-                    >
-                      <Plus size={18} /> New Expense
-                    </button>
-                  </div>
-                </div>
-
-          <section className="expense-panel-card expense-transactions">
-            <div className="expense-transactions-head">
-              <h3>Transactions</h3>
-              <span className="expense-transactions-meta">
-                {sortedTransactions.length} matching expense
-                {sortedTransactions.length === 1 ? "" : "s"}
-              </span>
-            </div>
-            <div className="expense-transactions-table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Supplier</th>
-                    <th>Category</th>
-                    <th>Description</th>
-                    <th className="amount">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading && (
-                    <tr>
-                      <td colSpan={5} className="expense-empty-row">
-                        Loading expenses...
-                      </td>
-                    </tr>
-                  )}
-                  {!loading && pagedTransactions.length === 0 && (
-                    <tr>
-                      <td colSpan={5} className="expense-empty-row">
-                        No expenses for this filter.
-                      </td>
-                    </tr>
-                  )}
-                  {!loading &&
-                    pagedTransactions.map((expense) => {
-                      const categoryName = expense.category || "Other";
-                      const supplierName =
-                        contacts.find((contact) => contact.id === expense.supplier_id)
-                          ?.name || "-";
-                      const visual =
-                        CATEGORY_VISUALS[normalizeCategoryKey(categoryName)];
-                      const Icon = visual.icon;
-                      return (
-                        <tr
-                          key={expense.id}
-                          onClick={() => openExpense(expense.id)}
-                          className="expense-clickable-row"
-                        >
-                          <td>
-                            {expense.expense_date
-                              ? new Date(expense.expense_date).toLocaleDateString(
-                                  undefined,
-                                  {
-                                    day: "2-digit",
-                                    month: "short",
-                                  },
-                                )
-                              : "-"}
-                          </td>
-                          <td>{supplierName}</td>
-                          <td>
-                            <div className="expense-category-cell">
-                              <span
-                                className="expense-category-icon"
-                                style={{ background: visual.color }}
-                              >
-                                <Icon size={13} />
-                              </span>
-                              {categoryName}
-                            </div>
-                          </td>
-                          <td>{expense.description || expense.notes || "-"}</td>
-                          <td className="amount negative">
-                            -{formatCurrency(expense.total_amount, expense.currency)}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                </tbody>
-              </table>
-            </div>
-            <div className="expense-pagination">
-              <label className="expense-pagination-size">
-                <span>Rows</span>
-                <select
-                  value={transactionsPageSize}
-                  onChange={(e) => setTransactionsPageSize(Number(e.target.value))}
-                >
-                  <option value={10}>10</option>
-                  <option value={25}>25</option>
-                  <option value={50}>50</option>
-                </select>
-              </label>
-              <span>
-                Page {sortedTransactions.length === 0 ? 0 : transactionsPage} of{" "}
-                {sortedTransactions.length === 0 ? 0 : transactionTotalPages}
-              </span>
-              <div>
-                <button
-                  type="button"
-                  disabled={transactionsPage <= 1}
-                  onClick={() =>
-                    setTransactionsPage((prev) => Math.max(prev - 1, 1))
-                  }
-                >
-                  Prev
-                </button>
-                <button
-                  type="button"
-                  disabled={
-                    transactionsPage >= transactionTotalPages ||
-                    sortedTransactions.length === 0
-                  }
-                  onClick={() =>
-                    setTransactionsPage((prev) =>
-                      Math.min(prev + 1, transactionTotalPages),
-                    )
-                  }
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          </section>
-        </div>
-
-        {showQuickAddModal && (
-          <div className="expense-modal-overlay" onClick={closeQuickAddModal}>
-            <div
-              className="expense-modal"
-              onClick={(event) => event.stopPropagation()}
-            >
-              <div className="expense-modal-head">
-                <h2>Add Expense</h2>
-                <button
-                  type="button"
-                  className="expense-modal-close"
-                  onClick={closeQuickAddModal}
-                >
-                  <X size={26} />
-                </button>
-              </div>
-
-              <div className="expense-modal-body">
-                <label className="expense-modal-label">Category</label>
-                <div className="expense-category-choices">
-                  {QUICK_ADD_CATEGORIES.map((category) => {
-                    const visual = CATEGORY_VISUALS[normalizeCategoryKey(category)];
-                    const Icon = visual.icon;
-                    return (
-                      <button
-                        key={category}
-                        type="button"
-                        className={`expense-category-choice ${quickCategory === category ? "selected" : ""}`}
-                        onClick={() => setQuickCategory(category)}
-                        style={{
-                          color: quickCategory === category ? visual.color : undefined,
-                        }}
-                      >
-                        <span
-                          className="choice-icon"
-                          style={{ background: visual.color }}
-                        >
-                          <Icon size={16} />
-                        </span>
-                        <span>{category}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <label className="expense-modal-label">Amount</label>
-                <div className="expense-input expense-input-money">
-                  <span>
-                    <WalletCards size={20} />
-                  </span>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={quickAmount}
-                    onChange={(e) => setQuickAmount(e.target.value)}
-                    placeholder="0.00"
-                  />
-                </div>
-
-                <label className="expense-modal-label">Date</label>
-                <div className="expense-input">
-                  <span>
-                    <CalendarDays size={20} />
-                  </span>
-                  <input
-                    type="date"
-                    value={quickDate}
-                    onChange={(e) => setQuickDate(e.target.value)}
-                  />
-                </div>
-
-                <label className="expense-modal-label">Notes</label>
-                <textarea
-                  rows={3}
-                  value={quickNotes}
-                  onChange={(e) => setQuickNotes(e.target.value)}
-                  placeholder="Optional"
-                />
-              </div>
-
-              <div className="expense-modal-footer">
-                <button
-                  type="button"
-                  className="expense-modal-cancel"
-                  onClick={closeQuickAddModal}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="expense-modal-submit"
-                  onClick={saveQuickExpense}
-                  disabled={saving}
-                >
-                  {saving ? "Saving..." : "Add Expense"}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </>
-    );
-  }
-
   return (
     <>
       {/* Admin breadcrumb */}
@@ -1543,7 +1145,7 @@ export default function ExpensesPage() {
         style={{ display: "flex", gap: 0, flexWrap: "nowrap" }}
       >
         <div id="main-content" className="two-panel two-panel-left">
-          {/* ══════ MAIN SIDEBAR (like Inventory MENU) ══════ */}
+          {/* ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â MAIN SIDEBAR (like Inventory MENU) ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â */}
           <div className="o-sidebar">
             <div className="o-sidebar-section">
               <div className="o-sidebar-title">MENU</div>
@@ -1622,9 +1224,9 @@ export default function ExpensesPage() {
             </div>
           </div>
 
-          {/* ══════ MAIN CONTENT AREA ══════ */}
+          {/* ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â MAIN CONTENT AREA ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â */}
           <div className="o-main">
-            {/* ── Form sub-control panel (like Inventory) ── */}
+            {/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Form sub-control panel (like Inventory) ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */}
             {mainView === "expenses" && subView === "form" && (
               <div
                 className="o-control-panel"
@@ -1632,7 +1234,7 @@ export default function ExpensesPage() {
               >
                 <div className="o-control-panel-left">
                   <button className="o-btn o-btn-link" onClick={goBack}>
-                    ← Back to List
+                    ÃƒÂ¢Ã¢â‚¬Â Ã‚Â Back to List
                   </button>
                   <span style={{ fontWeight: 600, marginLeft: 16 }}>
                     {isNew
@@ -1687,7 +1289,7 @@ export default function ExpensesPage() {
               </div>
             )}
 
-            {/* ── Search/Action bar (like Inventory o-control-panel) ── */}
+            {/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Search/Action bar (like Inventory o-control-panel) ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */}
             <div
               className="o-content"
               style={{
@@ -1783,7 +1385,7 @@ export default function ExpensesPage() {
                 </div>
               )}
 
-              {/* ═══════════ EXPENSES LIST VIEW ═══════════ */}
+              {/* ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â EXPENSES LIST VIEW ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â */}
               {mainView === "expenses" && subView === "list" && (
                 <>
                   {/* Sub-sidebar for filters (like Inventory products list) */}
@@ -1892,7 +1494,7 @@ export default function ExpensesPage() {
                                   color: "var(--muted)",
                                 }}
                               >
-                                Loading expenses…
+                                Loading expensesÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
                               </td>
                             </tr>
                           )}
@@ -2012,7 +1614,7 @@ export default function ExpensesPage() {
                 </>
               )}
 
-              {/* ═══════════ SUPPLIERS TABLE VIEW ═══════════ */}
+              {/* ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â SUPPLIERS TABLE VIEW ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â */}
               {mainView === "suppliers" && subView === "list" && (
                 <div className="o-main" style={{ width: "100%" }}>
                   <div className="o-list-view">
@@ -2084,7 +1686,7 @@ export default function ExpensesPage() {
                 </div>
               )}
 
-              {/* ═══════════ EXPENSE FORM VIEW ═══════════ */}
+              {/* ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â EXPENSE FORM VIEW ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â */}
               {mainView === "expenses" && subView === "form" && (
                 <div style={{ width: "100%", padding: 16 }}>
                   <div className="card shadow-sm">
@@ -2146,7 +1748,7 @@ export default function ExpensesPage() {
                             }
                             disabled={!isEditing}
                           >
-                            <option value="">— Select Supplier —</option>
+                            <option value="">ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Select Supplier ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â</option>
                             {contacts.map((c) => (
                               <option key={c.id} value={c.id}>
                                 {c.name}
@@ -2170,7 +1772,7 @@ export default function ExpensesPage() {
                               }}
                               disabled={!isEditing}
                             >
-                              <option value="">— Select Category —</option>
+                              <option value="">ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Select Category ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â</option>
                               {categories
                                 .slice()
                                 .sort((a, b) => a.name.localeCompare(b.name))
@@ -2317,7 +1919,7 @@ export default function ExpensesPage() {
                 </div>
               )}
 
-              {/* ═══════════ EXPENSE CATEGORIES LIST (like Inventory) ═══════════ */}
+              {/* ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â EXPENSE CATEGORIES LIST (like Inventory) ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â */}
               {mainView === "categories" && subView === "list" && (
                 <div className="o-main" style={{ width: "100%" }}>
                   <div className="o-list-view">
@@ -2385,7 +1987,7 @@ export default function ExpensesPage() {
         </div>
       </div>
 
-      {/* ═══════════ CATEGORY MODAL (like Inventory) ═══════════ */}
+      {/* ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â CATEGORY MODAL (like Inventory) ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â */}
       {showCategoryModal && (
         <div
           style={{
@@ -2449,7 +2051,7 @@ export default function ExpensesPage() {
                 onClick={saveCategory}
                 disabled={saving || !categoryFormName.trim()}
               >
-                {saving ? "Saving…" : editingCategoryId ? "Save" : "Create"}
+                {saving ? "SavingÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦" : editingCategoryId ? "Save" : "Create"}
               </button>
             </div>
           </div>
