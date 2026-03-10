@@ -3492,7 +3492,7 @@ export default function InventoryPage() {
                       />
                     </div>
 
-                    {mainView === "operations" && (
+                    {/* {mainView === "operations" && (
                       <div className="inventory-op-tabs">
                         <button
                           className={`o-btn ${operationsTab === "moves" ? "o-btn-primary" : "o-btn-secondary"}`}
@@ -3513,7 +3513,7 @@ export default function InventoryPage() {
                           Adjustments
                         </button>
                       </div>
-                    )}
+                    )} */}
                   </div>
 
                   <div className="o-control-panel-right">
