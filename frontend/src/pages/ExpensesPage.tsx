@@ -2428,12 +2428,6 @@ export default function ExpensesPage() {
                 <div className="expense-form-page">
                   <div className="expense-form-card">
                     <div className="expense-form-card-head">
-                      <div>
-                        <p className="expense-form-card-eyebrow">Expense Details</p>
-                        <h3 className="expense-form-card-title">
-                          Review and manage this expense entry
-                        </h3>
-                      </div>
                       <div className="expense-form-total-card">
                         <span>Total</span>
                         <strong>{formatCurrency(calc.total, form.currency)}</strong>

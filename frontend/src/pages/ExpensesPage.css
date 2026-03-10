@@ -1202,7 +1202,7 @@
 .expense-form-toolbar-copy h2 {
   margin: 0;
   color: #1e2853;
-  font-size: 28px;
+  font-size: 22px;
   font-weight: 800;
   line-height: 1.1;
 }
@@ -1222,7 +1222,7 @@
   border-radius: 999px;
   background: #f3f6fd;
   color: #61709f;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
 }
 
@@ -1246,7 +1246,10 @@
 
 .expense-form-page {
   width: 100%;
-  padding: 20px 0 8px;
+  padding: 20px 0 24px;
+  max-height: calc(100vh - 210px);
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .expense-form-card {
@@ -1260,9 +1263,9 @@
 .expense-form-card-head {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 18px;
-  padding: 24px 28px 20px;
+  padding: 16px 28px 14px;
   border-bottom: 1px solid #e9edf7;
   background: linear-gradient(180deg, #ffffff, #fbfcff);
 }
@@ -1284,11 +1287,11 @@
 }
 
 .expense-form-total-card {
-  min-width: 220px;
+  min-width: 200px;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 16px 18px;
+  padding: 14px 16px;
   border: 1px solid #dfe6f4;
   border-radius: 18px;
   background: #f7f9ff;
@@ -1297,7 +1300,7 @@
 
 .expense-form-total-card span {
   color: #6a769b;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1305,19 +1308,19 @@
 
 .expense-form-total-card strong {
   color: #1f2a54;
-  font-size: 30px;
+  font-size: 24px;
   font-weight: 800;
   line-height: 1.05;
 }
 
 .expense-form-total-card small {
   color: #6f7ca5;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
 }
 
 .expense-form-section {
-  padding: 24px 28px;
+  padding: 18px 28px;
   border-top: 1px solid #edf1f8;
 }
 
@@ -1336,56 +1339,67 @@
 .expense-form-section-head h4 {
   margin: 0;
   color: #24305c;
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 800;
 }
 
 .expense-form-section-head span {
   color: #7a85a9;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
 }
 
 .expense-form-label {
   color: #44527f;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
 .expense-form-input {
-  min-height: 48px;
-  border: 1px solid #d7dff0;
-  border-radius: 14px;
-  background: #fff;
+  min-height: 40px;
+  border: none;
+  border-bottom: 1px solid #d7dff0;
+  border-radius: 0;
+  background: transparent;
   color: #1f2a54;
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 500;
   box-shadow: none;
+  padding-left: 0;
+  padding-right: 0;
 }
 
 .expense-form-input:disabled {
-  background: #f8faff;
+  background: transparent;
   color: #42507c;
   opacity: 1;
 }
 
+.expense-form-input:focus {
+  border-color: transparent;
+  border-bottom-color: #3166e3;
+  box-shadow: none;
+  background: transparent;
+}
+
 .expense-form-textarea {
-  min-height: 132px;
+  min-height: 96px;
   resize: vertical;
 }
 
 .expense-form-readonly-value {
-  min-height: 48px;
+  min-height: 40px;
   display: flex;
   align-items: center;
-  padding: 0 16px;
-  border: 1px solid #dfe5f3;
-  border-radius: 14px;
-  background: #f8faff;
+  padding: 0;
+  border: none;
+  border-bottom: 1px solid #dfe5f3;
+  border-radius: 0;
+  background: transparent;
   color: #22305d;
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 800;
 }
 
@@ -1531,7 +1545,7 @@
 
   .expense-form-toolbar-copy h2,
   .expense-form-card-title {
-    font-size: 22px;
+    font-size: 18px;
   }
 
   .expense-form-toolbar-actions {
