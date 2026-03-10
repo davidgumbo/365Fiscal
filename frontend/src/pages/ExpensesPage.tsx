@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
 import {
+  ArrowLeft,
   BadgeCheck,
   BarChart3,
   CalendarDays,
@@ -1960,28 +1961,32 @@ export default function ExpensesPage() {
           <div className="o-main">
             {/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Form sub-control panel (like Inventory) ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */}
             {mainView === "expenses" && subView === "form" && (
-              <div
-                className="o-control-panel"
-                style={{ background: "var(--gray-50)", marginTop: -8 }}
-              >
-                <div className="o-control-panel-left">
-                  <button className="o-btn o-btn-link" onClick={goBack}>
-                    ÃƒÂ¢Ã¢â‚¬Â Ã‚Â Back to List
+              <div className="expense-form-toolbar">
+                <div className="expense-form-toolbar-main">
+                  <button className="expense-form-back-btn" onClick={goBack}>
+                    <ArrowLeft size={16} />
+                    <span>Back to List</span>
                   </button>
-                  <span style={{ fontWeight: 600, marginLeft: 16 }}>
-                    {isNew
-                      ? "New Expense"
-                      : selectedExpense?.reference || "Expense"}
-                  </span>
-                  {!isNew && selectedExpense && (
-                    <span
-                      className={`badge ms-2 ${selectedExpense.status === "posted" ? "bg-info" : "bg-secondary"}`}
-                    >
-                      {selectedExpense.status}
-                    </span>
-                  )}
+                  <div className="expense-form-toolbar-copy">
+                    <h2>
+                      {isNew
+                        ? "New Expense"
+                        : selectedExpense?.reference || "Expense"}
+                    </h2>
+                    <div className="expense-form-toolbar-meta">
+                      <span>{form.expense_date || "No date selected"}</span>
+                      <span>Currency: {form.currency || "USD"}</span>
+                      {!isNew && selectedExpense && (
+                        <span
+                          className={`expense-form-status-badge ${selectedExpense.status === "posted" ? "posted" : "draft"}`}
+                        >
+                          {selectedExpense.status}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <div className="o-control-panel-right">
+                <div className="expense-form-toolbar-actions">
                   {isEditing ? (
                     <>
                       <button
@@ -2226,7 +2231,7 @@ export default function ExpensesPage() {
                                   color: "var(--muted)",
                                 }}
                               >
-                                Loading expensesÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
+                                Loading expenses...
                               </td>
                             </tr>
                           )}
@@ -2420,18 +2425,36 @@ export default function ExpensesPage() {
 
               {/* ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â EXPENSE FORM VIEW ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â */}
               {mainView === "expenses" && subView === "form" && (
-                <div style={{ width: "100%", padding: 16 }}>
-                  <div className="card shadow-sm">
-                    <div className="card-body invoice-form">
-                      <div className="row g-3">
+                <div className="expense-form-page">
+                  <div className="expense-form-card">
+                    <div className="expense-form-card-head">
+                      <div>
+                        <p className="expense-form-card-eyebrow">Expense Details</p>
+                        <h3 className="expense-form-card-title">
+                          Review and manage this expense entry
+                        </h3>
+                      </div>
+                      <div className="expense-form-total-card">
+                        <span>Total</span>
+                        <strong>{formatCurrency(calc.total, form.currency)}</strong>
+                        <small>Tax {formatCurrency(calc.tax, form.currency)}</small>
+                      </div>
+                    </div>
+
+                    <div className="expense-form-section">
+                      <div className="expense-form-section-head">
+                        <h4>General Information</h4>
+                        <span>{isEditing ? "Fields are editable" : "Read-only view"}</span>
+                      </div>
+                      <div className="row g-4">
                         <div className="col-md-6">
                           <ValidatedField
                             label="Date"
-                            labelClassName="form-label fw-semibold"
+                            labelClassName="form-label fw-semibold expense-form-label"
                             isInvalid={invalidFields.includes("expense_date")}
                           >
                             <input
-                              className="form-control input-underline"
+                              className="form-control input-underline expense-form-input"
                               type="date"
                               value={form.expense_date}
                               onChange={(e) => {
@@ -2447,11 +2470,11 @@ export default function ExpensesPage() {
                           </ValidatedField>
                         </div>
                         <div className="col-md-6">
-                          <label className="form-label fw-semibold">
+                          <label className="form-label fw-semibold expense-form-label">
                             Reference
                           </label>
                           <input
-                            className="form-control input-underline bg-light"
+                            className="form-control input-underline expense-form-input bg-light"
                             value={form.reference}
                             onChange={(e) =>
                               setForm((p) => ({
@@ -2464,11 +2487,11 @@ export default function ExpensesPage() {
                           />
                         </div>
                         <div className="col-md-6">
-                          <label className="form-label fw-semibold">
+                          <label className="form-label fw-semibold expense-form-label">
                             Supplier
                           </label>
                           <select
-                            className="form-select input-underline"
+                            className="form-select input-underline expense-form-input"
                             value={form.supplier_id}
                             onChange={(e) =>
                               setForm((p) => ({
@@ -2480,7 +2503,7 @@ export default function ExpensesPage() {
                             }
                             disabled={!isEditing}
                           >
-                            <option value="">ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Select Supplier ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â</option>
+                            <option value="">Select Supplier</option>
                             {contacts.map((c) => (
                               <option key={c.id} value={c.id}>
                                 {c.name}
@@ -2491,11 +2514,11 @@ export default function ExpensesPage() {
                         <div className="col-md-6">
                           <ValidatedField
                             label="Category"
-                            labelClassName="form-label fw-semibold"
+                            labelClassName="form-label fw-semibold expense-form-label"
                             isInvalid={invalidFields.includes("category")}
                           >
                             <select
-                              className="form-select input-underline"
+                              className="form-select input-underline expense-form-input"
                               value={form.category || ""}
                               onChange={(e) => {
                                 const { value } = e.target;
@@ -2504,7 +2527,7 @@ export default function ExpensesPage() {
                               }}
                               disabled={!isEditing}
                             >
-                              <option value="">ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Select Category ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â</option>
+                              <option value="">Select Category</option>
                               {categories
                                 .slice()
                                 .sort((a, b) => a.name.localeCompare(b.name))
@@ -2520,10 +2543,11 @@ export default function ExpensesPage() {
                         <div className="col-md-3">
                           <ValidatedField
                             label="Status"
+                            labelClassName="form-label fw-semibold expense-form-label"
                             isInvalid={invalidFields.includes("status")}
                           >
                             <select
-                              className="form-select input-underline"
+                              className="form-select input-underline expense-form-input"
                               value={form.status}
                               onChange={(e) => {
                                 const { value } = e.target;
@@ -2540,10 +2564,11 @@ export default function ExpensesPage() {
                         <div className="col-md-3">
                           <ValidatedField
                             label="Currency"
+                            labelClassName="form-label fw-semibold expense-form-label"
                             isInvalid={invalidFields.includes("currency")}
                           >
                             <input
-                              className="form-control input-underline"
+                              className="form-control input-underline expense-form-input"
                               value={form.currency}
                               onChange={(e) => {
                                 const { value } = e.target;
@@ -2557,11 +2582,11 @@ export default function ExpensesPage() {
                         <div className="col-md-6">
                           <ValidatedField
                             label="Description"
-                            labelClassName="form-label fw-semibold"
+                            labelClassName="form-label fw-semibold expense-form-label"
                             isInvalid={invalidFields.includes("description")}
                           >
                             <input
-                              className="form-control input-underline"
+                              className="form-control input-underline expense-form-input"
                               value={form.description}
                               onChange={(e) => {
                                 const { value } = e.target;
@@ -2573,17 +2598,21 @@ export default function ExpensesPage() {
                             />
                           </ValidatedField>
                         </div>
+                      </div>
+                    </div>
 
-                        <div className="col-12">
-                          <hr className="my-1" />
-                        </div>
-
+                    <div className="expense-form-section">
+                      <div className="expense-form-section-head">
+                        <h4>Amounts</h4>
+                        <span>Calculated live from subtotal and VAT</span>
+                      </div>
+                      <div className="row g-4">
                         <div className="col-md-3">
-                          <label className="form-label fw-semibold">
+                          <label className="form-label fw-semibold expense-form-label">
                             Amount (ex VAT)
                           </label>
                           <input
-                            className="form-control input-underline"
+                            className="form-control input-underline expense-form-input"
                             type="number"
                             value={form.subtotal}
                             onChange={(e) =>
@@ -2596,11 +2625,11 @@ export default function ExpensesPage() {
                           />
                         </div>
                         <div className="col-md-3">
-                          <label className="form-label fw-semibold">
+                          <label className="form-label fw-semibold expense-form-label">
                             VAT %
                           </label>
                           <input
-                            className="form-control input-underline"
+                            className="form-control input-underline expense-form-input"
                             type="number"
                             value={form.vat_rate}
                             onChange={(e) =>
@@ -2613,31 +2642,36 @@ export default function ExpensesPage() {
                           />
                         </div>
                         <div className="col-md-3">
-                          <label className="form-label">Tax Amount</label>
-                          <div
-                            className="form-control-plaintext fw-semibold"
-                            style={{ fontSize: 14 }}
-                          >
+                          <label className="form-label fw-semibold expense-form-label">
+                            Tax Amount
+                          </label>
+                          <div className="expense-form-readonly-value">
                             {formatCurrency(calc.tax, form.currency)}
                           </div>
                         </div>
                         <div className="col-md-3">
-                          <label className="form-label">Total</label>
-                          <div
-                            className="form-control-plaintext fw-bold text-primary"
-                            style={{ fontSize: 16 }}
-                          >
+                          <label className="form-label fw-semibold expense-form-label">
+                            Total
+                          </label>
+                          <div className="expense-form-readonly-value expense-form-readonly-value-primary">
                             {formatCurrency(calc.total, form.currency)}
                           </div>
                         </div>
+                      </div>
+                    </div>
 
+                    <div className="expense-form-section">
+                      <div className="expense-form-section-head">
+                        <h4>Notes</h4>
+                      </div>
+                      <div className="row g-4">
                         <div className="col-12">
-                          <label className="form-label fw-semibold">
-                            Notes
+                          <label className="form-label fw-semibold expense-form-label">
+                            Internal Notes
                           </label>
                           <textarea
-                            className="form-control input-underline"
-                            rows={3}
+                            className="form-control input-underline expense-form-input expense-form-textarea"
+                            rows={4}
                             value={form.notes}
                             onChange={(e) =>
                               setForm((p) => ({ ...p, notes: e.target.value }))
@@ -2779,7 +2813,7 @@ export default function ExpensesPage() {
                 onClick={saveCategory}
                 disabled={saving || !categoryFormName.trim()}
               >
-                {saving ? "SavingÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦" : editingCategoryId ? "Save" : "Create"}
+                {saving ? "Saving..." : editingCategoryId ? "Save" : "Create"}
               </button>
             </div>
           </div>
@@ -2788,3 +2822,4 @@ export default function ExpensesPage() {
     </>
   );
 }
+
