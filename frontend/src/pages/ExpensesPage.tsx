@@ -939,36 +939,80 @@ export default function ExpensesPage() {
     setShowCategoryModal(true);
   };
 
+  const closeCategoryModal = () => {
+    setShowCategoryModal(false);
+    setEditingCategoryId(null);
+    setCategoryFormName("");
+  };
+
   const saveCategory = async () => {
     if (!companyId) {
       setError("Please select a company first.");
       return;
     }
-    if (!categoryFormName.trim()) {
+    const nextName = categoryFormName.trim();
+    if (!nextName) {
       setError("Category name is required.");
+      return;
+    }
+    const currentCategory = editingCategoryId
+      ? categories.find((category) => category.id === editingCategoryId) ?? null
+      : null;
+    const duplicateCategory = categories.find(
+      (category) =>
+        category.id !== editingCategoryId &&
+        category.name.trim().toLowerCase() === nextName.toLowerCase(),
+    );
+    if (duplicateCategory) {
+      setError("That expense category already exists.");
       return;
     }
     setSaving(true);
     setError(null);
     try {
+      let savedCategory: ExpenseCategory;
       if (editingCategoryId) {
-        await apiFetch(`/expense-categories/${editingCategoryId}`, {
+        savedCategory = await apiFetch<ExpenseCategory>(
+          `/expense-categories/${editingCategoryId}`,
+          {
           method: "PATCH",
-          body: JSON.stringify({ name: categoryFormName.trim() }),
-        });
+          body: JSON.stringify({ name: nextName }),
+        },
+        );
       } else {
-        await apiFetch("/expense-categories", {
+        savedCategory = await apiFetch<ExpenseCategory>("/expense-categories", {
           method: "POST",
           body: JSON.stringify({
             company_id: companyId,
-            name: categoryFormName.trim(),
+            name: nextName,
           }),
         });
       }
       await loadData();
-      setShowCategoryModal(false);
-      setEditingCategoryId(null);
-      setCategoryFormName("");
+      if (showQuickAddModal) {
+        setQuickCategory(savedCategory.name);
+      }
+      setForm((prev) => {
+        const currentName = (prev.category || "").trim();
+        if (!currentName && !editingCategoryId) {
+          return { ...prev, category: savedCategory.name };
+        }
+        if (
+          currentCategory &&
+          currentName.toLowerCase() === currentCategory.name.trim().toLowerCase()
+        ) {
+          return { ...prev, category: savedCategory.name };
+        }
+        return prev;
+      });
+      if (
+        currentCategory &&
+        categoryFilter.trim().toLowerCase() ===
+          currentCategory.name.trim().toLowerCase()
+      ) {
+        setCategoryFilter(savedCategory.name);
+      }
+      closeCategoryModal();
     } catch (err: any) {
       setError(err.message || "Failed to save category");
     } finally {
@@ -1037,30 +1081,6 @@ export default function ExpensesPage() {
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.download = `expenses_${new Date().toISOString().split("T")[0]}.csv`;
-    link.click();
-  };
-
-  const exportSummaryCSV = () => {
-    const rows = [
-      ["Metric", "Value"],
-      ["Total Expenses", totalExpense],
-      ["Posted Expenses", dashboardStats.postedCount],
-      ["Pending Approval", dashboardStats.draftCount],
-      ["Top Category", dashboardStats.topCategory?.name || "No Data"],
-      ["Top Category Amount", dashboardStats.topCategory?.amount || 0],
-      [],
-      ["Category", "Amount"],
-      ...categoryBreakdown.map((entry) => [entry.name, entry.amount]),
-    ];
-    const csvContent = rows
-      .map((row) =>
-        row.map((cell) => `"${String(cell ?? "").replace(/"/g, '""')}"`).join(","),
-      )
-      .join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `expense_summary_${new Date().toISOString().split("T")[0]}.csv`;
     link.click();
   };
 
@@ -1210,14 +1230,6 @@ export default function ExpensesPage() {
 
         <div className="expense-dashboard-shell">
           <div className="expense-dashboard-topbar">
-            <div className="expense-dashboard-title-block">
-              <h1>
-                Expenses
-                <span className="expense-dashboard-title-divider">|</span>
-                <span className="expense-dashboard-title-muted">Dashboard</span>
-              </h1>
-            </div>
-
             <div className="expense-dashboard-actions">
               <label className="expense-dashboard-search">
                 <Search size={18} />
@@ -1448,14 +1460,6 @@ export default function ExpensesPage() {
                   <h3>Expenses</h3>
                   <div className="expense-dashboard-card-actions">
                     <button
-                      className="expense-dashboard-secondary-btn"
-                      type="button"
-                      onClick={exportCSV}
-                    >
-                      <FileText size={17} />
-                      <span>Export Report</span>
-                    </button>
-                    <button
                       className="expense-add-btn"
                       type="button"
                       onClick={openQuickAddModal}
@@ -1648,18 +1652,18 @@ export default function ExpensesPage() {
               <button
                 type="button"
                 className="expense-dashboard-action-btn"
-                onClick={exportCSV}
+                onClick={() => openCategoryModal()}
               >
-                <Download size={18} />
-                <span>Export Report</span>
+                <FolderPlus size={18} />
+                <span>Add Category</span>
               </button>
               <button
                 type="button"
                 className="expense-dashboard-action-btn"
-                onClick={exportSummaryCSV}
+                onClick={loadData}
               >
-                <BarChart3 size={18} />
-                <span>Generate Summary</span>
+                <RefreshCw size={18} />
+                <span>Refresh Data</span>
               </button>
             </aside>
           </div>
@@ -1780,11 +1784,7 @@ export default function ExpensesPage() {
         {showCategoryModal && (
           <div
             className="expense-category-modal-overlay"
-            onClick={() => {
-              setShowCategoryModal(false);
-              setEditingCategoryId(null);
-              setCategoryFormName("");
-            }}
+            onClick={closeCategoryModal}
           >
             <div
               className="expense-category-modal"
@@ -1811,11 +1811,7 @@ export default function ExpensesPage() {
               <div className="expense-category-modal-actions">
                 <button
                   className="o-btn o-btn-secondary"
-                  onClick={() => {
-                    setShowCategoryModal(false);
-                    setEditingCategoryId(null);
-                    setCategoryFormName("");
-                  }}
+                  onClick={closeCategoryModal}
                 >
                   Cancel
                 </button>
@@ -2774,11 +2770,7 @@ export default function ExpensesPage() {
             >
               <button
                 className="o-btn o-btn-secondary"
-                onClick={() => {
-                  setShowCategoryModal(false);
-                  setEditingCategoryId(null);
-                  setCategoryFormName("");
-                }}
+                onClick={closeCategoryModal}
               >
                 Cancel
               </button>

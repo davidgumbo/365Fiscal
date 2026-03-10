@@ -17,9 +17,9 @@
 .expense-dashboard-topbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 24px;
-  margin-bottom: 28px;
+  margin-bottom: 20px;
 }
 
 .expense-dashboard-title-block {
