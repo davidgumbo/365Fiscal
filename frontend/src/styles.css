@@ -6719,42 +6719,42 @@ tr:hover .o-quick-actions {
 
 .app-launcher-watermark {
   position: absolute;
-  left: -36px;
-  bottom: 82px;
-  width: 320px;
-  height: 176px;
+  left: -74px;
+  bottom: 60px;
+  width: 430px;
+  height: 220px;
   pointer-events: none;
   z-index: 0;
-  opacity: 0.55;
+  opacity: 0.62;
 }
 
 .app-launcher-watermark span {
   position: absolute;
   left: 0;
   border-radius: 999px;
-  border-top: 4px solid transparent;
-  transform: rotate(-9deg);
+  border-top: 7px solid transparent;
+  transform: rotate(-10deg);
 }
 
 .app-launcher-watermark span:nth-child(1) {
   bottom: 0;
-  width: 238px;
-  height: 108px;
-  border-top-color: rgba(239, 68, 68, 0.42);
+  width: 318px;
+  height: 134px;
+  border-top-color: rgba(239, 68, 68, 0.44);
 }
 
 .app-launcher-watermark span:nth-child(2) {
-  bottom: 26px;
-  width: 270px;
-  height: 124px;
-  border-top-color: rgba(59, 130, 246, 0.34);
+  bottom: 34px;
+  width: 368px;
+  height: 164px;
+  border-top-color: rgba(59, 130, 246, 0.38);
 }
 
 .app-launcher-watermark span:nth-child(3) {
-  bottom: 54px;
-  width: 300px;
-  height: 138px;
-  border-top-color: rgba(239, 68, 68, 0.24);
+  bottom: 72px;
+  width: 418px;
+  height: 188px;
+  border-top-color: rgba(239, 68, 68, 0.28);
 }
 
 .app-launcher-header {
@@ -6805,28 +6805,28 @@ tr:hover .o-quick-actions {
   }
 
   .app-launcher-watermark {
-    left: -62px;
-    bottom: 44px;
-    width: 240px;
-    height: 140px;
-    opacity: 0.42;
+    left: -78px;
+    bottom: 30px;
+    width: 310px;
+    height: 170px;
+    opacity: 0.5;
   }
 
   .app-launcher-watermark span:nth-child(1) {
-    width: 170px;
-    height: 78px;
-  }
-
-  .app-launcher-watermark span:nth-child(2) {
-    bottom: 20px;
-    width: 196px;
+    width: 220px;
     height: 92px;
   }
 
+  .app-launcher-watermark span:nth-child(2) {
+    bottom: 26px;
+    width: 258px;
+    height: 116px;
+  }
+
   .app-launcher-watermark span:nth-child(3) {
-    bottom: 40px;
-    width: 220px;
-    height: 102px;
+    bottom: 52px;
+    width: 292px;
+    height: 132px;
   }
 }
 
@@ -7035,8 +7035,8 @@ tr:hover .o-quick-actions {
   justify-content: center;
   transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
   box-shadow:
-    0 7px 16px rgba(15, 23, 42, 0.15),
-    0 2px 5px rgba(15, 23, 42, 0.08);
+    0 6px 14px rgba(15, 23, 42, 0.13),
+    0 2px 4px rgba(15, 23, 42, 0.07);
 }
 
 .app-tile-icon-wrapper::before {
@@ -7047,9 +7047,9 @@ tr:hover .o-quick-actions {
   background:
     linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.2) 0%,
-      rgba(255, 255, 255, 0.08) 24%,
-      rgba(255, 255, 255, 0) 54%
+      rgba(255, 255, 255, 0.14) 0%,
+      rgba(255, 255, 255, 0.05) 22%,
+      rgba(255, 255, 255, 0) 50%
     );
   pointer-events: none;
 }
@@ -7064,20 +7064,20 @@ tr:hover .o-quick-actions {
   border-radius: 999px;
   background: linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0.2),
-    rgba(255, 255, 255, 0.04)
+    rgba(255, 255, 255, 0.12),
+    rgba(255, 255, 255, 0.02)
   );
   filter: blur(1px);
-  opacity: 0.6;
+  opacity: 0.42;
   pointer-events: none;
 }
 
 .app-tile:hover .app-tile-icon-wrapper {
   transform: translateY(-3px) scale(1.03);
   box-shadow:
-    0 12px 24px rgba(15, 23, 42, 0.18),
-    0 0 18px var(--app-tile-glow, rgba(255, 255, 255, 0.12));
-  filter: saturate(1.02) brightness(1.01);
+    0 10px 20px rgba(15, 23, 42, 0.16),
+    0 0 14px var(--app-tile-glow, rgba(255, 255, 255, 0.1));
+  filter: saturate(1.01) brightness(1.005);
 }
 
 .app-tile-icon {
