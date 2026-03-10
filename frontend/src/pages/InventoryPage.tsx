@@ -1,4 +1,6 @@
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo, useRef, type ChangeEvent } from "react";
+import html2pdf from "html2pdf.js";
+import * as XLSX from "xlsx";
 import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../api";
 import { useMe } from "../hooks/useMe";
@@ -6,11 +8,19 @@ import { useCompanies, Company } from "../hooks/useCompanies";
 import {
   ArrowUpRight,
   Boxes,
+  Check,
   Clock3,
   DollarSign,
   Package,
+  PenLine,
+  Plus,
+  Printer,
+  Trash2,
   TriangleAlert,
+  Download,
+  Upload,
   Warehouse as WarehouseGlyph,
+  X,
   Zap,
 } from "lucide-react";
 import ValidationAlert from "../components/ValidationAlert";
@@ -19,7 +29,8 @@ import {
   getMissingRequiredFields,
   getRequiredFieldError,
 } from "../utils/formValidation";
-import { SidebarMenu } from "../components/SidebarMenu";
+import { Sidebar } from "../components/Sidebar";
+import type { SidebarSection } from "../types/sidebar";
 import "./InventoryPage.css";
 
 // ============= TYPES =============
@@ -67,6 +78,15 @@ type TaxSetting = {
   zimra_tax_code: string;
   is_zimra_tax: boolean;
   is_active: boolean;
+};
+
+type CompanySettings = {
+  logo_data?: string;
+  document_layout?: string;
+  document_footer?: string;
+  document_header?: string;
+  document_watermark?: string;
+  document_watermark_opacity?: string;
 };
 
 type ProductWithStock = Product & {
@@ -123,6 +143,13 @@ type StockQuant = {
   total_value: number;
 };
 
+type StockMoveLineInput = {
+  line_id: string;
+  product_id: number | null;
+  quantity: number;
+  unit_cost: number;
+};
+
 // ============= CONSTANTS =============
 const MOVE_TYPES = [
   { value: "in", label: "Receipt" },
@@ -152,6 +179,18 @@ const UOMS = [
   { value: "BOX", label: "Box" },
   { value: "PACK", label: "Pack" },
 ];
+
+const PRODUCT_IMPORT_HEADER_ALIASES = {
+  product: ["product", "name", "productname"],
+  reference: ["reference", "ref", "productreference"],
+  location: ["location", "stocklocation"],
+  category: ["category", "productcategory"],
+  type: ["type", "producttype"],
+  on_hand: ["onhand", "qtyonhand", "quantityonhand", "qty", "quantity"],
+  sale_price: ["saleprice", "price", "sellingprice"],
+  sale_cost: ["salecost", "salescost"],
+  cost: ["cost", "purchasecost", "unitcost"],
+};
 
 type MainView =
   | "overview"
@@ -269,37 +308,16 @@ const OperationsIcon = ({ color }: InventoryIconProps) => (
   </svg>
 );
 
-const TrashIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="16"
-    height="16"
-    fill="currentColor"
-    className="bi bi-trash3"
-    viewBox="0 0 16 16"
-    aria-hidden="true"
-  >
-    <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5" />
-  </svg>
-);
+type MenuTab = {
+  key: Exclude<MainView, "operations" | "reporting">;
+  label: string;
+  color: string;
+  icon: (props: InventoryIconProps) => JSX.Element;
+};
 
-const EditIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-  >
-    <path d="M12 20h9" />
-    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
-  </svg>
-);
+const TrashIcon = () => <Trash2 size={16} strokeWidth={2} aria-hidden="true" />;
+
+const EditIcon = () => <PenLine size={16} strokeWidth={2} aria-hidden="true" />;
 
 export default function InventoryPage() {
   const navigate = useNavigate();
@@ -333,12 +351,99 @@ export default function InventoryPage() {
   const [stockMoves, setStockMoves] = useState<StockMove[]>([]);
   const [stockQuants, setStockQuants] = useState<StockQuant[]>([]);
   const [taxSettings, setTaxSettings] = useState<TaxSetting[]>([]);
+  const [companySettings, setCompanySettings] =
+    useState<CompanySettings | null>(null);
 
   // UI states
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const BASE_MENU_TABS: MenuTab[] = [
+    {
+      key: "overview",
+      label: "OVERVIEW",
+      color: "var(--blue-600)",
+      icon: OverviewIcon,
+    },
+    {
+      key: "products",
+      label: "PRODUCTS",
+      color: "var(--amber-500)",
+      icon: ProductsIcon,
+    },
+    {
+      key: "categories",
+      label: "PRODUCT CATEGORIES",
+      color: "var(--indigo-500)",
+      icon: CategoriesIcon,
+    },
+    {
+      key: "warehouses",
+      label: "WAREHOUSES",
+      color: "var(--emerald-500)",
+      icon: WarehousesIcon,
+    },
+  ];
+
+  const menuSections = useMemo<SidebarSection[]>(() => {
+    const baseItems = BASE_MENU_TABS.map((tab) => ({
+      id: `menu-${tab.key}`,
+      label: tab.label,
+      icon: <tab.icon color={tab.color} />,
+      isActive: mainView === tab.key,
+      onClick: () => {
+        setMainView(tab.key);
+        setSubView("list");
+        setSearchQuery("");
+      },
+    }));
+
+    const operationsItem = {
+      id: "menu-operations",
+      label: "OPERATIONS",
+      icon: <OperationsIcon color="var(--violet-500)" />,
+      isActive: mainView === "operations",
+      onClick: () => {
+        setMainView("operations");
+        setSubView("list");
+        setSearchQuery("");
+      },
+      dropdownItems: [
+        {
+          id: "operations-list",
+          label: "Stock Moves",
+          isActive: mainView === "operations" && subView === "list",
+          onClick: () => {
+            setMainView("operations");
+            setSubView("list");
+            setOperationsTab("moves");
+            setSearchQuery("");
+          },
+        },
+        {
+          id: "operations-form",
+          label: "New operation",
+          isActive: mainView === "operations" && subView === "form",
+          onClick: () => {
+            setMainView("operations");
+            setSubView("form");
+            setOperationsTab("moves");
+            setSearchQuery("");
+          },
+        },
+      ],
+    };
+
+    return [
+      {
+        id: "main-menu",
+        title: "MENU",
+        items: [...baseItems, operationsItem],
+      },
+    ];
+  }, [mainView, subView, setMainView, setSubView, setSearchQuery]);
 
   // Form states
   const [selectedProductId, setSelectedProductId] = useState<number | null>(
@@ -400,6 +505,8 @@ export default function InventoryPage() {
     useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const productImportInputRef = useRef<HTMLInputElement>(null);
+  const [importingProducts, setImportingProducts] = useState(false);
 
   const clearPendingProductImage = () => {
     if (pendingProductImagePreviewUrl) {
@@ -448,6 +555,20 @@ export default function InventoryPage() {
     source_document: "",
     notes: "",
   });
+  const moveLineIdRef = useRef(0);
+  const createMoveLine = (
+    overrides: Partial<StockMoveLineInput> = {},
+  ): StockMoveLineInput => {
+    moveLineIdRef.current += 1;
+    return {
+      line_id: `ml-${moveLineIdRef.current}`,
+      product_id: null,
+      quantity: 0,
+      unit_cost: 0,
+      ...overrides,
+    };
+  };
+  const [moveLines, setMoveLines] = useState<StockMoveLineInput[]>([]);
   const [invalidMoveFields, setInvalidMoveFields] = useState<string[]>([]);
   const [quickStockWarehouseId, setQuickStockWarehouseId] = useState<
     number | null
@@ -468,75 +589,23 @@ export default function InventoryPage() {
     [],
   );
   const [filterCategoryId, setFilterCategoryId] = useState<number | null>(null);
+  const [filterWarehouseId, setFilterWarehouseId] = useState<number | null>(
+    null,
+  );
+  const [filterLocationId, setFilterLocationId] = useState<number | null>(null);
 
   // Operations sub-tab
-  const [operationsTab, setOperationsTab] = useState<"moves" | "quants">(
-    "moves",
-  );
+  const [operationsTab, setOperationsTab] = useState<
+    "moves" | "quants" | "adjustments"
+  >("moves");
   const [filterState, setFilterState] = useState<string>("all");
-
-  const operationsDropdownContent = (
-    <div className="o-sidebar-dropdown-content">
-      <button
-        type="button"
-        className={`o-btn ${
-          operationsTab === "moves" ? "o-btn-primary" : "o-btn-secondary"
-        }`}
-        onClick={() => {
-          setMainView("operations");
-          setOperationsTab("moves");
-        }}
-      >
-        Stock Moves
-      </button>
-      <button
-        type="button"
-        className={`o-btn ${
-          operationsTab === "quants" ? "o-btn-primary" : "o-btn-secondary"
-        }`}
-        onClick={() => {
-          setMainView("operations");
-          setOperationsTab("quants");
-        }}
-      >
-        Stock On Hand
-      </button>
-    </div>
-  );
-
-  const inventoryMenuItems = [
-    {
-      key: "overview",
-      label: "OVERVIEW",
-      icon: OverviewIcon,
-      color: "var(--blue-600)",
-    },
-    {
-      key: "products",
-      label: "PRODUCTS",
-      icon: ProductsIcon,
-      color: "var(--amber-500)",
-    },
-    {
-      key: "categories",
-      label: "PRODUCT CATEGORIES",
-      icon: CategoriesIcon,
-      color: "var(--indigo-500)",
-    },
-    {
-      key: "warehouses",
-      label: "WAREHOUSES",
-      icon: WarehousesIcon,
-      color: "var(--emerald-500)",
-    },
-    {
-      key: "operations",
-      label: "OPERATIONS",
-      icon: OperationsIcon,
-      color: "var(--violet-500)",
-      dropdown: operationsDropdownContent,
-    },
-  ];
+  const [filterMoveType, setFilterMoveType] = useState<string>("all");
+  const [countedByQuantId, setCountedByQuantId] = useState<
+    Record<number, string>
+  >({});
+  const [showOnlyChangedAdjustments, setShowOnlyChangedAdjustments] =
+    useState(false);
+  const [applyingAdjustments, setApplyingAdjustments] = useState(false);
 
   // ============= EFFECTS =============
   // Portal users auto-select their first company
@@ -552,6 +621,27 @@ export default function InventoryPage() {
     }
   }, [companyId]);
 
+  useEffect(() => {
+    if (!stockQuants.length) {
+      setCountedByQuantId({});
+      return;
+    }
+    setCountedByQuantId((previous) => {
+      const next: Record<number, string> = {};
+      stockQuants.forEach((quant) => {
+        const defaultQty = Number.isFinite(quant.quantity) ? quant.quantity : 0;
+        next[quant.id] = previous[quant.id] ?? String(defaultQty);
+      });
+      return next;
+    });
+  }, [stockQuants]);
+
+  useEffect(() => {
+    if (operationsTab !== "moves") {
+      setFilterMoveType("all");
+    }
+  }, [operationsTab]);
+
   // ============= DATA LOADING =============
   const loadAllData = async () => {
     if (!companyId) {
@@ -561,16 +651,20 @@ export default function InventoryPage() {
     console.log("loadAllData starting for companyId:", companyId);
     setLoading(true);
     try {
-      const [prods, cats, whs, moves, quants, taxes] = await Promise.all([
-        apiFetch<ProductWithStock[]>(
-          `/products/with-stock?company_id=${companyId}`,
-        ),
-        apiFetch<Category[]>(`/categories?company_id=${companyId}`),
-        apiFetch<Warehouse[]>(`/warehouses?company_id=${companyId}`),
-        apiFetch<StockMove[]>(`/stock/moves?company_id=${companyId}`),
-        apiFetch<StockQuant[]>(`/stock/quants?company_id=${companyId}`),
-        apiFetch<TaxSetting[]>(`/tax-settings?company_id=${companyId}`),
-      ]);
+      const [prods, cats, whs, moves, quants, taxes, settings] =
+        await Promise.all([
+          apiFetch<ProductWithStock[]>(
+            `/products/with-stock?company_id=${companyId}`,
+          ),
+          apiFetch<Category[]>(`/categories?company_id=${companyId}`),
+          apiFetch<Warehouse[]>(`/warehouses?company_id=${companyId}`),
+          apiFetch<StockMove[]>(`/stock/moves?company_id=${companyId}`),
+          apiFetch<StockQuant[]>(`/stock/quants?company_id=${companyId}`),
+          apiFetch<TaxSetting[]>(`/tax-settings?company_id=${companyId}`),
+          apiFetch<CompanySettings>(
+            `/company-settings?company_id=${companyId}`,
+          ),
+        ]);
       console.log("loadAllData results:", {
         prods: prods.length,
         cats: cats.length,
@@ -604,6 +698,7 @@ export default function InventoryPage() {
       setStockMoves(moves);
       setStockQuants(quants);
       setTaxSettings(taxes);
+      setCompanySettings(settings ?? null);
 
       // Load locations for all warehouses
       if (whs.length) {
@@ -841,6 +936,489 @@ export default function InventoryPage() {
     }
   };
 
+  const normalizeImportHeader = (value: unknown) =>
+    String(value ?? "")
+      .trim()
+      .toLowerCase()
+      .replace(/[\s_-]+/g, "");
+
+  const normalizeImportValue = (value: unknown) => String(value ?? "").trim();
+
+  const findImportColumnIndex = (
+    headers: string[],
+    candidates: readonly string[],
+  ) => headers.findIndex((header) => candidates.includes(header));
+
+  const toImportQuantity = (value: unknown) => {
+    if (typeof value === "number") {
+      return Number.isFinite(value) ? value : 0;
+    }
+    const cleaned = String(value ?? "")
+      .trim()
+      .replace(/,/g, "");
+    const parsed = Number(cleaned);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+
+  const mapImportedProductType = (value: string) => {
+    const normalized = value.trim().toLowerCase();
+    if (!normalized) return "storable";
+    if (
+      normalized.includes("service") ||
+      normalized === "srv" ||
+      normalized === "services"
+    ) {
+      return "service";
+    }
+    if (
+      normalized.includes("consum") ||
+      normalized === "consumable" ||
+      normalized === "consume"
+    ) {
+      return "consumable";
+    }
+    return "storable";
+  };
+
+  const buildImportCode = (
+    label: string,
+    existingCodes: Set<string>,
+    fallbackPrefix: string,
+  ) => {
+    const base =
+      label
+        .toUpperCase()
+        .replace(/[^A-Z0-9]+/g, "")
+        .slice(0, 8) || fallbackPrefix;
+    let candidate = base;
+    let suffix = 1;
+    while (existingCodes.has(candidate)) {
+      candidate = `${base.slice(0, Math.max(2, 8 - String(suffix).length))}${suffix}`;
+      suffix += 1;
+    }
+    existingCodes.add(candidate);
+    return candidate;
+  };
+
+  const resolveImportLocationNames = (rawLocation: string) => {
+    const cleaned = rawLocation.trim();
+    if (!cleaned) {
+      return { warehouseName: "Main Warehouse", locationName: "Stock" };
+    }
+    const parts = cleaned
+      .split(/\s*(?:\/|>|\\|\|)\s*/)
+      .map((part) => part.trim())
+      .filter(Boolean);
+    if (parts.length >= 2) {
+      return {
+        warehouseName: parts[0],
+        locationName: parts[1],
+      };
+    }
+    return { warehouseName: "Main Warehouse", locationName: cleaned };
+  };
+
+  const handleProductsImport = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (!companyId) {
+      alert("Please select a company first.");
+      return;
+    }
+
+    setImportingProducts(true);
+    setError(null);
+    try {
+      const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
+      const firstSheet = workbook.SheetNames[0];
+      if (!firstSheet) {
+        throw new Error("No sheet found in the selected file.");
+      }
+      const rows = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], {
+        header: 1,
+        defval: "",
+      }) as (string | number | null)[][];
+      if (rows.length < 2) {
+        throw new Error(
+          "The import file is empty. Add headers and at least one product row.",
+        );
+      }
+
+      const headers = (rows[0] ?? []).map(normalizeImportHeader);
+      const productIndex = findImportColumnIndex(
+        headers,
+        PRODUCT_IMPORT_HEADER_ALIASES.product,
+      );
+      const referenceIndex = findImportColumnIndex(
+        headers,
+        PRODUCT_IMPORT_HEADER_ALIASES.reference,
+      );
+      const locationIndex = findImportColumnIndex(
+        headers,
+        PRODUCT_IMPORT_HEADER_ALIASES.location,
+      );
+      const categoryIndex = findImportColumnIndex(
+        headers,
+        PRODUCT_IMPORT_HEADER_ALIASES.category,
+      );
+      const typeIndex = findImportColumnIndex(
+        headers,
+        PRODUCT_IMPORT_HEADER_ALIASES.type,
+      );
+      const onHandIndex = findImportColumnIndex(
+        headers,
+        PRODUCT_IMPORT_HEADER_ALIASES.on_hand,
+      );
+      const salePriceIndex = findImportColumnIndex(
+        headers,
+        PRODUCT_IMPORT_HEADER_ALIASES.sale_price,
+      );
+      const saleCostIndex = findImportColumnIndex(
+        headers,
+        PRODUCT_IMPORT_HEADER_ALIASES.sale_cost,
+      );
+      const costIndex = findImportColumnIndex(
+        headers,
+        PRODUCT_IMPORT_HEADER_ALIASES.cost,
+      );
+
+      if (productIndex === -1) {
+        throw new Error(
+          "Missing Product column. Expected headers: Product, Reference, Location, Category, Type, On Hand, Sale Price, Sale Cost, Cost.",
+        );
+      }
+
+      const localCategories = [...categories];
+      const localWarehouses = [...warehouses];
+      const localLocations = [...locations];
+      const categoryByName = new Map(
+        localCategories.map((category) => [
+          category.name.trim().toLowerCase(),
+          category,
+        ]),
+      );
+      const warehouseByName = new Map(
+        localWarehouses.map((warehouse) => [
+          warehouse.name.trim().toLowerCase(),
+          warehouse,
+        ]),
+      );
+      const locationByKey = new Map(
+        localLocations.map((location) => [
+          `${location.warehouse_id}:${location.name.trim().toLowerCase()}`,
+          location,
+        ]),
+      );
+      const warehouseCodes = new Set(
+        localWarehouses.map((warehouse) => warehouse.code.trim().toUpperCase()),
+      );
+      const locationCodes = new Set(
+        localLocations.map((location) => location.code.trim().toUpperCase()),
+      );
+
+      const ensureCategory = async (name: string) => {
+        const trimmed = name.trim();
+        if (!trimmed) return null;
+        const key = trimmed.toLowerCase();
+        const existing = categoryByName.get(key);
+        if (existing) return existing.id;
+        const created = await apiFetch<Category>("/categories", {
+          method: "POST",
+          body: JSON.stringify({ company_id: companyId, name: trimmed }),
+        });
+        localCategories.push(created);
+        categoryByName.set(key, created);
+        return created.id;
+      };
+
+      const ensureLocation = async (rawLocation: string) => {
+        const { warehouseName, locationName } =
+          resolveImportLocationNames(rawLocation);
+        const warehouseKey = warehouseName.trim().toLowerCase();
+        let warehouse = warehouseByName.get(warehouseKey);
+        if (!warehouse) {
+          warehouse = await apiFetch<Warehouse>("/warehouses", {
+            method: "POST",
+            body: JSON.stringify({
+              company_id: companyId,
+              name: warehouseName,
+              code: buildImportCode(warehouseName, warehouseCodes, "WH"),
+              address: "",
+            }),
+          });
+          localWarehouses.push(warehouse);
+          warehouseByName.set(warehouseKey, warehouse);
+        }
+
+        const locationKey = `${warehouse.id}:${locationName.trim().toLowerCase()}`;
+        let location = locationByKey.get(locationKey);
+        if (!location) {
+          location = await apiFetch<Location>("/locations", {
+            method: "POST",
+            body: JSON.stringify({
+              warehouse_id: warehouse.id,
+              name: locationName,
+              code: buildImportCode(locationName, locationCodes, "LOC"),
+              is_primary: localLocations.every(
+                (entry) => entry.warehouse_id !== warehouse!.id,
+              ),
+            }),
+          });
+          localLocations.push(location);
+          locationByKey.set(locationKey, location);
+        }
+        return {
+          warehouseId: warehouse.id,
+          locationId: location.id,
+        };
+      };
+
+      const existingProductsByReference = new Map<string, Product>(
+        products
+          .filter((product) => product.reference?.trim())
+          .map((product) => [product.reference.trim().toLowerCase(), product]),
+      );
+      const existingProductsByName = new Map<string, Product>(
+        products.map((product) => [product.name.trim().toLowerCase(), product]),
+      );
+
+      let importedCount = 0;
+      let adjustedCount = 0;
+      const rowErrors: string[] = [];
+
+      for (let rowIndex = 1; rowIndex < rows.length; rowIndex += 1) {
+        const row = rows[rowIndex] ?? [];
+        const productName = normalizeImportValue(row[productIndex]);
+        const reference =
+          referenceIndex >= 0 ? normalizeImportValue(row[referenceIndex]) : "";
+        const locationLabel =
+          locationIndex >= 0 ? normalizeImportValue(row[locationIndex]) : "";
+        const categoryName =
+          categoryIndex >= 0 ? normalizeImportValue(row[categoryIndex]) : "";
+        const typeLabel =
+          typeIndex >= 0 ? normalizeImportValue(row[typeIndex]) : "";
+        const onHand =
+          onHandIndex >= 0 ? toImportQuantity(row[onHandIndex]) : 0;
+        const salePrice =
+          salePriceIndex >= 0
+            ? toImportQuantity(row[salePriceIndex])
+            : existingProductsByReference.get(reference.trim().toLowerCase())
+                ?.sale_price ||
+              existingProductsByName.get(productName.trim().toLowerCase())
+                ?.sale_price ||
+              0;
+        const saleCost =
+          saleCostIndex >= 0
+            ? toImportQuantity(row[saleCostIndex])
+            : existingProductsByReference.get(reference.trim().toLowerCase())
+                ?.sales_cost ||
+              existingProductsByName.get(productName.trim().toLowerCase())
+                ?.sales_cost ||
+              0;
+        const purchaseCost =
+          costIndex >= 0
+            ? toImportQuantity(row[costIndex])
+            : existingProductsByReference.get(reference.trim().toLowerCase())
+                ?.purchase_cost ||
+              existingProductsByName.get(productName.trim().toLowerCase())
+                ?.purchase_cost ||
+              0;
+
+        const isRowEmpty =
+          [
+            productName,
+            reference,
+            locationLabel,
+            categoryName,
+            typeLabel,
+          ].every((value) => !value) &&
+          onHand === 0 &&
+          salePrice === 0 &&
+          saleCost === 0 &&
+          purchaseCost === 0;
+        if (isRowEmpty) {
+          continue;
+        }
+        if (!productName) {
+          rowErrors.push(`Row ${rowIndex + 1}: Product is required.`);
+          continue;
+        }
+
+        try {
+          const categoryId = await ensureCategory(categoryName);
+          const mappedType = mapImportedProductType(typeLabel);
+          const existingProduct =
+            (reference &&
+              existingProductsByReference.get(
+                reference.trim().toLowerCase(),
+              )) ||
+            existingProductsByName.get(productName.trim().toLowerCase()) ||
+            null;
+          const productPayload = {
+            company_id: companyId,
+            name: productName,
+            description: existingProduct?.description || "",
+            reference,
+            barcode: existingProduct?.barcode || "",
+            category_id: categoryId,
+            product_type: mappedType,
+            uom: existingProduct?.uom || "Units",
+            sale_price: salePrice,
+            sales_cost: saleCost,
+            purchase_cost: purchaseCost,
+            tax_rate: existingProduct?.tax_rate || 15,
+            tax_id: existingProduct?.tax_id ?? null,
+            hs_code: existingProduct?.hs_code || "",
+            track_inventory: existingProduct?.track_inventory ?? true,
+            min_stock_quantity: existingProduct?.min_stock_quantity || 0,
+            max_stock_quantity: existingProduct?.max_stock_quantity || 0,
+            reorder_point: existingProduct?.reorder_point || 0,
+            weight: existingProduct?.weight || 0,
+            weight_uom: existingProduct?.weight_uom || "kg",
+            is_active: existingProduct?.is_active ?? true,
+            can_be_sold: existingProduct?.can_be_sold ?? true,
+            can_be_purchased: existingProduct?.can_be_purchased ?? true,
+            show_in_pos: existingProduct?.show_in_pos ?? true,
+          };
+
+          const savedProduct = existingProduct
+            ? await apiFetch<Product>(`/products/${existingProduct.id}`, {
+                method: "PATCH",
+                body: JSON.stringify(productPayload),
+              })
+            : await apiFetch<Product>("/products", {
+                method: "POST",
+                body: JSON.stringify(productPayload),
+              });
+
+          existingProductsByName.set(
+            productName.trim().toLowerCase(),
+            savedProduct,
+          );
+          if (reference) {
+            existingProductsByReference.set(
+              reference.trim().toLowerCase(),
+              savedProduct,
+            );
+          }
+          importedCount += 1;
+
+          if (onHand > 0) {
+            const { warehouseId, locationId } =
+              await ensureLocation(locationLabel);
+            const move = await apiFetch<StockMove>("/stock/moves", {
+              method: "POST",
+              body: JSON.stringify({
+                company_id: companyId,
+                product_id: savedProduct.id,
+                warehouse_id: warehouseId,
+                location_id: locationId,
+                move_type: "adjustment",
+                quantity: onHand,
+                unit_cost:
+                  Number.isFinite(savedProduct.purchase_cost) &&
+                  savedProduct.purchase_cost > 0
+                    ? savedProduct.purchase_cost
+                    : 0,
+                reference: "",
+                source_document: `Product import: ${file.name}`,
+                notes: `Imported opening stock for ${productName}`,
+              }),
+            });
+            await apiFetch(`/stock/moves/${move.id}/confirm`, {
+              method: "POST",
+            });
+            adjustedCount += 1;
+          }
+        } catch (error: any) {
+          rowErrors.push(
+            `Row ${rowIndex + 1}: ${error?.message || "Import failed."}`,
+          );
+        }
+      }
+
+      await loadAllData();
+      if (!importedCount && rowErrors.length) {
+        throw new Error(rowErrors.slice(0, 5).join(" "));
+      }
+      if (rowErrors.length) {
+        setError(rowErrors.slice(0, 5).join(" "));
+      }
+      alert(
+        `Imported ${importedCount} product${importedCount === 1 ? "" : "s"}${
+          adjustedCount
+            ? ` and applied stock to ${adjustedCount} item${
+                adjustedCount === 1 ? "" : "s"
+              }`
+            : ""
+        }.`,
+      );
+    } catch (error: any) {
+      setError(error?.message || "Failed to import products.");
+    } finally {
+      setImportingProducts(false);
+    }
+  };
+
+  const exportProducts = (format: "csv" | "xlsx") => {
+    const rows = filteredProducts.map((product) => {
+      const category = categories.find(
+        (entry) => entry.id === product.category_id,
+      );
+      return {
+        Product: product.name,
+        Reference: product.reference || "",
+        Location: productLocationById.get(product.id) || "",
+        Category: category?.name || "",
+        Type:
+          PRODUCT_TYPES.find((entry) => entry.value === product.product_type)
+            ?.label || product.product_type,
+        "On Hand": Number.isFinite(product.quantity_on_hand)
+          ? product.quantity_on_hand
+          : 0,
+        Available: Number.isFinite(product.quantity_available)
+          ? product.quantity_available
+          : 0,
+        "Sale Price": Number.isFinite(product.sale_price)
+          ? product.sale_price
+          : 0,
+        "Sale Cost": Number.isFinite(product.sales_cost)
+          ? product.sales_cost
+          : 0,
+        Cost: Number.isFinite(product.purchase_cost)
+          ? product.purchase_cost
+          : 0,
+        "Stock Value": Number.isFinite(product.stock_value)
+          ? product.stock_value
+          : 0,
+      };
+    });
+    if (!rows.length) {
+      alert("There are no products to export.");
+      return;
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    if (format === "csv") {
+      const csv = XLSX.utils.sheet_to_csv(worksheet);
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `inventory_products_${new Date().toISOString().split("T")[0]}.csv`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+      return;
+    }
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Products");
+    XLSX.writeFile(
+      workbook,
+      `inventory_products_${new Date().toISOString().split("T")[0]}.xlsx`,
+    );
+  };
+
   // ============= WAREHOUSE ACTIONS =============
   const startNewWarehouse = () => {
     setSelectedWarehouseId(null);
@@ -858,6 +1436,20 @@ export default function InventoryPage() {
       address: warehouse.address,
     });
     setSubView("form");
+  };
+
+  const openWarehouseProducts = (warehouseId: number) => {
+    setFilterWarehouseId(warehouseId);
+    setFilterLocationId(null);
+    setMainView("products");
+    setSubView("list");
+  };
+
+  const openLocationProducts = (warehouseId: number, locationId: number) => {
+    setFilterWarehouseId(warehouseId);
+    setFilterLocationId(locationId);
+    setMainView("products");
+    setSubView("list");
   };
 
   const saveWarehouse = async () => {
@@ -1082,6 +1674,26 @@ export default function InventoryPage() {
     preferredWarehouseId: number | null = null,
     preferredLocationId: number | null = null,
   ) => {
+    const targetQuant = stockQuants.find((quant) => {
+      if (quant.product_id !== product.id) return false;
+      if (preferredLocationId && quant.location_id !== preferredLocationId) {
+        return false;
+      }
+      if (preferredWarehouseId && quant.warehouse_id !== preferredWarehouseId) {
+        return false;
+      }
+      return true;
+    });
+
+    if (targetQuant) {
+      setMainView("operations");
+      setOperationsTab("adjustments");
+      setSubView("list");
+      setShowOnlyChangedAdjustments(false);
+      setSearchQuery(product.name);
+      return;
+    }
+
     const { warehouseId, locationId } = resolveMoveWarehouseLocation(
       product.id,
       preferredWarehouseId,
@@ -1102,6 +1714,13 @@ export default function InventoryPage() {
       source_document: "",
       notes: "",
     });
+    setMoveLines([
+      createMoveLine({
+        product_id: product.id,
+        quantity: 0,
+        unit_cost: product.purchase_cost ?? 0,
+      }),
+    ]);
     setSubView("form");
     setInvalidMoveFields([]);
     setError(null);
@@ -1159,6 +1778,77 @@ export default function InventoryPage() {
     }
   };
 
+  const updateCountedQuantity = (quantId: number, value: string) => {
+    setCountedByQuantId((previous) => ({ ...previous, [quantId]: value }));
+  };
+
+  const resetCountedAdjustments = () => {
+    const reset: Record<number, string> = {};
+    stockQuants.forEach((quant) => {
+      const qty = Number.isFinite(quant.quantity) ? quant.quantity : 0;
+      reset[quant.id] = String(qty);
+    });
+    setCountedByQuantId(reset);
+    setShowOnlyChangedAdjustments(false);
+  };
+
+  const applyInventoryAdjustments = async (
+    rowIds?: number[],
+  ): Promise<void> => {
+    if (!companyId) {
+      setError("Please select a company first.");
+      return;
+    }
+
+    const targetRows = adjustmentRows.filter((row) =>
+      rowIds ? rowIds.includes(row.quantId) : row.changed,
+    );
+
+    const invalidRow = targetRows.find((row) => !row.isValid);
+    if (invalidRow) {
+      setError(
+        `Counted quantity for ${invalidRow.productName} is invalid. Use a value of 0 or more.`,
+      );
+      return;
+    }
+
+    const rowsToApply = targetRows.filter((row) => row.changed);
+    if (rowsToApply.length === 0) {
+      setError("No counted differences to apply.");
+      return;
+    }
+
+    setApplyingAdjustments(true);
+    setError(null);
+    try {
+      for (const row of rowsToApply) {
+        const created = await apiFetch<StockMove>("/stock/moves", {
+          method: "POST",
+          body: JSON.stringify({
+            company_id: companyId,
+            product_id: row.productId,
+            warehouse_id: row.warehouseId,
+            location_id: row.locationId,
+            move_type: "adjustment",
+            quantity: row.counted,
+            unit_cost: row.unitCost,
+            reference: "",
+            source_document: "",
+            notes: `Inventory adjustment (${row.onHand} -> ${row.counted})`,
+          }),
+        });
+        await apiFetch(`/stock/moves/${created.id}/confirm`, {
+          method: "POST",
+        });
+      }
+      await loadAllData();
+    } catch (err: any) {
+      setError(err?.message || "Failed to apply inventory adjustments.");
+    } finally {
+      setApplyingAdjustments(false);
+    }
+  };
+
   const startNewMove = (moveType: string = "in") => {
     setSelectedMoveId(null);
     setIsNew(true);
@@ -1179,6 +1869,13 @@ export default function InventoryPage() {
       source_document: "",
       notes: "",
     });
+    setMoveLines([
+      createMoveLine({
+        product_id: defaultProduct?.id ?? null,
+        quantity: 1,
+        unit_cost: defaultProduct?.purchase_cost ?? 0,
+      }),
+    ]);
     setSubView("form");
     setInvalidMoveFields([]);
   };
@@ -1197,8 +1894,47 @@ export default function InventoryPage() {
       source_document: move.source_document,
       notes: move.notes,
     });
+    setMoveLines([
+      createMoveLine({
+        product_id: move.product_id,
+        quantity: move.quantity,
+        unit_cost: move.unit_cost,
+      }),
+    ]);
     setSubView("form");
     setInvalidMoveFields([]);
+  };
+
+  const addMoveLine = () => {
+    const defaultProduct = products[0];
+    setMoveLines((previous) => [
+      ...previous,
+      createMoveLine({
+        product_id: defaultProduct?.id ?? null,
+        quantity: 1,
+        unit_cost: defaultProduct?.purchase_cost ?? 0,
+      }),
+    ]);
+  };
+
+  const removeMoveLine = (lineId: string) => {
+    setMoveLines((previous) => {
+      if (previous.length <= 1) return previous;
+      return previous.filter((line) => line.line_id !== lineId);
+    });
+  };
+
+  const updateMoveLine = (
+    lineId: string,
+    patch: Partial<
+      Pick<StockMoveLineInput, "product_id" | "quantity" | "unit_cost">
+    >,
+  ) => {
+    setMoveLines((previous) =>
+      previous.map((line) =>
+        line.line_id === lineId ? { ...line, ...patch } : line,
+      ),
+    );
   };
 
   const clearInvalidMoveField = (key: string, value: unknown) => {
@@ -1210,7 +1946,6 @@ export default function InventoryPage() {
 
   const validateMoveRequiredFields = (): boolean => {
     const requiredFields = [
-      { key: "product", label: "Product", value: moveForm.product_id },
       { key: "warehouse", label: "Warehouse", value: moveForm.warehouse_id },
       { key: "location", label: "Location", value: moveForm.location_id },
     ];
@@ -1240,29 +1975,104 @@ export default function InventoryPage() {
     return true;
   };
 
+  const getNormalizedMoveLines = () =>
+    moveLines.map((line, index) => {
+      const productId = line.product_id;
+      const quantity = Number(line.quantity);
+      const unitCost = Number(line.unit_cost);
+      return {
+        index,
+        productId,
+        quantity,
+        unitCost,
+        validProduct: productId !== null,
+        validQuantity: Number.isFinite(quantity) && quantity > 0,
+        validUnitCost: Number.isFinite(unitCost) && unitCost >= 0,
+      };
+    });
+
+  const validateMoveLines = (): boolean => {
+    const normalized = getNormalizedMoveLines();
+    if (!normalized.length) {
+      setError("Add at least one product line.");
+      return false;
+    }
+
+    const missingProduct = normalized.find((line) => !line.validProduct);
+    if (missingProduct) {
+      setError(`Product is required on line ${missingProduct.index + 1}.`);
+      return false;
+    }
+
+    const invalidQuantity = normalized.find((line) => !line.validQuantity);
+    if (invalidQuantity) {
+      setError(
+        `Quantity must be greater than 0 on line ${invalidQuantity.index + 1}.`,
+      );
+      return false;
+    }
+
+    const invalidCost = normalized.find((line) => !line.validUnitCost);
+    if (invalidCost) {
+      setError(`Unit cost must be 0 or more on line ${invalidCost.index + 1}.`);
+      return false;
+    }
+    return true;
+  };
+
   const saveMove = async () => {
     if (!companyId) {
       alert("Please select a company first.");
       return;
     }
     if (!validateMoveRequiredFields()) return;
-    if (Number(moveForm.quantity) <= 0) {
-      alert("Quantity must be greater than 0.");
-      return;
-    }
+    if (!validateMoveLines()) return;
+
+    const normalizedLines = getNormalizedMoveLines();
+    const firstLine = normalizedLines[0];
+    if (!firstLine?.productId) return;
+    const sharedReference =
+      moveForm.reference.trim() ||
+      (normalizedLines.length > 1
+        ? `WH/${(moveForm.move_type || "mov").toUpperCase()}/${Date.now()}`
+        : "");
+
     setSaving(true);
     try {
-      const payload = { ...moveForm, company_id: companyId };
       if (selectedMoveId && !isNew) {
+        if (normalizedLines.length > 1) {
+          setError(
+            "Editing an existing move supports one product line. Create a new move for multiple lines.",
+          );
+          return;
+        }
+        const payload = {
+          ...moveForm,
+          company_id: companyId,
+          product_id: firstLine.productId,
+          quantity: firstLine.quantity,
+          unit_cost: firstLine.unitCost,
+        };
         await apiFetch(`/stock/moves/${selectedMoveId}`, {
           method: "PATCH",
           body: JSON.stringify(payload),
         });
       } else {
-        await apiFetch("/stock/moves", {
-          method: "POST",
-          body: JSON.stringify(payload),
-        });
+        for (const line of normalizedLines) {
+          if (!line.productId) continue;
+          const payload = {
+            ...moveForm,
+            company_id: companyId,
+            product_id: line.productId,
+            quantity: line.quantity,
+            unit_cost: line.unitCost,
+            reference: sharedReference,
+          };
+          await apiFetch("/stock/moves", {
+            method: "POST",
+            body: JSON.stringify(payload),
+          });
+        }
       }
       await loadAllData();
       setSubView("list");
@@ -1282,6 +2092,591 @@ export default function InventoryPage() {
     if (!companyId) return;
     await apiFetch(`/stock/moves/${moveId}/cancel`, { method: "POST" });
     await loadAllData();
+  };
+
+  const escapeMovePdfValue = (value: string) =>
+    value
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+
+  const printMovePdf = async (sourceMove?: StockMove) => {
+    const sourceGroup =
+      sourceMove && sourceMove.reference
+        ? stockMoves.filter(
+            (m) =>
+              m.reference === sourceMove.reference &&
+              m.move_type === sourceMove.move_type &&
+              m.warehouse_id === sourceMove.warehouse_id &&
+              m.location_id === sourceMove.location_id,
+          )
+        : sourceMove
+          ? [sourceMove]
+          : [];
+    const lines = sourceMove
+      ? sourceGroup.map((move) => ({
+          product_id: move.product_id,
+          quantity: move.quantity,
+          unit_cost: move.unit_cost,
+        }))
+      : moveLines;
+    const normalizedLines = lines
+      .filter((line) => line.product_id && Number(line.quantity) > 0)
+      .map((line) => {
+        const product = products.find((p) => p.id === line.product_id);
+        const quantity = Number(line.quantity) || 0;
+        const unitCost = Number(line.unit_cost) || 0;
+        return {
+          productName: product?.name || "Unknown Product",
+          uom: product?.uom || "Units",
+          quantity,
+          unitCost,
+          total: quantity * unitCost,
+        };
+      });
+    if (!normalizedLines.length) {
+      setError("Add at least one valid product line before printing.");
+      return;
+    }
+
+    const company = selectedCompany;
+    const warehouseId = sourceMove?.warehouse_id ?? moveForm.warehouse_id;
+    const locationId = sourceMove?.location_id ?? moveForm.location_id;
+    const warehouseName =
+      warehouses.find((w) => w.id === warehouseId)?.name || "-";
+    const locationName =
+      locations.find((l) => l.id === locationId)?.name || "-";
+    const moveType = sourceMove?.move_type ?? moveForm.move_type;
+    const moveTypeLabel =
+      MOVE_TYPES.find((entry) => entry.value === moveType)?.label || moveType;
+    const moveState = sourceMove?.state ?? "draft";
+    const moveStateLabel =
+      STATES.find((entry) => entry.value === moveState)?.label || moveState;
+    const printedAt = new Date();
+    const scheduledDateLabel = sourceMove?.scheduled_date
+      ? new Date(sourceMove.scheduled_date).toLocaleDateString()
+      : printedAt.toLocaleDateString();
+    const effectiveDateLabel = sourceMove?.done_date
+      ? new Date(sourceMove.done_date).toLocaleDateString()
+      : printedAt.toLocaleDateString();
+    const referenceRaw =
+      sourceMove?.reference || moveForm.reference || `WH/MOV/${Date.now()}`;
+    const reference = referenceRaw.trim();
+    const sourceDocument =
+      sourceMove?.source_document || moveForm.source_document;
+    const notes = sourceMove?.notes || moveForm.notes;
+    const footerHtml = (companySettings?.document_footer || "").replace(
+      /\n/g,
+      "<br />",
+    );
+    const headerHtml = (companySettings?.document_header || "").replace(
+      /\n/g,
+      "<br />",
+    );
+    const logoMarkup = companySettings?.logo_data
+      ? `<img class="logo" src="${companySettings.logo_data}" alt="Company logo" />`
+      : `<div class="logo-fallback">${escapeMovePdfValue(
+          (company?.name || "CO")
+            .split(/\s+/)
+            .filter(Boolean)
+            .slice(0, 2)
+            .map((part) => part[0]?.toUpperCase() || "")
+            .join("") || "CO",
+        )}</div>`;
+    const formatAddressLines = (
+      address?: string,
+      city?: string,
+      country?: string,
+    ) => {
+      const parts = (address || "")
+        .split(/\r?\n|,/)
+        .map((part) => part.trim())
+        .filter(Boolean);
+      const street1 = parts[0] || "";
+      const street2 = parts[1] || "";
+      return {
+        line1: [street1, street2].filter(Boolean).join(", "),
+        line2: (city || "").trim(),
+        line3: (country || "").trim(),
+      };
+    };
+    const companyAddress = formatAddressLines(
+      company?.address,
+      company?.city,
+      company?.country,
+    );
+    const totalQuantity = normalizedLines.reduce(
+      (sum, line) => sum + line.quantity,
+      0,
+    );
+    const totalAmount = normalizedLines.reduce(
+      (sum, line) => sum + line.total,
+      0,
+    );
+    const signatureTitle =
+      moveType === "out"
+        ? "Delivered By"
+        : moveType === "in"
+          ? "Received By"
+          : moveType === "internal"
+            ? "Handled By"
+            : "Approved By";
+    const linesHtml = normalizedLines
+      .map(
+        (line, index) => `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${escapeMovePdfValue(line.productName)}</td>
+            <td style="text-align:right">${line.quantity.toFixed(2)}</td>
+            <td>${escapeMovePdfValue(line.uom)}</td>
+            <td style="text-align:right">$${line.unitCost.toFixed(2)}</td>
+            <td style="text-align:right">$${line.total.toFixed(2)}</td>
+          </tr>
+        `,
+      )
+      .join("");
+
+    const html = `
+      <html>
+        <head>
+          <title>${escapeMovePdfValue(reference)}</title>
+          <style>
+            :root {
+              --ink: #0f172a;
+              --muted: #64748b;
+              --line: #dbe3f0;
+              --soft: #f8fafc;
+              --panel: #ffffff;
+              --accent: #1d4ed8;
+              --accent-soft: #eff6ff;
+              --accent-deep: #1e3a8a;
+            }
+            * { box-sizing: border-box; }
+            body {
+              margin: 0;
+              padding: 0;
+              background: #eef2f7;
+              color: var(--ink);
+              font-family: "Segoe UI", Arial, sans-serif;
+            }
+            .doc {
+              width: 100%;
+              padding: 28px 32px 36px;
+              background: var(--panel);
+              position: relative;
+            }
+            .watermark {
+              position: absolute;
+              inset: 0;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 64px;
+              font-weight: 800;
+              letter-spacing: 0.06em;
+              color: #94a3b8;
+              opacity: ${companySettings?.document_watermark_opacity || "0.06"};
+              pointer-events: none;
+              transform: rotate(-24deg);
+            }
+            .topbar {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-start;
+              gap: 20px;
+              padding-bottom: 18px;
+              border-bottom: 2px solid var(--line);
+            }
+            .brand {
+              display: flex;
+              align-items: flex-start;
+              gap: 16px;
+              min-width: 0;
+            }
+            .logo-wrap {
+              width: 120px;
+              min-height: 72px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              flex-shrink: 0;
+              margin: 0 auto;
+            }
+            .logo {
+              display: block;
+              max-width: 120px;
+              max-height: 72px;
+              width: auto;
+              height: auto;
+              object-fit: contain;
+              margin: 0 auto;
+            }
+            .logo-fallback {
+              width: 72px;
+              height: 72px;
+              border-radius: 16px;
+              background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+              color: #fff;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 28px;
+              font-weight: 800;
+              letter-spacing: 0.05em;
+              margin: 0 auto;
+            }
+            .company-block { min-width: 0; }
+            .company-name {
+              font-size: 24px;
+              font-weight: 800;
+              line-height: 1.1;
+              margin-bottom: 6px;
+            }
+            .company-meta {
+              font-size: 12px;
+              line-height: 1.6;
+              color: var(--muted);
+            }
+            .doc-side {
+              text-align: right;
+              min-width: 220px;
+            }
+            .doc-kicker {
+              display: inline-block;
+              margin-bottom: 10px;
+              padding: 6px 10px;
+              border-radius: 999px;
+              background: var(--accent-soft);
+              color: var(--accent-deep);
+              font-size: 11px;
+              font-weight: 800;
+              letter-spacing: 0.08em;
+              text-transform: uppercase;
+            }
+            .doc-title {
+              margin: 0;
+              font-size: 28px;
+              font-weight: 800;
+            }
+            .doc-printed {
+              margin-top: 8px;
+              font-size: 12px;
+              color: var(--muted);
+            }
+            .header-note {
+              margin-top: 14px;
+              padding: 10px 14px;
+              border: 1px solid var(--line);
+              border-radius: 12px;
+              background: var(--soft);
+              font-size: 12px;
+              line-height: 1.6;
+              color: var(--muted);
+            }
+            .meta-grid {
+              display: grid;
+              grid-template-columns: 1.1fr 0.9fr;
+              gap: 18px;
+              margin-top: 18px;
+            }
+            .meta-card {
+              border: 1px solid var(--line);
+              border-radius: 14px;
+              background: var(--panel);
+              overflow: hidden;
+            }
+            .meta-head {
+              padding: 10px 14px;
+              background: var(--accent-soft);
+              color: var(--accent-deep);
+              font-size: 11px;
+              font-weight: 800;
+              letter-spacing: 0.08em;
+              text-transform: uppercase;
+            }
+            .meta-body {
+              padding: 14px;
+              display: grid;
+              gap: 10px;
+              font-size: 13px;
+            }
+            .meta-row {
+              display: flex;
+              justify-content: space-between;
+              gap: 18px;
+              border-bottom: 1px dashed #e2e8f0;
+              padding-bottom: 8px;
+            }
+            .meta-row:last-child {
+              border-bottom: none;
+              padding-bottom: 0;
+            }
+            .meta-label {
+              color: var(--muted);
+              font-weight: 600;
+            }
+            .meta-value {
+              color: var(--ink);
+              font-weight: 700;
+              text-align: right;
+            }
+            .doc-table-wrap {
+              margin-top: 20px;
+              border: 1px solid var(--line);
+              border-radius: 14px;
+              overflow: hidden;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              font-size: 12px;
+            }
+            thead th {
+              padding: 11px 12px;
+              background: linear-gradient(180deg, #1e40af, #1d4ed8);
+              color: #ffffff;
+              text-align: left;
+              font-weight: 800;
+              letter-spacing: 0.05em;
+              text-transform: uppercase;
+            }
+            tbody td {
+              padding: 11px 12px;
+              border-bottom: 1px solid #e2e8f0;
+              vertical-align: top;
+            }
+            tbody tr:nth-child(even) td {
+              background: #f8fbff;
+            }
+            tfoot td {
+              padding: 12px;
+              background: #eff6ff;
+              border-top: 2px solid var(--line);
+              font-weight: 800;
+            }
+            .amount {
+              text-align: right;
+              white-space: nowrap;
+            }
+            .summary {
+              margin-top: 16px;
+              display: flex;
+              justify-content: flex-end;
+            }
+            .footer {
+              margin-top: 20px;
+              padding-top: 12px;
+              border-top: 1px solid var(--line);
+              text-align: center;
+              font-size: 11px;
+              line-height: 1.6;
+              color: var(--muted);
+            }
+            .signatures {
+              display: grid;
+              grid-template-columns: repeat(2, minmax(0, 1fr));
+              gap: 24px;
+              margin-top: 26px;
+            }
+            .signature-card {
+              border: 1px solid var(--line);
+              border-radius: 14px;
+              padding: 18px 20px 16px;
+              min-height: 156px;
+              background: linear-gradient(180deg, #ffffff, #fbfdff);
+            }
+            .signature-title {
+              margin: 0 0 30px;
+              color: var(--accent-deep);
+              font-size: 11px;
+              font-weight: 800;
+              letter-spacing: 0.08em;
+              text-transform: uppercase;
+            }
+            .signature-line {
+              margin: 28px auto 0;
+              border-bottom: 1px solid #94a3b8;
+              height: 26px;
+              width: 100%;
+            }
+            .signature-meta {
+              display: grid;
+              grid-template-columns: 1fr 150px;
+              gap: 18px;
+              margin-top: 16px;
+            }
+            .signature-label {
+              font-size: 11px;
+              color: var(--muted);
+              text-transform: uppercase;
+              letter-spacing: 0.05em;
+            }
+            .signature-value {
+              margin-top: 10px;
+              min-height: 18px;
+              font-size: 12px;
+              color: var(--ink);
+              font-weight: 600;
+            }
+            .signature-fill-line {
+              margin-top: 12px;
+              border-bottom: 1px solid #94a3b8;
+              height: 24px;
+              width: 100%;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="doc">
+            ${companySettings?.document_watermark ? `<div class="watermark">${escapeMovePdfValue(companySettings.document_watermark)}</div>` : ""}
+            <div class="topbar">
+              <div class="brand">
+                <div class="logo-wrap">${logoMarkup}</div>
+                <div class="company-block">
+                  <div class="company-name">${escapeMovePdfValue(company?.name || "Your Company")}</div>
+                  <div class="company-meta">
+                    ${companyAddress.line1 ? `${escapeMovePdfValue(companyAddress.line1)}<br />` : ""}
+                    ${companyAddress.line2 ? `${escapeMovePdfValue(companyAddress.line2)}<br />` : ""}
+                    ${companyAddress.line3 ? `${escapeMovePdfValue(companyAddress.line3)}<br />` : ""}
+                    ${company?.email ? `Email: ${escapeMovePdfValue(company.email)}<br />` : ""}
+                    ${company?.phone ? `Phone: ${escapeMovePdfValue(company.phone)}` : ""}
+                  </div>
+                </div>
+              </div>
+              <div class="doc-side">
+                <div class="doc-kicker">Inventory Document</div>
+                <h1 class="doc-title">${escapeMovePdfValue(moveTypeLabel)}</h1>
+                <div class="doc-printed">Printed: ${escapeMovePdfValue(printedAt.toLocaleString())}</div>
+              </div>
+            </div>
+            ${headerHtml ? `<div class="header-note">${headerHtml}</div>` : ""}
+            <div class="meta-grid">
+              <div class="meta-card">
+                <div class="meta-head">Document Details</div>
+                <div class="meta-body">
+                  <div class="meta-row">
+                    <span class="meta-label">Reference</span>
+                    <span class="meta-value">${escapeMovePdfValue(reference)}</span>
+                  </div>
+                  <div class="meta-row">
+                    <span class="meta-label">Operation Type</span>
+                    <span class="meta-value">${escapeMovePdfValue(moveTypeLabel)}</span>
+                  </div>
+                  <div class="meta-row">
+                    <span class="meta-label">Status</span>
+                    <span class="meta-value">${escapeMovePdfValue(moveStateLabel)}</span>
+                  </div>
+                  <div class="meta-row">
+                    <span class="meta-label">Document Date</span>
+                    <span class="meta-value">${escapeMovePdfValue(scheduledDateLabel)}</span>
+                  </div>
+                  <div class="meta-row">
+                    <span class="meta-label">Source Document</span>
+                    <span class="meta-value">${escapeMovePdfValue(sourceDocument || "-")}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="meta-card">
+                <div class="meta-head">Warehouse</div>
+                <div class="meta-body">
+                  <div class="meta-row">
+                    <span class="meta-label">Warehouse</span>
+                    <span class="meta-value">${escapeMovePdfValue(warehouseName)}</span>
+                  </div>
+                  <div class="meta-row">
+                    <span class="meta-label">Location</span>
+                    <span class="meta-value">${escapeMovePdfValue(locationName)}</span>
+                  </div>
+                  <div class="meta-row">
+                    <span class="meta-label">Notes</span>
+                    <span class="meta-value">${escapeMovePdfValue(notes || "-")}</span>
+                  </div>
+                  <div class="meta-row">
+                    <span class="meta-label">Effective Date</span>
+                    <span class="meta-value">${escapeMovePdfValue(effectiveDateLabel)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="doc-table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width:56px;">#</th>
+                    <th>Product</th>
+                    <th class="amount" style="width:120px;">Quantity</th>
+                    <th style="width:96px;">UoM</th>
+                    <th class="amount" style="width:130px;">Unit Cost</th>
+                    <th class="amount" style="width:140px;">Total</th>
+                  </tr>
+                </thead>
+                <tbody>${linesHtml}</tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="2">Totals</td>
+                    <td class="amount">${totalQuantity.toFixed(2)}</td>
+                    <td></td>
+                    <td></td>
+                    <td class="amount">$${totalAmount.toFixed(2)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+            <div class="signatures">
+              <div class="signature-card">
+                <h3 class="signature-title">${escapeMovePdfValue(signatureTitle)}</h3>
+                <div class="signature-line"></div>
+                <div class="signature-meta">
+                  <div>
+                    <div class="signature-label">Name / Signature</div>
+                    <div class="signature-fill-line"></div>
+                  </div>
+                  <div>
+                    <div class="signature-label">Date</div>
+                    <div class="signature-fill-line"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="signature-card">
+                <h3 class="signature-title">Authorized By</h3>
+                <div class="signature-line"></div>
+                <div class="signature-meta">
+                  <div>
+                    <div class="signature-label">Name / Signature</div>
+                    <div class="signature-fill-line"></div>
+                  </div>
+                  <div>
+                    <div class="signature-label">Date</div>
+                    <div class="signature-fill-line"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            ${footerHtml ? `<div class="footer">${footerHtml}</div>` : ""}
+          </div>
+        </body>
+      </html>
+    `;
+
+    const container = document.createElement("div");
+    container.innerHTML = html;
+    document.body.appendChild(container);
+    try {
+      await html2pdf()
+        .set({
+          margin: [8, 8, 8, 8],
+          filename: `${reference.replace(/[^\w-]+/g, "_")}.pdf`,
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+        })
+        .from(container)
+        .save();
+    } finally {
+      document.body.removeChild(container);
+    }
   };
 
   // ============= CATEGORY ACTIONS =============
@@ -1372,6 +2767,7 @@ export default function InventoryPage() {
     setSelectedProductId(null);
     setSelectedWarehouseId(null);
     setSelectedMoveId(null);
+    setMoveLines([]);
     setIsNew(false);
   };
 
@@ -1380,7 +2776,49 @@ export default function InventoryPage() {
   const selectedWarehouse = warehouses.find(
     (w) => w.id === selectedWarehouseId,
   );
+
+  const warehouseIdByLocationId = useMemo(
+    () =>
+      new Map(
+        locations.map((location) => [location.id, location.warehouse_id]),
+      ),
+    [locations],
+  );
+
+  const productIdsByWarehouse = useMemo(() => {
+    const grouped = new Map<number, Set<number>>();
+    stockQuants.forEach((quant) => {
+      const warehouseId =
+        quant.warehouse_id ??
+        (quant.location_id
+          ? (warehouseIdByLocationId.get(quant.location_id) ?? null)
+          : null);
+      const quantity = Number.isFinite(quant.quantity) ? quant.quantity : 0;
+      if (!warehouseId || quantity <= 0) return;
+      if (!grouped.has(warehouseId)) {
+        grouped.set(warehouseId, new Set<number>());
+      }
+      grouped.get(warehouseId)?.add(quant.product_id);
+    });
+    return grouped;
+  }, [stockQuants, warehouseIdByLocationId]);
+
+  const productIdsByLocation = useMemo(() => {
+    const grouped = new Map<number, Set<number>>();
+    stockQuants.forEach((quant) => {
+      if (!quant.location_id) return;
+      const quantity = Number.isFinite(quant.quantity) ? quant.quantity : 0;
+      if (quantity <= 0) return;
+      if (!grouped.has(quant.location_id)) {
+        grouped.set(quant.location_id, new Set<number>());
+      }
+      grouped.get(quant.location_id)?.add(quant.product_id);
+    });
+    return grouped;
+  }, [stockQuants]);
   const selectedMove = stockMoves.find((m) => m.id === selectedMoveId);
+  const isMoveReadonly =
+    selectedMove?.state === "done" || selectedMove?.state === "cancelled";
   const selectedProductStock = useMemo(() => {
     if (!selectedProductId) {
       return { onHand: 0, available: 0, reserved: 0 };
@@ -1447,6 +2885,16 @@ export default function InventoryPage() {
   const filteredProducts = products.filter((p) => {
     if (filterCategoryId !== null && p.category_id !== filterCategoryId)
       return false;
+    if (filterLocationId !== null) {
+      const hasStockInLocation =
+        productIdsByLocation.get(filterLocationId)?.has(p.id) ?? false;
+      if (!hasStockInLocation) return false;
+    }
+    if (filterWarehouseId !== null) {
+      const hasStockInWarehouse =
+        productIdsByWarehouse.get(filterWarehouseId)?.has(p.id) ?? false;
+      if (!hasStockInWarehouse) return false;
+    }
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
     return (
@@ -1455,6 +2903,13 @@ export default function InventoryPage() {
       p.barcode?.toLowerCase().includes(q)
     );
   });
+
+  const activeProductWarehouse = warehouses.find(
+    (warehouse) => warehouse.id === filterWarehouseId,
+  );
+  const activeProductLocation = locations.find(
+    (location) => location.id === filterLocationId,
+  );
 
   const productLocationById = useMemo(() => {
     const locationById = new Map(locations.map((l) => [l.id, l]));
@@ -1528,26 +2983,131 @@ export default function InventoryPage() {
 
   const filteredMoves = stockMoves.filter((m) => {
     if (filterState !== "all" && m.state !== filterState) return false;
+    if (filterMoveType !== "all" && m.move_type !== filterMoveType)
+      return false;
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
     const product = products.find((p) => p.id === m.product_id);
     return (
       m.reference?.toLowerCase().includes(q) ||
-      product?.name.toLowerCase().includes(q)
+      product?.name.toLowerCase().includes(q) ||
+      MOVE_TYPES.find((type) => type.value === m.move_type)
+        ?.label.toLowerCase()
+        .includes(q)
     );
   });
+
+  const moveLinesTotals = useMemo(() => {
+    return moveLines.reduce(
+      (acc, line) => {
+        const quantity = Number(line.quantity);
+        const unitCost = Number(line.unit_cost);
+        if (Number.isFinite(quantity)) {
+          acc.quantity += quantity;
+        }
+        if (Number.isFinite(quantity) && Number.isFinite(unitCost)) {
+          acc.total += quantity * unitCost;
+        }
+        return acc;
+      },
+      { quantity: 0, total: 0 },
+    );
+  }, [moveLines]);
+
+  const adjustmentRows = useMemo(() => {
+    const warehouseById = new Map(warehouses.map((w) => [w.id, w]));
+    const locationById = new Map(locations.map((l) => [l.id, l]));
+    const productById = new Map(products.map((p) => [p.id, p]));
+    const query = searchQuery.trim().toLowerCase();
+
+    return stockQuants
+      .map((quant) => {
+        const product = productById.get(quant.product_id);
+        const location = quant.location_id
+          ? locationById.get(quant.location_id)
+          : null;
+        const warehouse = quant.warehouse_id
+          ? warehouseById.get(quant.warehouse_id)
+          : location?.warehouse_id
+            ? warehouseById.get(location.warehouse_id)
+            : null;
+
+        const onHand = Number.isFinite(quant.quantity) ? quant.quantity : 0;
+        const countedText = countedByQuantId[quant.id] ?? String(onHand);
+        const counted = Number(countedText);
+        const isValid = Number.isFinite(counted) && counted >= 0;
+        const difference = isValid ? counted - onHand : 0;
+        const changed = isValid && Math.abs(difference) > 0.0001;
+        const unitCost =
+          Number.isFinite(quant.unit_cost) && quant.unit_cost > 0
+            ? quant.unit_cost
+            : Number.isFinite(product?.purchase_cost)
+              ? (product?.purchase_cost ?? 0)
+              : 0;
+
+        return {
+          quantId: quant.id,
+          productId: quant.product_id,
+          productName: product?.name || "-",
+          warehouseId: quant.warehouse_id ?? warehouse?.id ?? null,
+          warehouseName: warehouse?.name || "-",
+          locationId: quant.location_id ?? location?.id ?? null,
+          locationName: location?.name || "-",
+          uom: product?.uom || "Units",
+          onHand,
+          countedText,
+          counted,
+          difference,
+          changed,
+          isValid,
+          unitCost,
+        };
+      })
+      .filter((row) => {
+        if (showOnlyChangedAdjustments && !row.changed) return false;
+        if (!query) return true;
+        return (
+          row.productName.toLowerCase().includes(query) ||
+          row.warehouseName.toLowerCase().includes(query) ||
+          row.locationName.toLowerCase().includes(query)
+        );
+      })
+      .sort((a, b) => {
+        if (a.changed !== b.changed) return a.changed ? -1 : 1;
+        return a.productName.localeCompare(b.productName);
+      });
+  }, [
+    stockQuants,
+    warehouses,
+    locations,
+    products,
+    countedByQuantId,
+    searchQuery,
+    showOnlyChangedAdjustments,
+  ]);
+
+  const adjustmentSummary = useMemo(() => {
+    const changedRows = adjustmentRows.filter((row) => row.changed).length;
+    const invalidRows = adjustmentRows.filter((row) => !row.isValid).length;
+    return {
+      totalRows: adjustmentRows.length,
+      changedRows,
+      invalidRows,
+    };
+  }, [adjustmentRows]);
 
   const productMonetaryTotals = useMemo(() => {
     return filteredProducts.reduce(
       (acc, p) => {
         acc.salePrice += Number.isFinite(p.sale_price) ? p.sale_price : 0;
+        acc.salesCost += Number.isFinite(p.sales_cost) ? p.sales_cost : 0;
         acc.purchaseCost += Number.isFinite(p.purchase_cost)
           ? p.purchase_cost
           : 0;
         acc.stockValue += Number.isFinite(p.stock_value) ? p.stock_value : 0;
         return acc;
       },
-      { salePrice: 0, purchaseCost: 0, stockValue: 0 },
+      { salePrice: 0, salesCost: 0, purchaseCost: 0, stockValue: 0 },
     );
   }, [filteredProducts]);
 
@@ -1593,6 +3153,13 @@ export default function InventoryPage() {
   const warehouseLocations = (warehouseId: number) =>
     locations.filter((l) => l.warehouse_id === warehouseId);
 
+  const productFilterLocations = useMemo(() => {
+    if (filterWarehouseId === null) return locations;
+    return locations.filter(
+      (location) => location.warehouse_id === filterWarehouseId,
+    );
+  }, [locations, filterWarehouseId]);
+
   useEffect(() => {
     if (!selectedProductId) {
       setQuickStockWarehouseId(null);
@@ -1618,6 +3185,23 @@ export default function InventoryPage() {
     setQuickStockLocationId(defaultLocationId);
     setQuickStockQuantity("0");
   }, [selectedProductId, selectedProductWarehouseRows, warehouses, locations]);
+
+  useEffect(() => {
+    if (filterLocationId === null) return;
+    const activeLocation = locations.find(
+      (location) => location.id === filterLocationId,
+    );
+    if (!activeLocation) {
+      setFilterLocationId(null);
+      return;
+    }
+    if (
+      filterWarehouseId !== null &&
+      activeLocation.warehouse_id !== filterWarehouseId
+    ) {
+      setFilterLocationId(null);
+    }
+  }, [filterLocationId, filterWarehouseId, locations]);
 
   const goBackToCompanies = () => {
     setCompanyId(null);
@@ -1791,17 +3375,12 @@ export default function InventoryPage() {
           flexWrap: "nowrap",
         }}
       >
-        <div id="main-content" className="two-panel two-panel-left">
-          <SidebarMenu
-            title="MENU"
-            items={inventoryMenuItems}
-            activeKey={mainView}
-            onSelect={(key) => {
-              setMainView(key as MainView);
-              setSubView("list");
-              setSearchQuery("");
-            }}
-          />
+        <div
+          id="main-content"
+          className="two-panel two-panel-left inventory-workspace"
+        >
+          {/* Side Bar Navigation */}
+          <Sidebar sections={menuSections} />
 
           <div className="o-main">
             {/* Form Sub Control Panel */}
@@ -1865,7 +3444,7 @@ export default function InventoryPage() {
 
             {/* Main Content */}
             <div
-              className="o-content"
+              className={`o-content inventory-content inventory-view-${mainView} inventory-subview-${subView}`}
               style={{
                 flexWrap: "wrap",
                 alignContent: "flex-start",
@@ -1895,7 +3474,7 @@ export default function InventoryPage() {
                     </div>
 
                     {mainView === "operations" && (
-                      <div style={{ display: "flex", gap: 4, marginLeft: 1 }}>
+                      <div className="inventory-op-tabs">
                         <button
                           className={`o-btn ${operationsTab === "moves" ? "o-btn-primary" : "o-btn-secondary"}`}
                           onClick={() => setOperationsTab("moves")}
@@ -1907,6 +3486,12 @@ export default function InventoryPage() {
                           onClick={() => setOperationsTab("quants")}
                         >
                           Stock On Hand
+                        </button>
+                        <button
+                          className={`o-btn ${operationsTab === "adjustments" ? "o-btn-primary" : "o-btn-secondary"}`}
+                          onClick={() => setOperationsTab("adjustments")}
+                        >
+                          Adjustments
                         </button>
                       </div>
                     )}
@@ -1934,6 +3519,42 @@ export default function InventoryPage() {
 
                     {mainView === "products" && (
                       <>
+                        <input
+                          ref={productImportInputRef}
+                          type="file"
+                          accept=".csv,.xlsx,.xls"
+                          className="inventory-hidden-file-input"
+                          onChange={(event) => void handleProductsImport(event)}
+                        />
+                        <button
+                          className="o-btn o-btn-secondary inventory-inline-action-btn"
+                          onClick={() => productImportInputRef.current?.click()}
+                          disabled={importingProducts}
+                          title="Import products from CSV or Excel"
+                        >
+                          <Upload size={14} />
+                          <span>
+                            {importingProducts
+                              ? "Importing..."
+                              : "Import CSV/XLSX"}
+                          </span>
+                        </button>
+                        <button
+                          className="o-btn o-btn-secondary inventory-inline-action-btn"
+                          onClick={() => exportProducts("csv")}
+                          title="Export filtered products to CSV"
+                        >
+                          <Download size={14} />
+                          <span>Export CSV</span>
+                        </button>
+                        <button
+                          className="o-btn o-btn-secondary inventory-inline-action-btn"
+                          onClick={() => exportProducts("xlsx")}
+                          title="Export filtered products to Excel"
+                        >
+                          <Download size={14} />
+                          <span>Export XLSX</span>
+                        </button>
                         <button
                           className="o-btn o-btn-secondary"
                           onClick={() => openCategoryModal()}
@@ -1968,19 +3589,55 @@ export default function InventoryPage() {
                     )}
 
                     {mainView === "operations" && operationsTab === "moves" && (
-                      <div style={{ display: "flex", gap: 8 }}>
-                        {MOVE_TYPES.map((t) => (
-                          <button
-                            key={t.value}
-                            className="o-btn o-btn-secondary"
-                            onClick={() => startNewMove(t.value)}
-                            title={t.label}
-                          >
-                            {t.label}
-                          </button>
-                        ))}
+                      <div className="inventory-op-actions">
+                        {MOVE_TYPES.filter((t) => t.value !== "adjustment").map(
+                          (t) => (
+                            <button
+                              key={t.value}
+                              className="o-btn o-btn-secondary"
+                              onClick={() => startNewMove(t.value)}
+                              title={t.label}
+                            >
+                              {t.label}
+                            </button>
+                          ),
+                        )}
                       </div>
                     )}
+                    {mainView === "operations" &&
+                      operationsTab === "adjustments" && (
+                        <div className="inventory-op-actions">
+                          <button
+                            className="o-btn o-btn-secondary"
+                            onClick={() =>
+                              setShowOnlyChangedAdjustments((prev) => !prev)
+                            }
+                          >
+                            {showOnlyChangedAdjustments
+                              ? "Show All"
+                              : "Show Changed"}
+                          </button>
+                          <button
+                            className="o-btn o-btn-secondary"
+                            onClick={resetCountedAdjustments}
+                            disabled={applyingAdjustments}
+                          >
+                            Reset
+                          </button>
+                          <button
+                            className="o-btn o-btn-primary"
+                            onClick={() => void applyInventoryAdjustments()}
+                            disabled={
+                              applyingAdjustments ||
+                              adjustmentSummary.changedRows === 0
+                            }
+                          >
+                            {applyingAdjustments
+                              ? "Applying..."
+                              : `Apply Changed (${adjustmentSummary.changedRows})`}
+                          </button>
+                        </div>
+                      )}
                   </div>
                 </div>
               )}
@@ -1996,7 +3653,9 @@ export default function InventoryPage() {
                       <span className="inventory-stat-icon">
                         <Package size={16} />
                       </span>
-                      <div className="inventory-stat-value">{stats.totalProducts}</div>
+                      <div className="inventory-stat-value">
+                        {stats.totalProducts}
+                      </div>
                       <div className="inventory-stat-label">Products</div>
                     </button>
 
@@ -2006,7 +3665,9 @@ export default function InventoryPage() {
                       <span className="inventory-stat-icon warning">
                         <TriangleAlert size={16} />
                       </span>
-                      <div className="inventory-stat-value">{stats.lowStock}</div>
+                      <div className="inventory-stat-value">
+                        {stats.lowStock}
+                      </div>
                       <div className="inventory-stat-label">Low Stock</div>
                     </div>
 
@@ -2018,7 +3679,9 @@ export default function InventoryPage() {
                       <span className="inventory-stat-icon">
                         <WarehouseGlyph size={16} />
                       </span>
-                      <div className="inventory-stat-value">{stats.totalWarehouses}</div>
+                      <div className="inventory-stat-value">
+                        {stats.totalWarehouses}
+                      </div>
                       <div className="inventory-stat-label">Warehouses</div>
                     </button>
 
@@ -2030,7 +3693,9 @@ export default function InventoryPage() {
                       <span className="inventory-stat-icon">
                         <Clock3 size={16} />
                       </span>
-                      <div className="inventory-stat-value">{stats.pendingMoves}</div>
+                      <div className="inventory-stat-value">
+                        {stats.pendingMoves}
+                      </div>
                       <div className="inventory-stat-label">Pending Moves</div>
                     </button>
 
@@ -2060,7 +3725,13 @@ export default function InventoryPage() {
                             className="inventory-quick-btn"
                             onClick={() => {
                               setMainView("operations");
-                              startNewMove(t.value);
+                              if (t.value === "adjustment") {
+                                setOperationsTab("adjustments");
+                                setSubView("list");
+                              } else {
+                                setOperationsTab("moves");
+                                startNewMove(t.value);
+                              }
                             }}
                             type="button"
                           >
@@ -2080,12 +3751,15 @@ export default function InventoryPage() {
                       </header>
                       <div className="inventory-list">
                         {recentStockMoves.map((m) => {
-                          const product = products.find((p) => p.id === m.product_id);
+                          const product = products.find(
+                            (p) => p.id === m.product_id,
+                          );
                           return (
                             <div key={m.id} className="inventory-list-row">
                               <div className="inventory-list-meta">
                                 <span className="inventory-list-title">
-                                  {m.reference || `MOV/${String(m.id).padStart(5, "0")}`}
+                                  {m.reference ||
+                                    `MOV/${String(m.id).padStart(5, "0")}`}
                                 </span>
                                 <span className="inventory-list-sub">
                                   {product?.name || "Unknown product"}
@@ -2094,14 +3768,16 @@ export default function InventoryPage() {
                               <span
                                 className={`inventory-state state-${m.state || "draft"}`}
                               >
-                                {STATES.find((s) => s.value === m.state)?.label ||
-                                  m.state}
+                                {STATES.find((s) => s.value === m.state)
+                                  ?.label || m.state}
                               </span>
                             </div>
                           );
                         })}
                         {recentStockMoves.length === 0 && (
-                          <div className="inventory-empty-state">No stock moves yet</div>
+                          <div className="inventory-empty-state">
+                            No stock moves yet
+                          </div>
                         )}
                       </div>
                     </section>
@@ -2115,9 +3791,14 @@ export default function InventoryPage() {
                       </header>
                       <div className="inventory-list">
                         {lowStockProducts.map((p) => (
-                          <div key={p.id} className="inventory-list-row warning">
+                          <div
+                            key={p.id}
+                            className="inventory-list-row warning"
+                          >
                             <div className="inventory-list-meta">
-                              <span className="inventory-list-title">{p.name}</span>
+                              <span className="inventory-list-title">
+                                {p.name}
+                              </span>
                               <span className="inventory-list-sub">
                                 Reorder point: {p.reorder_point} {p.uom}
                               </span>
@@ -2158,8 +3839,12 @@ export default function InventoryPage() {
                           type="button"
                         >
                           <div className="inventory-list-meta">
-                            <span className="inventory-list-title">{w.name}</span>
-                            <span className="inventory-list-sub">Code: {w.code}</span>
+                            <span className="inventory-list-title">
+                              {w.name}
+                            </span>
+                            <span className="inventory-list-sub">
+                              Code: {w.code}
+                            </span>
                           </div>
                           <span className="inventory-list-sub">
                             {warehouseLocations(w.id).length} locations
@@ -2188,28 +3873,13 @@ export default function InventoryPage() {
               {mainView === "products" && subView === "list" && (
                 <>
                   {/* Sidebar */}
-                  <div className="o-sidebar">
+                  <div className="o-sidebar inventory-sub-sidebar">
                     <div className="o-sidebar-section">
-                      <div
-                        className="o-sidebar-title"
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                        }}
-                      >
+                      <div className="o-sidebar-title inventory-sidebar-title-row">
                         <span>Categories</span>
                         <button
                           onClick={() => openCategoryModal()}
-                          style={{
-                            background: "none",
-                            border: "none",
-                            cursor: "pointer",
-                            color: "var(--indigo-500)",
-                            fontSize: 18,
-                            fontWeight: 700,
-                            lineHeight: 1,
-                          }}
+                          className="inventory-add-inline-btn"
                           title="Add Category"
                         >
                           +
@@ -2239,14 +3909,83 @@ export default function InventoryPage() {
                         ))}
                       </select>
                       {categories.length === 0 && (
-                        <div
-                          style={{
-                            paddingTop: 8,
-                            color: "var(--slate-400)",
-                            fontSize: 12,
-                          }}
-                        >
+                        <div className="inventory-muted-note">
                           No categories yet.
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="o-sidebar-section">
+                      <div className="o-sidebar-title">Warehouse</div>
+                      <select
+                        className="o-form-select"
+                        value={filterWarehouseId ?? ""}
+                        onChange={(e) =>
+                          setFilterWarehouseId(
+                            e.target.value ? Number(e.target.value) : null,
+                          )
+                        }
+                      >
+                        <option value="">
+                          All Warehouses ({warehouses.length})
+                        </option>
+                        {warehouses.map((warehouse) => (
+                          <option key={warehouse.id} value={warehouse.id}>
+                            {warehouse.name}
+                          </option>
+                        ))}
+                      </select>
+                      {activeProductWarehouse && (
+                        <div className="inventory-muted-note inventory-filter-note">
+                          <span>
+                            Showing items in {activeProductWarehouse.name}
+                          </span>
+                          <button
+                            type="button"
+                            className="inventory-clear-filter-btn"
+                            onClick={() => setFilterWarehouseId(null)}
+                          >
+                            Clear
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="o-sidebar-section">
+                      <div className="o-sidebar-title">Location</div>
+                      <select
+                        className="o-form-select"
+                        value={filterLocationId ?? ""}
+                        onChange={(e) =>
+                          setFilterLocationId(
+                            e.target.value ? Number(e.target.value) : null,
+                          )
+                        }
+                      >
+                        <option value="">
+                          {filterWarehouseId !== null
+                            ? `All Locations (${productFilterLocations.length})`
+                            : `All Locations (${locations.length})`}
+                        </option>
+                        {productFilterLocations.map((location) => (
+                          <option key={location.id} value={location.id}>
+                            {location.name}
+                          </option>
+                        ))}
+                      </select>
+                      {activeProductLocation && (
+                        <div className="inventory-muted-note inventory-filter-note">
+                          <span>
+                            Showing items in location{" "}
+                            {activeProductLocation.name}
+                          </span>
+                          <button
+                            type="button"
+                            className="inventory-clear-filter-btn"
+                            onClick={() => setFilterLocationId(null)}
+                          >
+                            Clear
+                          </button>
                         </div>
                       )}
                     </div>
@@ -2268,12 +4007,12 @@ export default function InventoryPage() {
                   </div>
 
                   {/* Main List */}
-                  <div className="o-main">
-                    <div className="o-list-view">
+                  <div className="o-main inventory-view-main">
+                    <div className="o-list-view inventory-table-panel">
                       <table className="o-list-table">
                         <thead>
                           <tr>
-                            <th style={{ width: 40 }}></th>
+                            <th className="inventory-col-icon"></th>
                             <th>Product</th>
                             <th>Reference</th>
                             <th>Location</th>
@@ -2282,6 +4021,7 @@ export default function InventoryPage() {
                             <th>On Hand</th>
                             <th>Available</th>
                             <th className="text-end">Sale Price</th>
+                            <th className="text-end">Sale Cost</th>
                             <th className="text-end">Cost</th>
                             <th className="text-end">Stock Value</th>
                           </tr>
@@ -2295,33 +4035,22 @@ export default function InventoryPage() {
                               <tr
                                 key={p.id}
                                 onDoubleClick={() => openProduct(p)}
-                                style={{ cursor: "pointer" }}
+                                className="inventory-table-clickable"
                               >
                                 <td>
-                                  <span
-                                    style={{ fontSize: 14, fontWeight: 600 }}
-                                  >
-                                    P
+                                  <span className="inventory-inline-icon">
+                                    <Package size={14} />
                                   </span>
                                 </td>
                                 <td>
                                   <span
-                                    style={{
-                                      color: "var(--blue-600)",
-                                      fontWeight: 500,
-                                      cursor: "pointer",
-                                    }}
+                                    className="inventory-link-cell"
                                     onClick={() => openProduct(p)}
                                   >
                                     {p.name}
                                   </span>
                                   {p.barcode && (
-                                    <div
-                                      style={{
-                                        fontSize: 11,
-                                        color: "var(--muted)",
-                                      }}
-                                    >
+                                    <div className="inventory-subtext">
                                       {p.barcode}
                                     </div>
                                   )}
@@ -2343,8 +4072,7 @@ export default function InventoryPage() {
                                 <td>
                                   <button
                                     type="button"
-                                    className="o-btn o-btn-link"
-                                    style={{ fontWeight: 600 }}
+                                    className="o-btn o-btn-link inventory-qty-btn"
                                     onClick={(event) => {
                                       event.stopPropagation();
                                       openOnHandAdjustment(p);
@@ -2359,19 +4087,19 @@ export default function InventoryPage() {
                                     {p.uom}
                                   </button>
                                 </td>
-                                <td style={{ color: "var(--green-600)" }}>
+                                <td className="inventory-positive">
                                   {p.quantity_available} {p.uom}
                                 </td>
                                 <td className="o-monetary">
                                   ${p.sale_price.toFixed(2)}
                                 </td>
                                 <td className="o-monetary">
+                                  ${p.sales_cost.toFixed(2)}
+                                </td>
+                                <td className="o-monetary">
                                   ${p.purchase_cost.toFixed(2)}
                                 </td>
-                                <td
-                                  className="o-monetary"
-                                  style={{ fontWeight: 600 }}
-                                >
+                                <td className="o-monetary inventory-strong-cell">
                                   ${p.stock_value.toFixed(2)}
                                 </td>
                               </tr>
@@ -2379,10 +4107,7 @@ export default function InventoryPage() {
                           })}
                           {filteredProducts.length === 0 && (
                             <tr>
-                              <td
-                                colSpan={10}
-                                style={{ textAlign: "center", padding: 40 }}
-                              >
+                              <td colSpan={12} className="inventory-empty-row">
                                 <button
                                   className="o-btn o-btn-primary"
                                   onClick={startNewProduct}
@@ -2395,41 +4120,19 @@ export default function InventoryPage() {
                         </tbody>
                         <tfoot>
                           <tr>
-                            <td
-                              colSpan={8}
-                              style={{
-                                textAlign: "left",
-                                fontWeight: "bold",
-                                background: "var(--gray-200)",
-                              }}
-                            >
+                            <td colSpan={8} className="inventory-totals-label">
                               Totals:
                             </td>
-                            <td
-                              className="o-monetary"
-                              style={{
-                                fontWeight: 700,
-                                background: "var(--gray-200)",
-                              }}
-                            >
+                            <td className="o-monetary inventory-totals-value">
                               ${productMonetaryTotals.salePrice.toFixed(2)}
                             </td>
-                            <td
-                              className="o-monetary"
-                              style={{
-                                fontWeight: 700,
-                                background: "var(--gray-200)",
-                              }}
-                            >
+                            <td className="o-monetary inventory-totals-value">
+                              ${productMonetaryTotals.salesCost.toFixed(2)}
+                            </td>
+                            <td className="o-monetary inventory-totals-value">
                               ${productMonetaryTotals.purchaseCost.toFixed(2)}
                             </td>
-                            <td
-                              className="o-monetary"
-                              style={{
-                                fontWeight: 700,
-                                background: "var(--gray-200)",
-                              }}
-                            >
+                            <td className="o-monetary inventory-totals-value">
                               ${productMonetaryTotals.stockValue.toFixed(2)}
                             </td>
                           </tr>
@@ -2506,8 +4209,8 @@ export default function InventoryPage() {
 
               {/* ============= PRODUCTS KANBAN ============= */}
               {mainView === "products" && subView === "kanban" && (
-                <div className="o-main" style={{ width: "100%" }}>
-                  <div className="o-kanban">
+                <div className="o-main inventory-view-main">
+                  <div className="o-kanban inventory-product-kanban">
                     {filteredProducts.map((p) => {
                       const category = categories.find(
                         (c) => c.id === p.category_id,
@@ -2525,26 +4228,19 @@ export default function InventoryPage() {
                                 {p.reference || p.barcode || "No reference"}
                               </div>
                             </div>
-                            <span style={{ fontSize: 20, fontWeight: 700 }}>
-                              P
+                            <span className="inventory-kanban-icon">
+                              <Package size={18} />
                             </span>
                           </div>
                           <div className="o-kanban-body">
-                            <div
-                              style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                marginBottom: 8,
-                              }}
-                            >
-                              <span style={{ color: "var(--muted)" }}>
+                            <div className="inventory-kanban-meta-row">
+                              <span className="inventory-kanban-muted">
                                 On Hand
                               </span>
                               <span>
                                 <button
                                   type="button"
-                                  className="o-btn o-btn-link"
-                                  style={{ fontWeight: 600 }}
+                                  className="o-btn o-btn-link inventory-qty-btn"
                                   onClick={(event) => {
                                     event.stopPropagation();
                                     openOnHandAdjustment(p);
@@ -2557,28 +4253,17 @@ export default function InventoryPage() {
                                 </button>
                               </span>
                             </div>
-                            <div
-                              style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                marginBottom: 8,
-                              }}
-                            >
-                              <span style={{ color: "var(--muted)" }}>
+                            <div className="inventory-kanban-meta-row">
+                              <span className="inventory-kanban-muted">
                                 Sale Price
                               </span>
                               <span>${p.sale_price.toFixed(2)}</span>
                             </div>
-                            <div
-                              style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                              }}
-                            >
-                              <span style={{ color: "var(--muted)" }}>
+                            <div className="inventory-kanban-meta-row">
+                              <span className="inventory-kanban-muted">
                                 Stock Value
                               </span>
-                              <span style={{ fontWeight: 600 }}>
+                              <span className="inventory-kanban-strong">
                                 ${p.stock_value.toFixed(2)}
                               </span>
                             </div>
@@ -2606,8 +4291,11 @@ export default function InventoryPage() {
 
               {/* ============= PRODUCT FORM ============= */}
               {mainView === "products" && subView === "form" && (
-                <div className="o-main" style={{ width: "100%" }}>
-                  <div className="o-form-view">
+                <div
+                  className="o-main inventory-view-main"
+                  style={{ width: "100%" }}
+                >
+                  <div className="o-form-view inventory-form-panel">
                     <div className="o-form-sheet">
                       <div
                         style={{
@@ -3698,9 +5386,10 @@ export default function InventoryPage() {
 
               {/* ============= WAREHOUSES LIST ============= */}
               {mainView === "warehouses" && subView === "list" && (
-                <div className="o-main" style={{ width: "100%" }}>
-                  <div style={{ padding: 24 }}>
+                <div className="o-main inventory-view-main">
+                  <div className="inventory-warehouse-list-wrap">
                     <div
+                      className="inventory-warehouse-grid"
                       style={{
                         display: "grid",
                         gridTemplateColumns:
@@ -3725,28 +5414,16 @@ export default function InventoryPage() {
                         return (
                           <div
                             key={w.id}
-                            className="o-form-sheet"
+                            className="o-form-sheet inventory-warehouse-card"
                             style={{ cursor: "pointer" }}
                             onClick={() => openWarehouse(w)}
                           >
-                            <div
-                              style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "flex-start",
-                                marginBottom: 16,
-                              }}
-                            >
+                            <div className="inventory-warehouse-card-head">
                               <div>
-                                <h3 style={{ margin: 0, fontSize: 18 }}>
+                                <h3 className="inventory-warehouse-title">
                                   {w.name}
                                 </h3>
-                                <div
-                                  style={{
-                                    color: "var(--muted)",
-                                    fontSize: 13,
-                                  }}
-                                >
+                                <div className="inventory-warehouse-code">
                                   {w.code}
                                 </div>
                               </div>
@@ -3769,117 +5446,68 @@ export default function InventoryPage() {
                             </div>
 
                             {w.address && (
-                              <div
-                                style={{
-                                  color: "var(--muted)",
-                                  fontSize: 13,
-                                  marginBottom: 16,
-                                }}
-                              >
+                              <div className="inventory-warehouse-address">
                                 {w.address}
                               </div>
                             )}
 
-                            <div
-                              style={{
-                                display: "grid",
-                                gridTemplateColumns: "1fr 1fr 1fr",
-                                gap: 12,
-                                marginBottom: 16,
-                              }}
-                            >
-                              <div
-                                style={{
-                                  background: "var(--gray-50)",
-                                  padding: 12,
-                                  borderRadius: 4,
-                                  textAlign: "center",
-                                }}
-                              >
-                                <div style={{ fontSize: 20, fontWeight: 600 }}>
+                            <div className="inventory-warehouse-stats-grid">
+                              <div className="inventory-warehouse-stat-card">
+                                <div className="inventory-warehouse-stat-value">
                                   {locs.length}
                                 </div>
-                                <div
-                                  style={{
-                                    fontSize: 11,
-                                    color: "var(--muted)",
-                                  }}
-                                >
+                                <div className="inventory-warehouse-stat-label">
                                   Locations
                                 </div>
                               </div>
-                              <div
-                                style={{
-                                  background: "var(--gray-50)",
-                                  padding: 12,
-                                  borderRadius: 4,
-                                  textAlign: "center",
+                              <button
+                                type="button"
+                                className="inventory-warehouse-stat-card inventory-warehouse-stat-card-clickable"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  openWarehouseProducts(w.id);
                                 }}
+                                title={`View items in ${w.name}`}
                               >
-                                <div style={{ fontSize: 20, fontWeight: 600 }}>
+                                <div className="inventory-warehouse-stat-value">
                                   {totalItems}
                                 </div>
-                                <div
-                                  style={{
-                                    fontSize: 11,
-                                    color: "var(--muted)",
-                                  }}
-                                >
+                                <div className="inventory-warehouse-stat-label">
                                   Items
                                 </div>
-                              </div>
-                              <div
-                                style={{
-                                  background: "var(--gray-50)",
-                                  padding: 12,
-                                  borderRadius: 4,
-                                  textAlign: "center",
-                                }}
-                              >
-                                <div style={{ fontSize: 20, fontWeight: 600 }}>
+                              </button>
+                              <div className="inventory-warehouse-stat-card">
+                                <div className="inventory-warehouse-stat-value">
                                   ${totalValue.toFixed(0)}
                                 </div>
-                                <div
-                                  style={{
-                                    fontSize: 11,
-                                    color: "var(--muted)",
-                                  }}
-                                >
+                                <div className="inventory-warehouse-stat-label">
                                   Value
                                 </div>
                               </div>
                             </div>
 
-                            <div
-                              style={{
-                                borderTop: "1px solid var(--zinc-200)",
-                                paddingTop: 12,
-                              }}
-                            >
-                              <div
-                                style={{
-                                  fontSize: 12,
-                                  fontWeight: 600,
-                                  color: "var(--muted)",
-                                  marginBottom: 8,
-                                }}
-                              >
+                            <div className="inventory-warehouse-locations">
+                              <div className="inventory-warehouse-locations-label">
                                 LOCATIONS
                               </div>
-                              <div
-                                style={{
-                                  display: "flex",
-                                  flexWrap: "wrap",
-                                  gap: 8,
-                                }}
-                              >
+                              <div className="inventory-warehouse-locations-list">
                                 {locs.slice(0, 5).map((l) => (
-                                  <span
+                                  <button
                                     key={l.id}
-                                    className={`o-tag ${l.is_primary ? "o-tag-done" : "o-tag-draft"}`}
+                                    type="button"
+                                    className={`o-tag inventory-location-chip-btn ${
+                                      l.is_primary
+                                        ? "o-tag-done"
+                                        : "o-tag-draft"
+                                    }`}
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      openLocationProducts(w.id, l.id);
+                                    }}
+                                    title={`View items in ${w.name} / ${l.name}`}
                                   >
                                     {l.name}
-                                  </span>
+                                  </button>
                                 ))}
                                 {locs.length > 5 && (
                                   <span className="o-tag o-tag-draft">
@@ -3887,12 +5515,7 @@ export default function InventoryPage() {
                                   </span>
                                 )}
                                 {locs.length === 0 && (
-                                  <span
-                                    style={{
-                                      color: "var(--muted)",
-                                      fontSize: 13,
-                                    }}
-                                  >
+                                  <span className="inventory-warehouse-no-locations">
                                     No locations
                                   </span>
                                 )}
@@ -3904,28 +5527,20 @@ export default function InventoryPage() {
 
                       {warehouses.length === 0 && (
                         <div
+                          className="inventory-warehouse-empty"
                           style={{
                             gridColumn: "1 / -1",
                             textAlign: "center",
                             padding: 60,
                           }}
                         >
-                          <div
-                            style={{
-                              fontSize: 24,
-                              fontWeight: 700,
-                              color: "var(--blue-600)",
-                              marginBottom: 16,
-                            }}
-                          >
-                            WH
+                          <div className="inventory-empty-icon">
+                            <WarehouseGlyph size={24} />
                           </div>
-                          <h3 style={{ margin: "0 0 8px 0" }}>
+                          <h3 className="inventory-warehouse-empty-title">
                             No Warehouses Yet
                           </h3>
-                          <p
-                            style={{ color: "var(--muted)", marginBottom: 16 }}
-                          >
+                          <p className="inventory-warehouse-empty-text">
                             Create your first warehouse to start managing
                             inventory
                           </p>
@@ -3944,32 +5559,17 @@ export default function InventoryPage() {
 
               {/* ============= WAREHOUSE FORM ============= */}
               {mainView === "warehouses" && subView === "form" && (
-                <div className="o-main" style={{ width: "100%" }}>
-                  <div className="o-form-view">
+                <div className="o-main inventory-view-main">
+                  <div className="o-form-view inventory-form-panel inventory-warehouse-form">
                     <div className="o-form-sheet">
-                      <div
-                        style={{ display: "flex", gap: 24, marginBottom: 24 }}
-                      >
-                        <div
-                          style={{
-                            width: 64,
-                            height: 64,
-                            background: "var(--gray-50)",
-                            borderRadius: 8,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontSize: 24,
-                            fontWeight: 700,
-                            color: "var(--blue-600)",
-                          }}
-                        >
-                          WH
+                      <div className="inventory-warehouse-form-head">
+                        <div className="inventory-warehouse-hero-icon">
+                          <WarehouseGlyph size={24} />
                         </div>
-                        <div style={{ flex: 1 }}>
+                        <div className="inventory-warehouse-form-main">
                           <input
                             type="text"
-                            className="o-form-input"
+                            className="o-form-input inventory-warehouse-name-input"
                             placeholder="Warehouse Name"
                             value={warehouseForm.name}
                             onChange={(e) =>
@@ -3978,14 +5578,6 @@ export default function InventoryPage() {
                                 name: e.target.value,
                               })
                             }
-                            style={{
-                              fontSize: 24,
-                              fontWeight: 600,
-                              border: "none",
-                              borderBottom: "2px solid var(--zinc-200)",
-                              borderRadius: 0,
-                              padding: "8px 0",
-                            }}
                           />
                         </div>
                       </div>
@@ -3995,7 +5587,7 @@ export default function InventoryPage() {
                         <div className="o-form-field">
                           <input
                             type="text"
-                            className="o-form-input"
+                            className="o-form-input inventory-warehouse-code-input"
                             value={warehouseForm.code}
                             onChange={(e) =>
                               setWarehouseForm({
@@ -4004,17 +5596,13 @@ export default function InventoryPage() {
                               })
                             }
                             placeholder="e.g., WH01"
-                            style={{ maxWidth: 200 }}
                           />
                         </div>
                       </div>
 
                       <div className="o-form-group">
                         <label className="o-form-label">Address</label>
-                        <div
-                          className="o-form-field"
-                          style={{ maxWidth: "100%" }}
-                        >
+                        <div className="o-form-field inventory-field-full">
                           <textarea
                             className="o-form-textarea"
                             value={warehouseForm.address}
@@ -4026,7 +5614,6 @@ export default function InventoryPage() {
                             }
                             rows={3}
                             placeholder="Warehouse address..."
-                            style={{ width: "100%" }}
                           />
                         </div>
                       </div>
@@ -4041,15 +5628,8 @@ export default function InventoryPage() {
                             <div className="o-group-separator-line" />
                           </div>
 
-                          <div
-                            style={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                              marginBottom: 16,
-                            }}
-                          >
-                            <span style={{ fontWeight: 600 }}>
+                          <div className="inventory-section-header">
+                            <span className="inventory-section-title">
                               Warehouse Locations
                             </span>
                             <button
@@ -4076,7 +5656,9 @@ export default function InventoryPage() {
                                   <th>Name</th>
                                   <th>Code</th>
                                   <th>Primary</th>
-                                  <th style={{ width: 120 }}>Actions</th>
+                                  <th className="inventory-col-actions">
+                                    Actions
+                                  </th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -4088,22 +5670,13 @@ export default function InventoryPage() {
                                       <td>{l.is_primary ? "Yes" : ""}</td>
                                       <td>
                                         <button
-                                          className="o-btn o-btn-link"
-                                          style={{
-                                            padding: "4px 8px",
-                                            fontSize: 12,
-                                          }}
+                                          className="o-btn o-btn-link inventory-link-sm"
                                           onClick={() => openLocationModal(l)}
                                         >
                                           Edit
                                         </button>
                                         <button
-                                          className="o-btn o-btn-link"
-                                          style={{
-                                            padding: "4px 8px",
-                                            fontSize: 12,
-                                            color: "var(--red-500)",
-                                          }}
+                                          className="o-btn o-btn-link inventory-link-sm danger"
                                           onClick={() => deleteLocation(l.id)}
                                         >
                                           Delete
@@ -4117,10 +5690,7 @@ export default function InventoryPage() {
                                   <tr>
                                     <td
                                       colSpan={4}
-                                      style={{
-                                        textAlign: "center",
-                                        color: "var(--muted)",
-                                      }}
+                                      className="inventory-empty-row inventory-muted-note"
                                     >
                                       No locations yet
                                     </td>
@@ -4140,50 +5710,129 @@ export default function InventoryPage() {
               {mainView === "operations" && subView === "list" && (
                 <>
                   {/* Sidebar */}
-                  <div className="o-sidebar">
-                    <div className="o-sidebar-section">
-                      <div className="o-sidebar-title">Status</div>
-                      {["all", ...STATES.map((s) => s.value)].map((state) => (
-                        <div
-                          key={state}
-                          className={`o-sidebar-item ${filterState === state ? "active" : ""}`}
-                          onClick={() => setFilterState(state)}
-                        >
-                          <span>
-                            {state === "all"
-                              ? "All"
-                              : STATES.find((s) => s.value === state)?.label}
-                          </span>
-                          <span className="o-sidebar-count">
-                            {state === "all"
-                              ? stockMoves.length
-                              : stockMoves.filter((m) => m.state === state)
-                                  .length}
-                          </span>
+                  <div className="o-sidebar inventory-sub-sidebar">
+                    {operationsTab !== "adjustments" && (
+                      <>
+                        <div className="o-sidebar-section">
+                          <div className="o-sidebar-title">Status</div>
+                          {["all", ...STATES.map((s) => s.value)].map(
+                            (state) => (
+                              <div
+                                key={state}
+                                className={`o-sidebar-item ${filterState === state ? "active" : ""}`}
+                                onClick={() => setFilterState(state)}
+                              >
+                                <span>
+                                  {state === "all"
+                                    ? "All"
+                                    : STATES.find((s) => s.value === state)
+                                        ?.label}
+                                </span>
+                                <span className="o-sidebar-count">
+                                  {state === "all"
+                                    ? stockMoves.length
+                                    : stockMoves.filter(
+                                        (m) => m.state === state,
+                                      ).length}
+                                </span>
+                              </div>
+                            ),
+                          )}
                         </div>
-                      ))}
-                    </div>
 
-                    <div className="o-sidebar-section">
-                      <div className="o-sidebar-title">Operation Type</div>
-                      {MOVE_TYPES.map((t) => (
-                        <div key={t.value} className="o-sidebar-item">
-                          <span>{t.label}</span>
+                        <div className="o-sidebar-section">
+                          <div className="o-sidebar-title">Operation Type</div>
+                          {["all", ...MOVE_TYPES.map((t) => t.value)].map(
+                            (moveType) => (
+                              <div
+                                key={moveType}
+                                className={`o-sidebar-item ${
+                                  operationsTab === "moves" &&
+                                  filterMoveType === moveType
+                                    ? "active"
+                                    : ""
+                                }`}
+                                onClick={() => {
+                                  if (operationsTab === "moves") {
+                                    setFilterMoveType(moveType);
+                                  }
+                                }}
+                              >
+                                <span>
+                                  {moveType === "all"
+                                    ? "All"
+                                    : MOVE_TYPES.find(
+                                        (t) => t.value === moveType,
+                                      )?.label || moveType}
+                                </span>
+                                <span className="o-sidebar-count">
+                                  {moveType === "all"
+                                    ? stockMoves.length
+                                    : stockMoves.filter(
+                                        (m) => m.move_type === moveType,
+                                      ).length}
+                                </span>
+                              </div>
+                            ),
+                          )}
+                        </div>
+                      </>
+                    )}
+                    {operationsTab === "adjustments" && (
+                      <div className="o-sidebar-section">
+                        <div className="o-sidebar-title">Adjustments</div>
+                        <div className="o-sidebar-item">
+                          <span>Total Rows</span>
                           <span className="o-sidebar-count">
-                            {
-                              stockMoves.filter((m) => m.move_type === t.value)
-                                .length
-                            }
+                            {adjustmentSummary.totalRows}
                           </span>
                         </div>
-                      ))}
-                    </div>
+                        <div className="o-sidebar-item">
+                          <span>Changed</span>
+                          <span className="o-sidebar-count">
+                            {adjustmentSummary.changedRows}
+                          </span>
+                        </div>
+                        <div className="o-sidebar-item">
+                          <span>Invalid</span>
+                          <span className="o-sidebar-count">
+                            {adjustmentSummary.invalidRows}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Main Content */}
-                  <div className="o-main">
+                  <div className="o-main inventory-view-main">
                     {operationsTab === "moves" && (
-                      <div className="o-list-view">
+                      <div className="o-list-view inventory-table-panel">
+                        <div className="inventory-move-list-toolbar">
+                          <div className="inventory-move-filter-chips">
+                            {[
+                              { value: "all", label: "All" },
+                              { value: "in", label: "Receipts" },
+                              { value: "out", label: "Deliveries" },
+                              { value: "internal", label: "Transfers" },
+                              { value: "adjustment", label: "Adjustments" },
+                            ].map((entry) => (
+                              <button
+                                key={entry.value}
+                                type="button"
+                                className={`inventory-move-chip ${
+                                  filterMoveType === entry.value ? "active" : ""
+                                }`}
+                                onClick={() => setFilterMoveType(entry.value)}
+                              >
+                                {entry.label}
+                              </button>
+                            ))}
+                          </div>
+                          <div className="inventory-muted-note">
+                            {filteredMoves.length} move
+                            {filteredMoves.length === 1 ? "" : "s"}
+                          </div>
+                        </div>
                         <table className="o-list-table">
                           <thead>
                             <tr>
@@ -4195,7 +5844,7 @@ export default function InventoryPage() {
                               <th className="text-end">Unit Cost</th>
                               <th className="text-end">Total</th>
                               <th>Status</th>
-                              <th></th>
+                              <th>Actions</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -4213,15 +5862,11 @@ export default function InventoryPage() {
                                 <tr
                                   key={m.id}
                                   onDoubleClick={() => openMove(m)}
-                                  style={{ cursor: "pointer" }}
+                                  className="inventory-table-clickable"
                                 >
                                   <td>
                                     <span
-                                      style={{
-                                        color: "var(--blue-600)",
-                                        fontWeight: 500,
-                                        cursor: "pointer",
-                                      }}
+                                      className="inventory-link-cell"
                                       onClick={() => openMove(m)}
                                     >
                                       {m.reference ||
@@ -4237,7 +5882,7 @@ export default function InventoryPage() {
                                     </span>
                                   </td>
                                   <td>{warehouse?.name || "-"}</td>
-                                  <td style={{ fontWeight: 600 }}>
+                                  <td className="inventory-strong-cell">
                                     {m.quantity}{" "}
                                     {(product?.uom === "PCS"
                                       ? "Units"
@@ -4246,10 +5891,7 @@ export default function InventoryPage() {
                                   <td className="o-monetary">
                                     ${m.unit_cost.toFixed(2)}
                                   </td>
-                                  <td
-                                    className="o-monetary"
-                                    style={{ fontWeight: 600 }}
-                                  >
+                                  <td className="o-monetary inventory-strong-cell">
                                     ${m.total_cost.toFixed(2)}
                                   </td>
                                   <td>
@@ -4261,49 +5903,50 @@ export default function InventoryPage() {
                                     </span>
                                   </td>
                                   <td>
-                                    {m.state === "draft" && (
-                                      <div
-                                        className="o-quick-actions"
-                                        style={{ opacity: 1 }}
+                                    <div className="o-quick-actions">
+                                      <button
+                                        className="o-btn o-btn-secondary o-btn-icon"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          void printMovePdf(m);
+                                        }}
+                                        title="Print PDF"
                                       >
-                                        <button
-                                          className="o-btn o-btn-success o-btn-icon"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            confirmMove(m.id);
-                                          }}
-                                          title="Validate"
-                                        >
-                                          OK
-                                        </button>
-                                        <button
-                                          className="o-btn o-btn-danger o-btn-icon"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            cancelMove(m.id);
-                                          }}
-                                          title="Cancel"
-                                        >
-                                          X
-                                        </button>
-                                      </div>
-                                    )}
+                                        <Printer size={14} />
+                                      </button>
+                                      {m.state === "draft" && (
+                                        <>
+                                          <button
+                                            className="o-btn o-btn-success o-btn-icon"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              confirmMove(m.id);
+                                            }}
+                                            title="Validate"
+                                          >
+                                            <Check size={14} />
+                                          </button>
+                                          <button
+                                            className="o-btn o-btn-danger o-btn-icon"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              cancelMove(m.id);
+                                            }}
+                                            title="Cancel"
+                                          >
+                                            <X size={14} />
+                                          </button>
+                                        </>
+                                      )}
+                                    </div>
                                   </td>
                                 </tr>
                               );
                             })}
                             {filteredMoves.length === 0 && (
                               <tr>
-                                <td
-                                  colSpan={9}
-                                  style={{ textAlign: "center", padding: 40 }}
-                                >
-                                  <div
-                                    style={{
-                                      color: "var(--muted)",
-                                      marginBottom: 16,
-                                    }}
-                                  >
+                                <td colSpan={9} className="inventory-empty-row">
+                                  <div className="inventory-muted-note inventory-empty-note">
                                     No stock moves found
                                   </div>
                                   <button
@@ -4321,7 +5964,7 @@ export default function InventoryPage() {
                     )}
 
                     {operationsTab === "quants" && (
-                      <div className="o-list-view">
+                      <div className="o-list-view inventory-table-panel">
                         <table className="o-list-table">
                           <thead>
                             <tr>
@@ -4348,7 +5991,7 @@ export default function InventoryPage() {
                               );
                               return (
                                 <tr key={q.id}>
-                                  <td style={{ fontWeight: 500 }}>
+                                  <td className="inventory-strong-cell">
                                     {product?.name || "-"}
                                   </td>
                                   <td>{warehouse?.name || "-"}</td>
@@ -4357,8 +6000,7 @@ export default function InventoryPage() {
                                     {product ? (
                                       <button
                                         type="button"
-                                        className="o-btn o-btn-link"
-                                        style={{ fontWeight: 600 }}
+                                        className="o-btn o-btn-link inventory-qty-btn"
                                         onClick={() =>
                                           openOnHandAdjustment(
                                             product,
@@ -4370,36 +6012,27 @@ export default function InventoryPage() {
                                         {q.quantity}
                                       </button>
                                     ) : (
-                                      <span style={{ fontWeight: 600 }}>
+                                      <span className="inventory-strong-cell">
                                         {q.quantity}
                                       </span>
                                     )}
                                   </td>
                                   <td
-                                    style={{
-                                      color:
-                                        q.reserved_quantity > 0
-                                          ? "var(--red-500)"
-                                          : "inherit",
-                                    }}
+                                    className={
+                                      q.reserved_quantity > 0
+                                        ? "inventory-reserved-value"
+                                        : ""
+                                    }
                                   >
                                     {q.reserved_quantity}
                                   </td>
-                                  <td
-                                    style={{
-                                      color: "var(--green-600)",
-                                      fontWeight: 600,
-                                    }}
-                                  >
+                                  <td className="inventory-positive inventory-strong-cell">
                                     {q.available_quantity}
                                   </td>
                                   <td className="o-monetary">
                                     ${q.unit_cost.toFixed(2)}
                                   </td>
-                                  <td
-                                    className="o-monetary"
-                                    style={{ fontWeight: 600 }}
-                                  >
+                                  <td className="o-monetary inventory-strong-cell">
                                     ${q.total_value.toFixed(2)}
                                   </td>
                                 </tr>
@@ -4409,14 +6042,111 @@ export default function InventoryPage() {
                               <tr>
                                 <td
                                   colSpan={8}
-                                  style={{
-                                    textAlign: "center",
-                                    padding: 40,
-                                    color: "var(--muted)",
-                                  }}
+                                  className="inventory-empty-row inventory-muted-note"
                                 >
                                   No stock on hand. Validate stock moves to
                                   update quantities.
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+
+                    {operationsTab === "adjustments" && (
+                      <div className="o-list-view inventory-table-panel">
+                        <table className="o-list-table">
+                          <thead>
+                            <tr>
+                              <th>Product</th>
+                              <th>Warehouse</th>
+                              <th>Location</th>
+                              <th className="text-end">On Hand</th>
+                              <th className="text-end">Counted</th>
+                              <th className="text-end">Difference</th>
+                              <th className="text-end">Unit Cost</th>
+                              <th className="text-end">New Value</th>
+                              <th style={{ width: 110 }}>Action</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {adjustmentRows.map((row) => {
+                              const hasDelta = row.changed;
+                              return (
+                                <tr
+                                  key={row.quantId}
+                                  className={
+                                    hasDelta
+                                      ? "inventory-adjustment-row-changed"
+                                      : ""
+                                  }
+                                >
+                                  <td className="inventory-strong-cell">
+                                    {row.productName}
+                                  </td>
+                                  <td>{row.warehouseName}</td>
+                                  <td>{row.locationName}</td>
+                                  <td className="text-end">
+                                    {row.onHand} {row.uom}
+                                  </td>
+                                  <td className="text-end">
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      step="0.01"
+                                      value={row.countedText}
+                                      className={`inventory-counted-input ${!row.isValid ? "invalid" : ""}`}
+                                      onChange={(e) =>
+                                        updateCountedQuantity(
+                                          row.quantId,
+                                          e.target.value,
+                                        )
+                                      }
+                                    />
+                                  </td>
+                                  <td
+                                    className={`text-end ${row.difference > 0 ? "inventory-diff-positive" : row.difference < 0 ? "inventory-diff-negative" : ""}`}
+                                  >
+                                    {row.isValid
+                                      ? row.difference.toFixed(2)
+                                      : "-"}
+                                  </td>
+                                  <td className="o-monetary text-end">
+                                    ${row.unitCost.toFixed(2)}
+                                  </td>
+                                  <td className="o-monetary text-end">
+                                    {row.isValid
+                                      ? `$${(row.counted * row.unitCost).toFixed(2)}`
+                                      : "-"}
+                                  </td>
+                                  <td>
+                                    <button
+                                      className="o-btn o-btn-primary"
+                                      onClick={() =>
+                                        void applyInventoryAdjustments([
+                                          row.quantId,
+                                        ])
+                                      }
+                                      disabled={
+                                        applyingAdjustments ||
+                                        !row.isValid ||
+                                        !row.changed
+                                      }
+                                    >
+                                      Apply
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                            {adjustmentRows.length === 0 && (
+                              <tr>
+                                <td
+                                  colSpan={9}
+                                  className="inventory-empty-row inventory-muted-note"
+                                >
+                                  No adjustment rows found for this filter.
                                 </td>
                               </tr>
                             )}
@@ -4430,11 +6160,14 @@ export default function InventoryPage() {
 
               {/* ============= STOCK MOVE FORM ============= */}
               {mainView === "operations" && subView === "form" && (
-                <div className="o-main" style={{ width: "100%" }}>
-                  <div className="o-form-view">
+                <div
+                  className="o-main inventory-view-main"
+                  style={{ width: "100%" }}
+                >
+                  <div className="o-form-view inventory-form-panel inventory-move-form">
                     {/* Status Bar */}
                     {selectedMove && !isNew && (
-                      <div className="o-statusbar" style={{ marginBottom: 24 }}>
+                      <div className="o-statusbar inventory-statusbar">
                         {STATES.map((s, i) => (
                           <div
                             key={s.value}
@@ -4455,71 +6188,37 @@ export default function InventoryPage() {
                     )}
 
                     {/* Action Buttons */}
-                    {selectedMove &&
-                      selectedMove.state === "draft" &&
-                      !isNew && (
-                        <div
-                          style={{ marginBottom: 24, display: "flex", gap: 8 }}
-                        >
-                          <button
-                            className="o-btn o-btn-success"
-                            onClick={() => confirmMove(selectedMove.id)}
-                          >
-                            Validate
-                          </button>
-                          <button
-                            className="o-btn o-btn-secondary"
-                            onClick={() => cancelMove(selectedMove.id)}
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      )}
+                    <div className="inventory-form-actions">
+                      <button
+                        className="o-btn o-btn-secondary inventory-inline-action-btn"
+                        onClick={() => void printMovePdf()}
+                      >
+                        <Printer size={14} />
+                        <span>Print PDF</span>
+                      </button>
+                      {selectedMove &&
+                        selectedMove.state === "draft" &&
+                        !isNew && (
+                          <>
+                            <button
+                              className="o-btn o-btn-success"
+                              onClick={() => confirmMove(selectedMove.id)}
+                            >
+                              Validate
+                            </button>
+                            <button
+                              className="o-btn o-btn-secondary"
+                              onClick={() => cancelMove(selectedMove.id)}
+                            >
+                              Cancel
+                            </button>
+                          </>
+                        )}
+                    </div>
 
                     <div className="o-form-sheet">
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "1fr 1fr",
-                          gap: 24,
-                        }}
-                      >
+                      <div className="inventory-two-col-grid">
                         <div>
-                          <div className="o-form-group">
-                            <ValidatedField
-                              label="Product"
-                              className="o-form-field"
-                              isInvalid={invalidMoveFields.includes("product")}
-                            >
-                              <select
-                                className="o-form-select"
-                                value={moveForm.product_id ?? ""}
-                                onChange={(e) => {
-                                  const value = e.target.value
-                                    ? Number(e.target.value)
-                                    : null;
-                                  const prod = products.find(
-                                    (p) => p.id === value,
-                                  );
-                                  setMoveForm({
-                                    ...moveForm,
-                                    product_id: value,
-                                    unit_cost: prod?.purchase_cost || 0,
-                                  });
-                                  clearInvalidMoveField("product", value);
-                                }}
-                                disabled={selectedMove?.state === "done"}
-                              >
-                                <option value="">Select a product...</option>
-                                {products.map((p) => (
-                                  <option key={p.id} value={p.id}>
-                                    {p.name}
-                                  </option>
-                                ))}
-                              </select>
-                            </ValidatedField>
-                          </div>
-
                           <div className="o-form-group">
                             <label className="o-form-label">
                               Operation Type
@@ -4534,7 +6233,7 @@ export default function InventoryPage() {
                                     move_type: e.target.value,
                                   })
                                 }
-                                disabled={selectedMove?.state === "done"}
+                                disabled={isMoveReadonly}
                               >
                                 {MOVE_TYPES.map((t) => (
                                   <option key={t.value} value={t.value}>
@@ -4567,7 +6266,7 @@ export default function InventoryPage() {
                                   });
                                   clearInvalidMoveField("warehouse", value);
                                 }}
-                                disabled={selectedMove?.state === "done"}
+                                disabled={isMoveReadonly}
                               >
                                 <option value="">Select a warehouse...</option>
                                 {warehouses.map((w) => (
@@ -4598,7 +6297,7 @@ export default function InventoryPage() {
                                   });
                                   clearInvalidMoveField("location", value);
                                 }}
-                                disabled={selectedMove?.state === "done"}
+                                disabled={isMoveReadonly}
                               >
                                 <option value="">Select a location...</option>
                                 {locations
@@ -4619,64 +6318,6 @@ export default function InventoryPage() {
 
                         <div>
                           <div className="o-form-group">
-                            <label className="o-form-label">Quantity</label>
-                            <div className="o-form-field">
-                              <input
-                                type="number"
-                                className="o-form-input"
-                                value={moveForm.quantity}
-                                onChange={(e) =>
-                                  setMoveForm({
-                                    ...moveForm,
-                                    quantity: Number(e.target.value),
-                                  })
-                                }
-                                min="0"
-                                disabled={selectedMove?.state === "done"}
-                              />
-                            </div>
-                          </div>
-
-                          <div className="o-form-group">
-                            <label className="o-form-label">Unit Cost</label>
-                            <div className="o-form-field">
-                              <input
-                                type="number"
-                                className="o-form-input"
-                                value={moveForm.unit_cost}
-                                onChange={(e) =>
-                                  setMoveForm({
-                                    ...moveForm,
-                                    unit_cost: Number(e.target.value),
-                                  })
-                                }
-                                step="0.01"
-                                min="0"
-                                disabled={selectedMove?.state === "done"}
-                              />
-                            </div>
-                          </div>
-
-                          {/* <div className="o-form-group">
-                            <label className="o-form-label">Total Cost</label>
-                            <div className="o-form-field">
-                              <span
-                                style={{
-                                  padding: "8px 0",
-                                  display: "block",
-                                  fontWeight: 600,
-                                  fontSize: 18,
-                                }}
-                              >
-                                $
-                                {(
-                                  moveForm.quantity * moveForm.unit_cost
-                                ).toFixed(2)}
-                              </span>
-                            </div>
-                          </div> */}
-
-                          <div className="o-form-group">
                             <label className="o-form-label">Reference</label>
                             <div className="o-form-field">
                               <input
@@ -4690,7 +6331,7 @@ export default function InventoryPage() {
                                   })
                                 }
                                 placeholder="e.g., WH/IN/00001"
-                                disabled={selectedMove?.state === "done"}
+                                disabled={isMoveReadonly}
                               />
                             </div>
                           </div>
@@ -4711,17 +6352,184 @@ export default function InventoryPage() {
                                   })
                                 }
                                 placeholder="e.g., PO-00001"
-                                disabled={selectedMove?.state === "done"}
+                                disabled={isMoveReadonly}
                               />
+                            </div>
+                          </div>
+
+                          <div className="inventory-move-summary-card">
+                            <div className="inventory-move-summary-row">
+                              <span>Lines</span>
+                              <strong>{moveLines.length}</strong>
+                            </div>
+                            <div className="inventory-move-summary-row">
+                              <span>Total Qty</span>
+                              <strong>
+                                {moveLinesTotals.quantity.toFixed(2)}
+                              </strong>
+                            </div>
+                            <div className="inventory-move-summary-row">
+                              <span>Total Value</span>
+                              <strong>
+                                ${moveLinesTotals.total.toFixed(2)}
+                              </strong>
                             </div>
                           </div>
                         </div>
                       </div>
 
-                      <div
-                        className="o-group-separator"
-                        style={{ marginTop: 24 }}
-                      >
+                      <div className="o-group-separator inventory-group-separator">
+                        <div className="o-group-separator-line" />
+                        <span className="o-group-separator-text">
+                          Product Lines
+                        </span>
+                        <div className="o-group-separator-line" />
+                      </div>
+
+                      <div className="inventory-move-lines-panel">
+                        <div className="inventory-move-lines-header">
+                          <span>Add products to this receipt or delivery</span>
+                          {isNew && !isMoveReadonly && (
+                            <button
+                              type="button"
+                              className="o-btn o-btn-secondary inventory-inline-action-btn"
+                              onClick={addMoveLine}
+                            >
+                              <Plus size={14} />
+                              <span>Add Line</span>
+                            </button>
+                          )}
+                        </div>
+                        <div className="o-inline-table inventory-move-lines-table-wrap">
+                          <table className="inventory-move-lines-table">
+                            <thead>
+                              <tr>
+                                <th className="inventory-move-col-line">#</th>
+                                <th>Product</th>
+                                <th className="text-end inventory-move-col-qty">
+                                  Quantity
+                                </th>
+                                <th className="text-end inventory-move-col-cost">
+                                  Unit Cost
+                                </th>
+                                <th className="text-end inventory-move-col-total">
+                                  Line Total
+                                </th>
+                                <th className="inventory-move-col-actions">
+                                  Actions
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {moveLines.map((line, index) => {
+                                const product = products.find(
+                                  (p) => p.id === line.product_id,
+                                );
+                                const quantity = Number(line.quantity) || 0;
+                                const unitCost = Number(line.unit_cost) || 0;
+                                const lineTotal = quantity * unitCost;
+                                return (
+                                  <tr key={line.line_id}>
+                                    <td>{index + 1}</td>
+                                    <td>
+                                      <select
+                                        className="o-form-select"
+                                        value={line.product_id ?? ""}
+                                        onChange={(e) => {
+                                          const productId = e.target.value
+                                            ? Number(e.target.value)
+                                            : null;
+                                          const selectedProductLine =
+                                            products.find(
+                                              (p) => p.id === productId,
+                                            );
+                                          updateMoveLine(line.line_id, {
+                                            product_id: productId,
+                                            unit_cost:
+                                              selectedProductLine?.purchase_cost ??
+                                              0,
+                                          });
+                                        }}
+                                        disabled={isMoveReadonly}
+                                      >
+                                        <option value="">
+                                          Select product...
+                                        </option>
+                                        {products.map((p) => (
+                                          <option key={p.id} value={p.id}>
+                                            {p.name}
+                                          </option>
+                                        ))}
+                                      </select>
+                                    </td>
+                                    <td className="text-end">
+                                      <input
+                                        type="number"
+                                        className="o-form-input inventory-move-line-number"
+                                        min="0"
+                                        step="0.01"
+                                        value={line.quantity}
+                                        onChange={(e) =>
+                                          updateMoveLine(line.line_id, {
+                                            quantity: Number(e.target.value),
+                                          })
+                                        }
+                                        disabled={isMoveReadonly}
+                                      />
+                                    </td>
+                                    <td className="text-end">
+                                      <input
+                                        type="number"
+                                        className="o-form-input inventory-move-line-number"
+                                        min="0"
+                                        step="0.01"
+                                        value={line.unit_cost}
+                                        onChange={(e) =>
+                                          updateMoveLine(line.line_id, {
+                                            unit_cost: Number(e.target.value),
+                                          })
+                                        }
+                                        disabled={isMoveReadonly}
+                                      />
+                                    </td>
+                                    <td className="text-end inventory-line-total">
+                                      ${lineTotal.toFixed(2)}
+                                      <div className="inventory-subtext">
+                                        {product?.uom || "Units"}
+                                      </div>
+                                    </td>
+                                    <td>
+                                      <button
+                                        type="button"
+                                        className="o-btn o-btn-danger o-btn-icon"
+                                        onClick={() =>
+                                          removeMoveLine(line.line_id)
+                                        }
+                                        disabled={
+                                          isMoveReadonly ||
+                                          !isNew ||
+                                          moveLines.length <= 1
+                                        }
+                                        title="Remove line"
+                                      >
+                                        <Trash2 size={14} />
+                                      </button>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                        {!isNew && (
+                          <div className="inventory-muted-note">
+                            Existing moves support one product line. Create a
+                            new move for multiple lines.
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="o-group-separator inventory-group-separator">
                         <div className="o-group-separator-line" />
                         <span className="o-group-separator-text">Notes</span>
                         <div className="o-group-separator-line" />
@@ -4735,8 +6543,7 @@ export default function InventoryPage() {
                           setMoveForm({ ...moveForm, notes: e.target.value })
                         }
                         placeholder="Internal notes..."
-                        style={{ width: "100%" }}
-                        disabled={selectedMove?.state === "done"}
+                        disabled={isMoveReadonly}
                       />
                     </div>
                   </div>
