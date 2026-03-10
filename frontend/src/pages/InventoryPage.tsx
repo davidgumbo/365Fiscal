@@ -3607,7 +3607,7 @@ export default function InventoryPage() {
                       </button>
                     )}
 
-                    {mainView === "operations" && operationsTab === "moves" && (
+                    {/* {mainView === "operations" && operationsTab === "moves" && (
                       <div className="inventory-op-actions">
                         {MOVE_TYPES.filter((t) => t.value !== "adjustment").map(
                           (t) => (
@@ -3622,7 +3622,7 @@ export default function InventoryPage() {
                           ),
                         )}
                       </div>
-                    )}
+                    )} */}
                     {mainView === "operations" &&
                       operationsTab === "adjustments" && (
                         <div className="inventory-op-actions">
@@ -5827,7 +5827,7 @@ export default function InventoryPage() {
                     {operationsTab === "moves" && (
                       <div className="o-list-view inventory-table-panel">
                         <div className="inventory-move-list-toolbar">
-                          <div className="inventory-move-filter-chips">
+                          {/* <div className="inventory-move-filter-chips">
                             {[
                               { value: "all", label: "All" },
                               { value: "in", label: "Receipts" },
@@ -5846,11 +5846,11 @@ export default function InventoryPage() {
                                 {entry.label}
                               </button>
                             ))}
-                          </div>
-                          <div className="inventory-muted-note">
+                          </div> */}
+                          {/* <div className="inventory-muted-note">
                             {filteredMoves.length} move
                             {filteredMoves.length === 1 ? "" : "s"}
-                          </div>
+                          </div> */}
                         </div>
                         <table className="o-list-table">
                           <thead>
