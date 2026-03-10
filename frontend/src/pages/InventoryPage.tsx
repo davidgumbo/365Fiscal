@@ -6217,29 +6217,6 @@ export default function InventoryPage() {
                   style={{ width: "100%" }}
                 >
                   <div className="o-form-view inventory-form-panel inventory-move-form">
-                    {/* Status Bar */}
-                    {selectedMove && !isNew && (
-                      <div className="o-statusbar inventory-statusbar">
-                        {STATES.map((s, i) => (
-                          <div
-                            key={s.value}
-                            className={`o-statusbar-item ${
-                              selectedMove.state === s.value
-                                ? "active"
-                                : STATES.findIndex(
-                                      (st) => st.value === selectedMove.state,
-                                    ) > i
-                                  ? "done"
-                                  : ""
-                            }`}
-                          >
-                            {s.label}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Action Buttons */}
                     <div className="inventory-form-actions">
                       <button
                         className="o-btn o-btn-secondary inventory-inline-action-btn"
@@ -6248,6 +6225,26 @@ export default function InventoryPage() {
                         <Printer size={14} />
                         <span>Print PDF</span>
                       </button>
+                      {selectedMove && !isNew && (
+                        <div className="o-statusbar inventory-statusbar">
+                          {STATES.map((s, i) => (
+                            <div
+                              key={s.value}
+                              className={`o-statusbar-item ${
+                                selectedMove.state === s.value
+                                  ? "active"
+                                  : STATES.findIndex(
+                                        (st) => st.value === selectedMove.state,
+                                      ) > i
+                                    ? "done"
+                                    : ""
+                              }`}
+                            >
+                              {s.label}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                       {selectedMove &&
                         selectedMove.state === "draft" &&
                         !isNew && (
@@ -6270,7 +6267,7 @@ export default function InventoryPage() {
 
                     <div className="o-form-sheet">
                       <div className="inventory-two-col-grid">
-                        <div>
+                        <div className="inventory-move-fields">
                           <div className="o-form-group">
                             <label className="o-form-label">
                               Operation Type
@@ -6366,9 +6363,6 @@ export default function InventoryPage() {
                               </select>
                             </ValidatedField>
                           </div>
-                        </div>
-
-                        <div>
                           <div className="o-form-group">
                             <label className="o-form-label">Reference</label>
                             <div className="o-form-field">
@@ -6409,19 +6403,19 @@ export default function InventoryPage() {
                             </div>
                           </div>
 
-                          <div className="inventory-move-summary-card">
-                            <div className="inventory-move-summary-row">
-                              <span>Lines</span>
+                          <div className="inventory-move-summary-inline">
+                            <div className="inventory-move-summary-inline-item">
+                              <span>Lines:</span>
                               <strong>{moveLines.length}</strong>
                             </div>
-                            <div className="inventory-move-summary-row">
-                              <span>Total Qty</span>
+                            <div className="inventory-move-summary-inline-item">
+                              <span>Total Qty:</span>
                               <strong>
                                 {moveLinesTotals.quantity.toFixed(2)}
                               </strong>
                             </div>
-                            <div className="inventory-move-summary-row">
-                              <span>Total Value</span>
+                            <div className="inventory-move-summary-inline-item">
+                              <span>Total Value:</span>
                               <strong>
                                 ${moveLinesTotals.total.toFixed(2)}
                               </strong>
@@ -6430,13 +6424,7 @@ export default function InventoryPage() {
                         </div>
                       </div>
 
-                      <div className="o-group-separator inventory-group-separator">
-                        <div className="o-group-separator-line" />
-                        <span className="o-group-separator-text">
-                          Product Lines
-                        </span>
-                        <div className="o-group-separator-line" />
-                      </div>
+                      <div className="inventory-section-title">Product Lines</div>
 
                       <div className="inventory-move-lines-panel">
                         <div className="inventory-move-lines-header">
