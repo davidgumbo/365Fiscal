@@ -1688,6 +1688,34 @@ export default function InventoryPage() {
     return { warehouseId, locationId };
   };
 
+  useEffect(() => {
+    if (subView !== "form" || !moveForm.product_id) return;
+    const { warehouseId, locationId } = resolveMoveWarehouseLocation(
+      moveForm.product_id,
+      moveForm.warehouse_id,
+      moveForm.location_id,
+    );
+    if (
+      warehouseId === moveForm.warehouse_id &&
+      locationId === moveForm.location_id
+    ) {
+      return;
+    }
+    setMoveForm((prev) => ({
+      ...prev,
+      warehouse_id: warehouseId,
+      location_id: locationId,
+    }));
+  }, [
+    subView,
+    moveForm.product_id,
+    moveForm.warehouse_id,
+    moveForm.location_id,
+    warehouses,
+    locations,
+    stockQuants,
+  ]);
+
   const openOnHandAdjustment = (
     product: ProductWithStock,
     preferredWarehouseId: number | null = null,
@@ -1900,12 +1928,17 @@ export default function InventoryPage() {
   };
 
   const openMove = (move: StockMove) => {
+    const { warehouseId, locationId } = resolveMoveWarehouseLocation(
+      move.product_id,
+      move.warehouse_id,
+      move.location_id,
+    );
     setSelectedMoveId(move.id);
     setIsNew(false);
     setMoveForm({
       product_id: move.product_id,
-      warehouse_id: move.warehouse_id,
-      location_id: move.location_id,
+      warehouse_id: warehouseId,
+      location_id: locationId,
       move_type: move.move_type,
       quantity: move.quantity,
       unit_cost: move.unit_cost,

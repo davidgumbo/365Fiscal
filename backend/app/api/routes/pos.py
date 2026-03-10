@@ -29,6 +29,8 @@ from app.models.company import Company
 from app.models.company_settings import CompanySettings
 from app.models.stock_quant import StockQuant
 from app.models.stock_move import StockMove
+from app.models.warehouse import Warehouse
+from app.models.location import Location
 from app.models.audit_log import AuditAction, ResourceType
 from app.models.pos_employee import POSEmployee
 from app.models.pos_till import POSTill
@@ -83,6 +85,41 @@ def _calc_line(data: dict) -> tuple[float, float, float]:
     subtotal = qty * price * (1 - disc / 100)
     tax = subtotal * (vat / 100)
     return round(subtotal, 2), round(tax, 2), round(subtotal + tax, 2)
+
+
+def _resolve_pos_stock_location(
+    db: Session,
+    company_id: int,
+    preferred_warehouse_id: int | None,
+) -> tuple[int | None, int | None]:
+    warehouse = None
+    if preferred_warehouse_id is not None:
+        warehouse = (
+            db.query(Warehouse)
+            .filter(
+                Warehouse.id == preferred_warehouse_id,
+                Warehouse.company_id == company_id,
+            )
+            .first()
+        )
+    if not warehouse:
+        warehouse = (
+            db.query(Warehouse)
+            .filter(Warehouse.company_id == company_id)
+            .order_by(Warehouse.id.asc())
+            .first()
+        )
+
+    if not warehouse:
+        return None, None
+
+    location = (
+        db.query(Location)
+        .filter(Location.warehouse_id == warehouse.id)
+        .order_by(Location.is_primary.desc(), Location.id.asc())
+        .first()
+    )
+    return warehouse.id, location.id if location else None
 
 
 # ── sessions ────────────────────────────────────────────────────────────────
@@ -317,6 +354,11 @@ def create_order(
             if not assigned:
                 raise HTTPException(403, "Cashier is not assigned to this POS till")
     till_warehouse_id = till.warehouse_id if till else None
+    resolved_warehouse_id, resolved_location_id = _resolve_pos_stock_location(
+        db,
+        payload.company_id,
+        till_warehouse_id,
+    )
 
     # Get device from session
     device = None
@@ -410,8 +452,10 @@ def create_order(
             StockQuant.product_id == product.id,
             StockQuant.company_id == payload.company_id,
         )
-        if till_warehouse_id is not None:
-            quant_q = quant_q.filter(StockQuant.warehouse_id == till_warehouse_id)
+        if resolved_warehouse_id is not None:
+            quant_q = quant_q.filter(StockQuant.warehouse_id == resolved_warehouse_id)
+        if resolved_location_id is not None:
+            quant_q = quant_q.filter(StockQuant.location_id == resolved_location_id)
         quant = quant_q.order_by(StockQuant.id.asc()).first()
         if quant:
             quant.quantity = round(quant.quantity - qty, 4)
@@ -424,7 +468,8 @@ def create_order(
             reference=ref,
             move_type="out",
             quantity=qty,
-            warehouse_id=till_warehouse_id,
+            warehouse_id=resolved_warehouse_id,
+            location_id=resolved_location_id,
             unit_cost=product.sales_cost or product.purchase_cost,
             total_cost=round(qty * (product.sales_cost or product.purchase_cost), 2),
             source_document=ref,
@@ -465,7 +510,7 @@ def create_order(
         amount_paid=order.total_amount,
         amount_due=0,
         currency=payload.currency,
-        warehouse_id=till_warehouse_id,
+        warehouse_id=resolved_warehouse_id,
         payment_terms="Immediate",
         payment_reference=ref,
         notes=f"POS Order {ref}",
