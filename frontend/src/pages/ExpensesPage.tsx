@@ -1450,15 +1450,6 @@ export default function ExpensesPage() {
                     <button
                       className="expense-dashboard-secondary-btn"
                       type="button"
-                      onClick={loadData}
-                      disabled={loading}
-                    >
-                      <BarChart3 size={17} />
-                      <span>Analytics</span>
-                    </button>
-                    <button
-                      className="expense-dashboard-secondary-btn"
-                      type="button"
                       onClick={exportCSV}
                     >
                       <FileText size={17} />
@@ -1473,79 +1464,6 @@ export default function ExpensesPage() {
                       New Expense
                     </button>
                   </div>
-                </div>
-
-                <div className="expense-dashboard-analytics-grid expense-dashboard-analytics-grid-3">
-                  <article className="expense-dashboard-chart-card">
-                    <h4>Expenses by Category</h4>
-                    <div className="expense-breakdown-content expense-breakdown-content-compact">
-                      <div
-                        className="expense-donut-chart expense-donut-chart-compact"
-                        style={{ background: donutGradient }}
-                      />
-                      <div className="expense-legend-list">
-                        {categoryBreakdown.slice(0, 5).map((entry) => {
-                          const Icon = entry.icon;
-                          return (
-                            <div key={entry.name} className="expense-legend-item">
-                              <span
-                                className="expense-dashboard-category-badge"
-                                style={{ background: entry.color }}
-                              >
-                                <Icon size={12} />
-                              </span>
-                              <div className="expense-legend-main">
-                                <div className="expense-legend-name">
-                                  {entry.name}
-                                </div>
-                                <div className="expense-legend-percent">
-                                  {formatCurrency(entry.amount)}
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </article>
-
-                  <article className="expense-dashboard-chart-card">
-                    <h4>Expenses by Month</h4>
-                    <div className="expense-dashboard-bar-chart">
-                      {dashboardMonthlyTrend.map((point) => (
-                        <div key={point.key} className="expense-dashboard-bar-col">
-                          <span>{formatCurrency(point.amount)}</span>
-                          <div className="expense-dashboard-bar-track">
-                            <div
-                              className="expense-dashboard-bar-fill"
-                              style={{ height: `${point.height}%` }}
-                            />
-                          </div>
-                          <strong>{point.label}</strong>
-                        </div>
-                      ))}
-                    </div>
-                  </article>
-
-                  <article className="expense-dashboard-chart-card">
-                    <h4>Spending Trend</h4>
-                    <div className="expense-dashboard-mini-bars">
-                      {weeklyTrend.map((point) => (
-                        <div key={point.label} className="expense-dashboard-mini-bar-col">
-                          <span>{formatCurrency(point.amount)}</span>
-                          <div className="expense-dashboard-mini-bar-track">
-                            <div
-                              className="expense-dashboard-mini-bar-fill"
-                              style={{
-                                height: `${Math.max(14, (point.amount / maxWeeklyAmount) * 100)}%`,
-                              }}
-                            />
-                          </div>
-                          <strong>{point.label.replace("Week ", "W")}</strong>
-                        </div>
-                      ))}
-                    </div>
-                  </article>
                 </div>
 
                 <section className="expense-transactions expense-dashboard-transactions">
