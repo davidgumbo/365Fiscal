@@ -133,6 +133,11 @@
   background: #f1f6ff;
 }
 
+.inventory-row-actions {
+  opacity: 1;
+  visibility: visible;
+}
+
 .inventory-list {
   display: flex;
   flex-direction: column;

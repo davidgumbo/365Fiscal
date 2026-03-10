@@ -5922,7 +5922,7 @@ export default function InventoryPage() {
                                     </span>
                                   </td>
                                   <td>
-                                    <div className="o-quick-actions">
+                                    <div className="o-quick-actions inventory-row-actions">
                                       <button
                                         className="o-btn o-btn-secondary o-btn-icon"
                                         onClick={(e) => {

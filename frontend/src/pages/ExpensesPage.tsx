@@ -11,11 +11,9 @@ import {
   Clapperboard,
   Download,
   FileText,
-  FolderPlus,
   PieChart,
   Plus,
   ReceiptText,
-  RefreshCw,
   Search,
   ShoppingBag,
   UtensilsCrossed,
@@ -1463,7 +1461,7 @@ export default function ExpensesPage() {
                     <button
                       className="expense-add-btn"
                       type="button"
-                      onClick={openQuickAddModal}
+                      onClick={startNew}
                     >
                       <Plus size={18} />
                       New Expense
@@ -1630,43 +1628,6 @@ export default function ExpensesPage() {
               </section>
             </div>
 
-            <aside className="expense-panel-card expense-dashboard-quick-actions">
-              <div className="expense-dashboard-panel-head">
-                <h3>Quick Actions</h3>
-              </div>
-              <button
-                type="button"
-                className="expense-dashboard-primary-action"
-                onClick={openQuickAddModal}
-              >
-                <Plus size={18} />
-                <span>New Expense</span>
-              </button>
-              <button
-                type="button"
-                className="expense-dashboard-action-btn"
-                onClick={startNew}
-              >
-                <ReceiptText size={18} />
-                <span>Upload Receipt</span>
-              </button>
-              <button
-                type="button"
-                className="expense-dashboard-action-btn"
-                onClick={() => openCategoryModal()}
-              >
-                <FolderPlus size={18} />
-                <span>Add Category</span>
-              </button>
-              <button
-                type="button"
-                className="expense-dashboard-action-btn"
-                onClick={loadData}
-              >
-                <RefreshCw size={18} />
-                <span>Refresh Data</span>
-              </button>
-            </aside>
           </div>
         </div>
 
