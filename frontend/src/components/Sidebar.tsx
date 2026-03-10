@@ -42,18 +42,20 @@ export function Sidebar({ sections, className }: SidebarProps) {
                   onClick={item.onClick}
                   onKeyDown={(event) => handleActivationKey(event, item.onClick)}
                 >
-                  <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <span className="o-sidebar-item-label">
                     {item.icon}
-                    <span
-                      style={{
-                        letterSpacing: "0.5px",
-                        fontSize: 12,
-                        fontWeight: 500,
-                      }}
-                    >
-                      {item.label}
-                    </span>
+                    <span className="o-sidebar-item-text">{item.label}</span>
                   </span>
+                  {hasDropdown && (
+                    <span
+                      aria-hidden="true"
+                      className={`o-sidebar-dropdown-indicator ${
+                        dropdownOpen ? "open" : ""
+                      }`}
+                    >
+                      ▼
+                    </span>
+                  )}
                   {item.badge && <span className="o-sidebar-count">{item.badge}</span>}
                 </div>
 

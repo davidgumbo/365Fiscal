@@ -5592,6 +5592,32 @@ button.danger:hover {
   background: rgba(255,255,255,0.2);
 }
 
+.o-sidebar-item-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.o-sidebar-item-text {
+  letter-spacing: 0.5px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.o-sidebar-dropdown-indicator {
+  font-size: 10px;
+  line-height: 1;
+  transition: transform 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.o-sidebar-dropdown-indicator.open {
+  transform: rotate(180deg);
+}
+
 /* Main Content */
 .o-main {
   flex: 1;
