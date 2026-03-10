@@ -4800,7 +4800,7 @@ button.danger:hover {
 /* Two Panel Layout */
 .two-panel {
   display: grid;
-  grid-template-columns: 1fr 260px;
+  grid-template-columns: 1fr auto;
   align-items: start;
   gap: 1rem;
   min-height: 0;
@@ -4808,7 +4808,7 @@ button.danger:hover {
 
 .two-panel-left {
   display: grid;
-  grid-template-columns: 260px 1fr;
+  grid-template-columns: auto 1fr;
   /* align-items: start; */
   gap: 1rem;
   min-height: 0
@@ -5521,17 +5521,35 @@ button.danger:hover {
   padding-left: 4px;
 }
 
+.o-sidebar-dropdown {
+  margin: 2px 0 10px;
+  padding-left: 8px;
+  border-left: 2px solid transparent;
+  transition: border-color 0.2s ease;
+}
+
+.o-sidebar-dropdown[open] {
+  border-color: var(--blue-200);
+}
+
 .o-sidebar-dropdown summary {
   list-style: none;
-  cursor: pointer;
+  margin: 0;
+  padding: 0;
+  height: 0;
+  overflow: hidden;
+  pointer-events: none;
 }
 
 .o-sidebar-dropdown summary::-webkit-details-marker {
   display: none;
 }
 
-.o-sidebar-dropdown[open] summary {
-  margin-bottom: 8px;
+.o-sidebar-dropdown-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-left: 4px;
 }
 
 .o-sidebar-item {

@@ -19,6 +19,7 @@ import {
   getMissingRequiredFields,
   getRequiredFieldError,
 } from "../utils/formValidation";
+import { SidebarMenu } from "../components/SidebarMenu";
 import "./InventoryPage.css";
 
 // ============= TYPES =============
@@ -473,6 +474,69 @@ export default function InventoryPage() {
     "moves",
   );
   const [filterState, setFilterState] = useState<string>("all");
+
+  const operationsDropdownContent = (
+    <div className="o-sidebar-dropdown-content">
+      <button
+        type="button"
+        className={`o-btn ${
+          operationsTab === "moves" ? "o-btn-primary" : "o-btn-secondary"
+        }`}
+        onClick={() => {
+          setMainView("operations");
+          setOperationsTab("moves");
+        }}
+      >
+        Stock Moves
+      </button>
+      <button
+        type="button"
+        className={`o-btn ${
+          operationsTab === "quants" ? "o-btn-primary" : "o-btn-secondary"
+        }`}
+        onClick={() => {
+          setMainView("operations");
+          setOperationsTab("quants");
+        }}
+      >
+        Stock On Hand
+      </button>
+    </div>
+  );
+
+  const inventoryMenuItems = [
+    {
+      key: "overview",
+      label: "OVERVIEW",
+      icon: OverviewIcon,
+      color: "var(--blue-600)",
+    },
+    {
+      key: "products",
+      label: "PRODUCTS",
+      icon: ProductsIcon,
+      color: "var(--amber-500)",
+    },
+    {
+      key: "categories",
+      label: "PRODUCT CATEGORIES",
+      icon: CategoriesIcon,
+      color: "var(--indigo-500)",
+    },
+    {
+      key: "warehouses",
+      label: "WAREHOUSES",
+      icon: WarehousesIcon,
+      color: "var(--emerald-500)",
+    },
+    {
+      key: "operations",
+      label: "OPERATIONS",
+      icon: OperationsIcon,
+      color: "var(--violet-500)",
+      dropdown: operationsDropdownContent,
+    },
+  ];
 
   // ============= EFFECTS =============
   // Portal users auto-select their first company
@@ -1728,69 +1792,16 @@ export default function InventoryPage() {
         }}
       >
         <div id="main-content" className="two-panel two-panel-left">
-          {/* Side Bar Navigation */}
-          <div className="o-sidebar">
-            <div className="o-sidebar-section">
-              <div className="o-sidebar-title">MENU</div>
-              {[
-                {
-                  key: "overview",
-                  label: "OVERVIEW",
-                  icon: OverviewIcon,
-                  color: "var(--blue-600)",
-                },
-                {
-                  key: "products",
-                  label: "PRODUCTS",
-                  icon: ProductsIcon,
-                  color: "var(--amber-500)",
-                },
-                {
-                  key: "categories",
-                  label: "PRODUCT CATEGORIES",
-                  icon: CategoriesIcon,
-                  color: "var(--indigo-500)",
-                },
-                {
-                  key: "warehouses",
-                  label: "WAREHOUSES",
-                  icon: WarehousesIcon,
-                  color: "var(--emerald-500)",
-                },
-                {
-                  key: "operations",
-                  label: "OPERATIONS",
-                  icon: OperationsIcon,
-                  color: "var(--violet-500)",
-                },
-              ].map((tab) => (
-                <div
-                  key={tab.key}
-                  className={`o-sidebar-item ${mainView === tab.key ? "active" : ""}`}
-                  onClick={() => {
-                    setMainView(tab.key as MainView);
-                    setSubView("list");
-                    setSearchQuery("");
-                  }}
-                >
-                  <span
-                    style={{ display: "flex", alignItems: "center", gap: 10 }}
-                  >
-                    <tab.icon color={tab.color} />
-                    <span
-                      style={{
-                        letterSpacing: "0.5px",
-                        fontSize: 12,
-                        fontWeight: 500,
-                      }}
-                    >
-                      {tab.label}
-                    </span>
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
+          <SidebarMenu
+            title="MENU"
+            items={inventoryMenuItems}
+            activeKey={mainView}
+            onSelect={(key) => {
+              setMainView(key as MainView);
+              setSubView("list");
+              setSearchQuery("");
+            }}
+          />
 
           <div className="o-main">
             {/* Form Sub Control Panel */}
