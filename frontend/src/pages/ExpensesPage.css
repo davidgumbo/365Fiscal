@@ -17,7 +17,7 @@
 .expense-dashboard-topbar {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 24px;
   margin-bottom: 20px;
 }
@@ -49,16 +49,18 @@
 }
 
 .expense-dashboard-actions {
-  display: flex;
+  display: grid;
   align-items: center;
+  grid-template-columns: 1fr minmax(280px, 380px) 1fr;
   gap: 12px;
-  flex-wrap: wrap;
+  width: 100%;
 }
 
 .expense-dashboard-search {
-  min-width: 280px;
-  flex: 1 1 340px;
-  max-width: 380px;
+  grid-column: 2;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
   height: 44px;
   display: inline-flex;
   align-items: center;
@@ -85,6 +87,8 @@
 }
 
 .expense-dashboard-secondary-btn {
+  grid-column: 3;
+  justify-self: end;
   height: 44px;
   border: 1px solid #d6dcef;
   border-radius: 10px;
@@ -1417,7 +1421,9 @@
   }
 
   .expense-dashboard-actions {
+    display: flex;
     width: 100%;
+    flex-wrap: wrap;
   }
 
   .expense-dashboard-search {

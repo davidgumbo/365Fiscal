@@ -6719,42 +6719,74 @@ tr:hover .o-quick-actions {
 
 .app-launcher-watermark {
   position: absolute;
-  left: -74px;
-  bottom: 60px;
-  width: 430px;
-  height: 220px;
+  left: 50%;
+  top: 50%;
+  width: 620px;
+  height: 120px;
+  transform: translate(-50%, -50%);
   pointer-events: none;
   z-index: 0;
-  opacity: 0.9;
+  opacity: 0.95;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 18px;
 }
 
 .app-launcher-watermark span {
   position: absolute;
-  left: 0;
+  left: 50%;
   border-radius: 999px;
-  border-top: 7px solid transparent;
-  transform: rotate(-10deg);
+  height: 10px;
+  transform: translateX(-50%);
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  box-shadow:
+    0 0 14px rgba(255, 255, 255, 0.28),
+    0 0 22px rgba(59, 130, 246, 0.18);
 }
 
 .app-launcher-watermark span:nth-child(1) {
-  bottom: 0;
-  width: 318px;
-  height: 134px;
-  border-top-color: rgba(239, 68, 68, 0.26);
+  top: 8px;
+  width: 360px;
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(248, 113, 113, 0.5) 16%,
+    rgba(255, 255, 255, 0.78) 48%,
+    rgba(248, 113, 113, 0.42) 82%,
+    rgba(255, 255, 255, 0) 100%
+  );
 }
 
 .app-launcher-watermark span:nth-child(2) {
-  bottom: 34px;
-  width: 368px;
-  height: 164px;
-  border-top-color: rgba(59, 130, 246, 0.68);
+  top: 42px;
+  width: 520px;
+  height: 12px;
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(96, 165, 250, 0.82) 14%,
+    rgba(255, 255, 255, 0.98) 50%,
+    rgba(96, 165, 250, 0.82) 86%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  box-shadow:
+    0 0 20px rgba(96, 165, 250, 0.34),
+    0 0 34px rgba(255, 255, 255, 0.32);
 }
 
 .app-launcher-watermark span:nth-child(3) {
-  bottom: 72px;
-  width: 418px;
-  height: 188px;
-  border-top-color: rgba(239, 68, 68, 0.16);
+  top: 78px;
+  width: 420px;
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(248, 113, 113, 0.28) 18%,
+    rgba(255, 255, 255, 0.62) 50%,
+    rgba(248, 113, 113, 0.24) 82%,
+    rgba(255, 255, 255, 0) 100%
+  );
 }
 
 .app-launcher-header {
@@ -6805,28 +6837,29 @@ tr:hover .o-quick-actions {
   }
 
   .app-launcher-watermark {
-    left: -78px;
-    bottom: 30px;
-    width: 310px;
-    height: 170px;
-    opacity: 0.76;
+    width: 320px;
+    height: 92px;
+    top: 54%;
+    opacity: 0.86;
+    gap: 12px;
   }
 
   .app-launcher-watermark span:nth-child(1) {
-    width: 220px;
-    height: 92px;
+    top: 4px;
+    width: 200px;
+    height: 8px;
   }
 
   .app-launcher-watermark span:nth-child(2) {
-    bottom: 26px;
-    width: 258px;
-    height: 116px;
+    top: 30px;
+    width: 286px;
+    height: 10px;
   }
 
   .app-launcher-watermark span:nth-child(3) {
-    bottom: 52px;
-    width: 292px;
-    height: 132px;
+    top: 58px;
+    width: 226px;
+    height: 8px;
   }
 }
 
