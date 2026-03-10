@@ -9259,6 +9259,12 @@ button.danger:not(.icon-btn):not(.device-icon-btn):disabled {
   letter-spacing: 0.28px;
   white-space: nowrap;
 }
+
+.inventory-op-actions {
+  display: flex;
+  gap: 10px
+}
+
 .pos-company-name {
   font-weight: 700;
   font-size: 0.95rem;
