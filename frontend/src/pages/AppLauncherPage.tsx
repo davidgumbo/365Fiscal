@@ -59,32 +59,32 @@ const adminApps: AppItem[] = [
     label: "Dashboard",
     icon: DashboardIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(135deg, #fb923c 0%, #f97316 55%, #ea580c 100%)",
-    glowColor: "rgba(249, 115, 22, 0.34)",
+    background: "linear-gradient(145deg, #f8ab72 0%, #f97316 100%)",
+    glowColor: "rgba(249, 115, 22, 0.18)",
   },
   {
     to: "/companies",
     label: "Companies",
     icon: CompanyIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 58%, #6d28d9 100%)",
-    glowColor: "rgba(124, 58, 237, 0.34)",
+    background: "linear-gradient(145deg, #9a78f7 0%, #7c3aed 100%)",
+    glowColor: "rgba(124, 58, 237, 0.18)",
   },
   {
     to: "/invoices",
     label: "Invoices",
     icon: InvoiceIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(135deg, #fb7185 0%, #ef4444 58%, #dc2626 100%)",
-    glowColor: "rgba(239, 68, 68, 0.34)",
+    background: "linear-gradient(145deg, #f98f9d 0%, #ef4444 100%)",
+    glowColor: "rgba(239, 68, 68, 0.18)",
   },
   {
     to: "/purchases",
     label: "Purchases",
     icon: PurchaseIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(135deg, #38bdf8 0%, #0ea5e9 58%, #0284c7 100%)",
-    glowColor: "rgba(14, 165, 233, 0.34)",
+    background: "linear-gradient(145deg, #6dcff6 0%, #0ea5e9 100%)",
+    glowColor: "rgba(14, 165, 233, 0.18)",
   },
   // { to: "/products", label: "Products", icon: ProductIcon, color: "var(--white-500)", background: "var(--cyan-500)" },
   {
@@ -92,24 +92,24 @@ const adminApps: AppItem[] = [
     label: "Contacts",
     icon: ContactIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(135deg, #34d399 0%, #10b981 58%, #059669 100%)",
-    glowColor: "rgba(16, 185, 129, 0.34)",
+    background: "linear-gradient(145deg, #67d9ad 0%, #10b981 100%)",
+    glowColor: "rgba(16, 185, 129, 0.18)",
   },
   {
     to: "/quotations",
     label: "Quotations",
     icon: QuoteIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(135deg, #818cf8 0%, #6366f1 58%, #4f46e5 100%)",
-    glowColor: "rgba(99, 102, 241, 0.34)",
+    background: "linear-gradient(145deg, #929cf8 0%, #6366f1 100%)",
+    glowColor: "rgba(99, 102, 241, 0.18)",
   },
   {
     to: "/inventory",
     label: "Inventory",
     icon: InventoryIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(135deg, #a78bfa 0%, #7c3aed 58%, #6d28d9 100%)",
-    glowColor: "rgba(124, 58, 237, 0.34)",
+    background: "linear-gradient(145deg, #b09af8 0%, #7c3aed 100%)",
+    glowColor: "rgba(124, 58, 237, 0.18)",
   },
   // {
   //   to: "/pos",
@@ -123,40 +123,40 @@ const adminApps: AppItem[] = [
     label: "Devices",
     icon: DeviceIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(135deg, #f472b6 0%, #ec4899 58%, #db2777 100%)",
-    glowColor: "rgba(236, 72, 153, 0.34)",
+    background: "linear-gradient(145deg, #f68bc0 0%, #ec4899 100%)",
+    glowColor: "rgba(236, 72, 153, 0.18)",
   },
   {
     to: "/reports",
     label: "Financial Reports",
     icon: ReportsIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(135deg, #2dd4bf 0%, #14b8a6 58%, #0f766e 100%)",
-    glowColor: "rgba(20, 184, 166, 0.34)",
+    background: "linear-gradient(145deg, #5fd8ca 0%, #14b8a6 100%)",
+    glowColor: "rgba(20, 184, 166, 0.18)",
   },
   {
     to: "/expenses",
     label: "Expenses",
     icon: ExpensesIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(135deg, #4ade80 0%, #22c55e 58%, #16a34a 100%)",
-    glowColor: "rgba(34, 197, 94, 0.34)",
+    background: "linear-gradient(145deg, #6ee196 0%, #22c55e 100%)",
+    glowColor: "rgba(34, 197, 94, 0.18)",
   },
   {
     to: "/subscriptions",
     label: "Subscriptions",
     icon: SubscriptionIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(135deg, #fbbf24 0%, #f59e0b 58%, #d97706 100%)",
-    glowColor: "rgba(245, 158, 11, 0.34)",
+    background: "linear-gradient(145deg, #f8c95d 0%, #f59e0b 100%)",
+    glowColor: "rgba(245, 158, 11, 0.18)",
   },
   {
     to: "/settings",
     label: "Settings",
     icon: SettingsIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(135deg, #94a3b8 0%, #64748b 58%, #475569 100%)",
-    glowColor: "rgba(100, 116, 139, 0.28)",
+    background: "linear-gradient(145deg, #a9b5c7 0%, #64748b 100%)",
+    glowColor: "rgba(100, 116, 139, 0.16)",
   },
 ];
 
@@ -166,88 +166,88 @@ const portalApps: AppItem[] = [
     label: "Dashboard",
     icon: DashboardIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(135deg, #fb923c 0%, #f97316 55%, #ea580c 100%)",
-    glowColor: "rgba(249, 115, 22, 0.34)",
+    background: "linear-gradient(145deg, #f8ab72 0%, #f97316 100%)",
+    glowColor: "rgba(249, 115, 22, 0.18)",
   },
   {
     to: "/invoices",
     label: "Invoices",
     icon: InvoiceIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(135deg, #fb7185 0%, #ef4444 58%, #dc2626 100%)",
-    glowColor: "rgba(239, 68, 68, 0.34)",
+    background: "linear-gradient(145deg, #f98f9d 0%, #ef4444 100%)",
+    glowColor: "rgba(239, 68, 68, 0.18)",
   },
   {
     to: "/purchases",
     label: "Purchases",
     icon: PurchaseIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(135deg, #38bdf8 0%, #0ea5e9 58%, #0284c7 100%)",
-    glowColor: "rgba(14, 165, 233, 0.34)",
+    background: "linear-gradient(145deg, #6dcff6 0%, #0ea5e9 100%)",
+    glowColor: "rgba(14, 165, 233, 0.18)",
   },
   {
     to: "/contacts",
     label: "Contacts",
     icon: ContactIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(135deg, #34d399 0%, #10b981 58%, #059669 100%)",
-    glowColor: "rgba(16, 185, 129, 0.34)",
+    background: "linear-gradient(145deg, #67d9ad 0%, #10b981 100%)",
+    glowColor: "rgba(16, 185, 129, 0.18)",
   },
   {
     to: "/quotations",
     label: "Quotations",
     icon: QuoteIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(135deg, #818cf8 0%, #6366f1 58%, #4f46e5 100%)",
-    glowColor: "rgba(99, 102, 241, 0.34)",
+    background: "linear-gradient(145deg, #929cf8 0%, #6366f1 100%)",
+    glowColor: "rgba(99, 102, 241, 0.18)",
   },
   {
     to: "/inventory",
     label: "Inventory",
     icon: InventoryIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(135deg, #a78bfa 0%, #7c3aed 58%, #6d28d9 100%)",
-    glowColor: "rgba(124, 58, 237, 0.34)",
+    background: "linear-gradient(145deg, #b09af8 0%, #7c3aed 100%)",
+    glowColor: "rgba(124, 58, 237, 0.18)",
   },
   {
     to: "/pos",
     label: "Point of Sale",
     icon: POSLauncherIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(135deg, #4ade80 0%, #22c55e 58%, #16a34a 100%)",
-    glowColor: "rgba(34, 197, 94, 0.34)",
+    background: "linear-gradient(145deg, #6ee196 0%, #22c55e 100%)",
+    glowColor: "rgba(34, 197, 94, 0.18)",
   },
   {
     to: "/my-devices",
     label: "Devices",
     icon: DeviceIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(135deg, #f472b6 0%, #ec4899 58%, #db2777 100%)",
-    glowColor: "rgba(236, 72, 153, 0.34)",
+    background: "linear-gradient(145deg, #f68bc0 0%, #ec4899 100%)",
+    glowColor: "rgba(236, 72, 153, 0.18)",
   },
   {
     to: "/reports",
     label: "Financial Reports",
     icon: ReportsIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(135deg, #2dd4bf 0%, #14b8a6 58%, #0f766e 100%)",
-    glowColor: "rgba(20, 184, 166, 0.34)",
+    background: "linear-gradient(145deg, #5fd8ca 0%, #14b8a6 100%)",
+    glowColor: "rgba(20, 184, 166, 0.18)",
   },
   {
     to: "/expenses",
     label: "Expenses",
     icon: ExpensesIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(135deg, #4ade80 0%, #22c55e 58%, #16a34a 100%)",
-    glowColor: "rgba(34, 197, 94, 0.34)",
+    background: "linear-gradient(145deg, #6ee196 0%, #22c55e 100%)",
+    glowColor: "rgba(34, 197, 94, 0.18)",
   },
   {
     to: "/settings",
     label: "Settings",
     icon: SettingsIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(135deg, #94a3b8 0%, #64748b 58%, #475569 100%)",
-    glowColor: "rgba(100, 116, 139, 0.28)",
+    background: "linear-gradient(145deg, #a9b5c7 0%, #64748b 100%)",
+    glowColor: "rgba(100, 116, 139, 0.16)",
   },
 ];
 
@@ -327,6 +327,11 @@ export default function AppLauncherPage() {
   if (loading || activationLoading) {
     return (
       <div className="app-launcher-page">
+        <div className="app-launcher-watermark" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
         <div
           className="app-launcher-container"
           style={{
@@ -347,6 +352,11 @@ export default function AppLauncherPage() {
   if (!isAdmin && !hasActiveSubscription) {
     return (
       <div className="app-launcher-page">
+        <div className="app-launcher-watermark" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
         <div className="app-launcher-container app-launcher-activation">
           <div className="login-card login-card-glass activation-card">
             <div className="login-card-body activation-card-body">
@@ -489,6 +499,11 @@ export default function AppLauncherPage() {
 
   return (
     <div className="app-launcher-page">
+      <div className="app-launcher-watermark" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
       {/* Header */}
       <header className="app-launcher-header">
         <div className="app-launcher-user">

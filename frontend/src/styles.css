@@ -6689,7 +6689,10 @@ tr:hover .o-quick-actions {
 
 .app-launcher-page {
   min-height: 100vh;
-  background: var(--zinc-50);
+  background:
+    radial-gradient(circle at top right, rgba(59, 130, 246, 0.05), transparent 26%),
+    radial-gradient(circle at bottom left, rgba(239, 68, 68, 0.04), transparent 24%),
+    var(--zinc-50);
   position: relative;
   overflow: hidden;
   flex-direction: column;
@@ -6712,6 +6715,46 @@ tr:hover .o-quick-actions {
 .app-launcher-page > * {
   position: relative;
   z-index: 1;
+}
+
+.app-launcher-watermark {
+  position: absolute;
+  left: -36px;
+  bottom: 82px;
+  width: 320px;
+  height: 176px;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.55;
+}
+
+.app-launcher-watermark span {
+  position: absolute;
+  left: 0;
+  border-radius: 999px;
+  border-top: 4px solid transparent;
+  transform: rotate(-9deg);
+}
+
+.app-launcher-watermark span:nth-child(1) {
+  bottom: 0;
+  width: 238px;
+  height: 108px;
+  border-top-color: rgba(239, 68, 68, 0.42);
+}
+
+.app-launcher-watermark span:nth-child(2) {
+  bottom: 26px;
+  width: 270px;
+  height: 124px;
+  border-top-color: rgba(59, 130, 246, 0.34);
+}
+
+.app-launcher-watermark span:nth-child(3) {
+  bottom: 54px;
+  width: 300px;
+  height: 138px;
+  border-top-color: rgba(239, 68, 68, 0.24);
 }
 
 .app-launcher-header {
@@ -6759,6 +6802,31 @@ tr:hover .o-quick-actions {
     height: 100px;
     width: auto;
     clip-path: inset(6px 0 0 0);
+  }
+
+  .app-launcher-watermark {
+    left: -62px;
+    bottom: 44px;
+    width: 240px;
+    height: 140px;
+    opacity: 0.42;
+  }
+
+  .app-launcher-watermark span:nth-child(1) {
+    width: 170px;
+    height: 78px;
+  }
+
+  .app-launcher-watermark span:nth-child(2) {
+    bottom: 20px;
+    width: 196px;
+    height: 92px;
+  }
+
+  .app-launcher-watermark span:nth-child(3) {
+    bottom: 40px;
+    width: 220px;
+    height: 102px;
   }
 }
 
@@ -6967,8 +7035,8 @@ tr:hover .o-quick-actions {
   justify-content: center;
   transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
   box-shadow:
-    0 8px 18px rgba(15, 23, 42, 0.18),
-    0 2px 6px rgba(15, 23, 42, 0.1);
+    0 7px 16px rgba(15, 23, 42, 0.15),
+    0 2px 5px rgba(15, 23, 42, 0.08);
 }
 
 .app-tile-icon-wrapper::before {
@@ -6979,9 +7047,9 @@ tr:hover .o-quick-actions {
   background:
     linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.36) 0%,
-      rgba(255, 255, 255, 0.16) 26%,
-      rgba(255, 255, 255, 0) 58%
+      rgba(255, 255, 255, 0.2) 0%,
+      rgba(255, 255, 255, 0.08) 24%,
+      rgba(255, 255, 255, 0) 54%
     );
   pointer-events: none;
 }
@@ -6996,20 +7064,20 @@ tr:hover .o-quick-actions {
   border-radius: 999px;
   background: linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0.34),
-    rgba(255, 255, 255, 0.08)
+    rgba(255, 255, 255, 0.2),
+    rgba(255, 255, 255, 0.04)
   );
   filter: blur(1px);
-  opacity: 0.85;
+  opacity: 0.6;
   pointer-events: none;
 }
 
 .app-tile:hover .app-tile-icon-wrapper {
-  transform: translateY(-4px) scale(1.05);
+  transform: translateY(-3px) scale(1.03);
   box-shadow:
-    0 16px 30px rgba(15, 23, 42, 0.22),
-    0 0 30px var(--app-tile-glow, rgba(255, 255, 255, 0.18));
-  filter: saturate(1.08) brightness(1.03);
+    0 12px 24px rgba(15, 23, 42, 0.18),
+    0 0 18px var(--app-tile-glow, rgba(255, 255, 255, 0.12));
+  filter: saturate(1.02) brightness(1.01);
 }
 
 .app-tile-icon {
