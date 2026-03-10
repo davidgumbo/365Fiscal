@@ -6725,7 +6725,7 @@ tr:hover .o-quick-actions {
   height: 220px;
   pointer-events: none;
   z-index: 0;
-  opacity: 0.62;
+  opacity: 0.9;
 }
 
 .app-launcher-watermark span {
@@ -6740,21 +6740,21 @@ tr:hover .o-quick-actions {
   bottom: 0;
   width: 318px;
   height: 134px;
-  border-top-color: rgba(239, 68, 68, 0.44);
+  border-top-color: rgba(239, 68, 68, 0.26);
 }
 
 .app-launcher-watermark span:nth-child(2) {
   bottom: 34px;
   width: 368px;
   height: 164px;
-  border-top-color: rgba(59, 130, 246, 0.38);
+  border-top-color: rgba(59, 130, 246, 0.68);
 }
 
 .app-launcher-watermark span:nth-child(3) {
   bottom: 72px;
   width: 418px;
   height: 188px;
-  border-top-color: rgba(239, 68, 68, 0.28);
+  border-top-color: rgba(239, 68, 68, 0.16);
 }
 
 .app-launcher-header {
@@ -6809,7 +6809,7 @@ tr:hover .o-quick-actions {
     bottom: 30px;
     width: 310px;
     height: 170px;
-    opacity: 0.5;
+    opacity: 0.76;
   }
 
   .app-launcher-watermark span:nth-child(1) {
@@ -7047,9 +7047,9 @@ tr:hover .o-quick-actions {
   background:
     linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.14) 0%,
-      rgba(255, 255, 255, 0.05) 22%,
-      rgba(255, 255, 255, 0) 50%
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0.025) 20%,
+      rgba(255, 255, 255, 0) 46%
     );
   pointer-events: none;
 }
@@ -7064,20 +7064,20 @@ tr:hover .o-quick-actions {
   border-radius: 999px;
   background: linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0.12),
-    rgba(255, 255, 255, 0.02)
+    rgba(255, 255, 255, 0.07),
+    rgba(255, 255, 255, 0.01)
   );
   filter: blur(1px);
-  opacity: 0.42;
+  opacity: 0.28;
   pointer-events: none;
 }
 
 .app-tile:hover .app-tile-icon-wrapper {
   transform: translateY(-3px) scale(1.03);
   box-shadow:
-    0 10px 20px rgba(15, 23, 42, 0.16),
-    0 0 14px var(--app-tile-glow, rgba(255, 255, 255, 0.1));
-  filter: saturate(1.01) brightness(1.005);
+    0 9px 18px rgba(15, 23, 42, 0.15),
+    0 0 12px var(--app-tile-glow, rgba(255, 255, 255, 0.08));
+  filter: saturate(1.005) brightness(1.002);
 }
 
 .app-tile-icon {

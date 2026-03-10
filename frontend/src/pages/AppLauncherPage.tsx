@@ -59,7 +59,7 @@ const adminApps: AppItem[] = [
     label: "Dashboard",
     icon: DashboardIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(145deg, #f6a160 0%, #f38633 100%)",
+    background: "linear-gradient(145deg, #f49a52 0%, #f28f42 100%)",
     glowColor: "rgba(249, 115, 22, 0.18)",
   },
   {
@@ -67,7 +67,7 @@ const adminApps: AppItem[] = [
     label: "Companies",
     icon: CompanyIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(145deg, #9270f2 0%, #844ee8 100%)",
+    background: "linear-gradient(145deg, #8d68ef 0%, #8458e6 100%)",
     glowColor: "rgba(124, 58, 237, 0.18)",
   },
   {
@@ -75,7 +75,7 @@ const adminApps: AppItem[] = [
     label: "Invoices",
     icon: InvoiceIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(145deg, #f78492 0%, #ef5b5b 100%)",
+    background: "linear-gradient(145deg, #f27c89 0%, #ef6b6b 100%)",
     glowColor: "rgba(239, 68, 68, 0.18)",
   },
   {
@@ -83,7 +83,7 @@ const adminApps: AppItem[] = [
     label: "Purchases",
     icon: PurchaseIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(145deg, #62c8f1 0%, #2aaee8 100%)",
+    background: "linear-gradient(145deg, #56c0ee 0%, #38afe6 100%)",
     glowColor: "rgba(14, 165, 233, 0.18)",
   },
   // { to: "/products", label: "Products", icon: ProductIcon, color: "var(--white-500)", background: "var(--cyan-500)" },
@@ -92,7 +92,7 @@ const adminApps: AppItem[] = [
     label: "Contacts",
     icon: ContactIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(145deg, #62d1a6 0%, #28bf8c 100%)",
+    background: "linear-gradient(145deg, #5dc99f 0%, #34be90 100%)",
     glowColor: "rgba(16, 185, 129, 0.18)",
   },
   {
@@ -100,7 +100,7 @@ const adminApps: AppItem[] = [
     label: "Quotations",
     icon: QuoteIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(145deg, #8992f4 0%, #7073ee 100%)",
+    background: "linear-gradient(145deg, #858df0 0%, #7678eb 100%)",
     glowColor: "rgba(99, 102, 241, 0.18)",
   },
   {
@@ -108,7 +108,7 @@ const adminApps: AppItem[] = [
     label: "Inventory",
     icon: InventoryIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(145deg, #a691f2 0%, #8854e7 100%)",
+    background: "linear-gradient(145deg, #a087ef 0%, #8e61e5 100%)",
     glowColor: "rgba(124, 58, 237, 0.18)",
   },
   // {
@@ -123,7 +123,7 @@ const adminApps: AppItem[] = [
     label: "Devices",
     icon: DeviceIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(145deg, #f284ba 0%, #e95ea4 100%)",
+    background: "linear-gradient(145deg, #ef7eb6 0%, #e56aa7 100%)",
     glowColor: "rgba(236, 72, 153, 0.18)",
   },
   {
@@ -131,7 +131,7 @@ const adminApps: AppItem[] = [
     label: "Financial Reports",
     icon: ReportsIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(145deg, #5ccfc2 0%, #2ab9a9 100%)",
+    background: "linear-gradient(145deg, #58c8bc 0%, #37b9ab 100%)",
     glowColor: "rgba(20, 184, 166, 0.18)",
   },
   {
@@ -139,7 +139,7 @@ const adminApps: AppItem[] = [
     label: "Expenses",
     icon: ExpensesIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(145deg, #67d98f 0%, #38c96c 100%)",
+    background: "linear-gradient(145deg, #63d18b 0%, #44c570 100%)",
     glowColor: "rgba(34, 197, 94, 0.18)",
   },
   {
@@ -147,7 +147,7 @@ const adminApps: AppItem[] = [
     label: "Subscriptions",
     icon: SubscriptionIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(145deg, #f3c35d 0%, #f2ab2c 100%)",
+    background: "linear-gradient(145deg, #efbc5d 0%, #eeb03f 100%)",
     glowColor: "rgba(245, 158, 11, 0.18)",
   },
   {
@@ -155,7 +155,7 @@ const adminApps: AppItem[] = [
     label: "Settings",
     icon: SettingsIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(145deg, #9eabba 0%, #738297 100%)",
+    background: "linear-gradient(145deg, #98a5b5 0%, #7a8798 100%)",
     glowColor: "rgba(100, 116, 139, 0.16)",
   },
 ];
@@ -166,7 +166,7 @@ const portalApps: AppItem[] = [
     label: "Dashboard",
     icon: DashboardIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(145deg, #f6a160 0%, #f38633 100%)",
+    background: "linear-gradient(145deg, #f49a52 0%, #f28f42 100%)",
     glowColor: "rgba(249, 115, 22, 0.18)",
   },
   {
@@ -174,7 +174,7 @@ const portalApps: AppItem[] = [
     label: "Invoices",
     icon: InvoiceIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(145deg, #f78492 0%, #ef5b5b 100%)",
+    background: "linear-gradient(145deg, #f27c89 0%, #ef6b6b 100%)",
     glowColor: "rgba(239, 68, 68, 0.18)",
   },
   {
@@ -182,7 +182,7 @@ const portalApps: AppItem[] = [
     label: "Purchases",
     icon: PurchaseIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(145deg, #62c8f1 0%, #2aaee8 100%)",
+    background: "linear-gradient(145deg, #56c0ee 0%, #38afe6 100%)",
     glowColor: "rgba(14, 165, 233, 0.18)",
   },
   {
@@ -190,7 +190,7 @@ const portalApps: AppItem[] = [
     label: "Contacts",
     icon: ContactIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(145deg, #62d1a6 0%, #28bf8c 100%)",
+    background: "linear-gradient(145deg, #5dc99f 0%, #34be90 100%)",
     glowColor: "rgba(16, 185, 129, 0.18)",
   },
   {
@@ -198,7 +198,7 @@ const portalApps: AppItem[] = [
     label: "Quotations",
     icon: QuoteIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(145deg, #8992f4 0%, #7073ee 100%)",
+    background: "linear-gradient(145deg, #858df0 0%, #7678eb 100%)",
     glowColor: "rgba(99, 102, 241, 0.18)",
   },
   {
@@ -206,7 +206,7 @@ const portalApps: AppItem[] = [
     label: "Inventory",
     icon: InventoryIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(145deg, #a691f2 0%, #8854e7 100%)",
+    background: "linear-gradient(145deg, #a087ef 0%, #8e61e5 100%)",
     glowColor: "rgba(124, 58, 237, 0.18)",
   },
   {
@@ -214,7 +214,7 @@ const portalApps: AppItem[] = [
     label: "Point of Sale",
     icon: POSLauncherIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(145deg, #67d98f 0%, #38c96c 100%)",
+    background: "linear-gradient(145deg, #63d18b 0%, #44c570 100%)",
     glowColor: "rgba(34, 197, 94, 0.18)",
   },
   {
@@ -222,7 +222,7 @@ const portalApps: AppItem[] = [
     label: "Devices",
     icon: DeviceIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(145deg, #f284ba 0%, #e95ea4 100%)",
+    background: "linear-gradient(145deg, #ef7eb6 0%, #e56aa7 100%)",
     glowColor: "rgba(236, 72, 153, 0.18)",
   },
   {
@@ -230,7 +230,7 @@ const portalApps: AppItem[] = [
     label: "Financial Reports",
     icon: ReportsIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(145deg, #5ccfc2 0%, #2ab9a9 100%)",
+    background: "linear-gradient(145deg, #58c8bc 0%, #37b9ab 100%)",
     glowColor: "rgba(20, 184, 166, 0.18)",
   },
   {
@@ -238,7 +238,7 @@ const portalApps: AppItem[] = [
     label: "Expenses",
     icon: ExpensesIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(145deg, #67d98f 0%, #38c96c 100%)",
+    background: "linear-gradient(145deg, #63d18b 0%, #44c570 100%)",
     glowColor: "rgba(34, 197, 94, 0.18)",
   },
   {
@@ -246,7 +246,7 @@ const portalApps: AppItem[] = [
     label: "Settings",
     icon: SettingsIcon,
     color: "var(--white-500)",
-    background: "linear-gradient(145deg, #9eabba 0%, #738297 100%)",
+    background: "linear-gradient(145deg, #98a5b5 0%, #7a8798 100%)",
     glowColor: "rgba(100, 116, 139, 0.16)",
   },
 ];
