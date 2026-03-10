@@ -315,6 +315,33 @@ type MenuTab = {
   icon: (props: InventoryIconProps) => JSX.Element;
 };
 
+const BASE_MENU_TABS: MenuTab[] = [
+  {
+    key: "overview",
+    label: "OVERVIEW",
+    color: "var(--blue-600)",
+    icon: OverviewIcon,
+  },
+  {
+    key: "products",
+    label: "PRODUCTS",
+    color: "var(--amber-500)",
+    icon: ProductsIcon,
+  },
+  {
+    key: "categories",
+    label: "PRODUCT CATEGORIES",
+    color: "var(--indigo-500)",
+    icon: CategoriesIcon,
+  },
+  {
+    key: "warehouses",
+    label: "WAREHOUSES",
+    color: "var(--emerald-500)",
+    icon: WarehousesIcon,
+  },
+];
+
 const TrashIcon = () => <Trash2 size={16} strokeWidth={2} aria-hidden="true" />;
 
 const EditIcon = () => <PenLine size={16} strokeWidth={2} aria-hidden="true" />;
@@ -360,33 +387,6 @@ export default function InventoryPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const BASE_MENU_TABS: MenuTab[] = [
-    {
-      key: "overview",
-      label: "OVERVIEW",
-      color: "var(--blue-600)",
-      icon: OverviewIcon,
-    },
-    {
-      key: "products",
-      label: "PRODUCTS",
-      color: "var(--amber-500)",
-      icon: ProductsIcon,
-    },
-    {
-      key: "categories",
-      label: "PRODUCT CATEGORIES",
-      color: "var(--indigo-500)",
-      icon: CategoriesIcon,
-    },
-    {
-      key: "warehouses",
-      label: "WAREHOUSES",
-      color: "var(--emerald-500)",
-      icon: WarehousesIcon,
-    },
-  ];
-
   const menuSections = useMemo<SidebarSection[]>(() => {
     const baseItems = BASE_MENU_TABS.map((tab) => ({
       id: `menu-${tab.key}`,
@@ -413,12 +413,11 @@ export default function InventoryPage() {
       dropdownItems: [
         {
           id: "operations-list",
-          label: "Stock Moves",
+          label: "List view",
           isActive: mainView === "operations" && subView === "list",
           onClick: () => {
             setMainView("operations");
             setSubView("list");
-            setOperationsTab("moves");
             setSearchQuery("");
           },
         },
@@ -429,7 +428,6 @@ export default function InventoryPage() {
           onClick: () => {
             setMainView("operations");
             setSubView("form");
-            setOperationsTab("moves");
             setSearchQuery("");
           },
         },
