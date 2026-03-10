@@ -6757,6 +6757,40 @@ tr:hover .o-quick-actions {
   border-top-color: rgba(239, 68, 68, 0.16);
 }
 
+.app-launcher-watermark-top {
+  left: auto;
+  right: -86px;
+  top: 86px;
+  bottom: auto;
+  width: 390px;
+  height: 190px;
+  opacity: 0.82;
+}
+
+.app-launcher-watermark-top span {
+  left: auto;
+  right: 0;
+  transform: rotate(10deg);
+}
+
+.app-launcher-watermark-top span:nth-child(1) {
+  bottom: 0;
+  width: 286px;
+  height: 118px;
+}
+
+.app-launcher-watermark-top span:nth-child(2) {
+  bottom: 30px;
+  width: 334px;
+  height: 144px;
+}
+
+.app-launcher-watermark-top span:nth-child(3) {
+  bottom: 62px;
+  width: 380px;
+  height: 170px;
+}
+
 .app-launcher-header {
   display: flex;
   justify-content: space-between;
@@ -6827,6 +6861,31 @@ tr:hover .o-quick-actions {
     bottom: 52px;
     width: 292px;
     height: 132px;
+  }
+
+  .app-launcher-watermark-top {
+    right: -92px;
+    top: 74px;
+    width: 280px;
+    height: 146px;
+    opacity: 0.74;
+  }
+
+  .app-launcher-watermark-top span:nth-child(1) {
+    width: 198px;
+    height: 82px;
+  }
+
+  .app-launcher-watermark-top span:nth-child(2) {
+    bottom: 24px;
+    width: 234px;
+    height: 102px;
+  }
+
+  .app-launcher-watermark-top span:nth-child(3) {
+    bottom: 46px;
+    width: 266px;
+    height: 118px;
   }
 }
 

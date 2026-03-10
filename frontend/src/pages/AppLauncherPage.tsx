@@ -333,6 +333,14 @@ export default function AppLauncherPage() {
           <span></span>
         </div>
         <div
+          className="app-launcher-watermark app-launcher-watermark-top"
+          aria-hidden="true"
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <div
           className="app-launcher-container"
           style={{
             display: "flex",
@@ -353,6 +361,14 @@ export default function AppLauncherPage() {
     return (
       <div className="app-launcher-page">
         <div className="app-launcher-watermark" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <div
+          className="app-launcher-watermark app-launcher-watermark-top"
+          aria-hidden="true"
+        >
           <span></span>
           <span></span>
           <span></span>
@@ -500,6 +516,14 @@ export default function AppLauncherPage() {
   return (
     <div className="app-launcher-page">
       <div className="app-launcher-watermark" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+      <div
+        className="app-launcher-watermark app-launcher-watermark-top"
+        aria-hidden="true"
+      >
         <span></span>
         <span></span>
         <span></span>
