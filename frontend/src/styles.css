@@ -5441,7 +5441,7 @@ button.danger:hover {
   border: 1px solid var(--gray-300);
   border-radius: 4px;
   padding-left:10px;
-  min-width: 200px;
+  min-width: 20vw;
   min-height: 40px;
 }
 
