@@ -46,8 +46,12 @@
 
 .inventory-centered-searchbox {
   width: clamp(220px, 20vw, 360px);
-  margin: 0 auto;
   position: relative;
+}
+
+.inventory-centered-searchbox .o-searchbox {
+  width: 100%;
+  margin: 0;
 }
 
 .inventory-centered-searchbox input {
@@ -79,6 +83,14 @@
   transform: translateY(-50%);
   border-radius: 8px;
   box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  background: var(--white-500);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .inventory-filter-dropdown {

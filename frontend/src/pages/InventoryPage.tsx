@@ -3561,257 +3561,277 @@ export default function InventoryPage() {
                 >
                   <div className="inventory-search-wrapper">
                     <div className="inventory-search-inner">
-                      <div className="o-searchbox">
-                        <input
-                          type="text"
-                          placeholder="Search..."
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                        {mainView === "operations" &&
-                          operationsTab === "moves" && (
+                      <div className="inventory-centered-searchbox">
+                        <div className="o-searchbox">
+                          <input
+                            type="text"
+                            placeholder="Search..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                          />
+                          {(mainView === "operations" &&
+                            operationsTab === "moves") ||
+                          (mainView === "products" && subView === "list") ? (
                             <button
                               type="button"
-                              className="inventory-filter-toggle"
-                              aria-label="Toggle operation filters"
-                              onClick={() =>
-                                setFilterMenuOpen((prev) => {
-                                  if (!prev) {
-                                    setProductFilterMenuOpen(false);
-                                  }
-                                  return !prev;
-                                })
-                              }
+                              className="inventory-filter-toggle-inside"
+                              aria-label="Toggle filters"
+                              onClick={() => {
+                                if (
+                                  mainView === "operations" &&
+                                  operationsTab === "moves"
+                                ) {
+                                  setFilterMenuOpen((prev) => {
+                                    if (!prev) {
+                                      setProductFilterMenuOpen(false);
+                                    }
+                                    return !prev;
+                                  });
+                                } else {
+                                  setProductFilterMenuOpen((prev) => {
+                                    if (!prev) {
+                                      setFilterMenuOpen(false);
+                                    }
+                                    return !prev;
+                                  });
+                                }
+                              }}
                             >
                               <FunnelPlus size={16} />
                             </button>
-                          )}
-                        {mainView === "products" && subView === "list" && (
-                          <button
-                            type="button"
-                            className="inventory-filter-toggle"
-                            aria-label="Toggle product filters"
-                            onClick={() =>
-                              setProductFilterMenuOpen((prev) => {
-                                if (!prev) {
-                                  setFilterMenuOpen(false);
-                                }
-                                return !prev;
-                              })
-                            }
+                          ) : null}
+                        </div>
+                        {filterMenuOpen && (
+                          <div
+                            className="inventory-filter-dropdown"
+                            ref={filterMenuRef}
                           >
-                            <FunnelPlus size={16} />
-                          </button>
+                            <div className="inventory-filter-columns">
+                              <div className="inventory-filter-column">
+                                <div className="inventory-filter-title">
+                                  State
+                                </div>
+                                <div className="inventory-filter-items">
+                                  {[
+                                    "all",
+                                    ...STATES.map((s) => s.value),
+                                  ].map((state) => (
+                                    <button
+                                      key={state}
+                                      type="button"
+                                      className={`inventory-filter-chip ${
+                                        filterState === state
+                                          ? "inventory-filter-chip-active"
+                                          : ""
+                                      }`}
+                                      onClick={() => setFilterState(state)}
+                                    >
+                                      {state === "all"
+                                        ? "All"
+                                        : STATES.find(
+                                            (s) => s.value === state,
+                                          )?.label}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                              <div className="inventory-filter-column">
+                                <div className="inventory-filter-title">
+                                  Operation Type
+                                </div>
+                                <div className="inventory-filter-items">
+                                  {[
+                                    "all",
+                                    ...MOVE_TYPES.map((t) => t.value),
+                                  ].map((type) => (
+                                    <button
+                                      key={type}
+                                      type="button"
+                                      className={`inventory-filter-chip ${
+                                        filterMoveType === type
+                                          ? "inventory-filter-chip-active"
+                                          : ""
+                                      }`}
+                                      onClick={() => setFilterMoveType(type)}
+                                    >
+                                      {type === "all"
+                                        ? "All"
+                                        : MOVE_TYPES.find(
+                                            (t) => t.value === type,
+                                          )?.label}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        {productFilterMenuOpen && (
+                          <div
+                            className="inventory-filter-dropdown"
+                            ref={productFilterMenuRef}
+                          >
+                            <div className="inventory-filter-columns">
+                              <div className="inventory-filter-column">
+                                <div className="inventory-filter-title">
+                                  Category
+                                </div>
+                                <select
+                                  className="o-form-select"
+                                  value={filterCategoryId ?? ""}
+                                  onChange={(e) =>
+                                    setFilterCategoryId(
+                                      e.target.value
+                                        ? Number(e.target.value)
+                                        : null,
+                                    )
+                                  }
+                                >
+                                  <option value="">
+                                    All Products ({products.length})
+                                  </option>
+                                  {categories.map((category) => (
+                                    <option
+                                      key={category.id}
+                                      value={category.id}
+                                    >
+                                      {category.name} (
+                                      {
+                                        products.filter(
+                                          (product) =>
+                                            product.category_id ===
+                                            category.id,
+                                        ).length
+                                      }
+                                      )
+                                    </option>
+                                  ))}
+                                </select>
+                                {categories.length === 0 && (
+                                  <div className="inventory-filter-note">
+                                    No categories yet.
+                                  </div>
+                                )}
+                              </div>
+                              <div className="inventory-filter-column">
+                                <div className="inventory-filter-title">
+                                  Warehouse
+                                </div>
+                                <select
+                                  className="o-form-select"
+                                  value={filterWarehouseId ?? ""}
+                                  onChange={(e) =>
+                                    setFilterWarehouseId(
+                                      e.target.value
+                                        ? Number(e.target.value)
+                                        : null,
+                                    )
+                                  }
+                                >
+                                  <option value="">
+                                    All Warehouses ({warehouses.length})
+                                  </option>
+                                  {warehouses.map((warehouse) => (
+                                    <option
+                                      key={warehouse.id}
+                                      value={warehouse.id}
+                                    >
+                                      {warehouse.name}
+                                    </option>
+                                  ))}
+                                </select>
+                                {activeProductWarehouse && (
+                                  <div className="inventory-filter-note">
+                                    <span>
+                                      Showing items in{" "}
+                                      {activeProductWarehouse.name}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      className="inventory-clear-filter-btn"
+                                      onClick={() =>
+                                        setFilterWarehouseId(null)
+                                      }
+                                    >
+                                      Clear
+                                    </button>
+                                  </div>
+                                )}
+                                <div className="inventory-filter-title">
+                                  Location
+                                </div>
+                                <select
+                                  className="o-form-select"
+                                  value={filterLocationId ?? ""}
+                                  onChange={(e) =>
+                                    setFilterLocationId(
+                                      e.target.value
+                                        ? Number(e.target.value)
+                                        : null,
+                                    )
+                                  }
+                                >
+                                  <option value="">
+                                    {filterWarehouseId !== null
+                                      ? `All Locations (${productFilterLocations.length})`
+                                      : `All Locations (${locations.length})`}
+                                  </option>
+                                  {productFilterLocations.map((location) => (
+                                    <option
+                                      key={location.id}
+                                      value={location.id}
+                                    >
+                                      {location.name}
+                                    </option>
+                                  ))}
+                                </select>
+                                {activeProductLocation && (
+                                  <div className="inventory-filter-note">
+                                    <span>
+                                      Showing items in location{" "}
+                                      {activeProductLocation.name}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      className="inventory-clear-filter-btn"
+                                      onClick={() =>
+                                        setFilterLocationId(null)
+                                      }
+                                    >
+                                      Clear
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="inventory-filter-column">
+                                <div className="inventory-filter-title">
+                                  Product Type
+                                </div>
+                                <div className="inventory-filter-types">
+                                  {PRODUCT_TYPES.map((type) => (
+                                    <div
+                                      key={type.value}
+                                      className="inventory-filter-type"
+                                    >
+                                      <span>{type.label}</span>
+                                      <span className="inventory-filter-type-count">
+                                        {
+                                          products.filter(
+                                            (product) =>
+                                              product.product_type ===
+                                              type.value,
+                                          ).length
+                                        }
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
                         )}
                       </div>
                     </div>
-                    {filterMenuOpen && (
-                      <div
-                        className="inventory-filter-dropdown"
-                        ref={filterMenuRef}
-                      >
-                        <div className="inventory-filter-columns">
-                          <div className="inventory-filter-column">
-                            <div className="inventory-filter-title">State</div>
-                            <div className="inventory-filter-items">
-                              {["all", ...STATES.map((s) => s.value)].map(
-                                (state) => (
-                                  <button
-                                    key={state}
-                                    type="button"
-                                    className={`inventory-filter-chip ${
-                                      filterState === state
-                                        ? "inventory-filter-chip-active"
-                                        : ""
-                                    }`}
-                                    onClick={() => setFilterState(state)}
-                                  >
-                                    {state === "all"
-                                      ? "All"
-                                      : STATES.find((s) => s.value === state)
-                                          ?.label}
-                                  </button>
-                                ),
-                              )}
-                            </div>
-                          </div>
-                          <div className="inventory-filter-column">
-                            <div className="inventory-filter-title">
-                              Operation Type
-                            </div>
-                            <div className="inventory-filter-items">
-                              {["all", ...MOVE_TYPES.map((t) => t.value)].map(
-                                (type) => (
-                                  <button
-                                    key={type}
-                                    type="button"
-                                    className={`inventory-filter-chip ${
-                                      filterMoveType === type
-                                        ? "inventory-filter-chip-active"
-                                        : ""
-                                    }`}
-                                    onClick={() => setFilterMoveType(type)}
-                                  >
-                                    {type === "all"
-                                      ? "All"
-                                      : MOVE_TYPES.find((t) => t.value === type)
-                                          ?.label}
-                                  </button>
-                                ),
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    {productFilterMenuOpen && (
-                      <div
-                        className="inventory-filter-dropdown"
-                        ref={productFilterMenuRef}
-                      >
-                        <div className="inventory-filter-columns">
-                          <div className="inventory-filter-column">
-                            <div className="inventory-filter-title">
-                              Category
-                            </div>
-                            <select
-                              className="o-form-select"
-                              value={filterCategoryId ?? ""}
-                              onChange={(e) =>
-                                setFilterCategoryId(
-                                  e.target.value
-                                    ? Number(e.target.value)
-                                    : null,
-                                )
-                              }
-                            >
-                              <option value="">
-                                All Products ({products.length})
-                              </option>
-                              {categories.map((category) => (
-                                <option key={category.id} value={category.id}>
-                                  {category.name} (
-                                  {
-                                    products.filter(
-                                      (product) =>
-                                        product.category_id === category.id,
-                                    ).length
-                                  }
-                                  )
-                                </option>
-                              ))}
-                            </select>
-                            {categories.length === 0 && (
-                              <div className="inventory-filter-note">
-                                No categories yet.
-                              </div>
-                            )}
-                          </div>
-                          <div className="inventory-filter-column">
-                            <div className="inventory-filter-title">
-                              Warehouse
-                            </div>
-                            <select
-                              className="o-form-select"
-                              value={filterWarehouseId ?? ""}
-                              onChange={(e) =>
-                                setFilterWarehouseId(
-                                  e.target.value
-                                    ? Number(e.target.value)
-                                    : null,
-                                )
-                              }
-                            >
-                              <option value="">
-                                All Warehouses ({warehouses.length})
-                              </option>
-                              {warehouses.map((warehouse) => (
-                                <option key={warehouse.id} value={warehouse.id}>
-                                  {warehouse.name}
-                                </option>
-                              ))}
-                            </select>
-                            {activeProductWarehouse && (
-                              <div className="inventory-filter-note">
-                                <span>
-                                  Showing items in {activeProductWarehouse.name}
-                                </span>
-                                <button
-                                  type="button"
-                                  className="inventory-clear-filter-btn"
-                                  onClick={() => setFilterWarehouseId(null)}
-                                >
-                                  Clear
-                                </button>
-                              </div>
-                            )}
-                            <div className="inventory-filter-title">
-                              Location
-                            </div>
-                            <select
-                              className="o-form-select"
-                              value={filterLocationId ?? ""}
-                              onChange={(e) =>
-                                setFilterLocationId(
-                                  e.target.value
-                                    ? Number(e.target.value)
-                                    : null,
-                                )
-                              }
-                            >
-                              <option value="">
-                                {filterWarehouseId !== null
-                                  ? `All Locations (${productFilterLocations.length})`
-                                  : `All Locations (${locations.length})`}
-                              </option>
-                              {productFilterLocations.map((location) => (
-                                <option key={location.id} value={location.id}>
-                                  {location.name}
-                                </option>
-                              ))}
-                            </select>
-                            {activeProductLocation && (
-                              <div className="inventory-filter-note">
-                                <span>
-                                  Showing items in location{" "}
-                                  {activeProductLocation.name}
-                                </span>
-                                <button
-                                  type="button"
-                                  className="inventory-clear-filter-btn"
-                                  onClick={() => setFilterLocationId(null)}
-                                >
-                                  Clear
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                          <div className="inventory-filter-column">
-                            <div className="inventory-filter-title">
-                              Product Type
-                            </div>
-                            <div className="inventory-filter-types">
-                              {PRODUCT_TYPES.map((type) => (
-                                <div
-                                  key={type.value}
-                                  className="inventory-filter-type"
-                                >
-                                  <span>{type.label}</span>
-                                  <span className="inventory-filter-type-count">
-                                    {
-                                      products.filter(
-                                        (product) =>
-                                          product.product_type === type.value,
-                                      ).length
-                                    }
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
                   </div>
 
                   {/* {mainView === "operations" && (
