@@ -3583,7 +3583,7 @@ export default function InventoryPage() {
                                 })
                               }
                             >
-                              <FunnelPlus size={32} />
+                              <FunnelPlus size={16} />
                             </button>
                           )}
                         {mainView === "products" && subView === "list" && (
@@ -6306,19 +6306,30 @@ export default function InventoryPage() {
                 >
                   <div className="o-form-view inventory-form-panel inventory-move-form">
                     <div className="inventory-move-header">
-                      <button className="o-btn o-btn-link inventory-move-back-link" onClick={goBack}>
+                      <button
+                        className="o-btn o-btn-link inventory-move-back-link"
+                        onClick={goBack}
+                      >
                         ← Back to List
                       </button>
                       <h2 className="inventory-move-title">
                         {isNew
                           ? "New Stock Move"
-                          : selectedMove?.reference || `Move #${selectedMoveId}`}
+                          : selectedMove?.reference ||
+                            `Move #${selectedMoveId}`}
                       </h2>
                       <div className="inventory-move-header-actions">
-                        <button className="o-btn o-btn-primary" onClick={saveMove} disabled={saving}>
+                        <button
+                          className="o-btn o-btn-primary"
+                          onClick={saveMove}
+                          disabled={saving}
+                        >
                           {saving ? "Saving..." : "Save"}
                         </button>
-                        <button className="o-btn o-btn-secondary" onClick={goBack}>
+                        <button
+                          className="o-btn o-btn-secondary"
+                          onClick={goBack}
+                        >
                           Discard
                         </button>
                         {!isNew && selectedMoveId && (
@@ -6688,8 +6699,12 @@ export default function InventoryPage() {
                         </div>
                         <div className="inventory-move-lines-info-stats">
                           <span>Product</span>
-                          <span>Total Qty {moveLinesTotals.quantity.toFixed(0)}</span>
-                          <span>Total Value ${moveLinesTotals.total.toFixed(0)}</span>
+                          <span>
+                            Total Qty {moveLinesTotals.quantity.toFixed(0)}
+                          </span>
+                          <span>
+                            Total Value ${moveLinesTotals.total.toFixed(0)}
+                          </span>
                         </div>
                         <div className="inventory-muted-note">
                           Existing moves support one product line. Create a new
