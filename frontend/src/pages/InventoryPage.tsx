@@ -6552,23 +6552,6 @@ export default function InventoryPage() {
                         </div>
                       </div>
 
-                      <div className="inventory-move-summary-card">
-                        <div className="inventory-move-summary-card-title">Summary</div>
-                        <div className="inventory-move-summary-card-grid">
-                          <div className="inventory-move-summary-card-item">
-                            <span>{moveLines.length} Lines</span>
-                          </div>
-                          <div className="inventory-move-summary-card-item">
-                            <span>Total Qty</span>
-                            <strong>{moveLinesTotals.quantity.toFixed(2)}</strong>
-                          </div>
-                          <div className="inventory-move-summary-card-item">
-                            <span>Total Value</span>
-                            <strong>${moveLinesTotals.total.toFixed(2)}</strong>
-                          </div>
-                        </div>
-                      </div>
-
                       <div className="inventory-section-title">
                         Product Lines
                       </div>

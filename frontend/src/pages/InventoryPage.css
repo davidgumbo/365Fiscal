@@ -899,9 +899,8 @@
   padding: 20px;
   box-shadow: 0 4px 14px rgba(30, 41, 59, 0.06);
   display: grid;
-  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1.1fr);
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1.15fr);
   grid-template-areas:
-    "info summary"
     "info lines-title"
     "info lines"
     "info-foot lines";
@@ -936,48 +935,6 @@
 
 .inventory-move-summary-inline {
   display: none;
-}
-
-.inventory-move-summary-card {
-  grid-area: summary;
-  border: 1px solid #d6dce6;
-  border-radius: 14px;
-  padding: 18px;
-}
-
-.inventory-move-summary-card-title {
-  font-size: 22px;
-  font-weight: 700;
-  color: #111827;
-  margin-bottom: 12px;
-}
-
-.inventory-move-summary-card-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.inventory-move-summary-card-item {
-  border: 1px solid #d6dce6;
-  border-radius: 10px;
-  min-height: 86px;
-  padding: 12px;
-  display: grid;
-  align-content: center;
-  gap: 4px;
-}
-
-.inventory-move-summary-card-item span {
-  color: #334155;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.inventory-move-summary-card-item strong {
-  color: #0f172a;
-  font-size: 18px;
-  font-weight: 800;
 }
 
 .inventory-section-title {
@@ -1044,7 +1001,6 @@
     grid-template-columns: 1fr;
     grid-template-areas:
       "info"
-      "summary"
       "lines-title"
       "lines"
       "info-foot";
