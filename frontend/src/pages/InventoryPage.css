@@ -804,46 +804,186 @@
   }
 }
 
-/* Move detail layout styled like the requested Odoo-style card view */
-.inventory-move-form-topbar {
-  padding: 6px 0 18px;
-  margin-bottom: 12px;
-  border-bottom: 1px solid #d8dee9;
-}
-
-.inventory-move-form-topbar .o-control-panel-left {
-  gap: 12px;
-}
-
-.inventory-move-form-topbar .o-btn {
-  min-height: 44px;
-  border-radius: 10px;
-}
-
+/* Move detail layout: exact Odoo-like structure */
 .inventory-move-form {
   max-width: 1460px;
 }
 
+.inventory-move-header {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.inventory-move-back-link {
+  padding: 0;
+  min-height: 0;
+  width: fit-content;
+  color: #1f57c3;
+  font-size: 38px;
+  font-weight: 600;
+}
+
+.inventory-move-title {
+  margin: 0;
+  font-size: 46px;
+  font-weight: 700;
+  line-height: 1.15;
+  color: #111827;
+}
+
+.inventory-move-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #d9dfea;
+}
+
+.inventory-move-header-actions .o-btn {
+  min-height: 46px;
+  border-radius: 10px;
+  padding: 0 22px;
+}
+
+.inventory-form-actions {
+  margin-bottom: 16px;
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.inventory-form-actions .inventory-inline-action-btn {
+  background: transparent;
+  border: 0;
+  padding-left: 0;
+}
+
+.inventory-statusbar {
+  background: transparent;
+}
+
+.inventory-statusbar .o-statusbar-item {
+  background: transparent;
+  min-height: 36px;
+  min-width: 146px;
+  padding: 0 12px;
+  position: relative;
+}
+
+.inventory-statusbar .o-statusbar-item:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  right: -8px;
+  top: 50%;
+  width: 16px;
+  height: 1px;
+  background: #94a3b8;
+}
+
+.inventory-statusbar .o-statusbar-item.active {
+  color: #0f172a;
+  font-weight: 800;
+  background: transparent;
+}
+
+.inventory-statusbar .o-statusbar-item.done {
+  color: #2563eb;
+  background: transparent;
+}
+
 .inventory-move-form .o-form-sheet {
+  border: 1px solid #d6dce6;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 20px;
+  box-shadow: 0 4px 14px rgba(30, 41, 59, 0.06);
   display: grid;
   grid-template-columns: minmax(0, 1.7fr) minmax(0, 1.1fr);
   grid-template-areas:
+    "info summary"
     "info lines-title"
     "info lines"
-    "notes-title lines"
-    "notes lines";
-  column-gap: 24px;
-  row-gap: 14px;
+    "info-foot lines";
+  gap: 16px 24px;
 }
 
 .inventory-two-col-grid {
   grid-area: info;
+  border: 1px solid #d6dce6;
+  border-radius: 14px;
+  padding: 18px 20px;
+}
+
+.inventory-two-col-grid::before {
+  content: "Move Information";
+  display: block;
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #d9dfea;
+}
+
+.inventory-move-form .o-form-group {
+  grid-template-columns: 180px minmax(0, 1fr);
+}
+
+.inventory-move-form .o-form-group > .validated-field {
+  grid-template-columns: 180px minmax(0, 1fr);
+}
+
+.inventory-move-summary-inline {
+  display: none;
+}
+
+.inventory-move-summary-card {
+  grid-area: summary;
+  border: 1px solid #d6dce6;
+  border-radius: 14px;
+  padding: 18px;
+}
+
+.inventory-move-summary-card-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 12px;
+}
+
+.inventory-move-summary-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.inventory-move-summary-card-item {
+  border: 1px solid #d6dce6;
+  border-radius: 10px;
+  min-height: 86px;
+  padding: 12px;
+  display: grid;
+  align-content: center;
+  gap: 4px;
+}
+
+.inventory-move-summary-card-item span {
+  color: #334155;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.inventory-move-summary-card-item strong {
+  color: #0f172a;
+  font-size: 18px;
+  font-weight: 800;
 }
 
 .inventory-section-title {
   grid-area: lines-title;
   margin: 0;
-  font-size: 2rem;
+  font-size: 22px;
   font-weight: 700;
   text-transform: none;
   letter-spacing: 0;
@@ -852,26 +992,51 @@
 .inventory-move-lines-panel {
   grid-area: lines;
   border: 1px solid #d6dce6;
-  border-radius: 12px;
-  padding: 12px;
-  height: fit-content;
+  border-radius: 14px;
+  padding: 10px;
+  background: #fff;
 }
 
-.inventory-group-separator {
-  grid-area: notes-title;
-  margin: 4px 0 0;
+.inventory-move-lines-header {
+  margin-bottom: 8px;
 }
 
-.inventory-move-form .o-form-textarea {
-  grid-area: notes;
+.inventory-move-lines-header span {
+  display: none;
 }
 
-.inventory-move-summary-inline {
-  margin: 14px 0 0;
-  padding: 14px;
+.inventory-move-lines-table thead th {
+  background: #f3f5f8;
+}
+
+.inventory-move-lines-info-card {
+  grid-area: info-foot;
   border: 1px solid #d6dce6;
-  border-radius: 10px;
-  gap: 22px;
+  border-radius: 14px;
+  padding: 18px 20px;
+}
+
+.inventory-move-lines-info-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 14px;
+}
+
+.inventory-move-lines-info-stats {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  padding: 14px 0;
+  border-top: 1px solid #d9dfea;
+  border-bottom: 1px solid #d9dfea;
+  margin-bottom: 10px;
+}
+
+.inventory-move-lines-info-stats span {
+  color: #1f2937;
+  font-size: 20px;
+  font-weight: 600;
 }
 
 @media (max-width: 1200px) {
@@ -879,9 +1044,9 @@
     grid-template-columns: 1fr;
     grid-template-areas:
       "info"
+      "summary"
       "lines-title"
       "lines"
-      "notes-title"
-      "notes";
+      "info-foot";
   }
 }

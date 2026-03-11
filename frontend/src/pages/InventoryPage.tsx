@@ -3461,9 +3461,9 @@ export default function InventoryPage() {
 
           <div className="o-main">
             {/* Form Sub Control Panel */}
-            {subView === "form" && (
+            {subView === "form" && mainView !== "operations" && (
               <div
-                className={`o-control-panel ${mainView === "operations" ? "inventory-move-form-topbar" : ""}`}
+                className="o-control-panel"
                 style={{ background: "var(--gray-50)", marginTop: -8 }}
               >
                 <div className="o-control-panel-left">
@@ -3475,10 +3475,6 @@ export default function InventoryPage() {
                       (isNew ? "New Product" : selectedProduct?.name)}
                     {mainView === "warehouses" &&
                       (isNew ? "New Warehouse" : selectedWarehouse?.name)}
-                    {mainView === "operations" &&
-                      (isNew
-                        ? "New Stock Move"
-                        : selectedMove?.reference || `Move #${selectedMoveId}`)}
                   </span>
                 </div>
                 <div className="o-control-panel-right">
@@ -3487,52 +3483,30 @@ export default function InventoryPage() {
                     onClick={() => {
                       if (mainView === "products") saveProduct();
                       else if (mainView === "warehouses") saveWarehouse();
-                      else if (mainView === "operations") saveMove();
                     }}
                     disabled={saving}
                   >
                     {saving ? "Saving..." : "Save"}
                   </button>
-                  {mainView === "operations" && (
-                    <button
-                      className="o-btn o-btn-secondary"
-                      onClick={() => void printMovePdf()}
-                    >
-                      <Printer size={14} />
-                      <span>Print PDF</span>
-                    </button>
-                  )}
                   {!isNew && (
                     <>
-                      {mainView === "operations" && selectedMoveId ? (
-                        <button
-                          className="o-btn o-btn-danger"
-                          title="Delete"
-                          aria-label="Delete"
-                          onClick={() => deleteMove(selectedMoveId)}
-                          disabled={saving}
-                        >
-                          Delete
-                        </button>
-                      ) : (
-                        <button
-                          className="danger"
-                          title="Delete"
-                          aria-label="Delete"
-                          onClick={() => {
-                            if (mainView === "products" && selectedProductId)
-                              deleteProduct(selectedProductId);
-                            else if (
-                              mainView === "warehouses" &&
-                              selectedWarehouseId
-                            )
-                              deleteWarehouse(selectedWarehouseId);
-                          }}
-                          disabled={saving}
-                        >
-                          <TrashIcon />
-                        </button>
-                      )}
+                      <button
+                        className="danger"
+                        title="Delete"
+                        aria-label="Delete"
+                        onClick={() => {
+                          if (mainView === "products" && selectedProductId)
+                            deleteProduct(selectedProductId);
+                          else if (
+                            mainView === "warehouses" &&
+                            selectedWarehouseId
+                          )
+                            deleteWarehouse(selectedWarehouseId);
+                        }}
+                        disabled={saving}
+                      >
+                        <TrashIcon />
+                      </button>
                     </>
                   )}
                   <button className="o-btn o-btn-secondary" onClick={goBack}>
@@ -6354,6 +6328,41 @@ export default function InventoryPage() {
                   style={{ width: "100%" }}
                 >
                   <div className="o-form-view inventory-form-panel inventory-move-form">
+                    <div className="inventory-move-header">
+                      <button className="o-btn o-btn-link inventory-move-back-link" onClick={goBack}>
+                        ← Back to List
+                      </button>
+                      <h2 className="inventory-move-title">
+                        {isNew
+                          ? "New Stock Move"
+                          : selectedMove?.reference || `Move #${selectedMoveId}`}
+                      </h2>
+                      <div className="inventory-move-header-actions">
+                        <button className="o-btn o-btn-primary" onClick={saveMove} disabled={saving}>
+                          {saving ? "Saving..." : "Save"}
+                        </button>
+                        <button className="o-btn o-btn-secondary" onClick={goBack}>
+                          Discard
+                        </button>
+                        {!isNew && selectedMoveId && (
+                          <button
+                            className="o-btn o-btn-danger"
+                            onClick={() => deleteMove(selectedMoveId)}
+                            disabled={saving}
+                          >
+                            Delete
+                          </button>
+                        )}
+                        <button
+                          className="o-btn o-btn-secondary"
+                          onClick={() => void printMovePdf()}
+                        >
+                          <Printer size={14} />
+                          <span>Print PDF</span>
+                        </button>
+                      </div>
+                    </div>
+
                     <div className="inventory-form-actions">
                       <button
                         className="o-btn o-btn-secondary inventory-inline-action-btn"
@@ -6382,24 +6391,6 @@ export default function InventoryPage() {
                           ))}
                         </div>
                       )}
-                      {selectedMove &&
-                        selectedMove.state === "draft" &&
-                        !isNew && (
-                          <>
-                            <button
-                              className="o-btn o-btn-success"
-                              onClick={() => confirmMove(selectedMove.id)}
-                            >
-                              Validate
-                            </button>
-                            <button
-                              className="o-btn o-btn-secondary"
-                              onClick={() => cancelMove(selectedMove.id)}
-                            >
-                              Cancel
-                            </button>
-                          </>
-                        )}
                     </div>
 
                     <div className="o-form-sheet">
@@ -6561,21 +6552,38 @@ export default function InventoryPage() {
                         </div>
                       </div>
 
+                      <div className="inventory-move-summary-card">
+                        <div className="inventory-move-summary-card-title">Summary</div>
+                        <div className="inventory-move-summary-card-grid">
+                          <div className="inventory-move-summary-card-item">
+                            <span>{moveLines.length} Lines</span>
+                          </div>
+                          <div className="inventory-move-summary-card-item">
+                            <span>Total Qty</span>
+                            <strong>{moveLinesTotals.quantity.toFixed(2)}</strong>
+                          </div>
+                          <div className="inventory-move-summary-card-item">
+                            <span>Total Value</span>
+                            <strong>${moveLinesTotals.total.toFixed(2)}</strong>
+                          </div>
+                        </div>
+                      </div>
+
                       <div className="inventory-section-title">
                         Product Lines
                       </div>
 
                       <div className="inventory-move-lines-panel">
                         <div className="inventory-move-lines-header">
-                          <span>Add products to this receipt or delivery</span>
+                          <span>Product Lines</span>
                           {isNew && !isMoveReadonly && (
                             <button
                               type="button"
-                              className="o-btn o-btn-secondary inventory-inline-action-btn"
+                              className="o-btn o-btn-primary inventory-inline-action-btn"
                               onClick={addMoveLine}
                             >
                               <Plus size={14} />
-                              <span>Add Line</span>
+                              <span>Add Product</span>
                             </button>
                           )}
                         </div>
@@ -6700,30 +6708,22 @@ export default function InventoryPage() {
                             </tbody>
                           </table>
                         </div>
-                        {!isNew && (
-                          <div className="inventory-muted-note">
-                            Existing moves support one product line. Create a
-                            new move for multiple lines.
-                          </div>
-                        )}
                       </div>
 
-                      <div className="o-group-separator inventory-group-separator">
-                        <div className="o-group-separator-line" />
-                        <span className="o-group-separator-text">Notes</span>
-                        <div className="o-group-separator-line" />
+                      <div className="inventory-move-lines-info-card">
+                        <div className="inventory-move-lines-info-title">
+                          Product Lines
+                        </div>
+                        <div className="inventory-move-lines-info-stats">
+                          <span>Product</span>
+                          <span>Total Qty {moveLinesTotals.quantity.toFixed(0)}</span>
+                          <span>Total Value ${moveLinesTotals.total.toFixed(0)}</span>
+                        </div>
+                        <div className="inventory-muted-note">
+                          Existing moves support one product line. Create a new
+                          move for multiple lines.
+                        </div>
                       </div>
-
-                      <textarea
-                        className="o-form-textarea"
-                        rows={4}
-                        value={moveForm.notes}
-                        onChange={(e) =>
-                          setMoveForm({ ...moveForm, notes: e.target.value })
-                        }
-                        placeholder="Internal notes..."
-                        disabled={isMoveReadonly}
-                      />
                     </div>
                   </div>
                 </div>
