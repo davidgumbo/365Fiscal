@@ -6,6 +6,10 @@
   gap: 16px;
 }
 
+.inventory-hidden-file-input{
+  display: none;
+}
+
 .inventory-company-search-row {
   display: flex;
   justify-content: center;
