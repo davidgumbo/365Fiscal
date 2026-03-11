@@ -1125,6 +1125,24 @@
 
 .inventory-move-lines-table {
   width: 100%;
+  table-layout: auto;
+}
+
+.inventory-move-lines-table th:nth-child(2),
+.inventory-move-lines-table td:nth-child(2) {
+  min-width: 260px;
+}
+
+.inventory-move-lines-table td:nth-child(2) .o-form-select {
+  width: 100%;
+  min-width: 240px;
+}
+
+.inventory-move-lines-table th:nth-child(3),
+.inventory-move-lines-table td:nth-child(3),
+.inventory-move-lines-table th:nth-child(4),
+.inventory-move-lines-table td:nth-child(4) {
+  width: 120px;
 }
 
 @media (max-width: 1200px) {
