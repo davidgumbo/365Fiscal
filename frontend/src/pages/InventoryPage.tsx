@@ -387,6 +387,8 @@ export default function InventoryPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [showImportExportModal, setShowImportExportModal] = useState(false);
+
   // Operations sub-tab
   const [operationsTab, setOperationsTab] = useState<
     "moves" | "quants" | "adjustments"
@@ -3542,42 +3544,42 @@ export default function InventoryPage() {
                     )} */}
                   <div className="o-control-panel-right">
                     {mainView === "operations" && operationsTab === "moves" && (
-                      <div className="inventory-operations-filters">
-                        <label className="inventory-filter-label">
-                          <span>Status:</span>
-                          <select
-                            value={filterState}
-                            onChange={(event) =>
-                              setFilterState(event.target.value)
-                            }
-                            className="inventory-filter-select"
-                          >
-                            <option value="all">All</option>
-                            {STATES.map((state) => (
-                              <option key={state.value} value={state.value}>
-                                {state.label}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                        <label className="inventory-filter-label">
-                          <span>Operation Type:</span>
-                          <select
-                            value={filterMoveType}
-                            onChange={(event) =>
-                              setFilterMoveType(event.target.value)
-                            }
-                            className="inventory-filter-select"
-                          >
-                            <option value="all">All</option>
-                            {MOVE_TYPES.map((type) => (
-                              <option key={type.value} value={type.value}>
-                                {type.label}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                      </div>
+                        <div className="inventory-operations-filters">
+                          <label className="inventory-filter-label">
+                            <span>Status:</span>
+                            <select
+                              value={filterState}
+                              onChange={(event) =>
+                                setFilterState(event.target.value)
+                              }
+                              className="inventory-filter-select"
+                            >
+                              <option value="all">All</option>
+                              {STATES.map((state) => (
+                                <option key={state.value} value={state.value}>
+                                  {state.label}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <label className="inventory-filter-label">
+                            <span>Operation Type:</span>
+                            <select
+                              value={filterMoveType}
+                              onChange={(event) =>
+                                setFilterMoveType(event.target.value)
+                              }
+                              className="inventory-filter-select"
+                            >
+                              <option value="all">All</option>
+                              {MOVE_TYPES.map((type) => (
+                                <option key={type.value} value={type.value}>
+                                  {type.label}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        </div>
                     )}
                     {mainView === "products" && (
                       <div className="o-view-switcher">
@@ -3609,32 +3611,11 @@ export default function InventoryPage() {
                         />
                         <button
                           className="o-btn o-btn-secondary inventory-inline-action-btn"
-                          onClick={() => productImportInputRef.current?.click()}
-                          disabled={importingProducts}
-                          title="Import products from CSV or Excel"
+                          onClick={() => setShowImportExportModal(true)}
+                          title="Import or export products"
                         >
                           <Upload size={14} />
-                          <span>
-                            {importingProducts
-                              ? "Importing..."
-                              : "Import CSV/XLSX"}
-                          </span>
-                        </button>
-                        <button
-                          className="o-btn o-btn-secondary inventory-inline-action-btn"
-                          onClick={() => exportProducts("csv")}
-                          title="Export filtered products to CSV"
-                        >
-                          <Download size={14} />
-                          <span>Export CSV</span>
-                        </button>
-                        <button
-                          className="o-btn o-btn-secondary inventory-inline-action-btn"
-                          onClick={() => exportProducts("xlsx")}
-                          title="Export filtered products to Excel"
-                        >
-                          <Download size={14} />
-                          <span>Export XLSX</span>
+                          <span>Import / Export</span>
                         </button>
                         <button
                           className="o-btn o-btn-secondary"
@@ -6704,6 +6685,76 @@ export default function InventoryPage() {
                           : "Create"}
                     </button>
                   </div>
+                </div>
+              </div>
+            )}
+            {showImportExportModal && (
+              <div
+                style={{
+                  position: "fixed",
+                  inset: 0,
+                  background: "rgba(0,0,0,0.45)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  zIndex: 1000,
+                }}
+              >
+                <div
+                  style={{
+                    background: "var(--white-500)",
+                    borderRadius: 10,
+                    padding: 24,
+                    width: 360,
+                    textAlign: "center",
+                  }}
+                >
+                  <h3 style={{ margin: "0 0 16px" }}>Import or Export</h3>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 12,
+                      marginBottom: 16,
+                    }}
+                  >
+                    <button
+                      className="o-btn o-btn-secondary"
+                      onClick={() => {
+                        productImportInputRef.current?.click();
+                        setShowImportExportModal(false);
+                      }}
+                    >
+                      <Upload size={14} />
+                      <span>Import products</span>
+                    </button>
+                    <button
+                      className="o-btn o-btn-secondary"
+                      onClick={() => {
+                        exportProducts("csv");
+                        setShowImportExportModal(false);
+                      }}
+                    >
+                      <Download size={14} />
+                      <span>Export CSV</span>
+                    </button>
+                    <button
+                      className="o-btn o-btn-secondary"
+                      onClick={() => {
+                        exportProducts("xlsx");
+                        setShowImportExportModal(false);
+                      }}
+                    >
+                      <Download size={14} />
+                      <span>Export XLSX</span>
+                    </button>
+                  </div>
+                  <button
+                    className="o-btn o-btn-link"
+                    onClick={() => setShowImportExportModal(false)}
+                  >
+                    Cancel
+                  </button>
                 </div>
               </div>
             )}
