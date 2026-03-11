@@ -56,7 +56,7 @@
 
 .invoice-dashboard-topbar {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 160px auto auto;
+  grid-template-columns: minmax(280px, 540px) 140px auto auto;
   align-items: center;
   gap: 12px;
   margin-bottom: 18px;
@@ -69,14 +69,15 @@
 
 .invoice-dashboard-search {
   width: 100%;
-  height: 42px;
+  max-width: 540px;
+  height: 40px;
   display: inline-flex;
   align-items: center;
   gap: 10px;
   border: 1px solid #d9deef;
   border-radius: 10px;
   background: #fff;
-  padding: 0 12px;
+  padding: 0 11px;
   color: #7480a9;
 }
 
@@ -85,7 +86,7 @@
   border: none;
   background: transparent;
   color: #33406f;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   outline: none;
 }
@@ -95,23 +96,26 @@
 }
 
 .invoice-dashboard-search-icon svg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
 }
 
 .invoice-dashboard-select {
-  height: 42px;
+  height: 40px;
+  min-width: 140px;
   border: 1px solid #d6dcef;
   border-radius: 10px;
   background-color: #fff;
   color: #46527f;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
+  padding-left: 12px;
+  padding-right: 34px;
 }
 
 .invoice-dashboard-secondary-btn,
 .invoice-dashboard-primary-btn {
-  min-height: 42px;
+  min-height: 40px;
   border-radius: 10px;
   display: inline-flex;
   align-items: center;
