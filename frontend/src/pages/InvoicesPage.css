@@ -54,13 +54,13 @@
   min-width: 0;
 }
 
-.invoice-dashboard-topbar {
-  display: grid;
-  grid-template-columns: 1fr minmax(280px, 520px) 140px auto auto;
+.content-top-bar.invoice-dashboard-topbar {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   margin-bottom: 18px;
-  padding: 12px 14px;
+  padding: 12px;
   border-radius: 18px;
   background: #ffffff;
   border: 1px solid #dde3f1;
@@ -68,19 +68,26 @@
 }
 
 .invoice-dashboard-search {
-  grid-column: 2;
-  width: 100%;
-  max-width: 540px;
-  height: 40px;
-  display: inline-flex;
+  flex: 1 1 340px;
+  min-width: 240px;
+  max-width: 620px;
+  height: 42px;
+  display: flex;
   align-items: center;
   gap: 10px;
-  border: 1px solid #d9deef;
-  border-radius: 10px;
-  background: #fff;
-  padding: 0 11px;
-  color: #7480a9;
-  justify-self: center;
+  border: 1px solid #cdd6ea;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+  padding: 0 12px;
+  color: #6a769f;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.invoice-dashboard-search:focus-within {
+  border-color: #3166e3;
+  box-shadow:
+    0 0 0 3px rgba(49, 102, 227, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 .invoice-dashboard-search input {
@@ -94,7 +101,7 @@
 }
 
 .invoice-dashboard-search input::placeholder {
-  color: #8c95b8;
+  color: #8390b8;
 }
 
 .invoice-dashboard-search-icon svg {
@@ -103,23 +110,21 @@
 }
 
 .invoice-dashboard-select {
-  grid-column: 3;
-  height: 40px;
-  min-width: 140px;
+  margin-left: auto;
+  width: 148px;
+  height: 38px;
   border: 1px solid #d6dcef;
   border-radius: 10px;
   background-color: #fff;
   color: #46527f;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 600;
-  padding-left: 12px;
-  padding-right: 34px;
-  justify-self: end;
+  padding: 0 30px 0 10px;
 }
 
 .invoice-dashboard-secondary-btn,
 .invoice-dashboard-primary-btn {
-  min-height: 40px;
+  min-height: 38px;
   border-radius: 10px;
   display: inline-flex;
   align-items: center;
@@ -131,11 +136,11 @@
 }
 
 .invoice-dashboard-secondary-btn {
-  grid-column: 4;
+  margin-left: 0;
 }
 
 .invoice-dashboard-primary-btn {
-  grid-column: 5;
+  margin-left: 0;
 }
 
 .invoice-dashboard-secondary-btn {
@@ -253,28 +258,25 @@
 }
 
 @media (max-width: 900px) {
-  .invoice-dashboard-topbar {
-    grid-template-columns: minmax(0, 1fr) 128px auto auto;
-    align-items: center;
+  .content-top-bar.invoice-dashboard-topbar {
+    gap: 8px;
   }
 
   .invoice-dashboard-search,
-  .invoice-dashboard-select {
+  .invoice-dashboard-select,
+  .invoice-dashboard-secondary-btn,
+  .invoice-dashboard-primary-btn {
     max-width: none;
   }
 
   .invoice-dashboard-select {
-    min-width: 128px;
-  }
-
-  .invoice-dashboard-secondary-btn,
-  .invoice-dashboard-primary-btn {
-    width: auto;
+    width: 136px;
   }
 }
 
 @media (max-width: 640px) {
-  .invoice-dashboard-topbar {
+  .content-top-bar.invoice-dashboard-topbar {
+    display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
   }
@@ -284,6 +286,7 @@
     grid-column: 1 / -1;
     max-width: none;
     width: 100%;
+    margin-left: 0;
   }
 
   .invoice-dashboard-secondary-btn,
