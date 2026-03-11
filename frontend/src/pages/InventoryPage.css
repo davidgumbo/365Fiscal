@@ -917,18 +917,30 @@
 }
 
 .inventory-form-actions {
-  margin-bottom: 14px;
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: #f7f9fc;
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f8fafd;
   padding-bottom: 0;
-  border: 1px solid #e4e9f2;
+  border: 1px solid #dfe6f2;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .inventory-form-actions .inventory-inline-action-btn {
-  background: transparent;
-  border: 0;
-  padding-left: 0;
+  background: #ffffff;
+  border: 1px solid #d7e0ee;
+  border-radius: 10px;
+  min-height: 40px;
+  padding: 0 14px;
+  font-weight: 700;
+  color: #1f2a44;
+}
+
+.inventory-form-actions .inventory-inline-action-btn:hover {
+  background: #f5f8ff;
+  border-color: #c8d6ef;
 }
 
 .inventory-statusbar {
@@ -936,37 +948,57 @@
   border: 1px solid #dbe2ee;
   border-radius: 10px;
   overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: nowrap;
 }
 
 .inventory-statusbar .o-statusbar-item {
   background: #ffffff;
   min-height: 40px;
-  min-width: 146px;
+  min-width: 136px;
   padding: 0 14px;
   position: relative;
-  color: #334155;
+  color: #475569;
   font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0.01em;
 }
 
 .inventory-statusbar .o-statusbar-item:not(:last-child)::after {
   content: "";
   position: absolute;
-  right: -8px;
+  right: 0;
   top: 50%;
-  width: 16px;
-  height: 1px;
-  background: #94a3b8;
+  width: 1px;
+  height: 18px;
+  background: #e2e8f0;
+  transform: translateY(-50%);
 }
 
 .inventory-statusbar .o-statusbar-item.active {
   color: #1d4ed8;
   font-weight: 800;
-  background: #eef4ff;
+  background: #edf3ff;
 }
 
 .inventory-statusbar .o-statusbar-item.done {
   color: #0f172a;
   background: #f8fafc;
+}
+
+@media (max-width: 900px) {
+  .inventory-form-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .inventory-statusbar {
+    width: 100%;
+    overflow-x: auto;
+  }
 }
 
 .inventory-move-form .o-form-sheet {
