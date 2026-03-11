@@ -3531,111 +3531,87 @@ export default function InventoryPage() {
                     flex: "1 1 100%",
                   }}
                 >
-                <div className="inventory-search-wrapper">
-                  <div className="inventory-search-inner">
-                    <div className="o-searchbox">
-                      <input
-                        type="text"
-                        placeholder="Search..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                      />
-                    </div>
-                    {mainView === "operations" && operationsTab === "moves" && (
-                      <button
-                        type="button"
-                        className="inventory-filter-toggle"
-                        onClick={() => setFilterMenuOpen((prev) => !prev)}
-                      >
-                        <span>{filterMenuOpen ? "▴" : "▾"}</span>
-                      </button>
-                    )}
-                  </div>
-                  {filterMenuOpen && (
-                    <div className="inventory-filter-dropdown" ref={filterMenuRef}>
-                      <div className="inventory-filter-columns">
-                        <div className="inventory-filter-column">
-                          <div className="inventory-filter-title">Filters</div>
-                          <div className="inventory-filter-subtitle">State</div>
-                          <div className="inventory-filter-items">
-                            {["all", ...STATES.map((s) => s.value)].map((state) => (
-                              <button
-                                key={state}
-                                type="button"
-                                className={`inventory-filter-chip ${
-                                  filterState === state
-                                    ? "inventory-filter-chip-active"
-                                    : ""
-                                }`}
-                                onClick={() => setFilterState(state)}
-                              >
-                                {state === "all"
-                                  ? "All"
-                                  : STATES.find((s) => s.value === state)
-                                      ?.label}
-                              </button>
-                            ))}
-                          </div>
-                          <div className="inventory-filter-subtitle">
-                            Operation Type
-                          </div>
-                          <div className="inventory-filter-items">
-                            {["all", ...MOVE_TYPES.map((t) => t.value)].map(
-                              (type) => (
-                                <button
-                                  key={type}
-                                  type="button"
-                                  className={`inventory-filter-chip ${
-                                    filterMoveType === type
-                                      ? "inventory-filter-chip-active"
-                                      : ""
-                                  }`}
-                                  onClick={() => setFilterMoveType(type)}
-                                >
-                                  {type === "all"
-                                    ? "All"
-                                    : MOVE_TYPES.find((t) => t.value === type)
-                                        ?.label}
-                                </button>
-                              ),
-                            )}
-                          </div>
-                        </div>
-                        <div className="inventory-filter-column">
-                          <div className="inventory-filter-title">Group By</div>
-                          <button
-                            type="button"
-                            className="inventory-filter-link"
-                          >
-                            Operation Category
-                          </button>
-                          <button
-                            type="button"
-                            className="inventory-filter-link"
-                          >
-                            Warehouse
-                          </button>
-                          <button
-                            type="button"
-                            className="inventory-filter-link"
-                          >
-                            Custom Group
-                          </button>
-                        </div>
-                        <div className="inventory-filter-column">
-                          <div className="inventory-filter-title">Favorites</div>
-                          <button
-                            type="button"
-                            className="inventory-filter-primary"
-                            onClick={() => setFilterMenuOpen(false)}
-                          >
-                            Save current search
-                          </button>
-                        </div>
+                  <div className="inventory-search-wrapper">
+                    <div className="inventory-search-inner">
+                      <div className="o-searchbox">
+                        <input
+                          type="text"
+                          placeholder="Search..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                        {mainView === "operations" &&
+                          operationsTab === "moves" && (
+                            <button
+                              type="button"
+                              className="inventory-filter-toggle"
+                              onClick={() => setFilterMenuOpen((prev) => !prev)}
+                            >
+                              <span>{filterMenuOpen ? "▴" : "▾"}</span>
+                            </button>
+                          )}
                       </div>
                     </div>
-                  )}
-                </div>
+                    {filterMenuOpen && (
+                      <div
+                        className="inventory-filter-dropdown"
+                        ref={filterMenuRef}
+                      >
+                        <div className="inventory-filter-columns">
+                          <div className="inventory-filter-column">
+                            <div className="inventory-filter-title">State</div>
+                            <div className="inventory-filter-items">
+                              {["all", ...STATES.map((s) => s.value)].map(
+                                (state) => (
+                                  <button
+                                    key={state}
+                                    type="button"
+                                    className={`inventory-filter-chip ${
+                                      filterState === state
+                                        ? "inventory-filter-chip-active"
+                                        : ""
+                                    }`}
+                                    onClick={() => setFilterState(state)}
+                                  >
+                                    {state === "all"
+                                      ? "All"
+                                      : STATES.find((s) => s.value === state)
+                                          ?.label}
+                                  </button>
+                                ),
+                              )}
+                            </div>
+                          </div>
+                          <div className="inventory-filter-column">
+                            <div className="inventory-filter-title">
+                              Operation Type
+                            </div>
+                            <div className="inventory-filter-items">
+                              {["all", ...MOVE_TYPES.map((t) => t.value)].map(
+                                (type) => (
+                                  <button
+                                    key={type}
+                                    type="button"
+                                    className={`inventory-filter-chip ${
+                                      filterMoveType === type
+                                        ? "inventory-filter-chip-active"
+                                        : ""
+                                    }`}
+                                    onClick={() => setFilterMoveType(type)}
+                                  >
+                                    {type === "all"
+                                      ? "All"
+                                      : MOVE_TYPES.find((t) => t.value === type)
+                                          ?.label}
+                                  </button>
+                                ),
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
 
                   {/* {mainView === "operations" && (
                       <div className="inventory-op-tabs">
