@@ -55,10 +55,10 @@
 }
 
 .content-top-bar.invoice-dashboard-topbar {
-  display: flex;
-  flex-wrap: wrap;
+  display: flex !important;
+  flex-wrap: wrap !important;
   align-items: center;
-  gap: 10px;
+  gap: 10px !important;
   margin-bottom: 18px;
   padding: 12px;
   border-radius: 18px;
@@ -68,11 +68,12 @@
 }
 
 .invoice-dashboard-search {
-  flex: 1 1 340px;
+  flex: 1 1 340px !important;
   min-width: 240px;
   max-width: 620px;
   height: 42px;
-  display: flex;
+  display: flex !important;
+  position: static !important;
   align-items: center;
   gap: 10px;
   border: 1px solid #cdd6ea;
@@ -92,11 +93,13 @@
 
 .invoice-dashboard-search input {
   flex: 1;
+  width: 100% !important;
   border: none;
   background: transparent;
   color: #33406f;
   font-size: 14px;
   font-weight: 600;
+  padding: 0 !important;
   outline: none;
 }
 
@@ -109,8 +112,15 @@
   height: 16px;
 }
 
+.invoice-dashboard-search .invoice-dashboard-search-icon {
+  position: static !important;
+  transform: none !important;
+  left: auto !important;
+  top: auto !important;
+}
+
 .invoice-dashboard-select {
-  margin-left: auto;
+  margin-left: auto !important;
   width: 148px;
   height: 38px;
   border: 1px solid #d6dcef;
@@ -133,6 +143,7 @@
   padding: 0 16px;
   font-size: 14px;
   font-weight: 700;
+  white-space: nowrap;
 }
 
 .invoice-dashboard-secondary-btn {
