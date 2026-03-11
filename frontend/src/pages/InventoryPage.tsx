@@ -22,6 +22,7 @@ import {
   Warehouse as WarehouseGlyph,
   X,
   Zap,
+  ListFilter,
 } from "lucide-react";
 import ValidationAlert from "../components/ValidationAlert";
 import ValidatedField from "../components/ValidatedField";
@@ -3578,7 +3579,7 @@ export default function InventoryPage() {
                               className="inventory-filter-toggle"
                               onClick={() => setFilterMenuOpen((prev) => !prev)}
                             >
-                              <span>{filterMenuOpen ? "▴" : "▾"}</span>
+                              <span>{ListFilter}</span>
                             </button>
                           )}
                       </div>
