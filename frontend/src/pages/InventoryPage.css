@@ -44,7 +44,7 @@
 .inventory-filter-toggle {
   border: 1px solid var(--stroke);
   background: var(--white-500);
-  border-radius: 8px;
+  border-radius: 4px;
   width: 40px;
   height: 40px;
   display: inline-flex;
