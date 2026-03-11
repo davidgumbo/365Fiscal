@@ -5442,6 +5442,7 @@ button.danger:hover {
   border-radius: 4px;
   padding-left:10px;
   min-width: 200px;
+  min-height: 40px;
 }
 
 .o-searchbox input {
