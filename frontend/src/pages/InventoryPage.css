@@ -35,14 +35,24 @@
 }
 
 .inventory-search-inner {
+  width: 100%;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
+  position: relative;
+  padding: 0 12px;
 }
 
-.inventory-search-wrapper .o-searchbox {
+.inventory-centered-searchbox {
   width: clamp(220px, 20vw, 360px);
-  margin: 0;
+  margin: 0 auto;
+  position: relative;
+}
+
+.inventory-centered-searchbox input {
+  width: 100%;
+  padding-right: 52px;
 }
 
 .inventory-filter-toggle {
@@ -60,6 +70,15 @@
 
 .inventory-filter-toggle:hover {
   border-color: var(--blue-500);
+}
+
+.inventory-filter-toggle-inside {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
 }
 
 .inventory-filter-dropdown {
