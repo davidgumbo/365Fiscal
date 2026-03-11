@@ -117,6 +117,71 @@
   color: var(--white-500);
 }
 
+.inventory-filter-note {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  margin-top: 4px;
+  color: var(--muted, #66728f);
+}
+
+.inventory-clear-filter-btn {
+  border: none;
+  background: none;
+  color: var(--blue-500, #2563eb);
+  font-size: 0.75rem;
+  padding: 0;
+  cursor: pointer;
+}
+
+.inventory-filter-types {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.inventory-filter-type {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--stroke, #dbe1ef);
+  background: var(--slate-50, #f8fafc);
+  font-size: 0.85rem;
+  color: var(--slate-700, #334155);
+}
+
+.inventory-filter-type-count {
+  font-weight: 600;
+}
+
+.inventory-adjustment-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.inventory-adjustment-summary-card {
+  flex: 1;
+  min-width: 150px;
+  border: 1px solid var(--stroke, #dbe1ef);
+  border-radius: 12px;
+  padding: 10px 14px;
+  background: var(--slate-50, #f8fafc);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.inventory-adjustment-summary-card strong {
+  font-size: 1.1rem;
+  color: var(--blue-500, #2563eb);
+}
+
 .inventory-filter-link {
   border: 1px solid var(--stroke);
   background: transparent;

@@ -22,7 +22,7 @@ import {
   Warehouse as WarehouseGlyph,
   X,
   Zap,
-  ListFilter,
+  FunnelPlus,
 } from "lucide-react";
 import ValidationAlert from "../components/ValidationAlert";
 import ValidatedField from "../components/ValidatedField";
@@ -388,6 +388,7 @@ export default function InventoryPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filterMenuOpen, setFilterMenuOpen] = useState(false);
+  const [productFilterMenuOpen, setProductFilterMenuOpen] = useState(false);
 
   const [showImportExportModal, setShowImportExportModal] = useState(false);
 
@@ -423,6 +424,26 @@ export default function InventoryPage() {
       setFilterMenuOpen(false);
     }
   }, [mainView, operationsTab]);
+
+  useEffect(() => {
+    if (!productFilterMenuOpen) return;
+    const handleClick = (event: MouseEvent) => {
+      if (
+        productFilterMenuRef.current &&
+        !productFilterMenuRef.current.contains(event.target as Node)
+      ) {
+        setProductFilterMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [productFilterMenuOpen]);
+
+  useEffect(() => {
+    if (!(mainView === "products" && subView === "list")) {
+      setProductFilterMenuOpen(false);
+    }
+  }, [mainView, subView]);
 
   const menuSections = useMemo<SidebarSection[]>(() => {
     const baseItems = BASE_MENU_TABS.map((tab) => ({
@@ -563,6 +584,7 @@ export default function InventoryPage() {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const productImportInputRef = useRef<HTMLInputElement>(null);
   const filterMenuRef = useRef<HTMLDivElement | null>(null);
+  const productFilterMenuRef = useRef<HTMLDivElement | null>(null);
   const [importingProducts, setImportingProducts] = useState(false);
 
   const clearPendingProductImage = () => {
@@ -3551,11 +3573,36 @@ export default function InventoryPage() {
                             <button
                               type="button"
                               className="inventory-filter-toggle"
-                              onClick={() => setFilterMenuOpen((prev) => !prev)}
+                              aria-label="Toggle operation filters"
+                              onClick={() =>
+                                setFilterMenuOpen((prev) => {
+                                  if (!prev) {
+                                    setProductFilterMenuOpen(false);
+                                  }
+                                  return !prev;
+                                })
+                              }
                             >
-                              <ListFilter />
+                              <FunnelPlus size={32} />
                             </button>
                           )}
+                        {mainView === "products" && subView === "list" && (
+                          <button
+                            type="button"
+                            className="inventory-filter-toggle"
+                            aria-label="Toggle product filters"
+                            onClick={() =>
+                              setProductFilterMenuOpen((prev) => {
+                                if (!prev) {
+                                  setFilterMenuOpen(false);
+                                }
+                                return !prev;
+                              })
+                            }
+                          >
+                            <FunnelPlus />
+                          </button>
+                        )}
                       </div>
                     </div>
                     {filterMenuOpen && (
@@ -3612,6 +3659,154 @@ export default function InventoryPage() {
                                   </button>
                                 ),
                               )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {productFilterMenuOpen && (
+                      <div
+                        className="inventory-filter-dropdown"
+                        ref={productFilterMenuRef}
+                      >
+                        <div className="inventory-filter-columns">
+                          <div className="inventory-filter-column">
+                            <div className="inventory-filter-title">
+                              Category
+                            </div>
+                            <select
+                              className="o-form-select"
+                              value={filterCategoryId ?? ""}
+                              onChange={(e) =>
+                                setFilterCategoryId(
+                                  e.target.value
+                                    ? Number(e.target.value)
+                                    : null,
+                                )
+                              }
+                            >
+                              <option value="">
+                                All Products ({products.length})
+                              </option>
+                              {categories.map((category) => (
+                                <option key={category.id} value={category.id}>
+                                  {category.name} (
+                                  {
+                                    products.filter(
+                                      (product) =>
+                                        product.category_id === category.id,
+                                    ).length
+                                  }
+                                  )
+                                </option>
+                              ))}
+                            </select>
+                            {categories.length === 0 && (
+                              <div className="inventory-filter-note">
+                                No categories yet.
+                              </div>
+                            )}
+                          </div>
+                          <div className="inventory-filter-column">
+                            <div className="inventory-filter-title">
+                              Warehouse
+                            </div>
+                            <select
+                              className="o-form-select"
+                              value={filterWarehouseId ?? ""}
+                              onChange={(e) =>
+                                setFilterWarehouseId(
+                                  e.target.value
+                                    ? Number(e.target.value)
+                                    : null,
+                                )
+                              }
+                            >
+                              <option value="">
+                                All Warehouses ({warehouses.length})
+                              </option>
+                              {warehouses.map((warehouse) => (
+                                <option key={warehouse.id} value={warehouse.id}>
+                                  {warehouse.name}
+                                </option>
+                              ))}
+                            </select>
+                            {activeProductWarehouse && (
+                              <div className="inventory-filter-note">
+                                <span>
+                                  Showing items in {activeProductWarehouse.name}
+                                </span>
+                                <button
+                                  type="button"
+                                  className="inventory-clear-filter-btn"
+                                  onClick={() => setFilterWarehouseId(null)}
+                                >
+                                  Clear
+                                </button>
+                              </div>
+                            )}
+                            <div className="inventory-filter-title">
+                              Location
+                            </div>
+                            <select
+                              className="o-form-select"
+                              value={filterLocationId ?? ""}
+                              onChange={(e) =>
+                                setFilterLocationId(
+                                  e.target.value
+                                    ? Number(e.target.value)
+                                    : null,
+                                )
+                              }
+                            >
+                              <option value="">
+                                {filterWarehouseId !== null
+                                  ? `All Locations (${productFilterLocations.length})`
+                                  : `All Locations (${locations.length})`}
+                              </option>
+                              {productFilterLocations.map((location) => (
+                                <option key={location.id} value={location.id}>
+                                  {location.name}
+                                </option>
+                              ))}
+                            </select>
+                            {activeProductLocation && (
+                              <div className="inventory-filter-note">
+                                <span>
+                                  Showing items in location{" "}
+                                  {activeProductLocation.name}
+                                </span>
+                                <button
+                                  type="button"
+                                  className="inventory-clear-filter-btn"
+                                  onClick={() => setFilterLocationId(null)}
+                                >
+                                  Clear
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                          <div className="inventory-filter-column">
+                            <div className="inventory-filter-title">
+                              Product Type
+                            </div>
+                            <div className="inventory-filter-types">
+                              {PRODUCT_TYPES.map((type) => (
+                                <div
+                                  key={type.value}
+                                  className="inventory-filter-type"
+                                >
+                                  <span>{type.label}</span>
+                                  <span className="inventory-filter-type-count">
+                                    {
+                                      products.filter(
+                                        (product) =>
+                                          product.product_type === type.value,
+                                      ).length
+                                    }
+                                  </span>
+                                </div>
+                              ))}
                             </div>
                           </div>
                         </div>
@@ -4032,276 +4227,139 @@ export default function InventoryPage() {
 
               {/* ============= PRODUCTS LIST ============= */}
               {mainView === "products" && subView === "list" && (
-                <>
-                  {/* Sidebar */}
-                  <div className="o-sidebar inventory-sub-sidebar">
-                    <div className="o-sidebar-section">
-                      <div className="o-sidebar-title inventory-sidebar-title-row">
-                        <span>Categories</span>
-                        <button
-                          onClick={() => openCategoryModal()}
-                          className="inventory-add-inline-btn"
-                          title="Add Category"
-                        >
-                          +
-                        </button>
-                      </div>
-                      <select
-                        className="o-form-select"
-                        value={filterCategoryId ?? ""}
-                        onChange={(e) =>
-                          setFilterCategoryId(
-                            e.target.value ? Number(e.target.value) : null,
-                          )
-                        }
-                      >
-                        <option value="">
-                          All Products ({products.length})
-                        </option>
-                        {categories.map((c) => (
-                          <option key={c.id} value={c.id}>
-                            {c.name} (
-                            {
-                              products.filter((p) => p.category_id === c.id)
-                                .length
-                            }
-                            )
-                          </option>
-                        ))}
-                      </select>
-                      {categories.length === 0 && (
-                        <div className="inventory-muted-note">
-                          No categories yet.
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="o-sidebar-section">
-                      <div className="o-sidebar-title">Warehouse</div>
-                      <select
-                        className="o-form-select"
-                        value={filterWarehouseId ?? ""}
-                        onChange={(e) =>
-                          setFilterWarehouseId(
-                            e.target.value ? Number(e.target.value) : null,
-                          )
-                        }
-                      >
-                        <option value="">
-                          All Warehouses ({warehouses.length})
-                        </option>
-                        {warehouses.map((warehouse) => (
-                          <option key={warehouse.id} value={warehouse.id}>
-                            {warehouse.name}
-                          </option>
-                        ))}
-                      </select>
-                      {activeProductWarehouse && (
-                        <div className="inventory-muted-note inventory-filter-note">
-                          <span>
-                            Showing items in {activeProductWarehouse.name}
-                          </span>
-                          <button
-                            type="button"
-                            className="inventory-clear-filter-btn"
-                            onClick={() => setFilterWarehouseId(null)}
-                          >
-                            Clear
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="o-sidebar-section">
-                      <div className="o-sidebar-title">Location</div>
-                      <select
-                        className="o-form-select"
-                        value={filterLocationId ?? ""}
-                        onChange={(e) =>
-                          setFilterLocationId(
-                            e.target.value ? Number(e.target.value) : null,
-                          )
-                        }
-                      >
-                        <option value="">
-                          {filterWarehouseId !== null
-                            ? `All Locations (${productFilterLocations.length})`
-                            : `All Locations (${locations.length})`}
-                        </option>
-                        {productFilterLocations.map((location) => (
-                          <option key={location.id} value={location.id}>
-                            {location.name}
-                          </option>
-                        ))}
-                      </select>
-                      {activeProductLocation && (
-                        <div className="inventory-muted-note inventory-filter-note">
-                          <span>
-                            Showing items in location{" "}
-                            {activeProductLocation.name}
-                          </span>
-                          <button
-                            type="button"
-                            className="inventory-clear-filter-btn"
-                            onClick={() => setFilterLocationId(null)}
-                          >
-                            Clear
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="o-sidebar-section">
-                      <div className="o-sidebar-title">Product Type</div>
-                      {PRODUCT_TYPES.map((t) => (
-                        <div key={t.value} className="o-sidebar-item">
-                          <span>{t.label}</span>
-                          <span className="o-sidebar-count">
-                            {
-                              products.filter((p) => p.product_type === t.value)
-                                .length
-                            }
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Main List */}
-                  <div className="o-main inventory-view-main">
-                    <div className="o-list-view inventory-table-panel">
-                      <table className="o-list-table">
-                        <thead>
-                          <tr>
-                            <th className="inventory-col-icon"></th>
-                            <th>Product</th>
-                            <th>Reference</th>
-                            <th>Location</th>
-                            <th>Category</th>
-                            <th>Type</th>
-                            <th>On Hand</th>
-                            <th>Available</th>
-                            <th className="text-end">Sale Price</th>
-                            <th className="text-end">Sale Cost</th>
-                            <th className="text-end">Cost</th>
-                            <th className="text-end">Stock Value</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {filteredProducts.map((p) => {
-                            const category = categories.find(
-                              (c) => c.id === p.category_id,
-                            );
-                            return (
-                              <tr
-                                key={p.id}
-                                onDoubleClick={() => openProduct(p)}
-                                className="inventory-table-clickable"
-                              >
-                                <td>
-                                  <span className="inventory-inline-icon">
-                                    <Package size={14} />
-                                  </span>
-                                </td>
-                                <td>
-                                  <span
-                                    className="inventory-link-cell"
-                                    onClick={() => openProduct(p)}
-                                  >
-                                    {p.name}
-                                  </span>
-                                  {p.barcode && (
-                                    <div className="inventory-subtext">
-                                      {p.barcode}
-                                    </div>
-                                  )}
-                                </td>
-                                <td>{p.reference || "-"}</td>
-                                <td>{productLocationById.get(p.id) || "-"}</td>
-                                <td>{category?.name || "-"}</td>
-                                <td>
-                                  <span
-                                    className={`o-tag o-tag-${p.product_type === "storable" ? "in" : p.product_type === "service" ? "internal" : "out"}`}
-                                  >
-                                    {
-                                      PRODUCT_TYPES.find(
-                                        (t) => t.value === p.product_type,
-                                      )?.label
-                                    }
-                                  </span>
-                                </td>
-                                <td>
-                                  <button
-                                    type="button"
-                                    className="o-btn o-btn-link inventory-qty-btn"
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      openOnHandAdjustment(p);
-                                    }}
-                                    onDoubleClick={(event) =>
-                                      event.stopPropagation()
-                                    }
-                                  >
-                                    {Number.isFinite(p.quantity_on_hand)
-                                      ? p.quantity_on_hand
-                                      : 0}{" "}
-                                    {p.uom}
-                                  </button>
-                                </td>
-                                <td className="inventory-positive">
-                                  {p.quantity_available} {p.uom}
-                                </td>
-                                <td className="o-monetary">
-                                  ${p.sale_price.toFixed(2)}
-                                </td>
-                                <td className="o-monetary">
-                                  ${p.sales_cost.toFixed(2)}
-                                </td>
-                                <td className="o-monetary">
-                                  ${p.purchase_cost.toFixed(2)}
-                                </td>
-                                <td className="o-monetary inventory-strong-cell">
-                                  ${p.stock_value.toFixed(2)}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                          {filteredProducts.length === 0 && (
-                            <tr>
-                              <td colSpan={12} className="inventory-empty-row">
-                                <button
-                                  className="o-btn o-btn-primary"
-                                  onClick={startNewProduct}
+                <div className="o-main inventory-view-main">
+                  <div className="o-list-view inventory-table-panel">
+                    <table className="o-list-table">
+                      <thead>
+                        <tr>
+                          <th className="inventory-col-icon"></th>
+                          <th>Product</th>
+                          <th>Reference</th>
+                          <th>Location</th>
+                          <th>Category</th>
+                          <th>Type</th>
+                          <th>On Hand</th>
+                          <th>Available</th>
+                          <th className="text-end">Sale Price</th>
+                          <th className="text-end">Sale Cost</th>
+                          <th className="text-end">Cost</th>
+                          <th className="text-end">Stock Value</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredProducts.map((p) => {
+                          const category = categories.find(
+                            (c) => c.id === p.category_id,
+                          );
+                          return (
+                            <tr
+                              key={p.id}
+                              onDoubleClick={() => openProduct(p)}
+                              className="inventory-table-clickable"
+                            >
+                              <td>
+                                <span className="inventory-inline-icon">
+                                  <Package size={14} />
+                                </span>
+                              </td>
+                              <td>
+                                <span
+                                  className="inventory-link-cell"
+                                  onClick={() => openProduct(p)}
                                 >
-                                  + Create Product
+                                  {p.name}
+                                </span>
+                                {p.barcode && (
+                                  <div className="inventory-subtext">
+                                    {p.barcode}
+                                  </div>
+                                )}
+                              </td>
+                              <td>{p.reference || "-"}</td>
+                              <td>{productLocationById.get(p.id) || "-"}</td>
+                              <td>{category?.name || "-"}</td>
+                              <td>
+                                <span
+                                  className={`o-tag o-tag-${p.product_type === "storable" ? "in" : p.product_type === "service" ? "internal" : "out"}`}
+                                >
+                                  {
+                                    PRODUCT_TYPES.find(
+                                      (t) => t.value === p.product_type,
+                                    )?.label
+                                  }
+                                </span>
+                              </td>
+                              <td>
+                                <button
+                                  type="button"
+                                  className="o-btn o-btn-link inventory-qty-btn"
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    openOnHandAdjustment(p);
+                                  }}
+                                  onDoubleClick={(event) =>
+                                    event.stopPropagation()
+                                  }
+                                >
+                                  {Number.isFinite(p.quantity_on_hand)
+                                    ? p.quantity_on_hand
+                                    : 0}{" "}
+                                  {p.uom}
                                 </button>
                               </td>
+                              <td className="inventory-positive">
+                                {p.quantity_available} {p.uom}
+                              </td>
+                              <td className="o-monetary">
+                                ${p.sale_price.toFixed(2)}
+                              </td>
+                              <td className="o-monetary">
+                                ${p.sales_cost.toFixed(2)}
+                              </td>
+                              <td className="o-monetary">
+                                ${p.purchase_cost.toFixed(2)}
+                              </td>
+                              <td className="o-monetary inventory-strong-cell">
+                                ${p.stock_value.toFixed(2)}
+                              </td>
                             </tr>
-                          )}
-                        </tbody>
-                        <tfoot>
+                          );
+                        })}
+                        {filteredProducts.length === 0 && (
                           <tr>
-                            <td colSpan={8} className="inventory-totals-label">
-                              Totals:
-                            </td>
-                            <td className="o-monetary inventory-totals-value">
-                              ${productMonetaryTotals.salePrice.toFixed(2)}
-                            </td>
-                            <td className="o-monetary inventory-totals-value">
-                              ${productMonetaryTotals.salesCost.toFixed(2)}
-                            </td>
-                            <td className="o-monetary inventory-totals-value">
-                              ${productMonetaryTotals.purchaseCost.toFixed(2)}
-                            </td>
-                            <td className="o-monetary inventory-totals-value">
-                              ${productMonetaryTotals.stockValue.toFixed(2)}
+                            <td colSpan={12} className="inventory-empty-row">
+                              <button
+                                className="o-btn o-btn-primary"
+                                onClick={startNewProduct}
+                              >
+                                + Create Product
+                              </button>
                             </td>
                           </tr>
-                        </tfoot>
-                      </table>
-                    </div>
+                        )}
+                      </tbody>
+                      <tfoot>
+                        <tr>
+                          <td colSpan={8} className="inventory-totals-label">
+                            Totals:
+                          </td>
+                          <td className="o-monetary inventory-totals-value">
+                            ${productMonetaryTotals.salePrice.toFixed(2)}
+                          </td>
+                          <td className="o-monetary inventory-totals-value">
+                            ${productMonetaryTotals.salesCost.toFixed(2)}
+                          </td>
+                          <td className="o-monetary inventory-totals-value">
+                            ${productMonetaryTotals.purchaseCost.toFixed(2)}
+                          </td>
+                          <td className="o-monetary inventory-totals-value">
+                            ${productMonetaryTotals.stockValue.toFixed(2)}
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
                   </div>
-                </>
+                </div>
               )}
 
               {/* ============= CATEGORIES LIST ============= */}
@@ -5869,456 +5927,375 @@ export default function InventoryPage() {
 
               {/* ============= OPERATIONS ============= */}
               {mainView === "operations" && subView === "list" && (
-                <>
-                  {/* Sidebar */}
-                  <div className="o-sidebar inventory-sub-sidebar">
-                    {/*
-                    {operationsTab !== "adjustments" && (
-                      <>
-                        <div className="o-sidebar-section">
-                          <div className="o-sidebar-title">Status</div>
-                          {["all", ...STATES.map((s) => s.value)].map(
-                            (state) => (
-                              <div
-                                key={state}
-                                className={`o-sidebar-item ${filterState === state ? "active" : ""}`}
-                                onClick={() => setFilterState(state)}
-                              >
-                                <span>
-                                  {state === "all"
-                                    ? "All"
-                                    : STATES.find((s) => s.value === state)
-                                        ?.label}
-                                </span>
-                                <span className="o-sidebar-count">
-                                  {state === "all"
-                                    ? stockMoves.length
-                                    : stockMoves.filter(
-                                        (m) => m.state === state,
-                                      ).length}
-                                </span>
-                              </div>
-                            ),
-                          )}
-                        </div>
-
-                        <div className="o-sidebar-section">
-                          <div className="o-sidebar-title">Operation Type</div>
-                          {["all", ...MOVE_TYPES.map((t) => t.value)].map(
-                            (moveType) => (
-                              <div
-                                key={moveType}
-                                className={`o-sidebar-item ${
-                                  operationsTab === "moves" &&
-                                  filterMoveType === moveType
-                                    ? "active"
-                                    : ""
-                                }`}
-                                onClick={() => {
-                                  if (operationsTab === "moves") {
-                                    setFilterMoveType(moveType);
-                                  }
-                                }}
-                              >
-                                <span>
-                                  {moveType === "all"
-                                    ? "All"
-                                    : MOVE_TYPES.find(
-                                        (t) => t.value === moveType,
-                                      )?.label || moveType}
-                                </span>
-                                <span className="o-sidebar-count">
-                                  {moveType === "all"
-                                    ? stockMoves.length
-                                    : stockMoves.filter(
-                                        (m) => m.move_type === moveType,
-                                      ).length}
-                                </span>
-                              </div>
-                            ),
-                          )}
-                        </div>
-                      </>
-                    )}
-                    */}
-                    {operationsTab === "adjustments" && (
-                      <div className="o-sidebar-section">
-                        <div className="o-sidebar-title">Adjustments</div>
-                        <div className="o-sidebar-item">
-                          <span>Total Rows</span>
-                          <span className="o-sidebar-count">
-                            {adjustmentSummary.totalRows}
-                          </span>
-                        </div>
-                        <div className="o-sidebar-item">
-                          <span>Changed</span>
-                          <span className="o-sidebar-count">
-                            {adjustmentSummary.changedRows}
-                          </span>
-                        </div>
-                        <div className="o-sidebar-item">
-                          <span>Invalid</span>
-                          <span className="o-sidebar-count">
-                            {adjustmentSummary.invalidRows}
-                          </span>
-                        </div>
+                <div className="o-main inventory-view-main">
+                  {operationsTab === "adjustments" && (
+                    <div className="inventory-adjustment-summary">
+                      <div className="inventory-adjustment-summary-card">
+                        <span className="inventory-filter-title">
+                          Total Rows
+                        </span>
+                        <strong>{adjustmentSummary.totalRows}</strong>
                       </div>
-                    )}
-                  </div>
-
-                  {/* Main Content */}
-                  <div className="o-main inventory-view-main">
-                    {operationsTab === "moves" && (
-                      <div className="o-list-view inventory-table-panel">
-                        <div className="inventory-move-list-toolbar">
-                          {/* <div className="inventory-move-filter-chips">
-                            {[
-                              { value: "all", label: "All" },
-                              { value: "in", label: "Receipts" },
-                              { value: "out", label: "Deliveries" },
-                              { value: "internal", label: "Transfers" },
-                              { value: "adjustment", label: "Adjustments" },
-                            ].map((entry) => (
-                              <button
-                                key={entry.value}
-                                type="button"
-                                className={`inventory-move-chip ${
-                                  filterMoveType === entry.value ? "active" : ""
-                                }`}
-                                onClick={() => setFilterMoveType(entry.value)}
+                      <div className="inventory-adjustment-summary-card">
+                        <span className="inventory-filter-title">Changed</span>
+                        <strong>{adjustmentSummary.changedRows}</strong>
+                      </div>
+                      <div className="inventory-adjustment-summary-card">
+                        <span className="inventory-filter-title">Invalid</span>
+                        <strong>{adjustmentSummary.invalidRows}</strong>
+                      </div>
+                    </div>
+                  )}
+                  {operationsTab === "moves" && (
+                    <div className="o-list-view inventory-table-panel">
+                      <div className="inventory-move-list-toolbar">
+                        {/* <div className="inventory-move-filter-chips">
+                          {[
+                            { value: "all", label: "All" },
+                            { value: "in", label: "Receipts" },
+                            { value: "out", label: "Deliveries" },
+                            { value: "internal", label: "Transfers" },
+                            { value: "adjustment", label: "Adjustments" },
+                          ].map((entry) => (
+                            <button
+                              key={entry.value}
+                              type="button"
+                              className={`inventory-move-chip ${
+                                filterMoveType === entry.value ? "active" : ""
+                              }`}
+                              onClick={() => setFilterMoveType(entry.value)}
+                            >
+                              {entry.label}
+                            </button>
+                          ))}
+                        </div> */}
+                        {/* <div className="inventory-muted-note">
+                          {filteredMoves.length} move
+                          {filteredMoves.length === 1 ? "" : "s"}
+                        </div> */}
+                      </div>
+                      <table className="o-list-table">
+                        <thead>
+                          <tr>
+                            <th>Reference</th>
+                            <th>Product</th>
+                            <th>Type</th>
+                            <th>Warehouse</th>
+                            <th>Quantity</th>
+                            <th className="text-end">Unit Cost</th>
+                            <th className="text-end">Total</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredMoves.map((m) => {
+                            const product = products.find(
+                              (p) => p.id === m.product_id,
+                            );
+                            const warehouse = warehouses.find(
+                              (w) => w.id === m.warehouse_id,
+                            );
+                            const moveType = MOVE_TYPES.find(
+                              (t) => t.value === m.move_type,
+                            );
+                            return (
+                              <tr
+                                key={m.id}
+                                onDoubleClick={() => openMove(m)}
+                                className="inventory-table-clickable"
                               >
-                                {entry.label}
-                              </button>
-                            ))}
-                          </div> */}
-                          {/* <div className="inventory-muted-note">
-                            {filteredMoves.length} move
-                            {filteredMoves.length === 1 ? "" : "s"}
-                          </div> */}
-                        </div>
-                        <table className="o-list-table">
-                          <thead>
-                            <tr>
-                              <th>Reference</th>
-                              <th>Product</th>
-                              <th>Type</th>
-                              <th>Warehouse</th>
-                              <th>Quantity</th>
-                              <th className="text-end">Unit Cost</th>
-                              <th className="text-end">Total</th>
-                              <th>Status</th>
-                              <th>Actions</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {filteredMoves.map((m) => {
-                              const product = products.find(
-                                (p) => p.id === m.product_id,
-                              );
-                              const warehouse = warehouses.find(
-                                (w) => w.id === m.warehouse_id,
-                              );
-                              const moveType = MOVE_TYPES.find(
-                                (t) => t.value === m.move_type,
-                              );
-                              return (
-                                <tr
-                                  key={m.id}
-                                  onDoubleClick={() => openMove(m)}
-                                  className="inventory-table-clickable"
-                                >
-                                  <td>
-                                    <span
-                                      className="inventory-link-cell"
-                                      onClick={() => openMove(m)}
-                                    >
-                                      {m.reference ||
-                                        `WH/MOV/${String(m.id).padStart(5, "0")}`}
-                                    </span>
-                                  </td>
-                                  <td>{product?.name || "-"}</td>
-                                  <td>
-                                    <span
-                                      className={`o-tag o-tag-${m.move_type}`}
-                                    >
-                                      {moveType?.label}
-                                    </span>
-                                  </td>
-                                  <td>{warehouse?.name || "-"}</td>
-                                  <td className="inventory-strong-cell">
-                                    {m.quantity}{" "}
-                                    {(product?.uom === "PCS"
-                                      ? "Units"
-                                      : product?.uom) || "Units"}
-                                  </td>
-                                  <td className="o-monetary">
-                                    ${m.unit_cost.toFixed(2)}
-                                  </td>
-                                  <td className="o-monetary inventory-strong-cell">
-                                    ${m.total_cost.toFixed(2)}
-                                  </td>
-                                  <td>
-                                    <span className={`o-tag o-tag-${m.state}`}>
-                                      {
-                                        STATES.find((s) => s.value === m.state)
-                                          ?.label
-                                      }
-                                    </span>
-                                  </td>
-                                  <td>
-                                    <div className="o-quick-actions inventory-row-actions">
-                                      <button
-                                        className="o-btn o-btn-secondary o-btn-icon"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          void printMovePdf(m);
-                                        }}
-                                        title="Print PDF"
-                                      >
-                                        <Printer size={14} />
-                                      </button>
-                                      {m.state === "draft" && (
-                                        <>
-                                          <button
-                                            className="o-btn o-btn-success o-btn-icon"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              confirmMove(m.id);
-                                            }}
-                                            title="Validate"
-                                          >
-                                            <Check size={14} />
-                                          </button>
-                                          <button
-                                            className="o-btn o-btn-danger o-btn-icon"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              cancelMove(m.id);
-                                            }}
-                                            title="Cancel"
-                                          >
-                                            <X size={14} />
-                                          </button>
-                                        </>
-                                      )}
-                                    </div>
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                            {filteredMoves.length === 0 && (
-                              <tr>
-                                <td colSpan={9} className="inventory-empty-row">
-                                  <div className="inventory-muted-note inventory-empty-note">
-                                    No stock moves found
-                                  </div>
-                                  <button
-                                    className="o-btn o-btn-primary"
-                                    onClick={() => startNewMove("in")}
+                                <td>
+                                  <span
+                                    className="inventory-link-cell"
+                                    onClick={() => openMove(m)}
                                   >
-                                    + Create Stock Move
-                                  </button>
+                                    {m.reference ||
+                                      `WH/MOV/${String(m.id).padStart(5, "0")}`}
+                                  </span>
                                 </td>
-                              </tr>
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-
-                    {operationsTab === "quants" && (
-                      <div className="o-list-view inventory-table-panel">
-                        <table className="o-list-table">
-                          <thead>
-                            <tr>
-                              <th>Product</th>
-                              <th>Warehouse</th>
-                              <th>Location</th>
-                              <th>On Hand</th>
-                              <th>Reserved</th>
-                              <th>Available</th>
-                              <th>Unit Cost</th>
-                              <th>Value</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {stockQuants.map((q) => {
-                              const product = products.find(
-                                (p) => p.id === q.product_id,
-                              );
-                              const warehouse = warehouses.find(
-                                (w) => w.id === q.warehouse_id,
-                              );
-                              const location = locations.find(
-                                (l) => l.id === q.location_id,
-                              );
-                              return (
-                                <tr key={q.id}>
-                                  <td className="inventory-strong-cell">
-                                    {product?.name || "-"}
-                                  </td>
-                                  <td>{warehouse?.name || "-"}</td>
-                                  <td>{location?.name || "-"}</td>
-                                  <td>
-                                    {product ? (
-                                      <button
-                                        type="button"
-                                        className="o-btn o-btn-link inventory-qty-btn"
-                                        onClick={() =>
-                                          openOnHandAdjustment(
-                                            product,
-                                            q.warehouse_id,
-                                            q.location_id,
-                                          )
-                                        }
-                                      >
-                                        {q.quantity}
-                                      </button>
-                                    ) : (
-                                      <span className="inventory-strong-cell">
-                                        {q.quantity}
-                                      </span>
-                                    )}
-                                  </td>
-                                  <td
-                                    className={
-                                      q.reserved_quantity > 0
-                                        ? "inventory-reserved-value"
-                                        : ""
+                                <td>{product?.name || "-"}</td>
+                                <td>
+                                  <span
+                                    className={`o-tag o-tag-${m.move_type}`}
+                                  >
+                                    {moveType?.label}
+                                  </span>
+                                </td>
+                                <td>{warehouse?.name || "-"}</td>
+                                <td className="inventory-strong-cell">
+                                  {m.quantity}{" "}
+                                  {(product?.uom === "PCS"
+                                    ? "Units"
+                                    : product?.uom) || "Units"}
+                                </td>
+                                <td className="o-monetary">
+                                  ${m.unit_cost.toFixed(2)}
+                                </td>
+                                <td className="o-monetary inventory-strong-cell">
+                                  ${m.total_cost.toFixed(2)}
+                                </td>
+                                <td>
+                                  <span className={`o-tag o-tag-${m.state}`}>
+                                    {
+                                      STATES.find((s) => s.value === m.state)
+                                        ?.label
                                     }
-                                  >
-                                    {q.reserved_quantity}
-                                  </td>
-                                  <td className="inventory-positive inventory-strong-cell">
-                                    {q.available_quantity}
-                                  </td>
-                                  <td className="o-monetary">
-                                    ${q.unit_cost.toFixed(2)}
-                                  </td>
-                                  <td className="o-monetary inventory-strong-cell">
-                                    ${q.total_value.toFixed(2)}
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                            {stockQuants.length === 0 && (
-                              <tr>
-                                <td
-                                  colSpan={8}
-                                  className="inventory-empty-row inventory-muted-note"
-                                >
-                                  No stock on hand. Validate stock moves to
-                                  update quantities.
+                                  </span>
+                                </td>
+                                <td>
+                                  <div className="o-quick-actions inventory-row-actions">
+                                    <button
+                                      className="o-btn o-btn-secondary o-btn-icon"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        void printMovePdf(m);
+                                      }}
+                                      title="Print PDF"
+                                    >
+                                      <Printer size={14} />
+                                    </button>
+                                    {m.state === "draft" && (
+                                      <>
+                                        <button
+                                          className="o-btn o-btn-success o-btn-icon"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            confirmMove(m.id);
+                                          }}
+                                          title="Validate"
+                                        >
+                                          <Check size={14} />
+                                        </button>
+                                        <button
+                                          className="o-btn o-btn-danger o-btn-icon"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            cancelMove(m.id);
+                                          }}
+                                          title="Cancel"
+                                        >
+                                          <X size={14} />
+                                        </button>
+                                      </>
+                                    )}
+                                  </div>
                                 </td>
                               </tr>
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-
-                    {operationsTab === "adjustments" && (
-                      <div className="o-list-view inventory-table-panel">
-                        <table className="o-list-table">
-                          <thead>
+                            );
+                          })}
+                          {filteredMoves.length === 0 && (
                             <tr>
-                              <th>Product</th>
-                              <th>Warehouse</th>
-                              <th>Location</th>
-                              <th className="text-end">On Hand</th>
-                              <th className="text-end">Counted</th>
-                              <th className="text-end">Difference</th>
-                              <th className="text-end">Unit Cost</th>
-                              <th className="text-end">New Value</th>
-                              <th style={{ width: 110 }}>Action</th>
+                              <td colSpan={9} className="inventory-empty-row">
+                                <div className="inventory-muted-note inventory-empty-note">
+                                  No stock moves found
+                                </div>
+                                <button
+                                  className="o-btn o-btn-primary"
+                                  onClick={() => startNewMove("in")}
+                                >
+                                  + Create Stock Move
+                                </button>
+                              </td>
                             </tr>
-                          </thead>
-                          <tbody>
-                            {adjustmentRows.map((row) => {
-                              const hasDelta = row.changed;
-                              return (
-                                <tr
-                                  key={row.quantId}
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  {operationsTab === "quants" && (
+                    <div className="o-list-view inventory-table-panel">
+                      <table className="o-list-table">
+                        <thead>
+                          <tr>
+                            <th>Product</th>
+                            <th>Warehouse</th>
+                            <th>Location</th>
+                            <th>On Hand</th>
+                            <th>Reserved</th>
+                            <th>Available</th>
+                            <th>Unit Cost</th>
+                            <th>Value</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {stockQuants.map((q) => {
+                            const product = products.find(
+                              (p) => p.id === q.product_id,
+                            );
+                            const warehouse = warehouses.find(
+                              (w) => w.id === q.warehouse_id,
+                            );
+                            const location = locations.find(
+                              (l) => l.id === q.location_id,
+                            );
+                            return (
+                              <tr key={q.id}>
+                                <td className="inventory-strong-cell">
+                                  {product?.name || "-"}
+                                </td>
+                                <td>{warehouse?.name || "-"}</td>
+                                <td>{location?.name || "-"}</td>
+                                <td>
+                                  {product ? (
+                                    <button
+                                      type="button"
+                                      className="o-btn o-btn-link inventory-qty-btn"
+                                      onClick={() =>
+                                        openOnHandAdjustment(
+                                          product,
+                                          q.warehouse_id,
+                                          q.location_id,
+                                        )
+                                      }
+                                    >
+                                      {q.quantity}
+                                    </button>
+                                  ) : (
+                                    <span className="inventory-strong-cell">
+                                      {q.quantity}
+                                    </span>
+                                  )}
+                                </td>
+                                <td
                                   className={
-                                    hasDelta
-                                      ? "inventory-adjustment-row-changed"
+                                    q.reserved_quantity > 0
+                                      ? "inventory-reserved-value"
                                       : ""
                                   }
                                 >
-                                  <td className="inventory-strong-cell">
-                                    {row.productName}
-                                  </td>
-                                  <td>{row.warehouseName}</td>
-                                  <td>{row.locationName}</td>
-                                  <td className="text-end">
-                                    {row.onHand} {row.uom}
-                                  </td>
-                                  <td className="text-end">
-                                    <input
-                                      type="number"
-                                      min="0"
-                                      step="0.01"
-                                      value={row.countedText}
-                                      className={`inventory-counted-input ${!row.isValid ? "invalid" : ""}`}
-                                      onChange={(e) =>
-                                        updateCountedQuantity(
-                                          row.quantId,
-                                          e.target.value,
-                                        )
-                                      }
-                                    />
-                                  </td>
-                                  <td
-                                    className={`text-end ${row.difference > 0 ? "inventory-diff-positive" : row.difference < 0 ? "inventory-diff-negative" : ""}`}
-                                  >
-                                    {row.isValid
-                                      ? row.difference.toFixed(2)
-                                      : "-"}
-                                  </td>
-                                  <td className="o-monetary text-end">
-                                    ${row.unitCost.toFixed(2)}
-                                  </td>
-                                  <td className="o-monetary text-end">
-                                    {row.isValid
-                                      ? `$${(row.counted * row.unitCost).toFixed(2)}`
-                                      : "-"}
-                                  </td>
-                                  <td>
-                                    <button
-                                      className="o-btn o-btn-primary"
-                                      onClick={() =>
-                                        void applyInventoryAdjustments([
-                                          row.quantId,
-                                        ])
-                                      }
-                                      disabled={
-                                        applyingAdjustments ||
-                                        !row.isValid ||
-                                        !row.changed
-                                      }
-                                    >
-                                      Apply
-                                    </button>
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                            {adjustmentRows.length === 0 && (
-                              <tr>
-                                <td
-                                  colSpan={9}
-                                  className="inventory-empty-row inventory-muted-note"
-                                >
-                                  No adjustment rows found for this filter.
+                                  {q.reserved_quantity}
+                                </td>
+                                <td className="inventory-positive inventory-strong-cell">
+                                  {q.available_quantity}
+                                </td>
+                                <td className="o-monetary">
+                                  ${q.unit_cost.toFixed(2)}
+                                </td>
+                                <td className="o-monetary inventory-strong-cell">
+                                  ${q.total_value.toFixed(2)}
                                 </td>
                               </tr>
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                  </div>
-                </>
+                            );
+                          })}
+                          {stockQuants.length === 0 && (
+                            <tr>
+                              <td
+                                colSpan={8}
+                                className="inventory-empty-row inventory-muted-note"
+                              >
+                                No stock on hand. Validate stock moves to update
+                                quantities.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  {operationsTab === "adjustments" && (
+                    <div className="o-list-view inventory-table-panel">
+                      <table className="o-list-table">
+                        <thead>
+                          <tr>
+                            <th>Product</th>
+                            <th>Warehouse</th>
+                            <th>Location</th>
+                            <th className="text-end">On Hand</th>
+                            <th className="text-end">Counted</th>
+                            <th className="text-end">Difference</th>
+                            <th className="text-end">Unit Cost</th>
+                            <th className="text-end">New Value</th>
+                            <th style={{ width: 110 }}>Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {adjustmentRows.map((row) => {
+                            const hasDelta = row.changed;
+                            return (
+                              <tr
+                                key={row.quantId}
+                                className={
+                                  hasDelta
+                                    ? "inventory-adjustment-row-changed"
+                                    : ""
+                                }
+                              >
+                                <td className="inventory-strong-cell">
+                                  {row.productName}
+                                </td>
+                                <td>{row.warehouseName}</td>
+                                <td>{row.locationName}</td>
+                                <td className="text-end">
+                                  {row.onHand} {row.uom}
+                                </td>
+                                <td className="text-end">
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={row.countedText}
+                                    className={`inventory-counted-input ${!row.isValid ? "invalid" : ""}`}
+                                    onChange={(e) =>
+                                      updateCountedQuantity(
+                                        row.quantId,
+                                        e.target.value,
+                                      )
+                                    }
+                                  />
+                                </td>
+                                <td
+                                  className={`text-end ${row.difference > 0 ? "inventory-diff-positive" : row.difference < 0 ? "inventory-diff-negative" : ""}`}
+                                >
+                                  {row.isValid
+                                    ? row.difference.toFixed(2)
+                                    : "-"}
+                                </td>
+                                <td className="o-monetary text-end">
+                                  ${row.unitCost.toFixed(2)}
+                                </td>
+                                <td className="o-monetary text-end">
+                                  {row.isValid
+                                    ? `$${(row.counted * row.unitCost).toFixed(2)}`
+                                    : "-"}
+                                </td>
+                                <td>
+                                  <button
+                                    className="o-btn o-btn-primary"
+                                    onClick={() =>
+                                      void applyInventoryAdjustments([
+                                        row.quantId,
+                                      ])
+                                    }
+                                    disabled={
+                                      applyingAdjustments ||
+                                      !row.isValid ||
+                                      !row.changed
+                                    }
+                                  >
+                                    Apply
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                          {adjustmentRows.length === 0 && (
+                            <tr>
+                              <td
+                                colSpan={9}
+                                className="inventory-empty-row inventory-muted-note"
+                              >
+                                No adjustment rows found for this filter.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
               )}
 
               {/* ============= STOCK MOVE FORM ============= */}
