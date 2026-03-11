@@ -3616,7 +3616,7 @@ export default function InventoryPage() {
                           <Upload size={14} />
                           <span>
                             {importingProducts
-                              ? "Importing..."inventory-filter
+                              ? "Importing..."
                               : "Import CSV/XLSX"}
                           </span>
                         </button>
@@ -5791,7 +5791,8 @@ export default function InventoryPage() {
               {mainView === "operations" && subView === "list" && (
                 <>
                   {/* Sidebar */}
-                  {/* <div className="o-sidebar inventory-sub-sidebar">
+                  <div className="o-sidebar inventory-sub-sidebar">
+                    {/*
                     {operationsTab !== "adjustments" && (
                       <>
                         <div className="o-sidebar-section">
@@ -5858,7 +5859,8 @@ export default function InventoryPage() {
                           )}
                         </div>
                       </>
-                    )} */}
+                    )}
+                    */}
                     {operationsTab === "adjustments" && (
                       <div className="o-sidebar-section">
                         <div className="o-sidebar-title">Adjustments</div>
