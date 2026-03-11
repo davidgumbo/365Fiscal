@@ -3579,7 +3579,7 @@ export default function InventoryPage() {
                               className="inventory-filter-toggle"
                               onClick={() => setFilterMenuOpen((prev) => !prev)}
                             >
-                              <span>{ListFilter}</span>
+                              <ListFilter />
                             </button>
                           )}
                       </div>
