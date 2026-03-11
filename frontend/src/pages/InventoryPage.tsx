@@ -3600,7 +3600,7 @@ export default function InventoryPage() {
                               })
                             }
                           >
-                            <FunnelPlus />
+                            <FunnelPlus size={16} />
                           </button>
                         )}
                       </div>
