@@ -6546,16 +6546,14 @@ export default function InventoryPage() {
                         </div>
                       </div>
 
-                      <div className="inventory-section-title">
-                        <span className="inventory-move-section-icon">
-                          <Boxes size={18} />
-                        </span>
-                        <span>Product Lines</span>
-                      </div>
-
                       <div className="inventory-move-lines-panel">
                         <div className="inventory-move-lines-header">
-                          <span>Product Lines</span>
+                          <span>
+                            <span className="inventory-move-section-icon">
+                              <Boxes size={18} />
+                            </span>
+                            Product Lines
+                          </span>
                           {isNew && !isMoveReadonly && (
                             <button
                               type="button"
