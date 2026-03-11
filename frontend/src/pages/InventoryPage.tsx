@@ -3278,16 +3278,8 @@ export default function InventoryPage() {
   if (isAdmin && !companyId) {
     return (
       <div className="content">
-        <div
-          className=""
-          style={{
-            display: "flex",
-            width: "auto",
-            justifyContent: "space-between",
-            marginBottom: 24,
-          }}
-        >
-          <div className="company-search">
+        <div className="inventory-company-search-row">
+          <div className="company-search inventory-company-search-field">
             <input
               type="text"
               placeholder="Search company by name, VAT, or TIN"
@@ -3369,8 +3361,9 @@ export default function InventoryPage() {
               {companyQuery.trim()
                 ? "No companies match your search."
                 : "No companies found. Create a company first."}
-            </div>
-          )}
+                  </div>
+                </div>
+              )}
         </div>
       </div>
     );
@@ -3409,7 +3402,7 @@ export default function InventoryPage() {
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-              >
+                >
                 <polyline points="9 18 15 12 9 6" />
               </svg>
             </span>
@@ -3507,7 +3500,7 @@ export default function InventoryPage() {
               {subView !== "form" && mainView !== "overview" && (
                 <div
                   id="filters-search"
-                  className="o-control-panel"
+                  className="o-control-panel inventory-main-search-panel"
                   style={{
                     background: "var(--white-500)",
                     height: "5rem",
@@ -3515,7 +3508,7 @@ export default function InventoryPage() {
                     flex: "1 1 100%",
                   }}
                 >
-                  <div className="o-control-panel-left">
+                  <div className="inventory-search-wrapper">
                     <div className="o-searchbox">
                       <input
                         type="text"
@@ -3524,6 +3517,7 @@ export default function InventoryPage() {
                         onChange={(e) => setSearchQuery(e.target.value)}
                       />
                     </div>
+                  </div>
 
                     {/* {mainView === "operations" && (
                       <div className="inventory-op-tabs">
@@ -3547,8 +3541,6 @@ export default function InventoryPage() {
                         </button>
                       </div>
                     )} */}
-                  </div>
-
                   <div className="o-control-panel-right">
                     {mainView === "products" && (
                       <div className="o-view-switcher">

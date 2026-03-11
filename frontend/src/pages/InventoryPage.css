@@ -6,6 +6,34 @@
   gap: 16px;
 }
 
+.inventory-company-search-row {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+.inventory-company-search-row .inventory-company-search-field {
+  width: clamp(220px, 20vw, 360px);
+  margin: 0;
+}
+
+.inventory-main-search-panel {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.inventory-search-wrapper {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.inventory-search-wrapper .o-searchbox {
+  width: clamp(220px, 20vw, 360px);
+  margin: 0;
+}
+
 .inventory-stats-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -270,6 +298,13 @@
 
   .inventory-quick-actions {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .inventory-search-wrapper .o-searchbox,
+  .inventory-company-search-row .inventory-company-search-field {
+    width: min(90vw, 420px);
   }
 }
 
