@@ -127,8 +127,8 @@
 }
 
 .invoice-dashboard-select {
-  width: 180px;
-  height: 50px;
+  width: 220px;
+  height: 44px;
   border: 1px solid #ccd4e4;
   border-radius: 0 14px 14px 0;
   background-color: #fff;
@@ -283,7 +283,7 @@
 
 @media (max-width: 900px) {
   .invoice-dashboard-select {
-    width: 160px;
+    width: 180px;
     font-size: 14px;
   }
 
