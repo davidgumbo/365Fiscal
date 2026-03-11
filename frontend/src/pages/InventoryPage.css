@@ -34,6 +34,29 @@
   margin: 0;
 }
 
+.inventory-operations-filters {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.inventory-filter-label {
+  display: flex;
+  flex-direction: column;
+  font-size: 11px;
+  color: var(--muted);
+  gap: 4px;
+}
+
+.inventory-filter-select {
+  min-width: 140px;
+  border: 1px solid var(--stroke);
+  border-radius: 10px;
+  background: var(--white-500);
+  padding: 6px 10px;
+  font-size: 0.8rem;
+}
+
 .inventory-stats-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));

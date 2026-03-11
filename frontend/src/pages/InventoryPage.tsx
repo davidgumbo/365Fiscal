@@ -3401,7 +3401,7 @@ export default function InventoryPage() {
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                >
+              >
                 <polyline points="9 18 15 12 9 6" />
               </svg>
             </span>
@@ -3502,7 +3502,7 @@ export default function InventoryPage() {
                   className="o-control-panel inventory-main-search-panel"
                   style={{
                     background: "var(--white-500)",
-                    height: "5rem",
+                    marginTop: "1rem",
                     width: "100%",
                     flex: "1 1 100%",
                   }}
@@ -3541,6 +3541,40 @@ export default function InventoryPage() {
                       </div>
                     )} */}
                   <div className="o-control-panel-right">
+                    {mainView === "operations" && operationsTab === "moves" && (
+                      <div className="inventory-operations-filters">
+                        <label className="inventory-filter-label">
+                          <span>Status</span>
+                          <select
+                            value={filterState}
+                            onChange={(event) => setFilterState(event.target.value)}
+                            className="inventory-filter-select"
+                          >
+                            <option value="all">All</option>
+                            {STATES.map((state) => (
+                              <option key={state.value} value={state.value}>
+                                {state.label}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="inventory-filter-label">
+                          <span>Operation Type</span>
+                          <select
+                            value={filterMoveType}
+                            onChange={(event) => setFilterMoveType(event.target.value)}
+                            className="inventory-filter-select"
+                          >
+                            <option value="all">All</option>
+                            {MOVE_TYPES.map((type) => (
+                              <option key={type.value} value={type.value}>
+                                {type.label}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      </div>
+                    )}
                     {mainView === "products" && (
                       <div className="o-view-switcher">
                         <button
@@ -6415,7 +6449,9 @@ export default function InventoryPage() {
                         </div>
                       </div>
 
-                      <div className="inventory-section-title">Product Lines</div>
+                      <div className="inventory-section-title">
+                        Product Lines
+                      </div>
 
                       <div className="inventory-move-lines-panel">
                         <div className="inventory-move-lines-header">
