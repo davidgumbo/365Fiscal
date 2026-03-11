@@ -824,19 +824,19 @@ export default function PurchasesPage({
   }
 
   return (
-    <div className="purchases-page invoice-form">
-      <div className="page-header">
-        <div className="header-actions">
-          {mode !== "list" && (
+    <div className="container-fluid py-3 purchases-page invoice-form">
+      {mode !== "list" && (
+        <div className="page-header">
+          <div className="header-actions">
             <button
               className="btn btn-sm btn-light border"
               onClick={() => navigate("/purchases")}
             >
-              ← Back
+              Back
             </button>
-          )}
+          </div>
         </div>
-      </div>
+      )}
 
       <ValidationAlert message={error} onClose={() => setError(null)} />
 
@@ -1712,3 +1712,4 @@ export default function PurchasesPage({
     </div>
   );
 }
+

@@ -1193,7 +1193,9 @@ export default function ExpensesPage() {
     );
   }
 
-  if (mainView === "expenses" && subView === "list") {
+  const useLegacyExpenseDashboard = false;
+
+  if (useLegacyExpenseDashboard && mainView === "expenses" && subView === "list") {
     return (
       <>
         {isAdmin && company && (
@@ -1835,7 +1837,7 @@ export default function ExpensesPage() {
       <ValidationAlert message={error} onClose={() => setError(null)} />
 
       <div
-        className="page-container"
+        className="container-fluid py-3 page-container"
         style={{ display: "flex", gap: 0, flexWrap: "nowrap" }}
       >
         <div id="main-content" className="two-panel two-panel-left">
@@ -1997,89 +1999,91 @@ export default function ExpensesPage() {
               }}
             >
               {subView !== "form" && (
-                <div
-                  className="o-control-panel"
-                  style={{
-                    background: "var(--white-500)",
-                    height: "5rem",
-                    width: "100%",
-                    flex: "1 1 100%",
-                  }}
-                >
-                  <div className="o-control-panel-left">
-                    <div className="o-searchbox">
-                      <span className="o-searchbox-icon">Search</span>
-                      <input
-                        type="text"
-                        placeholder={
-                          mainView === "suppliers"
-                            ? "Search suppliers..."
-                            : mainView === "categories"
-                              ? "Search categories..."
-                              : "Search expenses..."
-                        }
-                        value={mainView === "expenses" ? search : searchQuery}
-                        onChange={(e) =>
-                          mainView === "expenses"
-                            ? setSearch(e.target.value)
-                            : setSearchQuery(e.target.value)
-                        }
-                      />
-                    </div>
-                  </div>
-                  <div className="o-control-panel-right">
-                    {mainView === "expenses" && (
-                      <>
-                        <button
-                          className="o-btn o-btn-secondary"
-                          onClick={exportCSV}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 6,
-                          }}
-                        >
-                          <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                            <polyline points="7 10 12 15 17 10" />
-                            <line x1="12" y1="15" x2="12" y2="3" />
-                          </svg>
-                          Export
-                        </button>
-                        <button
-                          className="o-btn o-btn-primary"
-                          onClick={startNew}
-                        >
-                          + New Expense
-                        </button>
-                      </>
-                    )}
-                    {mainView === "categories" && (
-                      <button
-                        className="o-btn o-btn-primary"
-                        onClick={() => openCategoryModal()}
+                <div className="content-top-bar" style={{ width: "100%", flex: "1 1 100%" }}>
+                  <div className="top-search">
+                    <span className="search-icon">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
                       >
-                        + New Category
-                      </button>
-                    )}
-                    {mainView === "suppliers" && (
-                      <button
-                        className="o-btn o-btn-primary"
-                        onClick={() => navigate("/contacts/new")}
-                      >
-                        + Add Supplier
-                      </button>
-                    )}
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                      </svg>
+                    </span>
+                    <input
+                      type="text"
+                      placeholder={
+                        mainView === "suppliers"
+                          ? "Search suppliers..."
+                          : mainView === "categories"
+                            ? "Search categories..."
+                            : "Search expenses..."
+                      }
+                      value={mainView === "expenses" ? search : searchQuery}
+                      onChange={(e) =>
+                        mainView === "expenses"
+                          ? setSearch(e.target.value)
+                          : setSearchQuery(e.target.value)
+                      }
+                    />
                   </div>
+                  {mainView === "expenses" && (
+                    <>
+                      <button
+                        className="o-btn o-btn-secondary"
+                        onClick={exportCSV}
+                        style={{ display: "flex", alignItems: "center", gap: 6 }}
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                          <polyline points="7 10 12 15 17 10" />
+                          <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                        Export
+                      </button>
+                      <button className="btn-create" onClick={startNew}>
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <line x1="12" y1="5" x2="12" y2="19" />
+                          <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                        New Expense
+                      </button>
+                    </>
+                  )}
+                  {mainView === "categories" && (
+                    <button
+                      className="o-btn o-btn-primary"
+                      onClick={() => openCategoryModal()}
+                    >
+                      + New Category
+                    </button>
+                  )}
+                  {mainView === "suppliers" && (
+                    <button
+                      className="o-btn o-btn-primary"
+                      onClick={() => navigate("/contacts/new")}
+                    >
+                      + Add Supplier
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -2167,9 +2171,11 @@ export default function ExpensesPage() {
 
                   {/* Expenses table */}
                   <div className="o-main">
-                    <div className="o-list-view">
-                      <table className="o-list-table">
-                        <thead>
+                    <div className="card shadow-sm">
+                      <div className="card-body p-0">
+                        <div className="table-responsive">
+                          <table className="table table-hover align-middle mb-0">
+                            <thead className="table-light">
                           <tr>
                             <th>Reference</th>
                             <th>Supplier</th>
@@ -2180,8 +2186,8 @@ export default function ExpensesPage() {
                             <th className="text-end">VAT</th>
                             <th className="text-end">Total</th>
                           </tr>
-                        </thead>
-                        <tbody>
+                            </thead>
+                            <tbody>
                           {loading && (
                             <tr>
                               <td
@@ -2264,49 +2270,51 @@ export default function ExpensesPage() {
                               </tr>
                             );
                           })}
-                        </tbody>
-                        {filteredExpenses.length > 0 && (
-                          <tfoot>
-                            <tr
-                              style={{
-                                background: "var(--slate-50)",
-                                fontWeight: 600,
-                              }}
-                            >
-                              <td colSpan={5} className="text-end">
-                                Grand Total:
-                              </td>
-                              <td className="text-end">
-                                {formatCurrency(
-                                  filteredExpenses.reduce(
-                                    (s, e) => s + (e.subtotal || 0),
-                                    0,
-                                  ),
-                                  "USD",
-                                )}
-                              </td>
-                              <td className="text-end">
-                                {formatCurrency(
-                                  filteredExpenses.reduce(
-                                    (s, e) => s + (e.tax_amount || 0),
-                                    0,
-                                  ),
-                                  "USD",
-                                )}
-                              </td>
-                              <td className="text-end">
-                                {formatCurrency(
-                                  filteredExpenses.reduce(
-                                    (s, e) => s + (e.total_amount || 0),
-                                    0,
-                                  ),
-                                  "USD",
-                                )}
-                              </td>
-                            </tr>
-                          </tfoot>
-                        )}
-                      </table>
+                            </tbody>
+                            {filteredExpenses.length > 0 && (
+                              <tfoot>
+                                <tr
+                                  style={{
+                                    background: "var(--slate-50)",
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  <td colSpan={5} className="text-end">
+                                    Grand Total:
+                                  </td>
+                                  <td className="text-end">
+                                    {formatCurrency(
+                                      filteredExpenses.reduce(
+                                        (s, e) => s + (e.subtotal || 0),
+                                        0,
+                                      ),
+                                      "USD",
+                                    )}
+                                  </td>
+                                  <td className="text-end">
+                                    {formatCurrency(
+                                      filteredExpenses.reduce(
+                                        (s, e) => s + (e.tax_amount || 0),
+                                        0,
+                                      ),
+                                      "USD",
+                                    )}
+                                  </td>
+                                  <td className="text-end">
+                                    {formatCurrency(
+                                      filteredExpenses.reduce(
+                                        (s, e) => s + (e.total_amount || 0),
+                                        0,
+                                      ),
+                                      "USD",
+                                    )}
+                                  </td>
+                                </tr>
+                              </tfoot>
+                            )}
+                          </table>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </>
