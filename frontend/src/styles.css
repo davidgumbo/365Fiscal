@@ -6720,7 +6720,8 @@ tr:hover .o-quick-actions {
 .app-launcher-watermark {
   position: absolute;
   left: -74px;
-  bottom: 60px;
+  top: 86px;
+  bottom: auto;
   width: 430px;
   height: 220px;
   pointer-events: none;
@@ -6760,8 +6761,8 @@ tr:hover .o-quick-actions {
 .app-launcher-watermark-top {
   left: auto;
   right: -86px;
-  top: 86px;
-  bottom: auto;
+  top: auto;
+  bottom: 60px;
   width: 390px;
   height: 190px;
   opacity: 0.82;
@@ -6840,7 +6841,8 @@ tr:hover .o-quick-actions {
 
   .app-launcher-watermark {
     left: -78px;
-    bottom: 30px;
+    top: 74px;
+    bottom: auto;
     width: 310px;
     height: 170px;
     opacity: 0.86;
@@ -6865,7 +6867,8 @@ tr:hover .o-quick-actions {
 
   .app-launcher-watermark-top {
     right: -92px;
-    top: 74px;
+    top: auto;
+    bottom: 30px;
     width: 280px;
     height: 146px;
     opacity: 0.74;
