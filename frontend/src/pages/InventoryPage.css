@@ -871,7 +871,7 @@
 
 /* Move detail layout: exact Odoo-like structure */
 .inventory-move-form {
-  max-width: 1680px;
+  max-width: 1880px;
   width: 100%;
 }
 
@@ -965,7 +965,7 @@
   padding: 20px;
   box-shadow: 0 4px 14px rgba(30, 41, 59, 0.06);
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.25fr);
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.45fr);
   grid-template-areas:
     "info lines-title"
     "info lines"
@@ -1033,10 +1033,7 @@
   border-radius: 14px;
   padding: 10px;
   background: #fff;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
+  min-height: 420px;
 }
 
 .inventory-move-lines-header {
@@ -1052,15 +1049,11 @@
 }
 
 .inventory-move-lines-table-wrap {
-  flex: 1 1 auto;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
+  overflow: auto;
 }
 
 .inventory-move-lines-table {
-  flex: 1 1 auto;
-  height: 100%;
+  width: 100%;
 }
 
 .inventory-move-lines-info-card {
