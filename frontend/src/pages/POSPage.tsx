@@ -351,6 +351,34 @@ export default function POSPage() {
   const { me } = useMe();
   const companyId = me?.company_ids?.[0];
   const barcodeRef = useRef<HTMLInputElement>(null);
+  const faviconLinkRef = useRef<HTMLLinkElement | null>(null);
+
+  useEffect(() => {
+    const existingLink =
+      document.querySelector<HTMLLinkElement>('link[rel*="icon"]');
+    const link = existingLink ?? document.createElement("link");
+    const previousHref = link.getAttribute("href");
+    const previousRel = link.getAttribute("rel");
+    const created = !existingLink;
+    link.setAttribute("rel", "icon");
+    link.setAttribute("href", "/pos-favicon.svg");
+    if (created) {
+      document.head.appendChild(link);
+    }
+    faviconLinkRef.current = link;
+    return () => {
+      const current = faviconLinkRef.current;
+      if (!current) return;
+      if (created) {
+        current.remove();
+      } else {
+        if (previousHref) current.setAttribute("href", previousHref);
+        else current.removeAttribute("href");
+        if (previousRel) current.setAttribute("rel", previousRel);
+        else current.removeAttribute("rel");
+      }
+    };
+  }, []);
 
   // ── state ──
   const [products, setProducts] = useState<POSProduct[]>([]);
@@ -4208,4 +4236,3 @@ export default function POSPage() {
     </div>
   );
 }
-
