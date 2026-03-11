@@ -239,10 +239,40 @@
 @media (max-width: 900px) {
   .invoice-dashboard-topbar {
     grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .invoice-dashboard-search,
+  .invoice-dashboard-select {
+    width: 100%;
+    max-width: none;
+  }
+
+  .invoice-dashboard-select {
+    min-width: 0;
+  }
+
+  .invoice-dashboard-secondary-btn,
+  .invoice-dashboard-primary-btn {
+    width: auto;
+    justify-self: start;
+  }
+}
+
+@media (max-width: 640px) {
+  .invoice-dashboard-topbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .invoice-dashboard-search,
+  .invoice-dashboard-select {
+    grid-column: 1 / -1;
   }
 
   .invoice-dashboard-secondary-btn,
   .invoice-dashboard-primary-btn {
     width: 100%;
+    min-width: 0;
   }
 }
