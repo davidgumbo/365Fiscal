@@ -254,27 +254,22 @@
 
 @media (max-width: 900px) {
   .invoice-dashboard-topbar {
-    grid-template-columns: 1fr;
-    align-items: stretch;
+    grid-template-columns: minmax(0, 1fr) 128px auto auto;
+    align-items: center;
   }
 
   .invoice-dashboard-search,
   .invoice-dashboard-select {
-    width: 100%;
-    max-width: 540px;
-    justify-self: start;
-    grid-column: auto;
+    max-width: none;
   }
 
   .invoice-dashboard-select {
-    min-width: 180px;
+    min-width: 128px;
   }
 
   .invoice-dashboard-secondary-btn,
   .invoice-dashboard-primary-btn {
     width: auto;
-    justify-self: start;
-    grid-column: auto;
   }
 }
 
