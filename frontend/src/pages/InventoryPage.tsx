@@ -3636,7 +3636,7 @@ export default function InventoryPage() {
                       </div>
                     )} */}
                   <div className="o-control-panel-right">
-                    {mainView === "operations" && operationsTab === "moves" && (
+                    {/* {mainView === "operations" && operationsTab === "moves" && (
                       <div className="inventory-operations-filters">
                         <label className="inventory-filter-label">
                           <span>Status:</span>
@@ -3673,7 +3673,7 @@ export default function InventoryPage() {
                           </select>
                         </label>
                       </div>
-                    )}
+                    )} */}
                     {mainView === "products" && (
                       <div className="o-view-switcher">
                         <button
