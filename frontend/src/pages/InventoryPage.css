@@ -27,11 +27,112 @@
   flex: 1;
   display: flex;
   justify-content: center;
+  position: relative;
+}
+
+.inventory-search-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .inventory-search-wrapper .o-searchbox {
   width: clamp(220px, 20vw, 360px);
   margin: 0;
+}
+
+.inventory-filter-toggle {
+  border: 1px solid var(--stroke);
+  background: var(--white-500);
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.inventory-filter-toggle:hover {
+  border-color: var(--blue-500);
+}
+
+.inventory-filter-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: min(640px, 90vw);
+  background: var(--white-500);
+  border: 1px solid var(--stroke);
+  border-radius: 14px;
+  box-shadow: var(--shadow-lg);
+  padding: 16px;
+  z-index: 50;
+}
+
+.inventory-filter-columns {
+  display: flex;
+  gap: 16px;
+}
+
+.inventory-filter-column {
+  flex: 1;
+  min-width: 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.inventory-filter-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.inventory-filter-subtitle {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+
+.inventory-filter-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.inventory-filter-chip {
+  border: 1px solid transparent;
+  background: var(--slate-50);
+  color: var(--slate-700);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.inventory-filter-chip-active {
+  background: var(--blue-500);
+  color: var(--white-500);
+}
+
+.inventory-filter-link {
+  border: 1px solid var(--stroke);
+  background: transparent;
+  border-radius: 8px;
+  padding: 8px 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.inventory-filter-primary {
+  border: 1px solid var(--stroke);
+  border-radius: 8px;
+  padding: 10px;
+  font-weight: 600;
+  background: var(--white-500);
+  cursor: pointer;
 }
 
 .inventory-operations-filters {

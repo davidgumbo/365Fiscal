@@ -386,6 +386,7 @@ export default function InventoryPage() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [filterMenuOpen, setFilterMenuOpen] = useState(false);
 
   const [showImportExportModal, setShowImportExportModal] = useState(false);
 
@@ -401,6 +402,26 @@ export default function InventoryPage() {
   const [showOnlyChangedAdjustments, setShowOnlyChangedAdjustments] =
     useState(false);
   const [applyingAdjustments, setApplyingAdjustments] = useState(false);
+
+  useEffect(() => {
+    if (!filterMenuOpen) return;
+    const handleClick = (event: MouseEvent) => {
+      if (
+        filterMenuRef.current &&
+        !filterMenuRef.current.contains(event.target as Node)
+      ) {
+        setFilterMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [filterMenuOpen]);
+
+  useEffect(() => {
+    if (!(mainView === "operations" && operationsTab === "moves")) {
+      setFilterMenuOpen(false);
+    }
+  }, [mainView, operationsTab]);
 
   const menuSections = useMemo<SidebarSection[]>(() => {
     const baseItems = BASE_MENU_TABS.map((tab) => ({
@@ -540,6 +561,7 @@ export default function InventoryPage() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const productImportInputRef = useRef<HTMLInputElement>(null);
+  const filterMenuRef = useRef<HTMLDivElement | null>(null);
   const [importingProducts, setImportingProducts] = useState(false);
 
   const clearPendingProductImage = () => {
@@ -3509,7 +3531,8 @@ export default function InventoryPage() {
                     flex: "1 1 100%",
                   }}
                 >
-                  <div className="inventory-search-wrapper">
+                <div className="inventory-search-wrapper">
+                  <div className="inventory-search-inner">
                     <div className="o-searchbox">
                       <input
                         type="text"
@@ -3518,7 +3541,101 @@ export default function InventoryPage() {
                         onChange={(e) => setSearchQuery(e.target.value)}
                       />
                     </div>
+                    {mainView === "operations" && operationsTab === "moves" && (
+                      <button
+                        type="button"
+                        className="inventory-filter-toggle"
+                        onClick={() => setFilterMenuOpen((prev) => !prev)}
+                      >
+                        <span>{filterMenuOpen ? "▴" : "▾"}</span>
+                      </button>
+                    )}
                   </div>
+                  {filterMenuOpen && (
+                    <div className="inventory-filter-dropdown" ref={filterMenuRef}>
+                      <div className="inventory-filter-columns">
+                        <div className="inventory-filter-column">
+                          <div className="inventory-filter-title">Filters</div>
+                          <div className="inventory-filter-subtitle">State</div>
+                          <div className="inventory-filter-items">
+                            {["all", ...STATES.map((s) => s.value)].map((state) => (
+                              <button
+                                key={state}
+                                type="button"
+                                className={`inventory-filter-chip ${
+                                  filterState === state
+                                    ? "inventory-filter-chip-active"
+                                    : ""
+                                }`}
+                                onClick={() => setFilterState(state)}
+                              >
+                                {state === "all"
+                                  ? "All"
+                                  : STATES.find((s) => s.value === state)
+                                      ?.label}
+                              </button>
+                            ))}
+                          </div>
+                          <div className="inventory-filter-subtitle">
+                            Operation Type
+                          </div>
+                          <div className="inventory-filter-items">
+                            {["all", ...MOVE_TYPES.map((t) => t.value)].map(
+                              (type) => (
+                                <button
+                                  key={type}
+                                  type="button"
+                                  className={`inventory-filter-chip ${
+                                    filterMoveType === type
+                                      ? "inventory-filter-chip-active"
+                                      : ""
+                                  }`}
+                                  onClick={() => setFilterMoveType(type)}
+                                >
+                                  {type === "all"
+                                    ? "All"
+                                    : MOVE_TYPES.find((t) => t.value === type)
+                                        ?.label}
+                                </button>
+                              ),
+                            )}
+                          </div>
+                        </div>
+                        <div className="inventory-filter-column">
+                          <div className="inventory-filter-title">Group By</div>
+                          <button
+                            type="button"
+                            className="inventory-filter-link"
+                          >
+                            Operation Category
+                          </button>
+                          <button
+                            type="button"
+                            className="inventory-filter-link"
+                          >
+                            Warehouse
+                          </button>
+                          <button
+                            type="button"
+                            className="inventory-filter-link"
+                          >
+                            Custom Group
+                          </button>
+                        </div>
+                        <div className="inventory-filter-column">
+                          <div className="inventory-filter-title">Favorites</div>
+                          <button
+                            type="button"
+                            className="inventory-filter-primary"
+                            onClick={() => setFilterMenuOpen(false)}
+                          >
+                            Save current search
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                   {/* {mainView === "operations" && (
                       <div className="inventory-op-tabs">
@@ -3544,42 +3661,42 @@ export default function InventoryPage() {
                     )} */}
                   <div className="o-control-panel-right">
                     {mainView === "operations" && operationsTab === "moves" && (
-                        <div className="inventory-operations-filters">
-                          <label className="inventory-filter-label">
-                            <span>Status:</span>
-                            <select
-                              value={filterState}
-                              onChange={(event) =>
-                                setFilterState(event.target.value)
-                              }
-                              className="inventory-filter-select"
-                            >
-                              <option value="all">All</option>
-                              {STATES.map((state) => (
-                                <option key={state.value} value={state.value}>
-                                  {state.label}
-                                </option>
-                              ))}
-                            </select>
-                          </label>
-                          <label className="inventory-filter-label">
-                            <span>Operation Type:</span>
-                            <select
-                              value={filterMoveType}
-                              onChange={(event) =>
-                                setFilterMoveType(event.target.value)
-                              }
-                              className="inventory-filter-select"
-                            >
-                              <option value="all">All</option>
-                              {MOVE_TYPES.map((type) => (
-                                <option key={type.value} value={type.value}>
-                                  {type.label}
-                                </option>
-                              ))}
-                            </select>
-                          </label>
-                        </div>
+                      <div className="inventory-operations-filters">
+                        <label className="inventory-filter-label">
+                          <span>Status:</span>
+                          <select
+                            value={filterState}
+                            onChange={(event) =>
+                              setFilterState(event.target.value)
+                            }
+                            className="inventory-filter-select"
+                          >
+                            <option value="all">All</option>
+                            {STATES.map((state) => (
+                              <option key={state.value} value={state.value}>
+                                {state.label}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="inventory-filter-label">
+                          <span>Operation Type:</span>
+                          <select
+                            value={filterMoveType}
+                            onChange={(event) =>
+                              setFilterMoveType(event.target.value)
+                            }
+                            className="inventory-filter-select"
+                          >
+                            <option value="all">All</option>
+                            {MOVE_TYPES.map((type) => (
+                              <option key={type.value} value={type.value}>
+                                {type.label}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      </div>
                     )}
                     {mainView === "products" && (
                       <div className="o-view-switcher">
@@ -3617,12 +3734,12 @@ export default function InventoryPage() {
                           <Upload size={14} />
                           <span>Import / Export</span>
                         </button>
-                        <button
+                        {/* <button
                           className="o-btn o-btn-secondary"
                           onClick={() => openCategoryModal()}
                         >
                           + Category
-                        </button>
+                        </button> */}
                         <button
                           className="o-btn o-btn-primary"
                           onClick={startNewProduct}
