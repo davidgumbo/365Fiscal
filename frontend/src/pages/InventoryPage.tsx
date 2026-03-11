@@ -3518,7 +3518,7 @@ export default function InventoryPage() {
                     </div>
                   </div>
 
-                    {/* {mainView === "operations" && (
+                  {/* {mainView === "operations" && (
                       <div className="inventory-op-tabs">
                         <button
                           className={`o-btn ${operationsTab === "moves" ? "o-btn-primary" : "o-btn-secondary"}`}
@@ -3544,10 +3544,12 @@ export default function InventoryPage() {
                     {mainView === "operations" && operationsTab === "moves" && (
                       <div className="inventory-operations-filters">
                         <label className="inventory-filter-label">
-                          <span>Status</span>
+                          <span>Status:</span>
                           <select
                             value={filterState}
-                            onChange={(event) => setFilterState(event.target.value)}
+                            onChange={(event) =>
+                              setFilterState(event.target.value)
+                            }
                             className="inventory-filter-select"
                           >
                             <option value="all">All</option>
@@ -3559,10 +3561,12 @@ export default function InventoryPage() {
                           </select>
                         </label>
                         <label className="inventory-filter-label">
-                          <span>Operation Type</span>
+                          <span>Operation Type:</span>
                           <select
                             value={filterMoveType}
-                            onChange={(event) => setFilterMoveType(event.target.value)}
+                            onChange={(event) =>
+                              setFilterMoveType(event.target.value)
+                            }
                             className="inventory-filter-select"
                           >
                             <option value="all">All</option>
@@ -3612,7 +3616,7 @@ export default function InventoryPage() {
                           <Upload size={14} />
                           <span>
                             {importingProducts
-                              ? "Importing..."
+                              ? "Importing..."inventory-filter
                               : "Import CSV/XLSX"}
                           </span>
                         </button>
@@ -5787,7 +5791,7 @@ export default function InventoryPage() {
               {mainView === "operations" && subView === "list" && (
                 <>
                   {/* Sidebar */}
-                  <div className="o-sidebar inventory-sub-sidebar">
+                  {/* <div className="o-sidebar inventory-sub-sidebar">
                     {operationsTab !== "adjustments" && (
                       <>
                         <div className="o-sidebar-section">
@@ -5854,7 +5858,7 @@ export default function InventoryPage() {
                           )}
                         </div>
                       </>
-                    )}
+                    )} */}
                     {operationsTab === "adjustments" && (
                       <div className="o-sidebar-section">
                         <div className="o-sidebar-title">Adjustments</div>

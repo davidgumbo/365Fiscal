@@ -42,10 +42,11 @@
 
 .inventory-filter-label {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   font-size: 11px;
   color: var(--muted);
-  gap: 4px;
+  gap: 0.5rem;
+  align-items: center;
 }
 
 .inventory-filter-select {
