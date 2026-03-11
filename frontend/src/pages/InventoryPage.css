@@ -871,7 +871,8 @@
 
 /* Move detail layout: exact Odoo-like structure */
 .inventory-move-form {
-  max-width: 1460px;
+  max-width: 1680px;
+  width: 100%;
 }
 
 .inventory-move-header {
@@ -964,7 +965,7 @@
   padding: 20px;
   box-shadow: 0 4px 14px rgba(30, 41, 59, 0.06);
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1.15fr);
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.25fr);
   grid-template-areas:
     "info lines-title"
     "info lines"
@@ -979,9 +980,10 @@
   padding: 18px 20px;
 }
 
-.inventory-two-col-grid::before {
-  content: "Move Information";
-  display: block;
+.inventory-move-section-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-size: 22px;
   font-weight: 700;
   color: #111827;
@@ -1004,11 +1006,25 @@
 
 .inventory-section-title {
   grid-area: lines-title;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   margin: 0;
   font-size: 22px;
   font-weight: 700;
   text-transform: none;
   letter-spacing: 0;
+}
+
+.inventory-move-section-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #eef4ff;
+  color: #2563eb;
 }
 
 .inventory-move-lines-panel {
@@ -1039,6 +1055,9 @@
 }
 
 .inventory-move-lines-info-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-size: 22px;
   font-weight: 700;
   color: #111827;

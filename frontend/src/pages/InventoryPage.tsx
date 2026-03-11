@@ -6372,6 +6372,12 @@ export default function InventoryPage() {
 
                     <div className="o-form-sheet">
                       <div className="inventory-two-col-grid">
+                        <div className="inventory-move-section-head">
+                          <span className="inventory-move-section-icon">
+                            <Package size={18} />
+                          </span>
+                          <span>Move Information</span>
+                        </div>
                         <div className="inventory-move-fields">
                           <div className="o-form-group">
                             <label className="o-form-label">
@@ -6530,7 +6536,10 @@ export default function InventoryPage() {
                       </div>
 
                       <div className="inventory-section-title">
-                        Product Lines
+                        <span className="inventory-move-section-icon">
+                          <Boxes size={18} />
+                        </span>
+                        <span>Product Lines</span>
                       </div>
 
                       <div className="inventory-move-lines-panel">
@@ -6672,7 +6681,10 @@ export default function InventoryPage() {
 
                       <div className="inventory-move-lines-info-card">
                         <div className="inventory-move-lines-info-title">
-                          Product Lines
+                          <span className="inventory-move-section-icon">
+                            <Boxes size={18} />
+                          </span>
+                          <span>Product Lines</span>
                         </div>
                         <div className="inventory-move-lines-info-stats">
                           <span>Product</span>
