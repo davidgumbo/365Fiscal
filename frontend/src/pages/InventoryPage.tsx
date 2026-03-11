@@ -2170,6 +2170,14 @@ export default function InventoryPage() {
     await loadAllData();
   };
 
+  const deleteMove = async (moveId: number) => {
+    if (!companyId) return;
+    await apiFetch(`/stock/moves/${moveId}`, { method: "DELETE" });
+    await loadAllData();
+    setSubView("list");
+    setIsNew(false);
+  };
+
   const escapeMovePdfValue = (value: string) =>
     value
       .replace(/&/g, "&amp;")
@@ -3454,7 +3462,7 @@ export default function InventoryPage() {
             {/* Form Sub Control Panel */}
             {subView === "form" && (
               <div
-                className="o-control-panel"
+                className={`o-control-panel ${mainView === "operations" ? "inventory-move-form-topbar" : ""}`}
                 style={{ background: "var(--gray-50)", marginTop: -8 }}
               >
                 <div className="o-control-panel-left">
@@ -3484,24 +3492,47 @@ export default function InventoryPage() {
                   >
                     {saving ? "Saving..." : "Save"}
                   </button>
-                  {!isNew && (
+                  {mainView === "operations" && (
                     <button
-                      className="danger"
-                      title="Delete"
-                      aria-label="Delete"
-                      onClick={() => {
-                        if (mainView === "products" && selectedProductId)
-                          deleteProduct(selectedProductId);
-                        else if (
-                          mainView === "warehouses" &&
-                          selectedWarehouseId
-                        )
-                          deleteWarehouse(selectedWarehouseId);
-                      }}
-                      disabled={saving}
+                      className="o-btn o-btn-secondary"
+                      onClick={() => void printMovePdf()}
                     >
-                      <TrashIcon />
+                      <Printer size={14} />
+                      <span>Print PDF</span>
                     </button>
+                  )}
+                  {!isNew && (
+                    <>
+                      {mainView === "operations" && selectedMoveId ? (
+                        <button
+                          className="o-btn o-btn-danger"
+                          title="Delete"
+                          aria-label="Delete"
+                          onClick={() => deleteMove(selectedMoveId)}
+                          disabled={saving}
+                        >
+                          Delete
+                        </button>
+                      ) : (
+                        <button
+                          className="danger"
+                          title="Delete"
+                          aria-label="Delete"
+                          onClick={() => {
+                            if (mainView === "products" && selectedProductId)
+                              deleteProduct(selectedProductId);
+                            else if (
+                              mainView === "warehouses" &&
+                              selectedWarehouseId
+                            )
+                              deleteWarehouse(selectedWarehouseId);
+                          }}
+                          disabled={saving}
+                        >
+                          <TrashIcon />
+                        </button>
+                      )}
+                    </>
                   )}
                   <button className="o-btn o-btn-secondary" onClick={goBack}>
                     Discard

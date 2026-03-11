@@ -803,3 +803,85 @@
     min-width: 760px;
   }
 }
+
+/* Move detail layout styled like the requested Odoo-style card view */
+.inventory-move-form-topbar {
+  padding: 6px 0 18px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #d8dee9;
+}
+
+.inventory-move-form-topbar .o-control-panel-left {
+  gap: 12px;
+}
+
+.inventory-move-form-topbar .o-btn {
+  min-height: 44px;
+  border-radius: 10px;
+}
+
+.inventory-move-form {
+  max-width: 1460px;
+}
+
+.inventory-move-form .o-form-sheet {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1.1fr);
+  grid-template-areas:
+    "info lines-title"
+    "info lines"
+    "notes-title lines"
+    "notes lines";
+  column-gap: 24px;
+  row-gap: 14px;
+}
+
+.inventory-two-col-grid {
+  grid-area: info;
+}
+
+.inventory-section-title {
+  grid-area: lines-title;
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.inventory-move-lines-panel {
+  grid-area: lines;
+  border: 1px solid #d6dce6;
+  border-radius: 12px;
+  padding: 12px;
+  height: fit-content;
+}
+
+.inventory-group-separator {
+  grid-area: notes-title;
+  margin: 4px 0 0;
+}
+
+.inventory-move-form .o-form-textarea {
+  grid-area: notes;
+}
+
+.inventory-move-summary-inline {
+  margin: 14px 0 0;
+  padding: 14px;
+  border: 1px solid #d6dce6;
+  border-radius: 10px;
+  gap: 22px;
+}
+
+@media (max-width: 1200px) {
+  .inventory-move-form .o-form-sheet {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "info"
+      "lines-title"
+      "lines"
+      "notes-title"
+      "notes";
+  }
+}
