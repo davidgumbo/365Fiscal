@@ -1043,10 +1043,10 @@
   padding: 22px;
   box-shadow: 0 6px 18px rgba(30, 41, 59, 0.06);
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(420px, 0.9fr) minmax(760px, 1.6fr);
   grid-template-areas:
     "info lines";
-  gap: 16px 24px;
+  gap: 14px 18px;
   width: 100%;
   min-height: clamp(560px, calc(100vh - 290px), 900px);
   align-items: start;
@@ -1102,7 +1102,7 @@
   grid-area: lines;
   border: 1px solid #d8e0ec;
   border-radius: 14px;
-  padding: 12px;
+  padding: 10px;
   background: #fff;
   min-height: 0;
   height: 100%;
@@ -1157,16 +1157,17 @@
 .inventory-move-lines-table {
   width: 100%;
   table-layout: auto;
+  min-width: 980px;
 }
 
 .inventory-move-lines-table th:nth-child(2),
 .inventory-move-lines-table td:nth-child(2) {
-  min-width: 260px;
+  min-width: 340px;
 }
 
 .inventory-move-lines-table td:nth-child(2) .o-form-select {
   width: 100%;
-  min-width: 240px;
+  min-width: 320px;
 }
 
 .inventory-move-lines-table th:nth-child(3),
