@@ -6690,27 +6690,6 @@ export default function InventoryPage() {
                         </div>
                       </div>
 
-                      <div className="inventory-move-lines-info-card">
-                        <div className="inventory-move-lines-info-title">
-                          <span className="inventory-move-section-icon">
-                            <Boxes size={18} />
-                          </span>
-                          <span>Product Lines</span>
-                        </div>
-                        <div className="inventory-move-lines-info-stats">
-                          <span>Product</span>
-                          <span>
-                            Total Qty {moveLinesTotals.quantity.toFixed(0)}
-                          </span>
-                          <span>
-                            Total Value ${moveLinesTotals.total.toFixed(0)}
-                          </span>
-                        </div>
-                        <div className="inventory-muted-note">
-                          Existing moves support one product line. Create a new
-                          move for multiple lines.
-                        </div>
-                      </div>
                     </div>
                   </div>
                 </div>
