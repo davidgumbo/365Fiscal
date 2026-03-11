@@ -871,8 +871,9 @@
 
 /* Move detail layout: exact Odoo-like structure */
 .inventory-move-form {
-  max-width: 1880px;
+  max-width: none;
   width: 100%;
+  margin: 0;
 }
 
 .inventory-move-header {
@@ -887,13 +888,13 @@
   min-height: 0;
   width: fit-content;
   color: #1f57c3;
-  font-size: 38px;
+  font-size: 16px;
   font-weight: 600;
 }
 
 .inventory-move-title {
   margin: 0;
-  font-size: 46px;
+  font-size: clamp(2rem, 2.8vw, 3rem);
   font-weight: 700;
   line-height: 1.15;
   color: #111827;
@@ -962,14 +963,16 @@
   border: 1px solid #d6dce6;
   border-radius: 14px;
   background: #ffffff;
-  padding: 20px;
-  box-shadow: 0 4px 14px rgba(30, 41, 59, 0.06);
+  padding: 22px;
+  box-shadow: 0 6px 18px rgba(30, 41, 59, 0.06);
   display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.45fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   grid-template-areas:
     "info lines-title"
     "info lines";
   gap: 16px 24px;
+  width: 100%;
+  min-height: calc(100vh - 270px);
 }
 
 .inventory-two-col-grid {
@@ -1032,7 +1035,10 @@
   border-radius: 14px;
   padding: 10px;
   background: #fff;
-  min-height: 420px;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .inventory-move-lines-header {
@@ -1049,6 +1055,8 @@
 
 .inventory-move-lines-table-wrap {
   overflow: auto;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .inventory-move-lines-table {
@@ -1063,4 +1071,39 @@
       "lines-title"
       "lines";
   }
+}
+
+/* Full-page stretch for move detail workspace */
+.inventory-workspace {
+  width: 100%;
+  height: 100%;
+}
+
+.inventory-workspace > .o-main {
+  height: 100% !important;
+  min-height: 0;
+}
+
+.inventory-content.inventory-view-operations.inventory-subview-form {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.inventory-content.inventory-view-operations.inventory-subview-form > .o-main.inventory-view-main {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.inventory-form-panel.inventory-move-form {
+  height: 100%;
+  min-height: 0;
+}
+
+.inventory-form-panel.inventory-move-form .o-form-sheet {
+  min-height: 100%;
 }
