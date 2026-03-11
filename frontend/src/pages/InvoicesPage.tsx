@@ -6,6 +6,7 @@ import { useMe } from "../hooks/useMe";
 import { useCompanies, Company } from "../hooks/useCompanies";
 import ValidationAlert from "../components/ValidationAlert";
 import ValidatedField from "../components/ValidatedField";
+import "./InvoicesPage.css";
 import {
   getDocumentLinesError,
   getMissingRequiredFields,
@@ -1600,13 +1601,13 @@ export default function InvoicesPage({
   }
 
   return (
-    <div className="container-fluid py-3 ">
+    <div className="container-fluid py-3 invoice-page-shell">
       <ValidationAlert message={error} onClose={() => setError(null)} />
 
       {/* ───────────── LIST VIEW ───────────── */}
       {!showForm && (
         <>
-          <div className="two-panel two-panel-left">
+          <div className="two-panel two-panel-left invoice-dashboard-layout">
             {/* Sidebar */}
             <div className="o-sidebar">
               <div className="o-sidebar-section">
@@ -1849,10 +1850,10 @@ export default function InvoicesPage({
               </div>
             </div>
 
-            <div>
-              <div className="content-top-bar">
-                <div className="top-search">
-                  <span className="search-icon">
+            <div className="invoice-list-main">
+              <div className="content-top-bar invoice-dashboard-topbar">
+                <div className="top-search invoice-dashboard-search">
+                  <span className="search-icon invoice-dashboard-search-icon">
                     <svg
                       viewBox="0 0 24 24"
                       fill="none"
@@ -1872,8 +1873,7 @@ export default function InvoicesPage({
                   />
                 </div>
                 <select
-                  className="form-select"
-                  style={{ maxWidth: 160 }}
+                  className="form-select invoice-dashboard-select"
                   value={listCurrency}
                   onChange={(e) => setListCurrency(e.target.value)}
                   aria-label="Filter by currency"
@@ -1883,8 +1883,7 @@ export default function InvoicesPage({
                   <option value="ZWG">ZWG</option>
                 </select>
                 <button
-                  className="o-btn o-btn-secondary"
-                  style={{ display: "flex", alignItems: "center", gap: 6 }}
+                  className="o-btn o-btn-secondary invoice-dashboard-secondary-btn"
                   onClick={() => {
                     const headers = [
                       "Reference",
@@ -1954,7 +1953,7 @@ export default function InvoicesPage({
                   Export
                 </button>
                 <button
-                  className="btn-create"
+                  className="btn-create invoice-dashboard-primary-btn"
                   onClick={() => {
                     beginNew();
                     navigate("/invoices/new");
@@ -1973,10 +1972,7 @@ export default function InvoicesPage({
                 </button>
               </div>
 
-              <div
-                className="card shadow-sm card-bg-shadow"
-                style={{ overflow: "auto", maxHeight: "80vh" }}
-              >
+              <div className="card shadow-sm card-bg-shadow invoice-list-card">
                 <div className="card-body p-0">
                   <div className="table-responsive">
                     <table className="table table-hover align-middle mb-0">
