@@ -3361,9 +3361,8 @@ export default function InventoryPage() {
               {companyQuery.trim()
                 ? "No companies match your search."
                 : "No companies found. Create a company first."}
-                  </div>
-                </div>
-              )}
+            </div>
+          )}
         </div>
       </div>
     );
