@@ -158,6 +158,116 @@
   white-space: nowrap;
 }
 
+.invoice-detail-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  border: 1px solid transparent;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.invoice-detail-btn:hover:not(:disabled) {
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+}
+
+.invoice-detail-btn:disabled {
+  opacity: 0.55;
+  box-shadow: none;
+}
+
+.invoice-detail-btn-primary {
+  background: #3166e3;
+  border-color: #3166e3;
+  color: #fff;
+}
+
+.invoice-detail-btn-primary:hover:not(:disabled) {
+  background: #2457d3;
+  border-color: #2457d3;
+  color: #fff;
+}
+
+.invoice-detail-btn-success {
+  background: #e8f8ef;
+  border-color: #bde9ce;
+  color: #137a43;
+}
+
+.invoice-detail-btn-success:hover:not(:disabled) {
+  background: #d9f3e4;
+  border-color: #8bd3a9;
+  color: #106a3a;
+}
+
+.invoice-detail-btn-success-soft {
+  background: #eefaf3;
+  border-color: #ccebd9;
+  color: #177245;
+}
+
+.invoice-detail-btn-success-soft:hover:not(:disabled) {
+  background: #e3f6eb;
+  border-color: #abdcbf;
+  color: #0f673b;
+}
+
+.invoice-detail-btn-warning {
+  background: #fff5e6;
+  border-color: #ffd7a1;
+  color: #b76a00;
+}
+
+.invoice-detail-btn-warning:hover:not(:disabled) {
+  background: #ffefda;
+  border-color: #ffc876;
+  color: #9d5a00;
+}
+
+.invoice-detail-btn-info {
+  background: #eef4ff;
+  border-color: #cddcff;
+  color: #2258d1;
+}
+
+.invoice-detail-btn-info:hover:not(:disabled) {
+  background: #e4eeff;
+  border-color: #b1c8ff;
+  color: #184bbd;
+}
+
+.invoice-detail-btn-danger-soft {
+  background: #fff1f2;
+  border-color: #fecdd3;
+  color: #be123c;
+}
+
+.invoice-detail-btn-danger-soft:hover:not(:disabled) {
+  background: #ffe5e8;
+  border-color: #fda4af;
+  color: #a60f35;
+}
+
+.invoice-detail-btn-neutral {
+  background: #fff;
+  border-color: #d6deea;
+  color: #475569;
+}
+
+.invoice-detail-btn-neutral:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #bfd0e8;
+  color: #334155;
+}
+
 .content-top-bar.invoice-dashboard-topbar {
   display: flex;
   flex-direction: column;

@@ -2025,7 +2025,7 @@ export default function InvoicesPage({
             ) : (
               <div className="d-flex align-items-center gap-2">
                 <button
-                  className="btn btn-sm btn-light border"
+                  className="btn btn-sm invoice-detail-btn invoice-detail-btn-neutral"
                   onClick={goBackToList}
                 >
                   ← Back
@@ -2048,14 +2048,14 @@ export default function InvoicesPage({
               {newMode ? (
                 <>
                   <button
-                    className="btn btn-sm btn-primary"
+                    className="btn btn-sm invoice-detail-btn invoice-detail-btn-primary"
                     onClick={createInvoice}
                     disabled={loading}
                   >
                     {loading ? "Saving…" : "Create Invoice"}
                   </button>
                   <button
-                    className="btn btn-sm btn-light border"
+                    className="btn btn-sm invoice-detail-btn invoice-detail-btn-neutral"
                     onClick={goBackToList}
                   >
                     Discard
@@ -2064,14 +2064,14 @@ export default function InvoicesPage({
               ) : isEditing ? (
                 <>
                   <button
-                    className="btn btn-sm btn-primary"
+                    className="btn btn-sm invoice-detail-btn invoice-detail-btn-primary"
                     onClick={saveInvoice}
                     disabled={loading}
                   >
                     {loading ? "Saving…" : "Save"}
                   </button>
                   <button
-                    className="btn btn-sm btn-light border"
+                    className="btn btn-sm invoice-detail-btn invoice-detail-btn-neutral"
                     onClick={() => setIsEditing(false)}
                   >
                     Discard
@@ -2081,21 +2081,21 @@ export default function InvoicesPage({
                 <>
                   {statusLabel === "draft" && (
                     <button
-                      className="btn btn-sm btn-light border"
+                      className="btn btn-sm invoice-detail-btn invoice-detail-btn-primary"
                       onClick={() => setIsEditing(true)}
                     >
                       Edit
                     </button>
                   )}
                   <button
-                    className="btn btn-sm btn-light border"
+                    className="btn btn-sm invoice-detail-btn invoice-detail-btn-success"
                     onClick={postInvoice}
                     disabled={statusLabel !== "draft"}
                   >
                     Post
                   </button>
                   <button
-                    className="btn btn-sm btn-light border"
+                    className="btn btn-sm invoice-detail-btn invoice-detail-btn-warning"
                     onClick={fiscalizeInvoice}
                     disabled={
                       statusLabel !== "posted" && statusLabel !== "paid"
@@ -2104,7 +2104,7 @@ export default function InvoicesPage({
                     Fiscalize
                   </button>
                   <button
-                    className="btn btn-sm btn-light border"
+                    className="btn btn-sm invoice-detail-btn invoice-detail-btn-neutral"
                     onClick={resetInvoice}
                     disabled={
                       statusLabel !== "posted" && statusLabel !== "fiscalized"
@@ -2113,20 +2113,20 @@ export default function InvoicesPage({
                     Reset
                   </button>
                   <button
-                    className="btn btn-sm btn-light border"
+                    className="btn btn-sm invoice-detail-btn invoice-detail-btn-info"
                     onClick={printInvoice}
                   >
                     Print PDF
                   </button>
                   <button
-                    className="btn btn-sm btn-light border"
+                    className="btn btn-sm invoice-detail-btn invoice-detail-btn-success-soft"
                     onClick={() => setPaymentOpen(true)}
                     disabled={statusLabel === "draft"}
                   >
                     Register Payment
                   </button>
                   <button
-                    className="btn btn-sm btn-light border"
+                    className="btn btn-sm invoice-detail-btn invoice-detail-btn-danger-soft"
                     onClick={createCreditNote}
                     disabled={statusLabel === "draft" || isCreditNote}
                   >
@@ -2391,6 +2391,7 @@ export default function InvoicesPage({
                     </button>
                   </div>
                 </div>
+                {activeLinesTotalPages > 1 && (
                 <div className="d-flex justify-content-between align-items-center mb-2">
                   <small className="text-muted">
                     Showing {visibleLineStart}-{visibleLineEnd} of{" "}
@@ -2435,6 +2436,7 @@ export default function InvoicesPage({
                     </button>
                   </div>
                 </div>
+                )}
                 <div className="table-responsive invoice-lines-table-wrap">
                   <table className="table table-bordered align-middle mb-0 invoice-lines-table">
                     <thead className="table-light">
@@ -2945,6 +2947,7 @@ export default function InvoicesPage({
                     </div>
                   )}
                 </div>
+                {activeLinesTotalPages > 1 && (
                 <div className="d-flex justify-content-between align-items-center mb-2">
                   <small className="text-muted">
                     Showing {visibleLineStart}-{visibleLineEnd} of{" "}
@@ -2989,6 +2992,7 @@ export default function InvoicesPage({
                     </button>
                   </div>
                 </div>
+                )}
                 <div className="table-responsive invoice-lines-table-wrap">
                   <table className="table table-bordered align-middle mb-0 invoice-lines-table">
                     <thead className="table-light">
