@@ -3697,9 +3697,7 @@ export default function InventoryPage() {
                           />
                           {(mainView === "operations" &&
                             operationsTab === "moves") ||
-                          (mainView === "products" &&
-                            subView === "list" &&
-                            subView === "grid") ? (
+                          mainView === "products" ? (
                             <button
                               type="button"
                               className="inventory-filter-toggle-inside"
