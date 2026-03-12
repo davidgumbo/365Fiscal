@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import html2pdf from "html2pdf.js";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiFetch } from "../api";
@@ -180,6 +180,8 @@ export default function PurchasesPage({
   const [listCurrency, setListCurrency] = useState("");
   const [listFrom, setListFrom] = useState("");
   const [listTo, setListTo] = useState("");
+  const [filterMenuOpen, setFilterMenuOpen] = useState(false);
+  const filterMenuRef = useRef<HTMLDivElement | null>(null);
 
   const [form, setForm] = useState({
     supplier_id: null as number | null,
@@ -194,6 +196,16 @@ export default function PurchasesPage({
   const [invalidFields, setInvalidFields] = useState<string[]>([]);
 
   const currencySymbol = companySettings?.currency_symbol || "$";
+
+  const currencyFilters = useMemo(() => {
+    const provided = orders
+      .map((order) => (order.currency || "").trim().toUpperCase())
+      .filter((code): code is string => Boolean(code));
+    if (provided.length) {
+      return Array.from(new Set(provided));
+    }
+    return ["USD", "ZWG"];
+  }, [orders]);
 
   useEffect(() => {
     if (!companyId) return;
@@ -225,6 +237,20 @@ export default function PurchasesPage({
     };
     loadData();
   }, [companyId, listCurrency]);
+
+  useEffect(() => {
+    if (!filterMenuOpen) return;
+    const handler = (event: MouseEvent) => {
+      if (
+        filterMenuRef.current &&
+        !filterMenuRef.current.contains(event.target as Node)
+      ) {
+        setFilterMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [filterMenuOpen]);
 
   useEffect(() => {
     if (!form.warehouse_id) {
@@ -1033,27 +1059,75 @@ export default function PurchasesPage({
                         strokeLinejoin="round"
                       >
                         <circle cx="11" cy="11" r="8" />
-                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                      </svg>
-                    </span>
-                    <input
-                      placeholder="Search purchases…"
-                      value={listSearch}
-                      onChange={(e) => setListSearch(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <div className="purchase-actions">
-                  <select
-                    className="form-select purchases-currency-select"
-                    value={listCurrency}
-                    onChange={(e) => setListCurrency(e.target.value)}
-                    aria-label="Filter by currency"
+                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                  </span>
+                  <input
+                    placeholder="Search purchases…"
+                    value={listSearch}
+                    onChange={(e) => setListSearch(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="search-filter-toggle"
+                    aria-label="Toggle filters"
+                    onClick={() => setFilterMenuOpen((prev) => !prev)}
                   >
-                    <option value="">All currencies</option>
-                    <option value="USD">USD</option>
-                    <option value="ZWG">ZWG</option>
-                  </select>
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M4 4h16M10 11h7M7 18h10" />
+                    </svg>
+                  </button>
+                  {filterMenuOpen && (
+                    <div
+                      className="search-filter-dropdown"
+                      ref={filterMenuRef}
+                    >
+                      <div className="search-filter-title">Currency</div>
+                      <div className="search-filter-items">
+                        <button
+                          type="button"
+                          className={`search-filter-chip ${
+                            listCurrency === ""
+                              ? "search-filter-chip-active"
+                              : ""
+                          }`}
+                          onClick={() => {
+                            setListCurrency("");
+                            setFilterMenuOpen(false);
+                          }}
+                        >
+                          All
+                        </button>
+                        {currencyFilters.map((code) => (
+                          <button
+                            key={code}
+                            type="button"
+                            className={`search-filter-chip ${
+                              listCurrency === code
+                                ? "search-filter-chip-active"
+                                : ""
+                            }`}
+                            onClick={() => {
+                              setListCurrency(code);
+                              setFilterMenuOpen(false);
+                            }}
+                          >
+                            {code}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+                <div className="purchase-actions">
                   <button
                     className="o-btn o-btn-secondary purchases-export-btn"
                     onClick={() => {

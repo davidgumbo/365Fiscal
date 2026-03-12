@@ -4971,7 +4971,7 @@ button.danger:hover {
 
 .content-top-bar .top-search input {
   width: 100%;
-  padding: 10px 14px 10px 40px;
+  padding: 10px 48px 10px 40px;
   border: 1px solid var(--stroke);
   border-radius: 12px;
   background: var(--white-500);
@@ -4998,6 +4998,70 @@ button.danger:hover {
 .content-top-bar .top-search .search-icon svg {
   width: 16px;
   height: 16px;
+}
+
+.content-top-bar .top-search .search-filter-toggle {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--stroke);
+  background: var(--white-500);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.content-top-bar .top-search .search-filter-toggle:hover {
+  border-color: var(--blue-500);
+}
+
+.content-top-bar .search-filter-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 220px;
+  background: var(--white-500);
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 12px;
+  z-index: 30;
+}
+
+.search-filter-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+  font-size: 0.85rem;
+  color: var(--slate-600);
+}
+
+.search-filter-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.search-filter-chip {
+  border: 1px solid transparent;
+  background: var(--slate-100);
+  color: var(--slate-600);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.search-filter-chip-active {
+  background: var(--blue-500);
+  color: var(--white-500);
+  border-color: var(--blue-500);
 }
 
 .content-top-bar .btn-create {
