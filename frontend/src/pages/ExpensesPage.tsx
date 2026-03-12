@@ -2035,7 +2035,7 @@ export default function ExpensesPage() {
                 rowGap: 12,
               }}
             >
-              {subView !== "form" && mainView === "expenses" && (
+              {false && subView !== "form" && mainView === "expenses" && (
                 <div className="content-top-bar" style={{ width: "100%", flex: "1 1 100%" }}>
                   <div className="top-search">
                     <span className="search-icon">
