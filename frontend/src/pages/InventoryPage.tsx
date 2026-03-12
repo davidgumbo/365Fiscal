@@ -175,7 +175,10 @@ function isRefundReturnMove(move: StockMove) {
 
 function getMoveTypeLabel(move: StockMove) {
   if (isRefundReturnMove(move)) return "Returned";
-  return MOVE_TYPES.find((type) => type.value === move.move_type)?.label || move.move_type;
+  return (
+    MOVE_TYPES.find((type) => type.value === move.move_type)?.label ||
+    move.move_type
+  );
 }
 
 const STATES = [
@@ -5619,11 +5622,11 @@ export default function InventoryPage() {
 
                             <div className="inventory-warehouse-stats-grid">
                               <div className="inventory-warehouse-stat-card">
-                                <div className="inventory-warehouse-stat-value">
-                                  {locs.length}
-                                </div>
                                 <div className="inventory-warehouse-stat-label">
                                   Locations
+                                </div>
+                                <div className="inventory-warehouse-stat-value">
+                                  {locs.length}
                                 </div>
                               </div>
                               <button
@@ -5635,27 +5638,29 @@ export default function InventoryPage() {
                                 }}
                                 title={`View items in ${w.name}`}
                               >
-                                <div className="inventory-warehouse-stat-value">
-                                  {totalItems}
-                                </div>
+                                
                                 <div className="inventory-warehouse-stat-label">
                                   Items
                                 </div>
+                                <div className="inventory-warehouse-stat-value">
+                                  {totalItems}
+                                </div>
                               </button>
                               <div className="inventory-warehouse-stat-card">
-                                <div className="inventory-warehouse-stat-value">
-                                  ${totalValue.toFixed(0)}
-                                </div>
+                                
                                 <div className="inventory-warehouse-stat-label">
                                   Value
+                                </div>
+                                <div className="inventory-warehouse-stat-value">
+                                  ${totalValue.toFixed(0)}
                                 </div>
                               </div>
                             </div>
 
                             <div className="inventory-warehouse-locations">
-                              <div className="inventory-warehouse-locations-label">
-                                LOCATIONS
-                              </div>
+                              {/* <div className="inventory-warehouse-locations-label">
+                                Location
+                              </div> */}
                               <div className="inventory-warehouse-locations-list">
                                 {locs.slice(0, 5).map((l) => (
                                   <button

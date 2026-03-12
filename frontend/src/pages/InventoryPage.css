@@ -1249,12 +1249,14 @@
   display: flex;
   flex-direction: row;
   justify-content: space-between;
+  border-bottom: 90% var(--gray-300);
 }
 
 .inventory-warehouse-stat-card {
   display: flex;
   justify-content: space-between;
-  border: solid 2px var(--gray-300) ;
+  border: solid 1px var(--gray-300) ;
+  border-radius: 5px;
 }
 
 .inventory-warehouse-stat-label{
@@ -1263,5 +1265,9 @@
 
 .inventory-warehouse-stats-grid{
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr 1fr;
+}
+
+.inventory-warehouse-locations-list{
+  margin-top: 1rem;
 }
