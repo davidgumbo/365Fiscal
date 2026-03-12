@@ -352,8 +352,9 @@
   font-weight: 700;
 }
 
+.invoice-page-shell td.invoice-total-negative,
 .invoice-page-shell .invoice-total-negative {
-  color: #ef4444;
+  color: #ef4444 !important;
 }
 
 .invoice-page-shell .text-muted {
