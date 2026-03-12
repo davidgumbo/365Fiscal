@@ -37,6 +37,7 @@ import {
 } from "../utils/formValidation";
 import { Sidebar } from "../components/Sidebar";
 import type { SidebarSection } from "../types/sidebar";
+import type { CurrencyItem } from "../types/currency";
 import "./InventoryPage.css";
 
 // ============= TYPES =============
@@ -132,6 +133,7 @@ type StockMove = {
   total_cost: number;
   source_document: string;
   state: string;
+  currency?: string;
   scheduled_date: string | null;
   done_date: string | null;
   notes: string;
@@ -163,6 +165,12 @@ const MOVE_TYPES = [
   { value: "internal", label: "Internal Transfer" },
   { value: "adjustment", label: "Inventory Adjustment" },
 ];
+
+const normalizeCurrencyCode = (value: string | null | undefined) => {
+  const code = (value || "").trim().toUpperCase();
+  if (!code) return "";
+  return code === "ZWL" ? "ZWG" : code;
+};
 
 function isRefundReturnMove(move: StockMove) {
   const notes = (move.notes || "").toLowerCase();
@@ -373,6 +381,8 @@ export default function InventoryPage() {
   >("moves");
   const [filterState, setFilterState] = useState<string>("all");
   const [filterMoveType, setFilterMoveType] = useState<string>("all");
+  const [filterCurrency, setFilterCurrency] = useState<string>("");
+  const [operationCurrencies, setOperationCurrencies] = useState<string[]>([]);
   const [countedByQuantId, setCountedByQuantId] = useState<
     Record<number, string>
   >({});
@@ -399,6 +409,39 @@ export default function InventoryPage() {
       setFilterMenuOpen(false);
     }
   }, [mainView, operationsTab]);
+
+  useEffect(() => {
+    if (!companyId) {
+      setOperationCurrencies([]);
+      setFilterCurrency("");
+      return;
+    }
+
+    let cancelled = false;
+    void apiFetch<CurrencyItem[]>(
+      `/currencies?company_id=${companyId}&active_only=true`,
+    )
+      .then((currencies) => {
+        if (cancelled) return;
+        const codes = Array.from(
+          new Set(
+            currencies
+              .map((cur) => normalizeCurrencyCode(cur.code))
+              .filter((code): code is string => Boolean(code)),
+          ),
+        );
+        setOperationCurrencies(codes.length ? codes : ["USD"]);
+        setFilterCurrency("");
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setOperationCurrencies(["USD"]);
+        setFilterCurrency("");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [companyId]);
 
   useEffect(() => {
     if (!productFilterMenuOpen) return;
@@ -3115,6 +3158,10 @@ export default function InventoryPage() {
         if (filterState !== "all" && m.state !== filterState) return false;
         if (filterMoveType !== "all" && m.move_type !== filterMoveType)
           return false;
+        if (filterCurrency) {
+          const moveCurrency = normalizeCurrencyCode(m.currency);
+          if (!moveCurrency || moveCurrency !== filterCurrency) return false;
+        }
         if (!searchQuery) return true;
         const q = searchQuery.toLowerCase();
         const product = products.find((p) => p.id === m.product_id);
@@ -3129,7 +3176,18 @@ export default function InventoryPage() {
         if (timeDiff !== 0) return timeDiff;
         return b.id - a.id;
       });
-  }, [stockMoves, filterState, filterMoveType, searchQuery, products]);
+  }, [
+    stockMoves,
+    filterState,
+    filterMoveType,
+    filterCurrency,
+    searchQuery,
+    products,
+  ]);
+
+  const operationsCurrencyOptions = operationCurrencies.length
+    ? operationCurrencies
+    : ["USD"];
 
   const moveLinesTotals = useMemo(() => {
     return moveLines.reduce(
@@ -3675,6 +3733,38 @@ export default function InventoryPage() {
                                         : MOVE_TYPES.find(
                                             (t) => t.value === type,
                                           )?.label}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                              <div className="inventory-filter-column">
+                                <div className="inventory-filter-title">
+                                  Currency
+                                </div>
+                                <div className="inventory-filter-items">
+                                  <button
+                                    type="button"
+                                    className={`inventory-filter-chip ${
+                                      filterCurrency === ""
+                                        ? "inventory-filter-chip-active"
+                                        : ""
+                                    }`}
+                                    onClick={() => setFilterCurrency("")}
+                                  >
+                                    All
+                                  </button>
+                                  {operationsCurrencyOptions.map((currency) => (
+                                    <button
+                                      key={currency}
+                                      type="button"
+                                      className={`inventory-filter-chip ${
+                                        filterCurrency === currency
+                                          ? "inventory-filter-chip-active"
+                                          : ""
+                                      }`}
+                                      onClick={() => setFilterCurrency(currency)}
+                                    >
+                                      {currency}
                                     </button>
                                   ))}
                                 </div>

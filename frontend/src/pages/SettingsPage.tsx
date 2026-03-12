@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../api";
 import { useCompanies, Company } from "../hooks/useCompanies";
 import { useMe } from "../hooks/useMe";
+import type { CurrencyItem, CurrencyRateRead } from "../types/currency";
 
 type DeviceBasic = {
   id: number;
@@ -31,26 +32,6 @@ const CURRENCIES = [
   { code: "ZWG", symbol: "ZWG", name: "Zimbabwe Dollar" },
   { code: "ZAR", symbol: "R", name: "South African Rand" },
 ];
-
-type CurrencyItem = {
-  id: number;
-  company_id: number;
-  code: string;
-  name: string;
-  symbol: string;
-  position: string;
-  decimal_places: number;
-  is_default: boolean;
-  is_active: boolean;
-};
-
-type CurrencyRateItem = {
-  id: number;
-  currency_id: number;
-  company_id: number;
-  rate: number;
-  rate_date: string;
-};
 
 type User = {
   id: number;
@@ -377,7 +358,7 @@ export default function SettingsPage() {
 
   // Currency management state
   const [currencyList, setCurrencyList] = useState<CurrencyItem[]>([]);
-  const [currencyRates, setCurrencyRates] = useState<CurrencyRateItem[]>([]);
+const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
   const [selectedCurrency, setSelectedCurrency] = useState<CurrencyItem | null>(
     null,
   );
@@ -666,7 +647,7 @@ export default function SettingsPage() {
 
   const loadCurrencyRates = async (currId: number) => {
     try {
-      const data = await apiFetch<CurrencyRateItem[]>(
+      const data = await apiFetch<CurrencyRateRead[]>(
         `/currencies/${currId}/rates?limit=60`,
       );
       setCurrencyRates(data);

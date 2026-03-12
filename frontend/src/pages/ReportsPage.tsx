@@ -8,6 +8,7 @@ import {
   buildRevenueTrendChart,
   RevenueTrendChart,
 } from "../utils/revenueTrend";
+import type { CurrencyItem } from "../types/currency";
 
 /* ── Interfaces ──────────────────────────────────────── */
 
@@ -128,18 +129,6 @@ interface CompanySettings {
   currency_code?: string;
   currency_symbol?: string;
 }
-
-type CurrencyItem = {
-  id: number;
-  company_id: number;
-  code: string;
-  name: string;
-  symbol: string;
-  position: string;
-  decimal_places: number;
-  is_default: boolean;
-  is_active: boolean;
-};
 
 type CurrencyOption = {
   code: string;

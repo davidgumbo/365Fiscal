@@ -21,6 +21,7 @@ import ValidationAlert from "../components/ValidationAlert";
 import ValidatedField from "../components/ValidatedField";
 import { Sidebar } from "../components/Sidebar";
 import type { SidebarSection } from "../types/sidebar";
+import type { CurrencyItem, CurrencyRateRead } from "../types/currency";
 import "./InvoicesPage.css";
 import {
   getDocumentLinesError,
@@ -153,26 +154,6 @@ type CompanySettings = {
   document_footer?: string;
   document_watermark?: string;
   document_watermark_opacity?: string;
-};
-
-type CurrencyItem = {
-  id: number;
-  company_id: number;
-  code: string;
-  name: string;
-  symbol: string;
-  position: string;
-  decimal_places: number;
-  is_default: boolean;
-  is_active: boolean;
-};
-
-type CurrencyRateRead = {
-  id: number;
-  currency_id: number;
-  company_id: number;
-  rate: number;
-  rate_date: string;
 };
 
 const currencyOptions = ["USD", "ZWG", "ZAR", "EUR", "GBP"];
@@ -516,6 +497,15 @@ export default function InvoicesPage({
   const [listStatus, setListStatus] = useState("");
   const [listType, setListType] = useState("");
   const [listCurrency, setListCurrency] = useState("");
+  const currencyFilters = useMemo(() => {
+    const provided = currencyList
+      .map((currency) => currency.code?.toUpperCase().trim())
+      .filter((code): code is string => Boolean(code));
+    if (provided.length) {
+      return Array.from(new Set(provided));
+    }
+    return currencyOptions;
+  }, [currencyList]);
   const invoiceSidebarSections = useMemo<SidebarSection[]>(() => {
     const statusItems = STATUS_FILTERS.map((filter) => {
       const IconComponent = filter.icon;
@@ -1732,16 +1722,33 @@ export default function InvoicesPage({
                 <div className="card shadow-sm card-bg-shadow invoice-list-card">
                   <div className="inventory-main-search-panel invoice-top-panel">
                     <div className="invoice-top-panel-actions invoice-top-panel-actions-left">
-                      <select
-                        className="form-select invoice-top-panel-select"
-                        value={listCurrency}
-                        onChange={(e) => setListCurrency(e.target.value)}
-                        aria-label="Filter by currency"
-                      >
-                        <option value="">All currencies</option>
-                        <option value="USD">USD</option>
-                        <option value="ZWG">ZWG</option>
-                      </select>
+                      <div className="invoice-filter-currency">
+                        <div className="inventory-filter-items">
+                          <button
+                            type="button"
+                            className={`inventory-filter-chip ${
+                              listCurrency === "" ? "inventory-filter-chip-active" : ""
+                            }`}
+                            onClick={() => setListCurrency("")}
+                          >
+                            All
+                          </button>
+                          {currencyFilters.map((code) => (
+                            <button
+                              key={code}
+                              type="button"
+                              className={`inventory-filter-chip ${
+                                listCurrency === code
+                                  ? "inventory-filter-chip-active"
+                                  : ""
+                              }`}
+                              onClick={() => setListCurrency(code)}
+                            >
+                              {code}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                       <button
                         className="o-btn o-btn-secondary invoice-top-panel-btn"
                         onClick={() => {
@@ -1835,139 +1842,137 @@ export default function InvoicesPage({
                     </div>
                     <div className="invoice-top-panel-right" />
                   </div>
-                  <div className="card-body p-0">
-                    <div className="table-responsive">
-                      <table className="table table-hover align-middle mb-0">
-                        <thead className="table-light">
+                  <div className="o-list-view inventory-table-panel">
+                    <table className="o-list-table">
+                      <thead>
+                        <tr>
+                          <th>Reference</th>
+                          <th>Customer</th>
+                          <th>Date</th>
+                          <th>Status</th>
+                          <th>Payment</th>
+                          <th className="text-end">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {loading && (
                           <tr>
-                            <th>Reference</th>
-                            <th>Customer</th>
-                            <th>Date</th>
-                            <th>Status</th>
-                            <th>Payment</th>
-                            <th className="text-end">Total</th>
+                            <td
+                              colSpan={6}
+                              className="text-center py-5 text-muted"
+                            >
+                              Loading invoices…
+                            </td>
                           </tr>
-                        </thead>
-                        <tbody>
-                          {loading && (
-                            <tr>
-                              <td
-                                colSpan={6}
-                                className="text-center py-5 text-muted"
-                              >
-                                Loading invoices…
+                        )}
+                        {!loading && invoices.length === 0 && (
+                          <tr>
+                            <td
+                              colSpan={6}
+                              className="text-center py-5 text-muted"
+                            >
+                              No invoices yet. Click{" "}
+                              <strong>+ New Invoice</strong> to create one.
+                            </td>
+                          </tr>
+                        )}
+                        {invoices.map((inv) => {
+                          const cust = contactById.get(inv.customer_id ?? 0);
+                          return (
+                            <tr
+                              key={inv.id}
+                              role="button"
+                              onClick={() => navigate(`/invoices/${inv.id}`)}
+                            >
+                              <td>
+                                <div className="fw-semibold">
+                                  {inv.reference}
+                                </div>
+                                <small className="text-muted">
+                                  {inv.invoice_type === "credit_note"
+                                    ? "Credit Note"
+                                    : "Invoice"}
+                                </small>
                               </td>
-                            </tr>
-                          )}
-                          {!loading && invoices.length === 0 && (
-                            <tr>
-                              <td
-                                colSpan={6}
-                                className="text-center py-5 text-muted"
-                              >
-                                No invoices yet. Click{" "}
-                                <strong>+ New Invoice</strong> to create one.
+                              <td>{cust?.name || "—"}</td>
+                              <td className="text-muted">
+                                {inv.invoice_date
+                                  ? new Date(inv.invoice_date).toLocaleDateString()
+                                  : "—"}
                               </td>
-                            </tr>
-                          )}
-                          {invoices.map((inv) => {
-                            const cust = contactById.get(inv.customer_id ?? 0);
-                            return (
-                              <tr
-                                key={inv.id}
-                                role="button"
-                                onClick={() => navigate(`/invoices/${inv.id}`)}
-                              >
-                                <td>
-                                  <div className="fw-semibold">
-                                    {inv.reference}
-                                  </div>
-                                  <small className="text-muted">
-                                    {inv.invoice_type === "credit_note"
-                                      ? "Credit Note"
-                                      : "Invoice"}
-                                  </small>
-                                </td>
-                                <td>{cust?.name || "—"}</td>
-                                <td className="text-muted">
-                                  {inv.invoice_date
-                                    ? new Date(
-                                        inv.invoice_date,
-                                      ).toLocaleDateString()
-                                    : "—"}
-                                </td>
-                                <td>
-                                  <span
-                                    className={`badge ${
-                                      inv.status === "paid"
-                                        ? "bg-success"
-                                        : inv.status === "posted"
-                                          ? "bg-info"
-                                          : inv.status === "fiscalized"
-                                            ? "bg-primary"
-                                            : "bg-secondary"
-                                    }`}
-                                  >
-                                    {inv.status}
-                                  </span>
-                                </td>
-                                <td>
-                                  <span
-                                    className={`badge bg-${
-                                      getPaymentStatus(
-                                        inv.amount_paid,
-                                        inv.amount_due,
-                                      ) === "Paid"
-                                        ? "success"
-                                        : getPaymentStatus(
-                                              inv.amount_paid,
-                                              inv.amount_due,
-                                            ) === "Partial"
-                                          ? "warning"
-                                          : "secondary"
-                                    }`}
-                                  >
-                                    {getPaymentStatus(
+                              <td>
+                                <span
+                                  className={`badge ${
+                                    inv.status === "paid"
+                                      ? "bg-success"
+                                      : inv.status === "posted"
+                                        ? "bg-info"
+                                        : inv.status === "fiscalized"
+                                          ? "bg-primary"
+                                          : "bg-secondary"
+                                  }`}
+                                >
+                                  {inv.status}
+                                </span>
+                              </td>
+                              <td>
+                                <span
+                                  className={`badge bg-${
+                                    getPaymentStatus(
                                       inv.amount_paid,
                                       inv.amount_due,
-                                    )}
-                                  </span>
-                                </td>
-                                <td
-                                  className={`text-end fw-semibold ${inv.total_amount < 0 ? "invoice-total-negative" : ""}`}
+                                    ) === "Paid"
+                                      ? "success"
+                                      : getPaymentStatus(
+                                            inv.amount_paid,
+                                            inv.amount_due,
+                                          ) === "Partial"
+                                        ? "warning"
+                                        : "secondary"
+                                  }`}
                                 >
-                                  {formatCurrency(
-                                    inv.total_amount || 0,
-                                    inv.currency || "USD",
+                                  {getPaymentStatus(
+                                    inv.amount_paid,
+                                    inv.amount_due,
                                   )}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                        <tfoot>
-                          <tr
-                            style={{
-                              background: "var(--slate-50)",
-                              fontWeight: 600,
-                            }}
-                          >
-                            <td colSpan={5} className="text-end">
-                              Grand Total:
-                            </td>
-                            <td className="text-end">
-                              {formatCurrency(
-                                invoices.reduce(
-                                  (sum, inv) => sum + (inv.total_amount || 0),
-                                  0,
-                                ),
-                                "USD",
-                              )}
-                            </td>
-                          </tr>
-                        </tfoot>
-                      </table>
-                    </div>
+                                </span>
+                              </td>
+                              <td
+                                className={`text-end fw-semibold ${
+                                  inv.total_amount < 0 ? "invoice-total-negative" : ""
+                                }`}
+                              >
+                                {formatCurrency(
+                                  inv.total_amount || 0,
+                                  inv.currency || "USD",
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                      <tfoot>
+                        <tr
+                          style={{
+                            background: "var(--slate-50)",
+                            fontWeight: 600,
+                          }}
+                        >
+                          <td colSpan={5} className="text-end">
+                            Grand Total:
+                          </td>
+                          <td className="text-end">
+                            {formatCurrency(
+                              invoices.reduce(
+                                (sum, inv) => sum + (inv.total_amount || 0),
+                                0,
+                              ),
+                              "USD",
+                            )}
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
                   </div>
                 </div>
               </div>

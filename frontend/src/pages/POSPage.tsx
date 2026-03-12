@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../api";
 import { useMe } from "../hooks/useMe";
 import BackIcon from "../assets/back.svg?react";
+import type { CurrencyItem, CurrencyRateRead } from "../types/currency";
 
 /* ────────────────────────── types ────────────────────────── */
 
@@ -116,26 +117,6 @@ type CompanyInfo = {
 type CompanySettings = {
   currency_code?: string | null;
   currency_symbol?: string | null;
-};
-
-type CurrencyItem = {
-  id: number;
-  company_id: number;
-  code: string;
-  name: string;
-  symbol: string;
-  position: string;
-  decimal_places: number;
-  is_default: boolean;
-  is_active: boolean;
-};
-
-type CurrencyRateRead = {
-  id: number;
-  currency_id: number;
-  company_id: number;
-  rate: number;
-  rate_date: string;
 };
 
 type POSTillInfo = {
