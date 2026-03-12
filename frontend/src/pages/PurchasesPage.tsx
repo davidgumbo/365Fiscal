@@ -1171,8 +1171,9 @@ export default function PurchasesPage({
                             >
                               <td
                                 style={{
-                                  fontFamily: "monospace",
+                                  fontFamily: "inherit",
                                   fontSize: 12,
+                                  fontWeight: 500,
                                 }}
                               >
                                 {order.reference}
