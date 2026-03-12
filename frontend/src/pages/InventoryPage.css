@@ -1303,6 +1303,9 @@
 .inventory-form-panel.inventory-move-form {
   height: auto;
   min-height: 0;
+  max-width: none;
+  width: 100%;
+  flex: 1 1 auto;
 }
 
 .inventory-form-panel.inventory-move-form .o-form-sheet {
