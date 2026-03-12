@@ -125,10 +125,20 @@
   min-width: 0;
 }
 
-.invoice-top-panel .inventory-search-wrapper {
-  position: static;
+.inventory-main-search-panel.invoice-top-panel .inventory-search-wrapper {
+  position: relative;
+  left: auto;
+  top: auto;
   transform: none;
   width: 100%;
+}
+
+.inventory-main-search-panel.invoice-top-panel .inventory-search-inner {
+  padding: 0;
+}
+
+.inventory-main-search-panel.invoice-top-panel .inventory-centered-searchbox {
+  width: min(100%, 520px);
 }
 
 .invoice-top-panel-actions {
