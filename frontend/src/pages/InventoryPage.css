@@ -25,6 +25,9 @@
 .inventory-main-search-panel {
   margin-left: 0;
   margin-right: 0;
+  position: relative;
+  min-height: 64px;
+  padding: 12px 16px;
 }
 
 .inventory-search-wrapper {
@@ -32,6 +35,18 @@
   display: flex;
   justify-content: center;
   position: relative;
+}
+
+.inventory-main-search-panel .inventory-search-wrapper {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(520px, 90%);
+}
+
+.inventory-main-search-panel .o-control-panel-right {
+  margin-left: auto;
 }
 
 .inventory-search-inner {

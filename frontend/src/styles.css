@@ -6148,12 +6148,6 @@ button.danger:hover {
 .o-quick-actions {
   display: flex;
   gap: 8px;
-  opacity: 0;
-  transition: opacity 0.15s;
-}
-
-tr:hover .o-quick-actions {
-  opacity: 1;
 }
 
 /* Responsive adjustments */
