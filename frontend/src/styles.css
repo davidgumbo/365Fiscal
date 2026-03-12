@@ -3362,6 +3362,96 @@ button.danger:hover {
   letter-spacing: 0.5px;
 }
 
+.portal-app-access {
+  margin-top: 18px;
+  border: 1px solid var(--slate-200);
+  border-radius: 16px;
+  background: linear-gradient(180deg, #fbfcff 0%, #f6f9ff 100%);
+  padding: 16px;
+}
+
+.portal-app-access-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.portal-app-access-head h5 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--slate-900);
+}
+
+.portal-app-access-head span {
+  font-size: 12px;
+  color: var(--slate-500);
+}
+
+.portal-app-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.portal-app-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 10px 12px;
+  border: 1px solid var(--slate-200);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--slate-700);
+  cursor: pointer;
+  transition: border-color 0.18s ease, background-color 0.18s ease,
+    box-shadow 0.18s ease, color 0.18s ease;
+}
+
+.portal-app-option:hover {
+  border-color: var(--blue-200);
+  background: #f8fbff;
+}
+
+.portal-app-option.selected {
+  border-color: var(--blue-300);
+  background: #eef4ff;
+  color: var(--blue-700);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.08);
+}
+
+.portal-app-option input {
+  margin: 0;
+}
+
+.portal-app-option span {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.portal-app-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.portal-app-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: #edf4ff;
+  color: var(--blue-700);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 /* Alerts */
 .alert {
   padding: 12px 16px;

@@ -104,7 +104,24 @@ type Company = {
   phone: string;
   tin: string;
   vat: string;
+  portal_apps?: string[];
 };
+
+const PORTAL_APP_OPTIONS = [
+  { key: "dashboard", label: "Dashboard" },
+  { key: "invoices", label: "Invoices" },
+  { key: "purchases", label: "Purchases" },
+  { key: "contacts", label: "Contacts" },
+  { key: "quotations", label: "Quotations" },
+  { key: "inventory", label: "Inventory" },
+  { key: "pos", label: "Point of Sale" },
+  { key: "devices", label: "Devices" },
+  { key: "reports", label: "Financial Reports" },
+  { key: "expenses", label: "Expenses" },
+  { key: "settings", label: "Settings" },
+] as const;
+
+const DEFAULT_PORTAL_APPS = PORTAL_APP_OPTIONS.map((app) => app.key);
 
 type GroupedCompanies = {
   label: string;
@@ -141,6 +158,9 @@ export default function CompaniesPage() {
   const [editPortalPassword, setEditPortalPassword] = useState("");
   const [portalEmail, setPortalEmail] = useState("");
   const [portalPassword, setPortalPassword] = useState("");
+  const [portalApps, setPortalApps] = useState<string[]>(DEFAULT_PORTAL_APPS);
+  const [editPortalApps, setEditPortalApps] =
+    useState<string[]>(DEFAULT_PORTAL_APPS);
   const [saving, setSaving] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -178,6 +198,18 @@ export default function CompaniesPage() {
     return () => clearTimeout(timeout);
   }, [me?.is_admin, state.filters]);
 
+  const togglePortalApp = (
+    appKey: string,
+    selected: string[],
+    setter: (apps: string[]) => void,
+  ) => {
+    setter(
+      selected.includes(appKey)
+        ? selected.filter((item) => item !== appKey)
+        : [...selected, appKey],
+    );
+  };
+
   const createCompany = async () => {
     if (!form.name || !form.tin) {
       setError("Company name and TIN are required");
@@ -189,7 +221,10 @@ export default function CompaniesPage() {
       setSaving(true);
       const company = await apiFetch<Company>("/companies", {
         method: "POST",
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          portal_apps: portalApps,
+        }),
       });
       let portalCreated = false;
       const portalEmailSnapshot = portalEmail;
@@ -219,6 +254,7 @@ export default function CompaniesPage() {
         tin: "",
         vat: "",
       });
+      setPortalApps(DEFAULT_PORTAL_APPS);
       setShowAddModal(false);
       if (portalCreated) {
         setStatus(
@@ -248,6 +284,9 @@ export default function CompaniesPage() {
       tin: company.tin || "",
       vat: company.vat || "",
     });
+    setEditPortalApps(
+      company.portal_apps?.length ? company.portal_apps : DEFAULT_PORTAL_APPS,
+    );
     setEditPortalPassword("");
     setEditPortalUserId(null);
     setEditPortalEmail("");
@@ -280,6 +319,7 @@ export default function CompaniesPage() {
       tin: "",
       vat: "",
     });
+    setEditPortalApps(DEFAULT_PORTAL_APPS);
     setEditPortalUserId(null);
     setEditPortalEmail("");
     setEditPortalPassword("");
@@ -296,7 +336,10 @@ export default function CompaniesPage() {
       setSaving(true);
       await apiFetch(`/companies/${editingCompany.id}`, {
         method: "PATCH",
-        body: JSON.stringify(editForm),
+        body: JSON.stringify({
+          ...editForm,
+          portal_apps: editPortalApps,
+        }),
       });
       // Update or create portal user if email/password provided
       if (editPortalEmail && editPortalPassword) {
@@ -519,6 +562,50 @@ export default function CompaniesPage() {
                     />
                   </label>
                 </div>
+                <div className="portal-app-access">
+                  <div className="portal-app-access-head">
+                    <h5>Portal Apps</h5>
+                    <span>
+                      Choose which apps can appear on the portal user dashboard.
+                    </span>
+                  </div>
+                  <div className="portal-app-grid">
+                    {PORTAL_APP_OPTIONS.map((app) => {
+                      const selected = portalApps.includes(app.key);
+                      return (
+                        <label
+                          key={app.key}
+                          className={`portal-app-option ${selected ? "selected" : ""}`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selected}
+                            onChange={() =>
+                              togglePortalApp(
+                                app.key,
+                                portalApps,
+                                setPortalApps,
+                              )
+                            }
+                          />
+                          <span>{app.label}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <div className="portal-app-badges">
+                    {portalApps.map((appKey) => {
+                      const option = PORTAL_APP_OPTIONS.find(
+                        (item) => item.key === appKey,
+                      );
+                      return (
+                        <span key={appKey} className="portal-app-badge">
+                          {option?.label || appKey}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             </div>
             <div className="modal-footer">
@@ -669,6 +756,50 @@ export default function CompaniesPage() {
                       onChange={(e) => setEditPortalPassword(e.target.value)}
                     />
                   </label>
+                </div>
+                <div className="portal-app-access">
+                  <div className="portal-app-access-head">
+                    <h5>Activated Apps</h5>
+                    <span>
+                      These apps will be shown on the portal user dashboard.
+                    </span>
+                  </div>
+                  <div className="portal-app-grid">
+                    {PORTAL_APP_OPTIONS.map((app) => {
+                      const selected = editPortalApps.includes(app.key);
+                      return (
+                        <label
+                          key={app.key}
+                          className={`portal-app-option ${selected ? "selected" : ""}`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selected}
+                            onChange={() =>
+                              togglePortalApp(
+                                app.key,
+                                editPortalApps,
+                                setEditPortalApps,
+                              )
+                            }
+                          />
+                          <span>{app.label}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <div className="portal-app-badges">
+                    {editPortalApps.map((appKey) => {
+                      const option = PORTAL_APP_OPTIONS.find(
+                        (item) => item.key === appKey,
+                      );
+                      return (
+                        <span key={appKey} className="portal-app-badge">
+                          {option?.label || appKey}
+                        </span>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </div>

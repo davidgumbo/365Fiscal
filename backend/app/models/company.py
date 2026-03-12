@@ -15,6 +15,7 @@ class Company(Base, TimestampMixin):
     phone: Mapped[str] = mapped_column(String(50), default="")
     tin: Mapped[str] = mapped_column(String(50), default="")
     vat: Mapped[str] = mapped_column(String(50), default="")
+    portal_apps: Mapped[str] = mapped_column(String(1000), default="")
 
     users = relationship("CompanyUser", back_populates="company")
     devices = relationship("Device", back_populates="company")

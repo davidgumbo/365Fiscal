@@ -11,6 +11,7 @@ export type MeCompany = {
   address: string;
   city?: string;
   country?: string;
+  portal_apps?: string[];
 };
 
 export type Me = {

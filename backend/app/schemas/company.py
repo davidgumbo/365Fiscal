@@ -10,6 +10,7 @@ class CompanyCreate(BaseModel):
     phone: str = ""
     tin: str = ""
     vat: str = ""
+    portal_apps: list[str] = []
 
 
 class CompanyUpdate(BaseModel):
@@ -19,6 +20,7 @@ class CompanyUpdate(BaseModel):
     phone: str | None = None
     tin: str | None = None
     vat: str | None = None
+    portal_apps: list[str] | None = None
 
 
 class CompanyRead(ORMBase):
@@ -29,3 +31,4 @@ class CompanyRead(ORMBase):
     phone: str
     tin: str
     vat: str
+    portal_apps: list[str] = []

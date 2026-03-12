@@ -46,6 +46,7 @@ const POSLauncherIcon = Calculator;
 
 interface AppItem {
   to: string;
+  key: string;
   label: string;
   icon: LucideIcon;
   color: string;
@@ -56,6 +57,7 @@ interface AppItem {
 const adminApps: AppItem[] = [
   {
     to: "/dashboard",
+    key: "dashboard",
     label: "Dashboard",
     icon: DashboardIcon,
     color: "var(--white-500)",
@@ -64,6 +66,7 @@ const adminApps: AppItem[] = [
   },
   {
     to: "/companies",
+    key: "companies",
     label: "Companies",
     icon: CompanyIcon,
     color: "var(--white-500)",
@@ -72,6 +75,7 @@ const adminApps: AppItem[] = [
   },
   {
     to: "/invoices",
+    key: "invoices",
     label: "Invoices",
     icon: InvoiceIcon,
     color: "var(--white-500)",
@@ -80,6 +84,7 @@ const adminApps: AppItem[] = [
   },
   {
     to: "/purchases",
+    key: "purchases",
     label: "Purchases",
     icon: PurchaseIcon,
     color: "var(--white-500)",
@@ -89,6 +94,7 @@ const adminApps: AppItem[] = [
   // { to: "/products", label: "Products", icon: ProductIcon, color: "var(--white-500)", background: "var(--cyan-500)" },
   {
     to: "/contacts",
+    key: "contacts",
     label: "Contacts",
     icon: ContactIcon,
     color: "var(--white-500)",
@@ -97,6 +103,7 @@ const adminApps: AppItem[] = [
   },
   {
     to: "/quotations",
+    key: "quotations",
     label: "Quotations",
     icon: QuoteIcon,
     color: "var(--white-500)",
@@ -105,6 +112,7 @@ const adminApps: AppItem[] = [
   },
   {
     to: "/inventory",
+    key: "inventory",
     label: "Inventory",
     icon: InventoryIcon,
     color: "var(--white-500)",
@@ -120,6 +128,7 @@ const adminApps: AppItem[] = [
   // },
   {
     to: "/devices",
+    key: "devices",
     label: "Devices",
     icon: DeviceIcon,
     color: "var(--white-500)",
@@ -128,6 +137,7 @@ const adminApps: AppItem[] = [
   },
   {
     to: "/reports",
+    key: "reports",
     label: "Financial Reports",
     icon: ReportsIcon,
     color: "var(--white-500)",
@@ -136,6 +146,7 @@ const adminApps: AppItem[] = [
   },
   {
     to: "/expenses",
+    key: "expenses",
     label: "Expenses",
     icon: ExpensesIcon,
     color: "var(--white-500)",
@@ -144,6 +155,7 @@ const adminApps: AppItem[] = [
   },
   {
     to: "/subscriptions",
+    key: "subscriptions",
     label: "Subscriptions",
     icon: SubscriptionIcon,
     color: "var(--white-500)",
@@ -152,6 +164,7 @@ const adminApps: AppItem[] = [
   },
   {
     to: "/settings",
+    key: "settings",
     label: "Settings",
     icon: SettingsIcon,
     color: "var(--white-500)",
@@ -163,6 +176,7 @@ const adminApps: AppItem[] = [
 const portalApps: AppItem[] = [
   {
     to: "/dashboard",
+    key: "dashboard",
     label: "Dashboard",
     icon: DashboardIcon,
     color: "var(--white-500)",
@@ -171,6 +185,7 @@ const portalApps: AppItem[] = [
   },
   {
     to: "/invoices",
+    key: "invoices",
     label: "Invoices",
     icon: InvoiceIcon,
     color: "var(--white-500)",
@@ -179,6 +194,7 @@ const portalApps: AppItem[] = [
   },
   {
     to: "/purchases",
+    key: "purchases",
     label: "Purchases",
     icon: PurchaseIcon,
     color: "var(--white-500)",
@@ -187,6 +203,7 @@ const portalApps: AppItem[] = [
   },
   {
     to: "/contacts",
+    key: "contacts",
     label: "Contacts",
     icon: ContactIcon,
     color: "var(--white-500)",
@@ -195,6 +212,7 @@ const portalApps: AppItem[] = [
   },
   {
     to: "/quotations",
+    key: "quotations",
     label: "Quotations",
     icon: QuoteIcon,
     color: "var(--white-500)",
@@ -203,6 +221,7 @@ const portalApps: AppItem[] = [
   },
   {
     to: "/inventory",
+    key: "inventory",
     label: "Inventory",
     icon: InventoryIcon,
     color: "var(--white-500)",
@@ -211,6 +230,7 @@ const portalApps: AppItem[] = [
   },
   {
     to: "/pos",
+    key: "pos",
     label: "Point of Sale",
     icon: POSLauncherIcon,
     color: "var(--white-500)",
@@ -219,6 +239,7 @@ const portalApps: AppItem[] = [
   },
   {
     to: "/my-devices",
+    key: "devices",
     label: "Devices",
     icon: DeviceIcon,
     color: "var(--white-500)",
@@ -227,6 +248,7 @@ const portalApps: AppItem[] = [
   },
   {
     to: "/reports",
+    key: "reports",
     label: "Financial Reports",
     icon: ReportsIcon,
     color: "var(--white-500)",
@@ -235,6 +257,7 @@ const portalApps: AppItem[] = [
   },
   {
     to: "/expenses",
+    key: "expenses",
     label: "Expenses",
     icon: ExpensesIcon,
     color: "var(--white-500)",
@@ -243,6 +266,7 @@ const portalApps: AppItem[] = [
   },
   {
     to: "/settings",
+    key: "settings",
     label: "Settings",
     icon: SettingsIcon,
     color: "var(--white-500)",
@@ -254,7 +278,14 @@ const portalApps: AppItem[] = [
 export default function AppLauncherPage() {
   const { me, loading } = useMe();
   const isAdmin = Boolean(me?.is_admin);
-  const apps = isAdmin ? adminApps : portalApps;
+  const allowedPortalApps = (me?.companies?.[0]?.portal_apps ?? [])
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean);
+  const apps = isAdmin
+    ? adminApps
+    : portalApps.filter((app) =>
+        allowedPortalApps.length ? allowedPortalApps.includes(app.key) : true,
+      );
   const displayName = me?.email ?? "User";
   const initials = getInitials(displayName);
 

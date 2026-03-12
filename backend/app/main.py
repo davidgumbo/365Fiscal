@@ -98,6 +98,17 @@ def ensure_new_columns():
                 else:
                     _startup_logger.info(">>> is_scrap column already exists")
 
+            if "companies" in table_names:
+                company_cols = {c["name"] for c in insp.get_columns("companies")}
+                if "portal_apps" not in company_cols:
+                    _startup_logger.info(">>> Adding portal_apps column to companies")
+                    conn.execute(text(
+                        "ALTER TABLE companies ADD COLUMN portal_apps VARCHAR(1000) DEFAULT ''"
+                    ))
+                    _startup_logger.info(">>> portal_apps column added successfully")
+                else:
+                    _startup_logger.info(">>> portal_apps column already exists")
+
         if "pos_tills" in table_names:
             till_cols = {c["name"] for c in insp.get_columns("pos_tills")}
             if "warehouse_id" not in till_cols:

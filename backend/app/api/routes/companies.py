@@ -23,6 +23,55 @@ from app.schemas.company import CompanyCreate, CompanyRead, CompanyUpdate
 router = APIRouter(prefix="/companies", tags=["companies"])
 
 
+DEFAULT_PORTAL_APPS = [
+    "dashboard",
+    "invoices",
+    "purchases",
+    "contacts",
+    "quotations",
+    "inventory",
+    "pos",
+    "devices",
+    "reports",
+    "expenses",
+    "settings",
+]
+
+
+def normalize_portal_apps(apps: list[str] | None) -> list[str]:
+    normalized: list[str] = []
+    seen: set[str] = set()
+    for app in apps or []:
+        key = (app or "").strip().lower()
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        normalized.append(key)
+    return normalized
+
+
+def parse_portal_apps(value: str | None) -> list[str]:
+    apps = normalize_portal_apps((value or "").split(","))
+    return apps or DEFAULT_PORTAL_APPS.copy()
+
+
+def serialize_portal_apps(apps: list[str] | None) -> str:
+    return ",".join(normalize_portal_apps(apps))
+
+
+def serialize_company(company: Company) -> dict:
+    return {
+        "id": company.id,
+        "name": company.name,
+        "address": company.address,
+        "email": company.email,
+        "phone": company.phone,
+        "tin": company.tin,
+        "vat": company.vat,
+        "portal_apps": parse_portal_apps(company.portal_apps),
+    }
+
+
 def apply_company_filters(
     query,
     search: str | None,
@@ -123,11 +172,12 @@ def create_company(payload: CompanyCreate, db: Session = Depends(get_db)):
         phone=payload.phone,
         tin=payload.tin,
         vat=payload.vat,
+        portal_apps=serialize_portal_apps(payload.portal_apps),
     )
     db.add(company)
     db.commit()
     db.refresh(company)
-    return company
+    return serialize_company(company)
 
 
 @router.patch("/{company_id}", response_model=CompanyRead, dependencies=[Depends(require_admin)])
@@ -136,10 +186,13 @@ def update_company(company_id: int, payload: CompanyUpdate, db: Session = Depend
     if not company:
         raise HTTPException(status_code=404, detail="Company not found")
     for field, value in payload.model_dump(exclude_unset=True).items():
-        setattr(company, field, value)
+        if field == "portal_apps":
+            company.portal_apps = serialize_portal_apps(value)
+        else:
+            setattr(company, field, value)
     db.commit()
     db.refresh(company)
-    return company
+    return serialize_company(company)
 
 
 @router.delete("/{company_id}", dependencies=[Depends(require_admin)])
@@ -217,7 +270,7 @@ def list_companies(
         date_from,
         date_to,
     )
-    return query.all()
+    return [serialize_company(company) for company in query.all()]
 
 
 @router.get("/me", response_model=list[CompanyRead])
@@ -298,7 +351,7 @@ def list_my_companies(
         date_from,
         date_to,
     )
-    return query.all()
+    return [serialize_company(company) for company in query.all()]
 
 
 @router.get("/{company_id}/portal-user")

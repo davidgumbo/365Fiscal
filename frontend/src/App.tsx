@@ -95,6 +95,21 @@ const portalNav = [
   { to: "/settings", label: "Settings", icon: SettingsIcon },
 ];
 
+const PORTAL_NAV_APP_KEYS: Record<string, string> = {
+  "/": "dashboard",
+  "/dashboard": "dashboard",
+  "/invoices": "invoices",
+  "/purchases": "purchases",
+  "/contacts": "contacts",
+  "/quotations": "quotations",
+  "/pos": "pos",
+  "/inventory": "inventory",
+  "/my-devices": "devices",
+  "/expenses": "expenses",
+  "/reports": "reports",
+  "/settings": "settings",
+};
+
 type FilterCondition = {
   id: string;
   field: string;
@@ -168,7 +183,20 @@ function AppContent() {
   ]);
   const topbarRef = useRef<HTMLDivElement | null>(null);
 
-  const navItems = isPortalMode ? portalNav : adminNav;
+  const allowedPortalApps = useMemo(() => {
+    const apps = me?.companies?.[0]?.portal_apps ?? [];
+    const normalized = apps
+      .map((item) => item.trim().toLowerCase())
+      .filter(Boolean);
+    return normalized.length ? normalized : null;
+  }, [me?.companies]);
+  const navItems = isPortalMode
+    ? portalNav.filter((item) => {
+        if (!allowedPortalApps) return true;
+        const appKey = PORTAL_NAV_APP_KEYS[item.to];
+        return appKey ? allowedPortalApps.includes(appKey) : true;
+      })
+    : adminNav;
   const displayName = me?.email ?? (isPortalMode ? "Portal User" : "Admin");
   const initials = getInitials(displayName);
   const currentPath = location.pathname === "/" ? "/" : location.pathname;
