@@ -231,7 +231,26 @@
   align-self: flex-start;
 }
 
+.expense-categories-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-self: flex-start;
+}
+
 .expense-suppliers-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  border: 1px solid #dfe4f2;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+  box-shadow: 0 12px 30px rgba(33, 45, 96, 0.06);
+}
+
+.expense-categories-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -257,7 +276,32 @@
   color: #7380a5;
 }
 
+.expense-categories-search {
+  flex: 1;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 0 14px;
+  border: 1px solid #d8dfef;
+  border-radius: 14px;
+  background: #fff;
+  color: #7380a5;
+}
+
 .expense-suppliers-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: #1d2852;
+  font-size: 14px;
+  font-weight: 600;
+  outline: none;
+}
+
+.expense-categories-search input {
   flex: 1;
   min-width: 0;
   border: none;
@@ -272,7 +316,22 @@
   color: #8a95b8;
 }
 
+.expense-categories-search input::placeholder {
+  color: #8a95b8;
+}
+
 .expense-suppliers-create-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 16px;
+  border-radius: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.expense-categories-create-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -503,12 +562,14 @@
 }
 
 @media (max-width: 900px) {
-  .expense-suppliers-toolbar {
+  .expense-suppliers-toolbar,
+  .expense-categories-toolbar {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .expense-suppliers-create-btn {
+  .expense-suppliers-create-btn,
+  .expense-categories-create-btn {
     width: 100%;
     justify-content: center;
   }

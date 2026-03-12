@@ -2012,7 +2012,7 @@ export default function ExpensesPage() {
                 rowGap: 12,
               }}
             >
-              {subView !== "form" && mainView !== "suppliers" && (
+              {subView !== "form" && mainView === "expenses" && (
                 <div className="content-top-bar" style={{ width: "100%", flex: "1 1 100%" }}>
                   <div className="top-search">
                     <span className="search-icon">
@@ -2030,16 +2030,10 @@ export default function ExpensesPage() {
                     </span>
                     <input
                       type="text"
-                      placeholder={
-                        mainView === "categories"
-                          ? "Search categories..."
-                          : "Search expenses..."
-                      }
-                      value={mainView === "expenses" ? search : searchQuery}
+                      placeholder="Search expenses..."
+                      value={search}
                       onChange={(e) =>
-                        mainView === "expenses"
-                          ? setSearch(e.target.value)
-                          : setSearchQuery(e.target.value)
+                        setSearch(e.target.value)
                       }
                     />
                   </div>
@@ -2079,14 +2073,6 @@ export default function ExpensesPage() {
                         New Expense
                       </button>
                     </>
-                  )}
-                  {mainView === "categories" && (
-                    <button
-                      className="o-btn o-btn-primary"
-                      onClick={() => openCategoryModal()}
-                    >
-                      + New Category
-                    </button>
                   )}
                 </div>
               )}
@@ -2672,7 +2658,26 @@ export default function ExpensesPage() {
 
               {/* ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â EXPENSE CATEGORIES LIST (like Inventory) ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â */}
               {mainView === "categories" && subView === "list" && (
-                <div className="o-main" style={{ width: "100%" }}>
+                <div className="o-main expense-categories-page" style={{ width: "100%" }}>
+                  <div className="expense-categories-toolbar">
+                    <label className="expense-categories-search">
+                      <Search size={16} />
+                      <input
+                        type="text"
+                        placeholder="Search categories..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                    </label>
+                    <button
+                      className="o-btn o-btn-primary expense-categories-create-btn"
+                      onClick={() => openCategoryModal()}
+                    >
+                      <Plus size={16} />
+                      New Category
+                    </button>
+                  </div>
+
                   <div className="o-list-view expense-category-list-view">
                     <table className="o-list-table expense-category-table">
                       <thead>
