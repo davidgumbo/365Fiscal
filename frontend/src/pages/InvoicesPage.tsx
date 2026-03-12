@@ -3304,7 +3304,7 @@ export default function InvoicesPage({
                       />
                     </div>
                     <div className="col-md-6">
-                      <label className="form-label">Produce Code</label>
+                      <label className="form-label">Product Code</label>
                       <input
                         className="form-control"
                         value={productReference}
