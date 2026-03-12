@@ -2793,6 +2793,7 @@ thead.table-light th {
   line-height: 1.4;
   white-space: nowrap;
   border: none;
+  justify-content: center;
 }
 
 /* ── Professional badge color variants ── */
