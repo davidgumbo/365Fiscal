@@ -6,18 +6,6 @@
   gap: 16px;
 }
 
-.inventory-table-panel .o-list-table tbody tr:nth-child(odd) {
-  background: #ffffff;
-}
-
-.inventory-table-panel .o-list-table tbody tr:nth-child(even) {
-  background: #f7f8fb;
-}
-
-.inventory-table-panel .o-list-table tbody tr:hover {
-  background: #eef3f9;
-}
-
 .inventory-hidden-file-input{
   display: none;
 }

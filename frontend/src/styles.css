@@ -3459,6 +3459,14 @@ button.danger:hover {
 }
 
 .data-table tbody tr:hover {
+  background: #eef3f9;
+}
+
+.data-table tbody tr:nth-child(odd) {
+  background: var(--white-500);
+}
+
+.data-table tbody tr:nth-child(even) {
   background: var(--slate-50);
 }
 
@@ -5671,8 +5679,16 @@ button.danger:hover {
   transition: background 0.1s;
 }
 
+.o-list-table tbody tr:nth-child(odd) {
+  background: var(--white-500);
+}
+
+.o-list-table tbody tr:nth-child(even) {
+  background: var(--slate-50);
+}
+
 .o-list-table tbody tr:hover {
-  background: var(--gray-50);
+  background: #eef3f9;
 }
 
 .o-list-table tbody tr.selected {
@@ -6422,7 +6438,15 @@ button.danger:hover {
 }
 
 .report-table tbody tr:hover {
-  background: var(--blue-50);
+  background: #eef3f9;
+}
+
+.report-table tbody tr:nth-child(odd) {
+  background: var(--white-500);
+}
+
+.report-table tbody tr:nth-child(even) {
+  background: var(--slate-50);
 }
 
 .report-table .text-right,
@@ -8326,7 +8350,7 @@ button.danger:hover {
 }
 
 .data-table tbody tr:hover {
-  background: rgba(59, 130, 246, 0.02);
+  background: #eef3f9;
 }
 
 .data-table tbody tr:last-child td {
