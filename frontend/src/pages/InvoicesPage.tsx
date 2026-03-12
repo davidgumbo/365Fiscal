@@ -7,11 +7,9 @@ import {
   Download,
   FileMinus,
   FilePlus,
-  FilePlus,
   FileText,
   PenLine,
   Plus,
-  Search,
   Search,
   ShieldCheck,
 } from "lucide-react";
