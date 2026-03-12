@@ -11,11 +11,14 @@ import {
   Clapperboard,
   Download,
   FileText,
+  LayoutGrid,
+  PenLine,
   PieChart,
   Plus,
   ReceiptText,
   Search,
   ShoppingBag,
+  Trash2,
   UtensilsCrossed,
   WalletCards,
   X,
@@ -1884,6 +1887,17 @@ export default function ExpensesPage() {
                     </svg>
                   ),
                 },
+                {
+                  key: "categories" as MainView,
+                  label: "CATEGORIES",
+                  icon: (
+                    <LayoutGrid
+                      size={18}
+                      strokeWidth={1.7}
+                      color="var(--blue-600)"
+                    />
+                  ),
+                },
               ].map((tab) => (
                 <div
                   key={tab.key}
@@ -2080,63 +2094,10 @@ export default function ExpensesPage() {
               {/* ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â EXPENSES LIST VIEW ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â */}
               {mainView === "expenses" && subView === "list" && (
                 <>
-                  {/* Sub-sidebar for filters (like Inventory products list) */}
+                  {/* Sub-sidebar for filters */}
                   <div className="o-sidebar">
-                    <div className="o-sidebar-section">
-                      <div
-                        className="o-sidebar-title"
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                        }}
-                      >
-                        <span>Categories</span>
-                        <button
-                          onClick={() => openCategoryModal()}
-                          style={{
-                            background: "none",
-                            border: "none",
-                            cursor: "pointer",
-                            color: "var(--indigo-500)",
-                            fontSize: 18,
-                            fontWeight: 700,
-                            lineHeight: 1,
-                          }}
-                          title="Add Category"
-                        >
-                          +
-                        </button>
-                      </div>
-                      <select
-                        className="o-form-select"
-                        value={categoryFilter}
-                        onChange={(e) => setCategoryFilter(e.target.value)}
-                      >
-                        <option value="">
-                          All Expenses ({expenses.length})
-                        </option>
-                        {categories.map((c) => (
-                          <option key={c.id} value={c.name}>
-                            {c.name} ({categoryExpenseCount.get(c.name) || 0})
-                          </option>
-                        ))}
-                      </select>
-                      {categories.length === 0 && (
-                        <div
-                          style={{
-                            paddingTop: 8,
-                            color: "var(--slate-400)",
-                            fontSize: 12,
-                          }}
-                        >
-                          No expense categories yet.
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="o-sidebar-section">
-                      <div className="o-sidebar-title">Status</div>
+                    <div className="o-sidebar-section expense-filter-section">
+                      <div className="o-sidebar-title">STATUS</div>
                       {[
                         { key: "", label: "All" },
                         { key: "posted", label: "Posted" },
@@ -2156,6 +2117,29 @@ export default function ExpensesPage() {
                           </span>
                         </div>
                       ))}
+                    </div>
+
+                    <div className="o-sidebar-section expense-filter-section">
+                      <div className="o-sidebar-title">SUPPLIER</div>
+                      <select
+                        className="o-form-select expense-filter-select"
+                        value={supplierFilter}
+                        onChange={(e) =>
+                          setSupplierFilter(
+                            e.target.value ? Number(e.target.value) : "",
+                          )
+                        }
+                      >
+                        <option value="">All Suppliers</option>
+                        {contacts
+                          .slice()
+                          .sort((a, b) => a.name.localeCompare(b.name))
+                          .map((contact) => (
+                            <option key={contact.id} value={contact.id}>
+                              {contact.name}
+                            </option>
+                          ))}
+                      </select>
                     </div>
                   </div>
 
@@ -2689,8 +2673,8 @@ export default function ExpensesPage() {
               {/* ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â EXPENSE CATEGORIES LIST (like Inventory) ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â */}
               {mainView === "categories" && subView === "list" && (
                 <div className="o-main" style={{ width: "100%" }}>
-                  <div className="o-list-view">
-                    <table className="o-list-table">
+                  <div className="o-list-view expense-category-list-view">
+                    <table className="o-list-table expense-category-table">
                       <thead>
                         <tr>
                           <th>Category</th>
@@ -2701,23 +2685,38 @@ export default function ExpensesPage() {
                       <tbody>
                         {filteredCategories.map((c) => (
                           <tr key={c.id}>
-                            <td style={{ fontWeight: 500 }}>{c.name}</td>
-                            <td>{categoryExpenseCount.get(c.name) ?? 0}</td>
                             <td>
-                              <div className="action-icons">
+                              <div className="expense-category-name-cell">
+                                <span className="expense-category-name-icon">
+                                  <LayoutGrid size={16} />
+                                </span>
+                                <span className="expense-category-name-text">
+                                  {c.name}
+                                </span>
+                              </div>
+                            </td>
+                            <td>
+                              <span className="expense-category-count-badge">
+                                {categoryExpenseCount.get(c.name) ?? 0}
+                              </span>
+                            </td>
+                            <td className="expense-category-actions-cell">
+                              <div className="expense-category-actions">
                                 <button
-                                  className="icon-btn"
+                                  type="button"
+                                  className="expense-category-action-btn"
                                   aria-label={`Edit ${c.name}`}
                                   onClick={() => openCategoryModal(c)}
                                 >
-                                  <EditIcon />
+                                  <PenLine size={15} />
                                 </button>
                                 <button
-                                  className="icon-btn danger"
+                                  type="button"
+                                  className="expense-category-action-btn expense-category-action-btn-danger"
                                   aria-label={`Delete ${c.name}`}
                                   onClick={() => deleteCategory(c.id)}
                                 >
-                                  <TrashIcon />
+                                  <Trash2 size={15} />
                                 </button>
                               </div>
                             </td>

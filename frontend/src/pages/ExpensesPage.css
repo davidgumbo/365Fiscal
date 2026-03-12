@@ -405,6 +405,103 @@
   justify-content: center;
 }
 
+.expense-filter-section + .expense-filter-section {
+  margin-top: 8px;
+}
+
+.expense-filter-select {
+  width: 100%;
+}
+
+.expense-category-list-view {
+  border: 1px solid #dfe4f2;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+  box-shadow: 0 12px 30px rgba(33, 45, 96, 0.06);
+  overflow: hidden;
+}
+
+.expense-category-table th {
+  background: #f7f9ff;
+}
+
+.expense-category-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.expense-category-name-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  background: #e8f1ff;
+  color: #2455d6;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.expense-category-name-text {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.expense-category-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: #eef4ff;
+  color: #1d4ed8;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.expense-category-actions-cell {
+  text-align: right;
+}
+
+.expense-category-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.expense-category-action-btn {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #d6deea;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #334155;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.expense-category-action-btn:hover {
+  border-color: #93c5fd;
+  background: #eff6ff;
+  color: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.expense-category-action-btn-danger:hover {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #dc2626;
+}
+
 @media (max-width: 900px) {
   .expense-suppliers-toolbar {
     flex-direction: column;
