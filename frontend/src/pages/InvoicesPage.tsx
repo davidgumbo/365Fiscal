@@ -1729,7 +1729,18 @@ export default function InvoicesPage({
             <Sidebar sections={invoiceSidebarSections} />
             <div className="invoice-dashboard-main">
               <div className="o-control-panel inventory-main-search-panel invoice-top-panel">
-                <div className="invoice-top-panel-spacer" />
+                <div className="invoice-top-panel-left">
+                  <select
+                    className="form-select invoice-top-panel-select"
+                    value={listCurrency}
+                    onChange={(e) => setListCurrency(e.target.value)}
+                    aria-label="Filter by currency"
+                  >
+                    <option value="">All currencies</option>
+                    <option value="USD">USD</option>
+                    <option value="ZWG">ZWG</option>
+                  </select>
+                </div>
                 <div className="invoice-top-panel-center">
                   <div className="inventory-search-wrapper">
                     <div className="inventory-search-inner">
@@ -1749,16 +1760,6 @@ export default function InvoicesPage({
                   </div>
                 </div>
                 <div className="o-control-panel-right invoice-top-panel-actions">
-                  <select
-                    className="form-select invoice-top-panel-select"
-                    value={listCurrency}
-                    onChange={(e) => setListCurrency(e.target.value)}
-                    aria-label="Filter by currency"
-                  >
-                    <option value="">All currencies</option>
-                    <option value="USD">USD</option>
-                    <option value="ZWG">ZWG</option>
-                  </select>
                   <button
                     className="o-btn o-btn-secondary invoice-top-panel-btn"
                     onClick={() => {

@@ -112,17 +112,20 @@
 
 .invoice-top-panel {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(360px, 520px) minmax(0, 1fr);
+  grid-template-columns: 160px minmax(320px, 520px) auto;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
 }
 
-.invoice-top-panel-spacer {
-  min-width: 0;
+.invoice-top-panel-left {
+  display: flex;
+  align-items: center;
 }
 
 .invoice-top-panel-center {
   min-width: 0;
+  display: flex;
+  justify-content: center;
 }
 
 .inventory-main-search-panel.invoice-top-panel .inventory-search-wrapper {
@@ -146,17 +149,22 @@
   align-items: center;
   justify-content: flex-end;
   gap: 10px;
-  min-width: 0;
+  min-width: max-content;
 }
 
 .invoice-top-panel-select {
-  max-width: 160px;
+  width: 160px;
+  min-width: 160px;
+  height: 44px;
+  border-radius: 12px;
 }
 
 .invoice-top-panel-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  min-height: 44px;
+  white-space: nowrap;
 }
 
 .content-top-bar.invoice-dashboard-topbar {
@@ -399,13 +407,13 @@
     grid-template-columns: 1fr;
   }
 
-  .invoice-top-panel-spacer {
-    display: none;
-  }
-
   .invoice-top-panel-actions {
     justify-content: stretch;
     flex-wrap: wrap;
+  }
+
+  .invoice-top-panel-left {
+    width: 100%;
   }
 
   .invoice-top-panel-select,
