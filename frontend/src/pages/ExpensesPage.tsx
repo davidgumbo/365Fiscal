@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -11,6 +11,7 @@ import {
   Clapperboard,
   Download,
   FileText,
+  Filter,
   LayoutGrid,
   PenLine,
   PieChart,
@@ -219,6 +220,7 @@ export default function ExpensesPage() {
   const [categoryFilter, setCategoryFilter] = useState<string>("");
   const [dateFilter, setDateFilter] = useState<DateFilter>("this_month");
   const [searchQuery, setSearchQuery] = useState("");
+  const [expenseFilterMenuOpen, setExpenseFilterMenuOpen] = useState(false);
   const [showQuickAddModal, setShowQuickAddModal] = useState(false);
   const [quickCategory, setQuickCategory] = useState<string>("Food");
   const [quickAmount, setQuickAmount] = useState<string>("");
@@ -244,6 +246,7 @@ export default function ExpensesPage() {
   const [categoryFormName, setCategoryFormName] = useState("");
   const [transactionsPage, setTransactionsPage] = useState(1);
   const [transactionsPageSize, setTransactionsPageSize] = useState(8);
+  const expenseFilterMenuRef = useRef<HTMLDivElement | null>(null);
 
   const quickCategoryOptions = useMemo(() => {
     const dynamicCategories = categories
@@ -556,6 +559,26 @@ export default function ExpensesPage() {
     setStatusFilter("");
     setSupplierFilter("");
     setSearch("");
+  }, [mainView, subView]);
+
+  useEffect(() => {
+    if (!expenseFilterMenuOpen) return;
+    const handleClick = (event: MouseEvent) => {
+      if (
+        expenseFilterMenuRef.current &&
+        !expenseFilterMenuRef.current.contains(event.target as Node)
+      ) {
+        setExpenseFilterMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [expenseFilterMenuOpen]);
+
+  useEffect(() => {
+    if (!(mainView === "expenses" && subView === "list")) {
+      setExpenseFilterMenuOpen(false);
+    }
   }, [mainView, subView]);
 
   const filteredCategories = useMemo(() => {
@@ -2079,58 +2102,185 @@ export default function ExpensesPage() {
 
               {/* ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â EXPENSES LIST VIEW ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â */}
               {mainView === "expenses" && subView === "list" && (
-                <>
-                  {/* Sub-sidebar for filters */}
-                  <div className="o-sidebar">
-                    <div className="o-sidebar-section expense-filter-section">
-                      <div className="o-sidebar-title">STATUS</div>
-                      {[
-                        { key: "", label: "All" },
-                        { key: "posted", label: "Posted" },
-                        { key: "draft", label: "Draft" },
-                      ].map((item) => (
-                        <div
-                          key={item.key || "all"}
-                          className={`o-sidebar-item ${statusFilter === item.key ? "active" : ""}`}
-                          onClick={() => setStatusFilter(item.key)}
+                <div className="o-main expense-list-page">
+                  <div className="expense-list-toolbar">
+                    <div className="expense-list-search-wrap">
+                      <div className="expense-list-searchbox">
+                        <span className="search-icon">
+                          <Search size={16} />
+                        </span>
+                        <input
+                          type="text"
+                          placeholder="Search expenses..."
+                          value={search}
+                          onChange={(e) => setSearch(e.target.value)}
+                        />
+                        <button
+                          type="button"
+                          className="expense-filter-toggle"
+                          aria-label="Open expense filters"
+                          onClick={() =>
+                            setExpenseFilterMenuOpen((prev) => !prev)
+                          }
                         >
-                          <span>{item.label}</span>
-                          <span className="o-sidebar-count">
-                            {item.key === ""
-                              ? expenses.length
-                              : expenses.filter((e) => e.status === item.key)
-                                  .length}
-                          </span>
-                        </div>
-                      ))}
+                          <Filter size={16} />
+                        </button>
+                        {expenseFilterMenuOpen && (
+                          <div
+                            className="expense-filter-dropdown"
+                            ref={expenseFilterMenuRef}
+                          >
+                            <div className="expense-filter-columns">
+                              <div className="expense-filter-column">
+                                <div className="expense-filter-title">
+                                  Status
+                                </div>
+                                <div className="expense-filter-items">
+                                  {[
+                                    { key: "", label: "All", count: expenses.length },
+                                    {
+                                      key: "posted",
+                                      label: "Posted",
+                                      count: expenses.filter((e) => e.status === "posted").length,
+                                    },
+                                    {
+                                      key: "draft",
+                                      label: "Draft",
+                                      count: expenses.filter((e) => e.status === "draft").length,
+                                    },
+                                  ].map((item) => (
+                                    <button
+                                      key={item.key || "all"}
+                                      type="button"
+                                      className={`expense-filter-chip ${
+                                        statusFilter === item.key
+                                          ? "expense-filter-chip-active"
+                                          : ""
+                                      }`}
+                                      onClick={() => setStatusFilter(item.key)}
+                                    >
+                                      {item.label} ({item.count})
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                              <div className="expense-filter-column">
+                                <div className="expense-filter-title">
+                                  Supplier
+                                </div>
+                                <div className="expense-filter-items">
+                                  <button
+                                    type="button"
+                                    className={`expense-filter-chip ${
+                                      supplierFilter === ""
+                                        ? "expense-filter-chip-active"
+                                        : ""
+                                    }`}
+                                    onClick={() => setSupplierFilter("")}
+                                  >
+                                    All Suppliers
+                                  </button>
+                                  {contacts
+                                    .slice()
+                                    .sort((a, b) => a.name.localeCompare(b.name))
+                                    .map((contact) => (
+                                      <button
+                                        key={contact.id}
+                                        type="button"
+                                        className={`expense-filter-chip ${
+                                          supplierFilter === contact.id
+                                            ? "expense-filter-chip-active"
+                                            : ""
+                                        }`}
+                                        onClick={() =>
+                                          setSupplierFilter(contact.id)
+                                        }
+                                      >
+                                        {contact.name}
+                                      </button>
+                                    ))}
+                                </div>
+                              </div>
+                              <div className="expense-filter-column">
+                                <div className="expense-filter-title">
+                                  Category
+                                </div>
+                                <div className="expense-filter-items">
+                                  <button
+                                    type="button"
+                                    className={`expense-filter-chip ${
+                                      categoryFilter === ""
+                                        ? "expense-filter-chip-active"
+                                        : ""
+                                    }`}
+                                    onClick={() => setCategoryFilter("")}
+                                  >
+                                    All Categories
+                                  </button>
+                                  {categories
+                                    .slice()
+                                    .sort((a, b) => a.name.localeCompare(b.name))
+                                    .map((category) => (
+                                      <button
+                                        key={category.id}
+                                        type="button"
+                                        className={`expense-filter-chip ${
+                                          categoryFilter === category.name
+                                            ? "expense-filter-chip-active"
+                                            : ""
+                                        }`}
+                                        onClick={() =>
+                                          setCategoryFilter(category.name)
+                                        }
+                                      >
+                                        {category.name} (
+                                        {categoryExpenseCount.get(category.name) || 0}
+                                        )
+                                      </button>
+                                    ))}
+                                </div>
+                                {hasActiveFilters && (
+                                  <div className="expense-filter-note">
+                                    <span>Filters applied</span>
+                                    <button
+                                      type="button"
+                                      className="expense-filter-clear-btn"
+                                      onClick={() => {
+                                        setSearch("");
+                                        setSupplierFilter("");
+                                        setStatusFilter("");
+                                        setCategoryFilter("");
+                                        setDateFilter("this_month");
+                                        setExpenseFilterMenuOpen(false);
+                                      }}
+                                    >
+                                      Clear all
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
-
-                    <div className="o-sidebar-section expense-filter-section">
-                      <div className="o-sidebar-title">SUPPLIER</div>
-                      <select
-                        className="o-form-select expense-filter-select"
-                        value={supplierFilter}
-                        onChange={(e) =>
-                          setSupplierFilter(
-                            e.target.value ? Number(e.target.value) : "",
-                          )
-                        }
+                    <div className="expense-list-toolbar-actions">
+                      <button
+                        className="o-btn o-btn-secondary"
+                        onClick={exportCSV}
+                        style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
                       >
-                        <option value="">All Suppliers</option>
-                        {contacts
-                          .slice()
-                          .sort((a, b) => a.name.localeCompare(b.name))
-                          .map((contact) => (
-                            <option key={contact.id} value={contact.id}>
-                              {contact.name}
-                            </option>
-                          ))}
-                      </select>
+                        <Download size={16} />
+                        Export
+                      </button>
+                      <button className="btn-create" onClick={startNew}>
+                        <Plus size={16} />
+                        New Expense
+                      </button>
                     </div>
                   </div>
 
-                  {/* Expenses table */}
-                  <div className="o-main">
+                  <div className="expense-list-table-card">
                     <div className="card shadow-sm">
                       <div className="card-body p-0">
                         <div className="table-responsive">
@@ -2277,7 +2427,7 @@ export default function ExpensesPage() {
                       </div>
                     </div>
                   </div>
-                </>
+                </div>
               )}
 
               {/* ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â SUPPLIERS TABLE VIEW ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â */}
