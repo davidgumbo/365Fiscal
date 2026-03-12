@@ -102,6 +102,7 @@ class POSOrderRefund(BaseModel):
 class POSSessionOpen(BaseModel):
     company_id: int
     device_id: int | None = None
+    till_id: int | None = None
     opening_balance: float = 0
     notes: str = ""
 
@@ -202,6 +203,7 @@ class POSTillCreate(BaseModel):
     sort_order: int = 0
     employee_ids: List[int] = []
     warehouse_id: int | None = None
+    fiscal_device_id: int | None = None
 
 
 class POSTillUpdate(BaseModel):
@@ -210,6 +212,7 @@ class POSTillUpdate(BaseModel):
     sort_order: int | None = None
     employee_ids: List[int] | None = None
     warehouse_id: int | None = None
+    fiscal_device_id: int | None = None
 
 
 class POSTillEmployeeRead(ORMBase):
@@ -219,6 +222,14 @@ class POSTillEmployeeRead(ORMBase):
     is_active: bool
 
 
+class POSTillDeviceRead(ORMBase):
+    id: int
+    device_id: str
+    serial_number: str
+    model: str
+    fiscal_day_status: str
+
+
 class POSTillRead(ORMBase):
     id: int
     company_id: int
@@ -226,7 +237,9 @@ class POSTillRead(ORMBase):
     is_active: bool
     sort_order: int
     warehouse_id: int | None = None
+    fiscal_device_id: int | None = None
     warehouse: WarehouseRead | None = None
+    fiscal_device: POSTillDeviceRead | None = None
     employees: List[POSTillEmployeeRead] = []
     created_at: datetime
     updated_at: datetime

@@ -124,6 +124,19 @@ def ensure_new_columns():
             else:
                 _startup_logger.info(">>> warehouse_id column already exists")
 
+            if "fiscal_device_id" not in till_cols:
+                _startup_logger.info(">>> Adding fiscal_device_id column to pos_tills")
+                conn.execute(text(
+                    "ALTER TABLE pos_tills ADD COLUMN fiscal_device_id INTEGER"
+                ))
+                _startup_logger.info(">>> Adding foreign key fk_pos_tills_fiscal_device_id")
+                conn.execute(text(
+                    "ALTER TABLE pos_tills ADD CONSTRAINT fk_pos_tills_fiscal_device_id FOREIGN KEY (fiscal_device_id) REFERENCES devices(id)"
+                ))
+                _startup_logger.info(">>> fiscal_device_id column added successfully")
+            else:
+                _startup_logger.info(">>> fiscal_device_id column already exists")
+
         _startup_logger.info(">>> ensure_new_columns: COMPLETE")
 
         # Stamp alembic so 'alembic upgrade head' won't re-run this migration

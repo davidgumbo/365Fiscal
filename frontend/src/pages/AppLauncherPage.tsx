@@ -284,7 +284,11 @@ export default function AppLauncherPage() {
   const apps = isAdmin
     ? adminApps
     : portalApps.filter((app) =>
-        allowedPortalApps.length ? allowedPortalApps.includes(app.key) : true,
+        app.key === "settings"
+          ? true
+          : allowedPortalApps.length
+            ? allowedPortalApps.includes(app.key)
+            : true,
       );
   const displayName = me?.email ?? "User";
   const initials = getInitials(displayName);

@@ -251,9 +251,25 @@ def open_session(
     if existing:
         return existing  # return current open session
 
+    resolved_device_id = payload.device_id
+    if payload.till_id is not None:
+        till = (
+            db.query(POSTill)
+            .filter(
+                POSTill.id == payload.till_id,
+                POSTill.company_id == payload.company_id,
+            )
+            .first()
+        )
+        if not till:
+            raise HTTPException(400, "POS till not found")
+        if not till.is_active:
+            raise HTTPException(400, "POS till is inactive")
+        resolved_device_id = till.fiscal_device_id
+
     session = POSSession(
         company_id=payload.company_id,
-        device_id=payload.device_id,
+        device_id=resolved_device_id,
         opened_by_id=user.id,
         name=_next_session_name(db),
         opening_balance=payload.opening_balance,
@@ -1316,12 +1332,24 @@ def create_till(
 ):
     """Create a new POS till and assign employees."""
     ensure_company_access(db, user, payload.company_id)
+    if payload.fiscal_device_id is not None:
+        device = (
+            db.query(Device)
+            .filter(
+                Device.id == payload.fiscal_device_id,
+                Device.company_id == payload.company_id,
+            )
+            .first()
+        )
+        if not device:
+            raise HTTPException(400, "Fiscal device not found for this company")
     till = POSTill(
         company_id=payload.company_id,
         name=payload.name,
         is_active=payload.is_active,
         sort_order=payload.sort_order,
         warehouse_id=payload.warehouse_id,
+        fiscal_device_id=payload.fiscal_device_id,
     )
     # Assign employees
     if payload.employee_ids:
@@ -1364,6 +1392,17 @@ def update_till(
     ensure_company_access(db, user, till.company_id)
     update_data = payload.dict(exclude_unset=True)
     employee_ids = update_data.pop("employee_ids", None)
+    if "fiscal_device_id" in update_data and update_data["fiscal_device_id"] is not None:
+        device = (
+            db.query(Device)
+            .filter(
+                Device.id == update_data["fiscal_device_id"],
+                Device.company_id == till.company_id,
+            )
+            .first()
+        )
+        if not device:
+            raise HTTPException(400, "Fiscal device not found for this company")
     for field, value in update_data.items():
         setattr(till, field, value)
     if employee_ids is not None:

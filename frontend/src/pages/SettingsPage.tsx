@@ -137,6 +137,8 @@ type POSTillItem = {
   updated_at: string;
   warehouse_id: number | null;
   warehouse: Warehouse | null;
+  fiscal_device_id: number | null;
+  fiscal_device: DeviceBasic | null;
 };
 
 // Icon components for professional actions
@@ -224,6 +226,13 @@ export default function SettingsPage() {
   const { me } = useMe();
   const { companies, loading: companiesLoading } = useCompanies();
   const isAdmin = Boolean(me?.is_admin);
+  const allowedPortalApps = useMemo(() => {
+    const apps = me?.companies?.[0]?.portal_apps ?? [];
+    const normalized = apps
+      .map((item) => item.trim().toLowerCase())
+      .filter(Boolean);
+    return normalized.length ? normalized : null;
+  }, [me?.companies]);
   const [companyId, setCompanyId] = useState<number | null>(null);
   const [companyQuery, setCompanyQuery] = useState("");
   const [taxes, setTaxes] = useState<TaxSetting[]>([]);
@@ -331,15 +340,31 @@ export default function SettingsPage() {
     name: string;
     employee_ids: number[];
     warehouse_id: number | null;
+    fiscal_device_id: number | null;
   }>({
     name: "",
     employee_ids: [],
     warehouse_id: null,
+    fiscal_device_id: null,
   });
   const [tillEditing, setTillEditing] = useState<number | null>(null);
   const [tillSaving, setTillSaving] = useState(false);
   const [tillDropdownOpen, setTillDropdownOpen] = useState(false);
   const tillDropdownRef = useRef<HTMLLabelElement>(null);
+
+  const canUsePortalApp = (appKey: string) => {
+    if (isAdmin) return true;
+    if (appKey === "settings") return true;
+    if (!allowedPortalApps) return true;
+    return allowedPortalApps.includes(appKey);
+  };
+
+  const showDocumentSettings =
+    canUsePortalApp("invoices") || canUsePortalApp("quotations");
+  const showInvoiceSettings = canUsePortalApp("invoices");
+  const showTaxSettings =
+    canUsePortalApp("invoices") || canUsePortalApp("purchases");
+  const showPOSSettings = canUsePortalApp("pos");
 
   // Close till dropdown on outside click
   useEffect(() => {
@@ -391,6 +416,31 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
     }
     setActiveSection(me?.is_admin ? "admins" : "users-companies");
   }, [activeTopTab, me?.is_admin]);
+
+  useEffect(() => {
+    if (isAdmin) return;
+    const allowedSections = [
+      "company",
+      "currencies",
+      "users-companies",
+      "subscription",
+      ...(showDocumentSettings ? ["document-layout"] : []),
+      ...(showInvoiceSettings ? ["sequences"] : []),
+      ...(showTaxSettings ? ["zimra-tax"] : []),
+      ...(showPOSSettings ? ["pos-settings"] : []),
+    ];
+    if (!allowedSections.includes(activeSection)) {
+      setActiveTopTab("general");
+      setActiveSection(allowedSections[0] || "company");
+    }
+  }, [
+    activeSection,
+    isAdmin,
+    showDocumentSettings,
+    showInvoiceSettings,
+    showPOSSettings,
+    showTaxSettings,
+  ]);
 
   // Track changes
   useEffect(() => {
@@ -541,7 +591,12 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
         });
         setStatus("Point Of Sales added");
       }
-      setTillForm({ name: "", employee_ids: [], warehouse_id: null });
+      setTillForm({
+        name: "",
+        employee_ids: [],
+        warehouse_id: null,
+        fiscal_device_id: null,
+      });
       setTillEditing(null);
       setTillDropdownOpen(false);
       loadPosTills(companyId);
@@ -1753,33 +1808,39 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
           >
             Company
           </button>
-          <button
-            className={`settings-sidebar-item ${activeSection === "document-layout" ? "active" : ""}`}
-            onClick={() => {
-              setActiveTopTab("general");
-              setActiveSection("document-layout");
-            }}
-          >
-            Document Layout
-          </button>
-          <button
-            className={`settings-sidebar-item ${activeSection === "sequences" ? "active" : ""}`}
-            onClick={() => {
-              setActiveTopTab("general");
-              setActiveSection("sequences");
-            }}
-          >
-            Invoice Settings
-          </button>
-          <button
-            className={`settings-sidebar-item ${activeSection === "zimra-tax" ? "active" : ""}`}
-            onClick={() => {
-              setActiveTopTab("general");
-              setActiveSection("zimra-tax");
-            }}
-          >
-            ZIMRA Taxes
-          </button>
+          {showDocumentSettings && (
+            <button
+              className={`settings-sidebar-item ${activeSection === "document-layout" ? "active" : ""}`}
+              onClick={() => {
+                setActiveTopTab("general");
+                setActiveSection("document-layout");
+              }}
+            >
+              Document Layout
+            </button>
+          )}
+          {showInvoiceSettings && (
+            <button
+              className={`settings-sidebar-item ${activeSection === "sequences" ? "active" : ""}`}
+              onClick={() => {
+                setActiveTopTab("general");
+                setActiveSection("sequences");
+              }}
+            >
+              Invoice Settings
+            </button>
+          )}
+          {showTaxSettings && (
+            <button
+              className={`settings-sidebar-item ${activeSection === "zimra-tax" ? "active" : ""}`}
+              onClick={() => {
+                setActiveTopTab("general");
+                setActiveSection("zimra-tax");
+              }}
+            >
+              ZIMRA Taxes
+            </button>
+          )}
           <button
             className={`settings-sidebar-item ${activeSection === "currencies" ? "active" : ""}`}
             onClick={() => {
@@ -1789,16 +1850,20 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
           >
             Currencies
           </button>
-          <div className="settings-sidebar-title">Point of Sale</div>
-          <button
-            className={`settings-sidebar-item ${activeSection === "pos-settings" ? "active" : ""}`}
-            onClick={() => {
-              setActiveTopTab("general");
-              setActiveSection("pos-settings");
-            }}
-          >
-            POS Configuration
-          </button>
+          {showPOSSettings && (
+            <>
+              <div className="settings-sidebar-title">Point of Sale</div>
+              <button
+                className={`settings-sidebar-item ${activeSection === "pos-settings" ? "active" : ""}`}
+                onClick={() => {
+                  setActiveTopTab("general");
+                  setActiveSection("pos-settings");
+                }}
+              >
+                POS Configuration
+              </button>
+            </>
+          )}
           <div className="settings-sidebar-title">Users &amp; Companies</div>
           <button
             className={`settings-sidebar-item ${activeSection === (me.is_admin ? "admins" : "users-companies") ? "active" : ""}`}
@@ -4939,6 +5004,47 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
                               ))}
                             </select>
                           </label>
+                          <label className="input" style={{ margin: 0 }}>
+                            <span
+                              style={{
+                                fontSize: 11,
+                                fontWeight: 600,
+                                textTransform: "uppercase",
+                                letterSpacing: "0.5px",
+                                color: "var(--slate-500)",
+                              }}
+                            >
+                              Fiscal Device (optional)
+                            </span>
+                            <select
+                              value={tillForm.fiscal_device_id ?? ""}
+                              onChange={(e) =>
+                                setTillForm({
+                                  ...tillForm,
+                                  fiscal_device_id:
+                                    e.target.value === ""
+                                      ? null
+                                      : Number(e.target.value),
+                                })
+                              }
+                              style={{
+                                width: "100%",
+                                padding: "8px 10px",
+                                fontSize: 13,
+                                borderRadius: 6,
+                                border: "1px solid var(--gray-200, #e5e7eb)",
+                                background: "#fff",
+                              }}
+                            >
+                              <option value="">No fiscal device</option>
+                              {devices.map((d) => (
+                                <option key={d.id} value={d.id}>
+                                  {d.model || "Device"} -{" "}
+                                  {d.device_id || d.serial_number}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
                           <div style={{ display: "flex", gap: 6 }}>
                             <button
                               className="primary"
@@ -4974,6 +5080,7 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
                                     name: "",
                                     employee_ids: [],
                                     warehouse_id: null,
+                                    fiscal_device_id: null,
                                   });
                                   setTillDropdownOpen(false);
                                 }}
@@ -5029,6 +5136,20 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
                                   }}
                                 >
                                   Warehouse
+                                </th>
+                                <th
+                                  style={{
+                                    padding: "10px 16px",
+                                    textAlign: "left",
+                                    fontSize: 11,
+                                    fontWeight: 600,
+                                    textTransform: "uppercase",
+                                    letterSpacing: "0.5px",
+                                    color: "var(--slate-400)",
+                                    borderBottom: "1px solid var(--gray-200)",
+                                  }}
+                                >
+                                  Fiscal Device
                                 </th>
                                 <th
                                   style={{
@@ -5158,6 +5279,43 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
                                   <td
                                     style={{
                                       padding: "12px 16px",
+                                      fontSize: 13,
+                                      color: "var(--slate-600)",
+                                      borderBottom: "1px solid var(--gray-100)",
+                                    }}
+                                  >
+                                    {till.fiscal_device ? (
+                                      <div
+                                        style={{
+                                          display: "flex",
+                                          flexDirection: "column",
+                                          gap: 2,
+                                        }}
+                                      >
+                                        <span>
+                                          {till.fiscal_device.model || "Device"}
+                                        </span>
+                                        <span
+                                          style={{
+                                            fontSize: 11,
+                                            color: "var(--slate-400)",
+                                          }}
+                                        >
+                                          {till.fiscal_device.device_id ||
+                                            till.fiscal_device.serial_number}
+                                        </span>
+                                      </div>
+                                    ) : (
+                                      <span
+                                        style={{ color: "var(--slate-400)" }}
+                                      >
+                                        No fiscal device
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td
+                                    style={{
+                                      padding: "12px 16px",
                                       borderBottom: "1px solid var(--gray-100)",
                                     }}
                                   >
@@ -5259,6 +5417,8 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
                                             ),
                                             warehouse_id:
                                               till.warehouse_id ?? null,
+                                            fiscal_device_id:
+                                              till.fiscal_device_id ?? null,
                                           });
                                         }}
                                         style={{

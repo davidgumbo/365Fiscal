@@ -125,6 +125,8 @@ type POSTillInfo = {
   name: string;
   is_active: boolean;
   sort_order: number;
+  fiscal_device_id?: number | null;
+  fiscal_device?: Device | null;
 };
 
 /* ────────────────────────── helpers ────────────────────────── */
@@ -171,6 +173,51 @@ function buildReceiptHtml(
   const companyContacts = [company?.phone, company?.email]
     .filter(Boolean)
     .join("<br>");
+
+  if (!device?.device_id) {
+    return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Receipt - ${order.reference}</title>
+<style>
+  @page { size: 80mm auto; margin: 0; }
+  * { box-sizing: border-box; }
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 12px; width: 80mm; padding: 5mm; color: #111; background: #fff; }
+  .center { text-align: center; }
+  .logo { max-width: 42mm; max-height: 20mm; margin: 0 auto 8px; display: block; }
+  .company { font-size: 12px; line-height: 1.45; }
+  .served { margin-top: 8px; font-size: 12px; }
+  .receipt-no { font-size: 18px; font-weight: 700; margin: 8px 0 14px; }
+  .item { margin-bottom: 12px; }
+  .item-head { display: flex; justify-content: space-between; gap: 10px; font-weight: 700; font-size: 11px; }
+  .item-name { flex: 1; text-transform: uppercase; }
+  .item-meta { margin-top: 4px; font-size: 12px; }
+  .qty-box { display: inline-block; min-width: 32px; padding: 1px 4px; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: 700; }
+  .divider { border-top: 1px dashed #666; margin: 12px 0; }
+  .total { display: flex; justify-content: space-between; font-size: 14px; }
+  .amount { font-weight: 500; }
+</style></head><body>
+  <div class="center">
+    ${company?.logo_data ? `<img class="logo" src="${company.logo_data}" alt="Logo" />` : ""}
+    <div class="company">${company?.name || ""}</div>
+    ${company?.tin ? `<div class="company">Tax ID: ${company.tin}</div>` : ""}
+    ${company?.email ? `<div class="company">${company.email}</div>` : ""}
+    <div class="served">Served by ${order.cashier_name || "Cashier"}</div>
+    <div class="receipt-no">${order.reference.replace(/\D/g, "").slice(-6) || order.id}</div>
+  </div>
+  ${lines
+    .map(
+      (l) => `
+    <div class="item">
+      <div class="item-head">
+        <span class="item-name">${l.description}</span>
+        <span>${order.currency} ${fmt(l.total_price)}</span>
+      </div>
+      <div class="item-meta"><span class="qty-box">${fmt(l.quantity)}</span> x ${order.currency} ${fmt(l.unit_price)} / ${l.uom}</div>
+    </div>`,
+    )
+    .join("")}
+  <div class="divider"></div>
+  <div class="total"><span>TOTAL</span><span class="amount">${order.currency} ${fmt(order.total_amount)}</span></div>
+</body></html>`;
+  }
 
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Receipt - ${order.reference}</title>
 <style>
@@ -554,6 +601,12 @@ export default function POSPage() {
       sortedPosTills.find((till) => till.is_active) || sortedPosTills[0];
     setSelectedTillId(defaultTill.id);
   }, [companyId, selectedTillId, sortedPosTills]);
+
+  useEffect(() => {
+    if (selectedTill?.fiscal_device_id) {
+      setSelectedDeviceId(selectedTill.fiscal_device_id);
+    }
+  }, [selectedTill?.fiscal_device_id]);
 
   const defaultCurrency =
     currencyList.find(
@@ -1156,7 +1209,8 @@ export default function POSPage() {
         method: "POST",
         body: JSON.stringify({
           company_id: companyId,
-          device_id: selectedDeviceId,
+          device_id: selectedTill?.fiscal_device_id ?? selectedDeviceId,
+          till_id: selectedTillId,
           opening_balance: parseFloat(openingBalance) || 0,
         }),
       });

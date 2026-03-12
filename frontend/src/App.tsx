@@ -192,6 +192,7 @@ function AppContent() {
   }, [me?.companies]);
   const navItems = isPortalMode
     ? portalNav.filter((item) => {
+        if (item.to === "/settings") return true;
         if (!allowedPortalApps) return true;
         const appKey = PORTAL_NAV_APP_KEYS[item.to];
         return appKey ? allowedPortalApps.includes(appKey) : true;
