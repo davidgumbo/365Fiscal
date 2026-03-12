@@ -4,8 +4,11 @@ import { useNavigate, useParams } from "react-router-dom";
 import { apiFetch } from "../api";
 import { useMe } from "../hooks/useMe";
 import { useCompanies, Company } from "../hooks/useCompanies";
+import ValidationAlert from "../components/ValidationAlert";
+import ValidatedField from "../components/ValidatedField";
 import {
   getDocumentLinesError,
+  getMissingRequiredFields,
   getRequiredFieldError,
 } from "../utils/formValidation";
 
@@ -188,6 +191,7 @@ export default function PurchasesPage({
     location_id: null as number | null,
   });
   const [lines, setLines] = useState<PurchaseOrderLine[]>([emptyLine()]);
+  const [invalidFields, setInvalidFields] = useState<string[]>([]);
 
   const currencySymbol = companySettings?.currency_symbol || "$";
 
@@ -271,6 +275,7 @@ export default function PurchasesPage({
       warehouse_id: selectedOrder.warehouse_id,
       location_id: selectedOrder.location_id,
     });
+    setInvalidFields([]);
     setLines(
       selectedOrder.lines?.length
         ? selectedOrder.lines.map((line) => {
@@ -302,6 +307,7 @@ export default function PurchasesPage({
     });
     setLines([emptyLine()]);
     setIsEditing(true);
+    setInvalidFields([]);
   };
 
   const updateLine = (index: number, updates: Partial<PurchaseOrderLine>) => {
@@ -511,18 +517,38 @@ export default function PurchasesPage({
       });
   };
 
+  const clearInvalidField = (key: string, value: unknown) => {
+    if (!invalidFields.includes(key)) return;
+    if (value === null || value === undefined) return;
+    if (typeof value === "string" && value.trim().length === 0) return;
+    setInvalidFields((prev) => prev.filter((field) => field !== key));
+  };
+
+  const validatePurchaseRequiredFields = (): boolean => {
+    const requiredFields = [
+      { key: "supplier", label: "Supplier", value: form.supplier_id },
+      { key: "order_date", label: "Order date", value: form.order_date },
+      { key: "currency", label: "Currency", value: form.currency },
+    ];
+    const missingFields = getMissingRequiredFields(requiredFields);
+    if (missingFields.length) {
+      const message = getRequiredFieldError(requiredFields);
+      if (message) {
+        setError(message);
+      }
+      setInvalidFields(missingFields.map((field) => field.key));
+      return false;
+    }
+    setInvalidFields([]);
+    return true;
+  };
+
   const saveOrder = async () => {
     if (!companyId) {
       setError("Please select a company first.");
       return;
     }
-    const requiredError = getRequiredFieldError([
-      { label: "Supplier", value: form.supplier_id },
-      { label: "Order date", value: form.order_date },
-      { label: "Currency", value: form.currency },
-    ]);
-    if (requiredError) {
-      setError(requiredError);
+    if (!validatePurchaseRequiredFields()) {
       return;
     }
     const linesError = getDocumentLinesError(lines);
@@ -798,25 +824,21 @@ export default function PurchasesPage({
   }
 
   return (
-    <div className="purchases-page invoice-form">
-      <div className="page-header">
-        <div className="header-actions">
-          {mode !== "list" && (
-            <button className="outline" onClick={() => navigate("/purchases")}>
-              Back to List
+    <div className="container-fluid py-3 purchases-page invoice-form">
+      {mode !== "list" && (
+        <div className="page-header">
+          <div className="header-actions">
+            <button
+              className="btn btn-sm btn-light border"
+              onClick={() => navigate("/purchases")}
+            >
+              Back
             </button>
-          )}
-        </div>
-      </div>
-
-      {error && (
-        <div className="alert alert-error" style={{ marginBottom: 16 }}>
-          {error}
-          <button onClick={() => setError(null)} style={{ marginLeft: 8 }}>
-            ×
-          </button>
+          </div>
         </div>
       )}
+
+      <ValidationAlert message={error} onClose={() => setError(null)} />
 
       {mode === "list" && (
         <>
@@ -998,10 +1020,93 @@ export default function PurchasesPage({
             </div>
 
             <div>
-              <div className="content-top-bar">
-                <div className="top-search">
-                  <span className="search-icon">
+              <div className="content-top-bar purchases-top-bar">
+                <div className="purchases-search-slot">
+                  <div className="top-search purchases-top-search">
+                    <span className="search-icon">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                      </svg>
+                    </span>
+                    <input
+                      placeholder="Search purchases…"
+                      value={listSearch}
+                      onChange={(e) => setListSearch(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="purchase-actions">
+                  <select
+                    className="form-select purchases-currency-select"
+                    value={listCurrency}
+                    onChange={(e) => setListCurrency(e.target.value)}
+                    aria-label="Filter by currency"
+                  >
+                    <option value="">All currencies</option>
+                    <option value="USD">USD</option>
+                    <option value="ZWG">ZWG</option>
+                  </select>
+                  <button
+                    className="o-btn o-btn-secondary purchases-export-btn"
+                    onClick={() => {
+                      const headers = [
+                        "Reference",
+                        "Supplier",
+                        "Status",
+                        "Paid State",
+                        "Order Date",
+                        "Expected Date",
+                        "Subtotal",
+                        "Tax",
+                        "Total",
+                      ];
+                      const rows = filteredOrders.map((order) => {
+                        const supplier = contacts.find(
+                          (c) => c.id === order.supplier_id,
+                        );
+                        return [
+                          order.reference,
+                          supplier?.name || "",
+                          order.status,
+                          order.paid_state || "unpaid",
+                          toDateInputValue(order.order_date),
+                          toDateInputValue(order.expected_date),
+                          order.subtotal || 0,
+                          order.tax_amount || 0,
+                          order.total_amount || 0,
+                        ];
+                      });
+                      const csvContent = [headers, ...rows]
+                        .map((row) =>
+                          row
+                            .map(
+                              (cell) => `"${String(cell).replace(/"/g, '""')}"`,
+                            )
+                            .join(","),
+                        )
+                        .join("\n");
+                      const blob = new Blob([csvContent], {
+                        type: "text/csv;charset=utf-8;",
+                      });
+                      const link = document.createElement("a");
+                      link.href = URL.createObjectURL(blob);
+                      link.download = `purchases_${
+                        new Date().toISOString().split("T")[0]
+                      }.csv`;
+                      link.click();
+                    }}
+                  >
                     <svg
+                      width="16"
+                      height="16"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
@@ -1009,110 +1114,31 @@ export default function PurchasesPage({
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     >
-                      <circle cx="11" cy="11" r="8" />
-                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" y1="15" x2="12" y2="3" />
                     </svg>
-                  </span>
-                  <input
-                    placeholder="Search purchases…"
-                    value={listSearch}
-                    onChange={(e) => setListSearch(e.target.value)}
-                  />
+                    Export
+                  </button>
+                  <button
+                    className="btn-create purchases-create-btn"
+                    onClick={() => {
+                      startNew();
+                      navigate("/purchases/new");
+                    }}
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <line x1="12" y1="5" x2="12" y2="19" />
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                    New Purchase
+                  </button>
                 </div>
-                <select
-                  className="form-select"
-                  style={{ maxWidth: 160 }}
-                  value={listCurrency}
-                  onChange={(e) => setListCurrency(e.target.value)}
-                  aria-label="Filter by currency"
-                >
-                  <option value="">All currencies</option>
-                  <option value="USD">USD</option>
-                  <option value="ZWG">ZWG</option>
-                </select>
-                <button
-                  className="o-btn o-btn-secondary"
-                  style={{ display: "flex", alignItems: "center", gap: 6 }}
-                  onClick={() => {
-                    const headers = [
-                      "Reference",
-                      "Supplier",
-                      "Status",
-                      "Paid State",
-                      "Order Date",
-                      "Expected Date",
-                      "Subtotal",
-                      "Tax",
-                      "Total",
-                    ];
-                    const rows = filteredOrders.map((order) => {
-                      const supplier = contacts.find(
-                        (c) => c.id === order.supplier_id,
-                      );
-                      return [
-                        order.reference,
-                        supplier?.name || "",
-                        order.status,
-                        order.paid_state || "unpaid",
-                        toDateInputValue(order.order_date),
-                        toDateInputValue(order.expected_date),
-                        order.subtotal || 0,
-                        order.tax_amount || 0,
-                        order.total_amount || 0,
-                      ];
-                    });
-                    const csvContent = [headers, ...rows]
-                      .map((row) =>
-                        row
-                          .map(
-                            (cell) => `"${String(cell).replace(/"/g, '""')}"`,
-                          )
-                          .join(","),
-                      )
-                      .join("\n");
-                    const blob = new Blob([csvContent], {
-                      type: "text/csv;charset=utf-8;",
-                    });
-                    const link = document.createElement("a");
-                    link.href = URL.createObjectURL(blob);
-                    link.download = `purchases_${new Date().toISOString().split("T")[0]}.csv`;
-                    link.click();
-                  }}
-                >
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="7 10 12 15 17 10" />
-                    <line x1="12" y1="15" x2="12" y2="3" />
-                  </svg>
-                  Export
-                </button>
-                <button
-                  className="btn-create"
-                  onClick={() => {
-                    startNew();
-                    navigate("/purchases/new");
-                  }}
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <line x1="12" y1="5" x2="12" y2="19" />
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                  </svg>
-                  New Purchase
-                </button>
               </div>
               <div className="card shadow-sm">
                 <div className="card-body">
@@ -1148,9 +1174,11 @@ export default function PurchasesPage({
                               onClick={() => navigate(`/purchases/${order.id}`)}
                             >
                               <td
+                                className="purchase-reference-cell"
                                 style={{
-                                  fontFamily: "monospace",
+                                  fontFamily: "inherit",
                                   fontSize: 12,
+                                  fontWeight: 500,
                                 }}
                               >
                                 {order.reference}
@@ -1257,9 +1285,62 @@ export default function PurchasesPage({
             )}
             <div className="d-flex flex-wrap justify-content-between align-items-center mb-3">
               <div>
-                <h2 className="mb-1">
-                  {selectedOrder?.reference || "New Purchase"}
-                </h2>
+                <div style={{ display: "flex", alignItems: "top", gap: 8 }}>
+                  <h2 className="mb-1">
+                    {selectedOrder?.reference || "New Purchase"}
+                  </h2>
+                  <div className="form-actions">
+                    {selectedOrderId && (
+                      <button
+                        className="btn btn-outline-secondary btn-sm"
+                        onClick={printOrder}
+                      >
+                        Print
+                      </button>
+                    )}
+                    {canEdit && (
+                      <button
+                        className="btn btn-primary btn-sm"
+                        onClick={saveOrder}
+                        disabled={saving}
+                      >
+                        {saving ? "Saving..." : "Save"}
+                      </button>
+                    )}
+                    {!canEdit && currentStatus === "draft" && (
+                      <button
+                        className="btn btn-outline-secondary btn-sm"
+                        onClick={() => setIsEditing(true)}
+                      >
+                        Edit
+                      </button>
+                    )}
+                    {selectedOrderId && currentStatus === "draft" && (
+                      <button
+                        className="btn btn-success btn-sm"
+                        onClick={confirmOrder}
+                      >
+                        Confirm
+                      </button>
+                    )}
+                    {selectedOrderId && currentStatus === "confirmed" && (
+                      <button
+                        className="btn btn-success btn-sm"
+                        onClick={receiveOrder}
+                      >
+                        Receive
+                      </button>
+                    )}
+                    {selectedOrderId && currentStatus !== "received" && (
+                      <button
+                        className="btn btn-outline-danger btn-sm"
+                        onClick={cancelOrder}
+                      >
+                        Cancel
+                      </button>
+                    )}
+                  </div>
+                </div>
                 <div className="statusbar">
                   {["draft", "confirmed", "received"].map((step) => (
                     <span
@@ -1302,95 +1383,57 @@ export default function PurchasesPage({
                   </div>
                 )}
               </div>
-              <div className="form-actions">
-                {selectedOrderId && (
-                  <button
-                    className="btn btn-outline-secondary btn-sm"
-                    onClick={printOrder}
-                  >
-                    Print
-                  </button>
-                )}
-                {canEdit && (
-                  <button
-                    className="btn btn-primary btn-sm"
-                    onClick={saveOrder}
-                    disabled={saving}
-                  >
-                    {saving ? "Saving..." : "Save"}
-                  </button>
-                )}
-                {!canEdit && currentStatus === "draft" && (
-                  <button
-                    className="btn btn-outline-secondary btn-sm"
-                    onClick={() => setIsEditing(true)}
-                  >
-                    Edit
-                  </button>
-                )}
-                {selectedOrderId && currentStatus === "draft" && (
-                  <button
-                    className="btn btn-success btn-sm"
-                    onClick={confirmOrder}
-                  >
-                    Confirm
-                  </button>
-                )}
-                {selectedOrderId && currentStatus === "confirmed" && (
-                  <button
-                    className="btn btn-success btn-sm"
-                    onClick={receiveOrder}
-                  >
-                    Receive
-                  </button>
-                )}
-                {selectedOrderId && currentStatus !== "received" && (
-                  <button
-                    className="btn btn-outline-danger btn-sm"
-                    onClick={cancelOrder}
-                  >
-                    Cancel
-                  </button>
-                )}
-              </div>
             </div>
 
             <div className="row g-3 mb-4">
               <div className="col-md-6">
-                <label className="form-label fw-semibold">Supplier</label>
-                <select
-                  className="form-select input-underline"
-                  value={form.supplier_id ?? ""}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      supplier_id: Number(e.target.value) || null,
-                    }))
-                  }
-                  disabled={!canEdit}
+                <ValidatedField
+                  label="Supplier"
+                  isInvalid={invalidFields.includes("supplier")}
+                  labelClassName="form-label"
                 >
-                  <option value="">Select supplier</option>
-                  {contacts.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+                  <select
+                    className="form-select input-underline"
+                    value={form.supplier_id ?? ""}
+                    onChange={(e) => {
+                      const supplierId = Number(e.target.value) || null;
+                      setForm((prev) => ({
+                        ...prev,
+                        supplier_id: supplierId,
+                      }));
+                      clearInvalidField("supplier", supplierId);
+                    }}
+                    disabled={!canEdit}
+                  >
+                    <option value="">Select supplier</option>
+                    {contacts.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </ValidatedField>
               </div>
               <div className="col-md-6">
-                <label className="form-label fw-semibold">Order Date</label>
-                <input
-                  type="date"
-                  className="form-control input-underline"
-                  value={form.order_date}
-                  onChange={(e) =>
-                    setForm((prev) => ({ ...prev, order_date: e.target.value }))
-                  }
-                  disabled={!canEdit}
-                />
+                <ValidatedField
+                  label="Order Date"
+                  isInvalid={invalidFields.includes("order_date")}
+                >
+                  <input
+                    type="date"
+                    className="form-control input-underline"
+                    value={form.order_date}
+                    onChange={(e) => {
+                      const { value } = e.target;
+                      setForm((prev) => ({ ...prev, order_date: value }));
+                      clearInvalidField("order_date", value);
+                    }}
+                    disabled={!canEdit}
+                  />
+                </ValidatedField>
               </div>
               <div className="col-md-6">
-                <label className="form-label fw-semibold">Expected Date</label>
+                <label className="form-label ">Expected Date</label>
                 <input
                   type="date"
                   className="form-control input-underline"
@@ -1447,15 +1490,21 @@ export default function PurchasesPage({
                 </select>
               </div>
               <div className="col-md-6">
-                <label className="form-label">Currency</label>
-                <input
-                  className="form-control input-underline"
-                  value={form.currency}
-                  onChange={(e) =>
-                    setForm((prev) => ({ ...prev, currency: e.target.value }))
-                  }
-                  disabled={!canEdit}
-                />
+                <ValidatedField
+                  label="Currency"
+                  isInvalid={invalidFields.includes("currency")}
+                >
+                  <input
+                    className="form-control input-underline"
+                    value={form.currency}
+                    onChange={(e) => {
+                      const { value } = e.target;
+                      setForm((prev) => ({ ...prev, currency: value }));
+                      clearInvalidField("currency", value);
+                    }}
+                    disabled={!canEdit}
+                  />
+                </ValidatedField>
               </div>
               <div className="col-12">
                 <label className="form-label">Notes</label>
