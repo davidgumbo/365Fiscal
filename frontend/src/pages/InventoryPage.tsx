@@ -23,6 +23,7 @@ import {
   X,
   Zap,
   FunnelPlus,
+  LayoutGrid,
 } from "lucide-react";
 import ValidationAlert from "../components/ValidationAlert";
 import ValidatedField from "../components/ValidatedField";
@@ -461,7 +462,7 @@ export default function InventoryPage() {
     const operationsItem = {
       id: "menu-operations",
       label: "OPERATIONS",
-      icon: <OperationsIcon color="var(--violet-500)" />,
+      icon: <LayoutGrid color="var(--violet-500)" />,
       isActive: mainView === "operations",
       onClick: () => {
         setMainView("operations");
@@ -3783,6 +3784,7 @@ export default function InventoryPage() {
                                   ))}
                                 </div>
                               </div>
+
                               <div className="inventory-filter-row">
                                 <div className="inventory-filter-types">
                                   {PRODUCT_TYPES.map((type) => (
