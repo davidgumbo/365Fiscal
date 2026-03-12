@@ -112,20 +112,19 @@
 
 .invoice-top-panel {
   display: grid;
-  grid-template-columns: 160px minmax(320px, 520px) auto;
+  grid-template-columns: auto minmax(320px, 520px) minmax(0, 1fr);
   align-items: center;
   gap: 14px;
-}
-
-.invoice-top-panel-left {
-  display: flex;
-  align-items: center;
 }
 
 .invoice-top-panel-center {
   min-width: 0;
   display: flex;
   justify-content: center;
+}
+
+.invoice-top-panel-right {
+  min-width: 0;
 }
 
 .inventory-main-search-panel.invoice-top-panel .inventory-search-wrapper {
@@ -147,9 +146,13 @@
 .invoice-top-panel-actions {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: 10px;
   min-width: max-content;
+}
+
+.invoice-top-panel-actions-left {
+  justify-content: flex-start;
 }
 
 .invoice-top-panel-select {
@@ -350,6 +353,10 @@
   font-weight: 700;
 }
 
+.invoice-page-shell .invoice-total-negative {
+  color: #ef4444;
+}
+
 .invoice-page-shell .text-muted {
   color: #7b86a8 !important;
 }
@@ -412,15 +419,15 @@
     flex-wrap: wrap;
   }
 
-  .invoice-top-panel-left {
-    width: 100%;
-  }
-
   .invoice-top-panel-select,
   .invoice-top-panel-btn {
     width: 100%;
     max-width: none;
     justify-content: center;
+  }
+
+  .invoice-top-panel-right {
+    display: none;
   }
 
   .invoice-dashboard-select {

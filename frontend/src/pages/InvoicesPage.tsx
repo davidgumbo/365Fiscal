@@ -1729,7 +1729,7 @@ export default function InvoicesPage({
             <Sidebar sections={invoiceSidebarSections} />
             <div className="invoice-dashboard-main">
               <div className="o-control-panel inventory-main-search-panel invoice-top-panel">
-                <div className="invoice-top-panel-left">
+                <div className="invoice-top-panel-actions invoice-top-panel-actions-left">
                   <select
                     className="form-select invoice-top-panel-select"
                     value={listCurrency}
@@ -1740,26 +1740,6 @@ export default function InvoicesPage({
                     <option value="USD">USD</option>
                     <option value="ZWG">ZWG</option>
                   </select>
-                </div>
-                <div className="invoice-top-panel-center">
-                  <div className="inventory-search-wrapper">
-                    <div className="inventory-search-inner">
-                      <div className="inventory-centered-searchbox">
-                        <div className="o-searchbox">
-                          <span className="o-searchbox-icon">
-                            <Search size={16} />
-                          </span>
-                          <input
-                            placeholder="Search invoices..."
-                            value={listSearch}
-                            onChange={(e) => setListSearch(e.target.value)}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="o-control-panel-right invoice-top-panel-actions">
                   <button
                     className="o-btn o-btn-secondary invoice-top-panel-btn"
                     onClick={() => {
@@ -1830,6 +1810,25 @@ export default function InvoicesPage({
                     <span>New Invoice</span>
                   </button>
                 </div>
+                <div className="invoice-top-panel-center">
+                  <div className="inventory-search-wrapper">
+                    <div className="inventory-search-inner">
+                      <div className="inventory-centered-searchbox">
+                        <div className="o-searchbox">
+                          <span className="o-searchbox-icon">
+                            <Search size={16} />
+                          </span>
+                          <input
+                            placeholder="Search invoices..."
+                            value={listSearch}
+                            onChange={(e) => setListSearch(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="invoice-top-panel-right" />
               </div>
               <div className="o-main inventory-view-main">
                 <div className="card shadow-sm card-bg-shadow invoice-list-card">
@@ -1931,7 +1930,9 @@ export default function InvoicesPage({
                                     )}
                                   </span>
                                 </td>
-                                <td className="text-end fw-semibold">
+                                <td
+                                  className={`text-end fw-semibold ${inv.total_amount < 0 ? "invoice-total-negative" : ""}`}
+                                >
                                   {formatCurrency(
                                     inv.total_amount || 0,
                                     inv.currency || "USD",
