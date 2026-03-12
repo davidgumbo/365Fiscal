@@ -1124,12 +1124,13 @@ textarea {
   text-align: left;
   padding: 12px 16px;
   border-bottom: 1px solid var(--slate-100);
-  font-size: 13px;
+  font-size: 14px;
   vertical-align: middle;
+  line-height: 1.45;
 }
 
 .table th {
-  font-size: 11px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.6px;
   color: var(--slate-500);
@@ -1190,7 +1191,7 @@ thead.table-light {
 thead.table-light th {
   background: var(--slate-50) !important;
   color: var(--slate-500) !important;
-  font-size: 11px !important;
+  font-size: 12px !important;
   font-weight: 700 !important;
   text-transform: uppercase !important;
   letter-spacing: 0.6px !important;
@@ -1236,7 +1237,7 @@ thead.table-light th {
 }
 
 .table td small.text-muted {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--slate-400);
 }
 
@@ -3459,7 +3460,7 @@ button.danger:hover {
 .data-table th {
   text-align: left;
   padding: 12px 16px;
-  font-size: 0.75rem;
+  font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -3471,7 +3472,8 @@ button.danger:hover {
 .data-table td {
   padding: 14px 16px;
   border-bottom: 1px solid var(--stroke);
-  font-size: 0.875rem;
+  font-size: 14px;
+  line-height: 1.45;
 }
 
 .data-table tbody tr:hover {
@@ -5658,7 +5660,7 @@ button.danger:hover {
 .o-list-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .o-list-table thead {
@@ -5672,6 +5674,9 @@ button.danger:hover {
   text-align: left;
   padding: 8px 12px;
   font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   color: var(--ink);
   border-bottom: 2px solid var(--zinc-200);
   white-space: nowrap;
@@ -5689,6 +5694,8 @@ button.danger:hover {
   padding: 8px 12px;
   border-bottom: 1px solid var(--gray-100);
   vertical-align: middle;
+  font-size: 14px;
+  line-height: 1.45;
 }
 
 .o-list-table tbody tr {
@@ -6257,6 +6264,90 @@ button.danger:hover {
   box-shadow: var(--shadow-soft);
 }
 
+.report-filter-bar {
+  display: grid;
+  grid-template-columns: minmax(320px, auto) minmax(320px, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
+  border: 1px solid var(--stroke);
+  border-radius: 16px;
+  box-shadow: var(--shadow-soft);
+}
+
+.page-content .report-filter-bar {
+  top: 0;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
+}
+
+.report-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.report-filter-group-dates {
+  justify-content: flex-start;
+}
+
+.report-filter-group-actions {
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.report-filter-group-currency {
+  justify-content: flex-end;
+}
+
+.report-filter-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.report-filter-input,
+.report-filter-select {
+  height: 40px;
+  min-width: 150px;
+  padding: 0 14px;
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+  background: var(--white-500);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.report-filter-input:focus,
+.report-filter-select:focus {
+  outline: none;
+  border-color: var(--blue-500);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.report-filter-select {
+  min-width: 180px;
+  cursor: pointer;
+}
+
+.report-filter-bar .o-btn {
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: none;
+}
+
 .report-tabs {
   display: flex;
   gap: 6px;
@@ -6442,12 +6533,13 @@ button.danger:hover {
 .report-table td {
   text-align: left;
   padding: 10px 12px;
-  font-size: 13px;
+  font-size: 14px;
   border-bottom: 1px solid var(--stroke-light);
+  line-height: 1.45;
 }
 
 .report-table th {
-  font-size: 11px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.4px;
   color: var(--muted);
@@ -6711,6 +6803,26 @@ button.danger:hover {
   .reports-toolbar {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .report-filter-bar {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    padding: 14px;
+  }
+
+  .report-filter-group,
+  .report-filter-group-dates,
+  .report-filter-group-actions,
+  .report-filter-group-currency {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .report-filter-input,
+  .report-filter-select {
+    min-width: 0;
+    width: 100%;
   }
   
   .date-range {
@@ -7957,7 +8069,7 @@ button.danger:hover {
 
 .dashboard-table th {
   text-align: left;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--ink-light);
   text-transform: uppercase;
@@ -7968,7 +8080,8 @@ button.danger:hover {
 
 .dashboard-table td {
   padding: 12px;
-  font-size: 1rem;
+  font-size: 14px;
+  line-height: 1.45;
   color: var(--ink);
   border-bottom: 1px solid var(--stroke-light);
 }
@@ -8370,6 +8483,11 @@ button.danger:hover {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--muted);
+}
+
+.data-table td {
+  font-size: 14px;
+  line-height: 1.45;
 }
 
 .data-table tbody tr:hover {

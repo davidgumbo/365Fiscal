@@ -2958,30 +2958,28 @@ export default function ReportsPage() {
 
         <div>
           {/* Top bar with date range and actions */}
-          <div className="content-top-bar">
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <label style={{ fontSize: 13, fontWeight: 500 }}>From:</label>
+          <div className="content-top-bar report-filter-bar">
+            <div className="report-filter-group report-filter-group-dates">
+              <label className="report-filter-label">From</label>
               <input
                 type="date"
-                className="form-control form-control-sm"
-                style={{ width: 140 }}
+                className="report-filter-input"
                 value={dateRange.from}
                 onChange={(e) =>
                   setDateRange((prev) => ({ ...prev, from: e.target.value }))
                 }
               />
-              <label style={{ fontSize: 13, fontWeight: 500 }}>To:</label>
+              <label className="report-filter-label">To</label>
               <input
                 type="date"
-                className="form-control form-control-sm"
-                style={{ width: 140 }}
+                className="report-filter-input"
                 value={dateRange.to}
                 onChange={(e) =>
                   setDateRange((prev) => ({ ...prev, to: e.target.value }))
                 }
               />
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div className="report-filter-group report-filter-group-actions">
               <button
                 className={`o-btn ${loading ? "o-btn-primary" : "o-btn-secondary"}`}
                 style={{ display: "flex", alignItems: "center", gap: 6 }}
@@ -3051,18 +3049,10 @@ export default function ReportsPage() {
                 Export PDF
               </button>
             </div>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                marginLeft: "auto",
-              }}
-            >
-              <label style={{ fontSize: 13, fontWeight: 500 }}>Currency:</label>
+            <div className="report-filter-group report-filter-group-currency">
+              <label className="report-filter-label">Currency</label>
               <select
-                className="form-select form-select-sm"
-                style={{ width: 160 }}
+                className="report-filter-select"
                 value={reportCurrency}
                 onChange={(e) =>
                   setReportCurrency(normalizeCurrency(e.target.value))
