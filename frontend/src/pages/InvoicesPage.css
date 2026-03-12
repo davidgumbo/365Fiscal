@@ -110,6 +110,45 @@
   min-width: 0;
 }
 
+.invoice-top-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 520px) minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+}
+
+.invoice-top-panel-spacer {
+  min-width: 0;
+}
+
+.invoice-top-panel-center {
+  min-width: 0;
+}
+
+.invoice-top-panel .inventory-search-wrapper {
+  position: static;
+  transform: none;
+  width: 100%;
+}
+
+.invoice-top-panel-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: 0;
+}
+
+.invoice-top-panel-select {
+  max-width: 160px;
+}
+
+.invoice-top-panel-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .content-top-bar.invoice-dashboard-topbar {
   display: flex;
   flex-direction: column;
@@ -346,6 +385,26 @@
 }
 
 @media (max-width: 900px) {
+  .invoice-top-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .invoice-top-panel-spacer {
+    display: none;
+  }
+
+  .invoice-top-panel-actions {
+    justify-content: stretch;
+    flex-wrap: wrap;
+  }
+
+  .invoice-top-panel-select,
+  .invoice-top-panel-btn {
+    width: 100%;
+    max-width: none;
+    justify-content: center;
+  }
+
   .invoice-dashboard-select {
     width: 180px;
     font-size: 14px;

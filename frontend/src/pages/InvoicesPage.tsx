@@ -1729,26 +1729,28 @@ export default function InvoicesPage({
             <Sidebar sections={invoiceSidebarSections} />
             <div className="invoice-dashboard-main">
               <div className="o-control-panel inventory-main-search-panel invoice-top-panel">
-                <div className="inventory-search-wrapper">
-                  <div className="inventory-search-inner">
-                    <div className="inventory-centered-searchbox">
-                      <div className="o-searchbox">
-                        <span className="o-searchbox-icon">
-                          <Search size={16} />
-                        </span>
-                        <input
-                          placeholder="Search invoices..."
-                          value={listSearch}
-                          onChange={(e) => setListSearch(e.target.value)}
-                        />
+                <div className="invoice-top-panel-spacer" />
+                <div className="invoice-top-panel-center">
+                  <div className="inventory-search-wrapper">
+                    <div className="inventory-search-inner">
+                      <div className="inventory-centered-searchbox">
+                        <div className="o-searchbox">
+                          <span className="o-searchbox-icon">
+                            <Search size={16} />
+                          </span>
+                          <input
+                            placeholder="Search invoices..."
+                            value={listSearch}
+                            onChange={(e) => setListSearch(e.target.value)}
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-                <div className="o-control-panel-right">
+                <div className="o-control-panel-right invoice-top-panel-actions">
                   <select
-                    className="form-select"
-                    style={{ maxWidth: 160 }}
+                    className="form-select invoice-top-panel-select"
                     value={listCurrency}
                     onChange={(e) => setListCurrency(e.target.value)}
                     aria-label="Filter by currency"
@@ -1758,8 +1760,7 @@ export default function InvoicesPage({
                     <option value="ZWG">ZWG</option>
                   </select>
                   <button
-                    className="o-btn o-btn-secondary"
-                    style={{ display: "flex", alignItems: "center", gap: 6 }}
+                    className="o-btn o-btn-secondary invoice-top-panel-btn"
                     onClick={() => {
                       const headers = [
                         "Reference",
@@ -1818,8 +1819,7 @@ export default function InvoicesPage({
                     <span>Export</span>
                   </button>
                   <button
-                    className="o-btn o-btn-primary"
-                    style={{ display: "flex", alignItems: "center", gap: 6 }}
+                    className="o-btn o-btn-primary invoice-top-panel-btn"
                     onClick={() => {
                       beginNew();
                       navigate("/invoices/new");
