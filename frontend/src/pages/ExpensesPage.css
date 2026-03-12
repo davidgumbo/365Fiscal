@@ -224,6 +224,65 @@
   overflow: hidden;
 }
 
+.expense-suppliers-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-self: flex-start;
+}
+
+.expense-suppliers-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  border: 1px solid #dfe4f2;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+  box-shadow: 0 12px 30px rgba(33, 45, 96, 0.06);
+}
+
+.expense-suppliers-search {
+  flex: 1;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 0 14px;
+  border: 1px solid #d8dfef;
+  border-radius: 14px;
+  background: #fff;
+  color: #7380a5;
+}
+
+.expense-suppliers-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: #1d2852;
+  font-size: 14px;
+  font-weight: 600;
+  outline: none;
+}
+
+.expense-suppliers-search input::placeholder {
+  color: #8a95b8;
+}
+
+.expense-suppliers-create-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 16px;
+  border-radius: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .expense-suppliers-table th {
   background: #f7f9ff;
 }
@@ -265,6 +324,20 @@
   font-weight: 600;
 }
 
+.expense-supplier-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: #eef4ff;
+  color: #1d4ed8;
+  font-size: 13px;
+  font-weight: 800;
+}
+
 .expense-suppliers-actions-cell {
   text-align: right;
 }
@@ -274,8 +347,25 @@
   align-items: center;
   gap: 8px;
   min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid #d7deee;
+  border-radius: 12px;
+  background: #fff;
+  color: #334155;
   border-radius: 12px;
   font-weight: 700;
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.expense-suppliers-view-btn:hover {
+  border-color: #93c5fd;
+  background: #eff6ff;
+  color: #1d4ed8;
+  transform: translateY(-1px);
 }
 
 .expense-suppliers-empty-cell {
@@ -313,6 +403,18 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+@media (max-width: 900px) {
+  .expense-suppliers-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .expense-suppliers-create-btn {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 .expense-dashboard-section-row {

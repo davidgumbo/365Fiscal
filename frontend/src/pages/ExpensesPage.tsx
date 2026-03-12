@@ -1998,7 +1998,7 @@ export default function ExpensesPage() {
                 rowGap: 12,
               }}
             >
-              {subView !== "form" && (
+              {subView !== "form" && mainView !== "suppliers" && (
                 <div className="content-top-bar" style={{ width: "100%", flex: "1 1 100%" }}>
                   <div className="top-search">
                     <span className="search-icon">
@@ -2017,11 +2017,9 @@ export default function ExpensesPage() {
                     <input
                       type="text"
                       placeholder={
-                        mainView === "suppliers"
-                          ? "Search suppliers..."
-                          : mainView === "categories"
-                            ? "Search categories..."
-                            : "Search expenses..."
+                        mainView === "categories"
+                          ? "Search categories..."
+                          : "Search expenses..."
                       }
                       value={mainView === "expenses" ? search : searchQuery}
                       onChange={(e) =>
@@ -2074,14 +2072,6 @@ export default function ExpensesPage() {
                       onClick={() => openCategoryModal()}
                     >
                       + New Category
-                    </button>
-                  )}
-                  {mainView === "suppliers" && (
-                    <button
-                      className="o-btn o-btn-primary"
-                      onClick={() => navigate("/contacts/new")}
-                    >
-                      + Add Supplier
                     </button>
                   )}
                 </div>
@@ -2322,17 +2312,36 @@ export default function ExpensesPage() {
 
               {/* ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â SUPPLIERS TABLE VIEW ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â */}
               {mainView === "suppliers" && subView === "list" && (
-                <div className="o-main" style={{ width: "100%" }}>
+                <div className="o-main expense-suppliers-page" style={{ width: "100%" }}>
+                  <div className="expense-suppliers-toolbar">
+                    <label className="expense-suppliers-search">
+                      <Search size={16} />
+                      <input
+                        type="text"
+                        placeholder="Search suppliers..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                    </label>
+                    <button
+                      className="o-btn o-btn-primary expense-suppliers-create-btn"
+                      onClick={() => navigate("/contacts/new")}
+                    >
+                      <Plus size={16} />
+                      Add Supplier
+                    </button>
+                  </div>
+
                   <div className="o-list-view expense-suppliers-list-view">
                     <table className="o-list-table expense-suppliers-table">
                       <thead>
                         <tr>
                           <th>Supplier</th>
-                          <th className="text-end">Expenses</th>
+                          <th>Expenses</th>
                           <th className="text-end">Subtotal</th>
                           <th className="text-end">VAT</th>
                           <th className="text-end">Total</th>
-                          <th style={{ width: 140 }}>Actions</th>
+                          <th style={{ width: 160 }}>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -2353,7 +2362,11 @@ export default function ExpensesPage() {
                                 </div>
                               </div>
                             </td>
-                            <td className="text-end">{s.expenseCount}</td>
+                            <td>
+                              <span className="expense-supplier-count-badge">
+                                {s.expenseCount}
+                              </span>
+                            </td>
                             <td className="text-end">
                               {formatCurrency(s.subtotal, "USD")}
                             </td>
@@ -2361,14 +2374,14 @@ export default function ExpensesPage() {
                               {formatCurrency(s.tax, "USD")}
                             </td>
                             <td
-                              className="text-end"
-                              style={{ fontWeight: 600 }}
+                              className={`text-end ${s.total < 0 ? "negative-amount" : ""}`}
+                              style={{ fontWeight: 700 }}
                             >
                               {formatCurrency(s.total, "USD")}
                             </td>
                             <td className="expense-suppliers-actions-cell">
                               <button
-                                className="o-btn o-btn-secondary expense-suppliers-view-btn"
+                                className="expense-suppliers-view-btn"
                                 onClick={() => {
                                   setSupplierFilter(s.id);
                                   setMainView("expenses");
@@ -2396,8 +2409,7 @@ export default function ExpensesPage() {
                                   </div>
                                   <strong>No suppliers found</strong>
                                   <span>
-                                    Add a supplier to start tracking expense
-                                    history.
+                                    Add a supplier to start tracking expense history.
                                   </span>
                                 </div>
                               ) : (
