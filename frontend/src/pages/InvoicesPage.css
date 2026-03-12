@@ -158,7 +158,8 @@
   white-space: nowrap;
 }
 
-.invoice-detail-btn {
+.invoice-page-shell .invoice-detail-actions .invoice-detail-btn,
+button.invoice-detail-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -175,19 +176,21 @@
     box-shadow 0.18s ease;
 }
 
-.invoice-detail-btn:hover:not(:disabled) {
+.invoice-page-shell .invoice-detail-actions .invoice-detail-btn:hover:not(:disabled),
+button.invoice-detail-btn:hover:not(:disabled) {
   box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
 }
 
-.invoice-detail-btn:disabled {
+.invoice-page-shell .invoice-detail-actions .invoice-detail-btn:disabled,
+button.invoice-detail-btn:disabled {
   opacity: 0.55;
   box-shadow: none;
 }
 
 .invoice-detail-btn-primary {
-  background: #3166e3;
-  border-color: #3166e3;
-  color: #fff;
+  background: #3166e3 !important;
+  border-color: #3166e3 !important;
+  color: #fff !important;
 }
 
 .invoice-detail-btn-primary:hover:not(:disabled) {
@@ -197,9 +200,9 @@
 }
 
 .invoice-detail-btn-success {
-  background: #e8f8ef;
-  border-color: #bde9ce;
-  color: #137a43;
+  background: #e8f8ef !important;
+  border-color: #bde9ce !important;
+  color: #137a43 !important;
 }
 
 .invoice-detail-btn-success:hover:not(:disabled) {
@@ -209,9 +212,9 @@
 }
 
 .invoice-detail-btn-success-soft {
-  background: #eefaf3;
-  border-color: #ccebd9;
-  color: #177245;
+  background: #eefaf3 !important;
+  border-color: #ccebd9 !important;
+  color: #177245 !important;
 }
 
 .invoice-detail-btn-success-soft:hover:not(:disabled) {
@@ -221,9 +224,9 @@
 }
 
 .invoice-detail-btn-warning {
-  background: #fff5e6;
-  border-color: #ffd7a1;
-  color: #b76a00;
+  background: #fff5e6 !important;
+  border-color: #ffd7a1 !important;
+  color: #b76a00 !important;
 }
 
 .invoice-detail-btn-warning:hover:not(:disabled) {
@@ -233,9 +236,9 @@
 }
 
 .invoice-detail-btn-info {
-  background: #eef4ff;
-  border-color: #cddcff;
-  color: #2258d1;
+  background: #eef4ff !important;
+  border-color: #cddcff !important;
+  color: #2258d1 !important;
 }
 
 .invoice-detail-btn-info:hover:not(:disabled) {
@@ -245,9 +248,9 @@
 }
 
 .invoice-detail-btn-danger-soft {
-  background: #fff1f2;
-  border-color: #fecdd3;
-  color: #be123c;
+  background: #fff1f2 !important;
+  border-color: #fecdd3 !important;
+  color: #be123c !important;
 }
 
 .invoice-detail-btn-danger-soft:hover:not(:disabled) {
@@ -257,9 +260,9 @@
 }
 
 .invoice-detail-btn-neutral {
-  background: #fff;
-  border-color: #d6deea;
-  color: #475569;
+  background: #fff !important;
+  border-color: #d6deea !important;
+  color: #475569 !important;
 }
 
 .invoice-detail-btn-neutral:hover:not(:disabled) {

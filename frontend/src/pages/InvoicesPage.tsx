@@ -1331,6 +1331,21 @@ export default function InvoicesPage({
   }, [selectedInvoiceId, newMode]);
 
   const canEdit = isEditing && statusLabel === "draft" && !isCreditNote;
+  const hasFiscalDevice =
+    devices.length > 0 || Boolean(editDeviceId ?? selectedInvoice?.device_id);
+  const showEditAction = statusLabel === "draft";
+  const showPostAction = statusLabel === "draft";
+  const showFiscalizeAction =
+    hasFiscalDevice && (statusLabel === "posted" || statusLabel === "paid");
+  const showResetAction =
+    statusLabel === "posted" || statusLabel === "fiscalized";
+  const showRegisterPaymentAction =
+    !isCreditNote && (statusLabel === "posted" || statusLabel === "fiscalized");
+  const showCreditNoteAction =
+    !isCreditNote &&
+    (statusLabel === "posted" ||
+      statusLabel === "paid" ||
+      statusLabel === "fiscalized");
 
   const taxBreakdown = useMemo(() => {
     const map = new Map<number, number>();
@@ -2044,7 +2059,7 @@ export default function InvoicesPage({
                 )}
               </div>
             )}
-            <div className="d-flex flex-wrap gap-1">
+            <div className="d-flex flex-wrap gap-2 invoice-detail-actions">
               {newMode ? (
                 <>
                   <button
@@ -2079,7 +2094,7 @@ export default function InvoicesPage({
                 </>
               ) : (
                 <>
-                  {statusLabel === "draft" && (
+                  {showEditAction && (
                     <button
                       className="btn btn-sm invoice-detail-btn invoice-detail-btn-primary"
                       onClick={() => setIsEditing(true)}
@@ -2087,51 +2102,52 @@ export default function InvoicesPage({
                       Edit
                     </button>
                   )}
-                  <button
-                    className="btn btn-sm invoice-detail-btn invoice-detail-btn-success"
-                    onClick={postInvoice}
-                    disabled={statusLabel !== "draft"}
-                  >
-                    Post
-                  </button>
-                  <button
-                    className="btn btn-sm invoice-detail-btn invoice-detail-btn-warning"
-                    onClick={fiscalizeInvoice}
-                    disabled={
-                      statusLabel !== "posted" && statusLabel !== "paid"
-                    }
-                  >
-                    Fiscalize
-                  </button>
-                  <button
-                    className="btn btn-sm invoice-detail-btn invoice-detail-btn-neutral"
-                    onClick={resetInvoice}
-                    disabled={
-                      statusLabel !== "posted" && statusLabel !== "fiscalized"
-                    }
-                  >
-                    Reset
-                  </button>
+                  {showPostAction && (
+                    <button
+                      className="btn btn-sm invoice-detail-btn invoice-detail-btn-success"
+                      onClick={postInvoice}
+                    >
+                      Post
+                    </button>
+                  )}
+                  {showFiscalizeAction && (
+                    <button
+                      className="btn btn-sm invoice-detail-btn invoice-detail-btn-warning"
+                      onClick={fiscalizeInvoice}
+                    >
+                      Fiscalize
+                    </button>
+                  )}
+                  {showResetAction && (
+                    <button
+                      className="btn btn-sm invoice-detail-btn invoice-detail-btn-neutral"
+                      onClick={resetInvoice}
+                    >
+                      Reset
+                    </button>
+                  )}
                   <button
                     className="btn btn-sm invoice-detail-btn invoice-detail-btn-info"
                     onClick={printInvoice}
                   >
                     Print PDF
                   </button>
-                  <button
-                    className="btn btn-sm invoice-detail-btn invoice-detail-btn-success-soft"
-                    onClick={() => setPaymentOpen(true)}
-                    disabled={statusLabel === "draft"}
-                  >
-                    Register Payment
-                  </button>
-                  <button
-                    className="btn btn-sm invoice-detail-btn invoice-detail-btn-danger-soft"
-                    onClick={createCreditNote}
-                    disabled={statusLabel === "draft" || isCreditNote}
-                  >
-                    Credit Note
-                  </button>
+                  {showRegisterPaymentAction && (
+                    <button
+                      className="btn btn-sm invoice-detail-btn invoice-detail-btn-success-soft"
+                      onClick={() => setPaymentOpen(true)}
+                    >
+                      Register Payment
+                    </button>
+                  )}
+                  {showCreditNoteAction && (
+                    <button
+                      className="btn btn-sm invoice-detail-btn invoice-detail-btn-danger-soft"
+                      onClick={createCreditNote}
+                    >
+                      Credit Note
+                    </button>
+                  )}
                 </>
               )}
             </div>
