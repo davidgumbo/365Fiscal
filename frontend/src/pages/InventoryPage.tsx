@@ -3746,47 +3746,44 @@ export default function InventoryPage() {
                                     </button>
                                   ))}
                                 </div>
-                                <div className="inventory-filter-column">
-                                  <div className="inventory-filter-title">
-                                    Location
-                                  </div>
-                                  <div className="inventory-filter-items">
+                              </div>
+                              <div className="inventory-filter-column">
+                                <div className="inventory-filter-title">
+                                  Location
+                                </div>
+                                <div className="inventory-filter-items">
+                                  <button
+                                    type="button"
+                                    className={`inventory-filter-chip ${
+                                      filterLocationId === null
+                                        ? "inventory-filter-chip-active"
+                                        : ""
+                                    }`}
+                                    onClick={() => setFilterLocationId(null)}
+                                  >
+                                    {filterWarehouseId !== null
+                                      ? `All Locations (${productFilterLocations.length})`
+                                      : `All Locations (${locations.length})`}
+                                  </button>
+                                  {productFilterLocations.map((location) => (
                                     <button
+                                      key={location.id}
                                       type="button"
                                       className={`inventory-filter-chip ${
-                                        filterLocationId === null
+                                        filterLocationId === location.id
                                           ? "inventory-filter-chip-active"
                                           : ""
                                       }`}
-                                      onClick={() => setFilterLocationId(null)}
+                                      onClick={() =>
+                                        setFilterLocationId(location.id)
+                                      }
                                     >
-                                      {filterWarehouseId !== null
-                                        ? `All Locations (${productFilterLocations.length})`
-                                        : `All Locations (${locations.length})`}
+                                      {location.name}
                                     </button>
-                                    {productFilterLocations.map((location) => (
-                                      <button
-                                        key={location.id}
-                                        type="button"
-                                        className={`inventory-filter-chip ${
-                                          filterLocationId === location.id
-                                            ? "inventory-filter-chip-active"
-                                            : ""
-                                        }`}
-                                        onClick={() =>
-                                          setFilterLocationId(location.id)
-                                        }
-                                      >
-                                        {location.name}
-                                      </button>
-                                    ))}
-                                  </div>
+                                  ))}
                                 </div>
                               </div>
                               <div className="inventory-filter-row">
-                                <div className="inventory-filter-title">
-                                  Product Type
-                                </div>
                                 <div className="inventory-filter-types">
                                   {PRODUCT_TYPES.map((type) => (
                                     <div
