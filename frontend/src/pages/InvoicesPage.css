@@ -276,15 +276,15 @@
   transition: background-color 160ms ease;
 }
 
-.invoice-page-shell .table-hover tbody tr:nth-child(odd) {
+.invoice-page-shell .table-hover tbody tr:nth-child(odd) td {
   background: #ffffff;
 }
 
-.invoice-page-shell .table-hover tbody tr:nth-child(even) {
+.invoice-page-shell .table-hover tbody tr:nth-child(even) td {
   background: #f7f8fb;
 }
 
-.invoice-page-shell .table-hover tbody tr:hover {
+.invoice-page-shell .table-hover tbody tr:hover td {
   background: #eef3f9;
 }
 

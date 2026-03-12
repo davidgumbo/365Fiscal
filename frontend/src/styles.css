@@ -1143,15 +1143,15 @@ textarea {
   transition: background-color 0.15s ease;
 }
 
-.table tbody tr:nth-child(odd) {
+.table tbody tr:nth-child(odd) td {
   background: var(--white-500);
 }
 
-.table tbody tr:nth-child(even) {
+.table tbody tr:nth-child(even) td {
   background: var(--slate-50);
 }
 
-.table tbody tr:hover {
+.table tbody tr:hover td {
   background: #eef3f9;
 }
 
