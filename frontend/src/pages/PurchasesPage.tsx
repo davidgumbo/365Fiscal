@@ -1170,6 +1170,7 @@ export default function PurchasesPage({
                               onClick={() => navigate(`/purchases/${order.id}`)}
                             >
                               <td
+                                className="purchase-reference-cell"
                                 style={{
                                   fontFamily: "inherit",
                                   fontSize: 12,

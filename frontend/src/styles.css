@@ -1163,6 +1163,13 @@ textarea {
   cursor: pointer;
 }
 
+.purchase-reference-cell {
+  font-family: inherit !important;
+  font-weight: 500;
+  letter-spacing: normal;
+  font-variant-numeric: normal;
+}
+
 .table-group td {
   background: var(--slate-50);
   font-weight: 600;
