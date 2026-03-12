@@ -1729,110 +1729,112 @@ export default function InvoicesPage({
             <Sidebar sections={invoiceSidebarSections} />
             <div className="invoice-dashboard-main">
               <div className="o-main inventory-view-main">
-                <div className="inventory-main-search-panel invoice-top-panel">
-                  <div className="invoice-top-panel-actions invoice-top-panel-actions-left">
-                    <select
-                      className="form-select invoice-top-panel-select"
-                      value={listCurrency}
-                      onChange={(e) => setListCurrency(e.target.value)}
-                      aria-label="Filter by currency"
-                    >
-                      <option value="">All currencies</option>
-                      <option value="USD">USD</option>
-                      <option value="ZWG">ZWG</option>
-                    </select>
-                    <button
-                      className="o-btn o-btn-secondary invoice-top-panel-btn"
-                      onClick={() => {
-                        const headers = [
-                          "Reference",
-                          "Type",
-                          "Customer",
-                          "Date",
-                          "Status",
-                          "Payment",
-                          "Subtotal",
-                          "Tax",
-                          "Total",
-                          "Paid",
-                          "Due",
-                        ];
-                        const rows = invoices.map((inv) => {
-                          const cust = contactById.get(inv.customer_id ?? 0);
-                          return [
-                            inv.reference,
-                            inv.invoice_type === "credit_note"
-                              ? "Credit Note"
-                              : "Invoice",
-                            cust?.name || "",
-                            inv.invoice_date
-                              ? new Date(inv.invoice_date).toLocaleDateString()
-                              : "",
-                            inv.status,
-                            getPaymentStatus(inv.amount_paid, inv.amount_due),
-                            inv.subtotal || 0,
-                            inv.tax_amount || 0,
-                            inv.total_amount || 0,
-                            inv.amount_paid || 0,
-                            inv.amount_due || 0,
+                <div className="card shadow-sm card-bg-shadow invoice-list-card">
+                  <div className="inventory-main-search-panel invoice-top-panel">
+                    <div className="invoice-top-panel-actions invoice-top-panel-actions-left">
+                      <select
+                        className="form-select invoice-top-panel-select"
+                        value={listCurrency}
+                        onChange={(e) => setListCurrency(e.target.value)}
+                        aria-label="Filter by currency"
+                      >
+                        <option value="">All currencies</option>
+                        <option value="USD">USD</option>
+                        <option value="ZWG">ZWG</option>
+                      </select>
+                      <button
+                        className="o-btn o-btn-secondary invoice-top-panel-btn"
+                        onClick={() => {
+                          const headers = [
+                            "Reference",
+                            "Type",
+                            "Customer",
+                            "Date",
+                            "Status",
+                            "Payment",
+                            "Subtotal",
+                            "Tax",
+                            "Total",
+                            "Paid",
+                            "Due",
                           ];
-                        });
-                        const csvContent = [headers, ...rows]
-                          .map((row) =>
-                            row
-                              .map(
-                                (cell) =>
-                                  `"${String(cell).replace(/"/g, '""')}"`,
-                              )
-                              .join(","),
-                          )
-                          .join("\n");
-                        const blob = new Blob([csvContent], {
-                          type: "text/csv;charset=utf-8;",
-                        });
-                        const link = document.createElement("a");
-                        link.href = URL.createObjectURL(blob);
-                        link.download = `invoices_${
-                          new Date().toISOString().split("T")[0]
-                        }.csv`;
-                        link.click();
-                      }}
-                    >
-                      <Download size={16} />
-                      <span>Export</span>
-                    </button>
-                    <button
-                      className="o-btn o-btn-primary invoice-top-panel-btn"
-                      onClick={() => {
-                        beginNew();
-                        navigate("/invoices/new");
-                      }}
-                    >
-                      <Plus size={16} />
-                      <span>New Invoice</span>
-                    </button>
-                  </div>
-                  <div className="invoice-top-panel-center">
-                    <div className="inventory-search-wrapper">
-                      <div className="inventory-search-inner">
-                        <div className="inventory-centered-searchbox">
-                          <div className="o-searchbox">
-                            <span className="o-searchbox-icon">
-                              <Search size={16} />
-                            </span>
-                            <input
-                              placeholder="Search invoices..."
-                              value={listSearch}
-                              onChange={(e) => setListSearch(e.target.value)}
-                            />
+                          const rows = invoices.map((inv) => {
+                            const cust = contactById.get(inv.customer_id ?? 0);
+                            return [
+                              inv.reference,
+                              inv.invoice_type === "credit_note"
+                                ? "Credit Note"
+                                : "Invoice",
+                              cust?.name || "",
+                              inv.invoice_date
+                                ? new Date(
+                                    inv.invoice_date,
+                                  ).toLocaleDateString()
+                                : "",
+                              inv.status,
+                              getPaymentStatus(inv.amount_paid, inv.amount_due),
+                              inv.subtotal || 0,
+                              inv.tax_amount || 0,
+                              inv.total_amount || 0,
+                              inv.amount_paid || 0,
+                              inv.amount_due || 0,
+                            ];
+                          });
+                          const csvContent = [headers, ...rows]
+                            .map((row) =>
+                              row
+                                .map(
+                                  (cell) =>
+                                    `"${String(cell).replace(/"/g, '""')}"`,
+                                )
+                                .join(","),
+                            )
+                            .join("\n");
+                          const blob = new Blob([csvContent], {
+                            type: "text/csv;charset=utf-8;",
+                          });
+                          const link = document.createElement("a");
+                          link.href = URL.createObjectURL(blob);
+                          link.download = `invoices_${
+                            new Date().toISOString().split("T")[0]
+                          }.csv`;
+                          link.click();
+                        }}
+                      >
+                        <Download size={16} />
+                        <span>Export</span>
+                      </button>
+                      <button
+                        className="o-btn o-btn-primary invoice-top-panel-btn"
+                        onClick={() => {
+                          beginNew();
+                          navigate("/invoices/new");
+                        }}
+                      >
+                        <Plus size={16} />
+                        <span>New Invoice</span>
+                      </button>
+                    </div>
+                    <div className="invoice-top-panel-center">
+                      <div className="inventory-search-wrapper">
+                        <div className="inventory-search-inner">
+                          <div className="inventory-centered-searchbox">
+                            <div className="o-searchbox">
+                              <span className="o-searchbox-icon">
+                                <Search size={16} />
+                              </span>
+                              <input
+                                placeholder="Search invoices..."
+                                value={listSearch}
+                                onChange={(e) => setListSearch(e.target.value)}
+                              />
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
+                    <div className="invoice-top-panel-right" />
                   </div>
-                  <div className="invoice-top-panel-right" />
-                </div>
-                <div className="card shadow-sm card-bg-shadow invoice-list-card">
                   <div className="card-body p-0">
                     <div className="table-responsive">
                       <table className="table table-hover align-middle mb-0">

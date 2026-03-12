@@ -67,13 +67,13 @@
   margin-left: auto;
 }
 
-.invoice-page-shell .o-sidebar {
+/* .invoice-page-shell .o-sidebar {
   padding: 14px 12px;
   border-radius: 18px;
   background: #ffffff;
   border: 1px solid #dde3f1;
   box-shadow: 0 8px 24px rgba(33, 45, 96, 0.06);
-}
+} */
 
 .invoice-page-shell .o-sidebar-section + .o-sidebar-section {
   margin-top: 16px;
@@ -317,7 +317,6 @@
   top: 0;
   z-index: 1;
   padding: 16px 18px;
-  background: #f7f9fd;
   border-bottom: 1px solid #e1e6f2;
   color: #647299;
   font-size: 11px;
