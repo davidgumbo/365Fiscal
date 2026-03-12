@@ -1,11 +1,37 @@
-﻿from fastapi import APIRouter, Depends, HTTPException
+import re
+
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_db, ensure_company_access, require_company_access, require_portal_user
+from app.api.deps import (
+    ensure_company_access,
+    get_db,
+    require_company_access,
+    require_portal_user,
+)
+from app.models.invoice import Invoice
+from app.models.location import Location
+from app.models.pos_till import POSTill
+from app.models.purchase_order import PurchaseOrder
+from app.models.stock_move import StockMove
+from app.models.stock_quant import StockQuant
 from app.models.warehouse import Warehouse
-from app.schemas.warehouse import WarehouseCreate, WarehouseUpdate, WarehouseRead
+from app.schemas.warehouse import WarehouseCreate, WarehouseRead, WarehouseUpdate
 
 router = APIRouter(prefix="/warehouses", tags=["warehouses"])
+
+
+def _warehouse_location_prefix(name: str, fallback_code: str = "") -> str:
+    tokens = [re.sub(r"[^A-Z0-9]", "", part.upper()) for part in name.split()]
+    tokens = [token for token in tokens if token]
+    if len(tokens) >= 2:
+        prefix = "".join(token[0] for token in tokens[:2])
+    elif tokens:
+        prefix = tokens[0][:2]
+    else:
+        fallback = re.sub(r"[^A-Z0-9]", "", fallback_code.upper())
+        prefix = fallback[:2] if fallback else "WH"
+    return prefix or "WH"
 
 
 @router.post("", response_model=WarehouseRead)
@@ -17,6 +43,19 @@ def create_warehouse(
     ensure_company_access(db, user, payload.company_id)
     warehouse = Warehouse(**payload.dict())
     db.add(warehouse)
+    db.flush()
+
+    stock_prefix = _warehouse_location_prefix(warehouse.name, warehouse.code)
+    db.add(
+        Location(
+            warehouse_id=warehouse.id,
+            name="Stock",
+            code=f"{stock_prefix}/Stock",
+            is_primary=True,
+            is_scrap=False,
+        )
+    )
+
     db.commit()
     db.refresh(warehouse)
     return warehouse
@@ -56,11 +95,11 @@ def update_warehouse(
     if not warehouse:
         raise HTTPException(status_code=404, detail="Warehouse not found")
     ensure_company_access(db, user, warehouse.company_id)
-    
+
     update_data = payload.dict(exclude_unset=True)
     for key, value in update_data.items():
         setattr(warehouse, key, value)
-    
+
     db.commit()
     db.refresh(warehouse)
     return warehouse
@@ -76,7 +115,44 @@ def delete_warehouse(
     if not warehouse:
         raise HTTPException(status_code=404, detail="Warehouse not found")
     ensure_company_access(db, user, warehouse.company_id)
-    
+
+    location_ids = [
+        row[0]
+        for row in db.query(Location.id)
+        .filter(Location.warehouse_id == warehouse.id)
+        .all()
+    ]
+
+    if location_ids:
+        db.query(StockQuant).filter(
+            StockQuant.location_id.in_(location_ids)
+        ).delete(synchronize_session=False)
+        db.query(StockMove).filter(
+            StockMove.location_id.in_(location_ids)
+        ).update({StockMove.location_id: None}, synchronize_session=False)
+        db.query(PurchaseOrder).filter(
+            PurchaseOrder.location_id.in_(location_ids)
+        ).update({PurchaseOrder.location_id: None}, synchronize_session=False)
+        db.query(Location).filter(
+            Location.id.in_(location_ids)
+        ).delete(synchronize_session=False)
+
+    db.query(StockQuant).filter(
+        StockQuant.warehouse_id == warehouse.id
+    ).delete(synchronize_session=False)
+    db.query(StockMove).filter(
+        StockMove.warehouse_id == warehouse.id
+    ).update({StockMove.warehouse_id: None}, synchronize_session=False)
+    db.query(PurchaseOrder).filter(
+        PurchaseOrder.warehouse_id == warehouse.id
+    ).update({PurchaseOrder.warehouse_id: None}, synchronize_session=False)
+    db.query(Invoice).filter(
+        Invoice.warehouse_id == warehouse.id
+    ).update({Invoice.warehouse_id: None}, synchronize_session=False)
+    db.query(POSTill).filter(
+        POSTill.warehouse_id == warehouse.id
+    ).update({POSTill.warehouse_id: None}, synchronize_session=False)
+
     db.delete(warehouse)
     db.commit()
     return {"message": "Warehouse deleted"}

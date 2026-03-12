@@ -87,6 +87,17 @@ def ensure_new_columns():
             else:
                 _startup_logger.info(">>> till_id column already exists")
 
+            if "locations" in table_names:
+                location_cols = {c["name"] for c in insp.get_columns("locations")}
+                if "is_scrap" not in location_cols:
+                    _startup_logger.info(">>> Adding is_scrap column to locations")
+                    conn.execute(text(
+                        "ALTER TABLE locations ADD COLUMN is_scrap BOOLEAN DEFAULT FALSE"
+                    ))
+                    _startup_logger.info(">>> is_scrap column added successfully")
+                else:
+                    _startup_logger.info(">>> is_scrap column already exists")
+
         if "pos_tills" in table_names:
             till_cols = {c["name"] for c in insp.get_columns("pos_tills")}
             if "warehouse_id" not in till_cols:

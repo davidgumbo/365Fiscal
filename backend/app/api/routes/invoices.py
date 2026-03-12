@@ -103,7 +103,15 @@ def process_invoice_stock(invoice: Invoice, db: Session, reverse: bool = False):
         return
     
     # Get default location
-    location = db.query(Location).filter(Location.warehouse_id == warehouse.id).first()
+    location = (
+        db.query(Location)
+        .filter(
+            Location.warehouse_id == warehouse.id,
+            Location.is_scrap.is_(False),
+        )
+        .order_by(Location.is_primary.desc(), Location.id.asc())
+        .first()
+    )
     if not location:
         return
     

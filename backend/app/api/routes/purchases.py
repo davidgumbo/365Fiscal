@@ -310,7 +310,15 @@ def receive_purchase_order(
     if order.location_id:
         location = db.query(Location).filter(Location.id == order.location_id).first()
     if not location:
-        location = db.query(Location).filter(Location.warehouse_id == warehouse.id).first()
+        location = (
+            db.query(Location)
+            .filter(
+                Location.warehouse_id == warehouse.id,
+                Location.is_scrap.is_(False),
+            )
+            .order_by(Location.is_primary.desc(), Location.id.asc())
+            .first()
+        )
     if not location:
         raise HTTPException(status_code=400, detail="No location available")
 

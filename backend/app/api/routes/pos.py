@@ -115,7 +115,10 @@ def _resolve_pos_stock_location(
 
     location = (
         db.query(Location)
-        .filter(Location.warehouse_id == warehouse.id)
+        .filter(
+            Location.warehouse_id == warehouse.id,
+            Location.is_scrap.is_(False),
+        )
         .order_by(Location.is_primary.desc(), Location.id.asc())
         .first()
     )

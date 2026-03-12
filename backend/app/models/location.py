@@ -13,5 +13,6 @@ class Location(Base, TimestampMixin):
     name: Mapped[str] = mapped_column(String(255))
     code: Mapped[str] = mapped_column(String(50), default="")
     is_primary: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_scrap: Mapped[bool] = mapped_column(Boolean, default=False)
 
     warehouse = relationship("Warehouse", back_populates="locations")

@@ -118,6 +118,7 @@ type Location = {
   name: string;
   code: string;
   is_primary: boolean;
+  is_scrap: boolean;
 };
 
 type StockMove = {
@@ -634,6 +635,7 @@ export default function InventoryPage() {
     name: "",
     code: "",
     is_primary: false,
+    is_scrap: false,
   });
   const [invalidLocationFields, setInvalidLocationFields] = useState<string[]>(
     [],
@@ -1655,6 +1657,7 @@ export default function InventoryPage() {
         name: location.name,
         code: location.code,
         is_primary: location.is_primary,
+        is_scrap: location.is_scrap,
       });
     } else {
       setSelectedLocationId(null);
@@ -1663,6 +1666,7 @@ export default function InventoryPage() {
         name: "",
         code: "",
         is_primary: false,
+        is_scrap: false,
       });
     }
     setInvalidLocationFields([]);
@@ -1726,8 +1730,14 @@ export default function InventoryPage() {
         name: "",
         code: "",
         is_primary: false,
+        is_scrap: false,
       });
       setInvalidLocationFields([]);
+    } catch (err) {
+      alert(
+        "Error saving location: " +
+          (err instanceof Error ? err.message : String(err)),
+      );
     } finally {
       setSaving(false);
     }
@@ -1739,6 +1749,11 @@ export default function InventoryPage() {
     try {
       await apiFetch(`/locations/${locationId}`, { method: "DELETE" });
       await loadAllData();
+    } catch (err) {
+      alert(
+        "Error deleting location: " +
+          (err instanceof Error ? err.message : String(err)),
+      );
     } finally {
       setSaving(false);
     }
@@ -5774,6 +5789,7 @@ export default function InventoryPage() {
                                 </div>
                               </div>
                               <button
+                                type="button"
                                 className="inventory-warehouse-action-btn"
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -5783,6 +5799,7 @@ export default function InventoryPage() {
                                     name: "",
                                     code: "",
                                     is_primary: false,
+                                    is_scrap: false,
                                   });
                                   setShowLocationModal(true);
                                 }}
@@ -5922,145 +5939,230 @@ export default function InventoryPage() {
                 <div className="o-main inventory-view-main">
                   <div className="o-form-view inventory-form-panel inventory-warehouse-form">
                     <div className="o-form-sheet">
-                      <div className="inventory-warehouse-form-head">
-                        <div className="inventory-warehouse-hero-icon">
-                          <WarehouseGlyph size={24} />
-                        </div>
-                        <div className="inventory-warehouse-form-main">
-                          <input
-                            type="text"
-                            className="o-form-input inventory-warehouse-name-input"
-                            placeholder="Warehouse Name"
-                            value={warehouseForm.name}
-                            onChange={(e) =>
-                              setWarehouseForm({
-                                ...warehouseForm,
-                                name: e.target.value,
-                              })
-                            }
-                          />
-                        </div>
-                      </div>
-
-                      <div className="o-form-group">
-                        <label className="o-form-label">Short Code</label>
-                        <div className="o-form-field">
-                          <input
-                            type="text"
-                            className="o-form-input inventory-warehouse-code-input"
-                            value={warehouseForm.code}
-                            onChange={(e) =>
-                              setWarehouseForm({
-                                ...warehouseForm,
-                                code: e.target.value.toUpperCase(),
-                              })
-                            }
-                            placeholder="e.g., WH01"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="o-form-group">
-                        <label className="o-form-label">Address</label>
-                        <div className="o-form-field inventory-field-full">
-                          <textarea
-                            className="o-form-textarea"
-                            value={warehouseForm.address}
-                            onChange={(e) =>
-                              setWarehouseForm({
-                                ...warehouseForm,
-                                address: e.target.value,
-                              })
-                            }
-                            rows={3}
-                            placeholder="Warehouse address..."
-                          />
-                        </div>
-                      </div>
-
-                      {selectedWarehouseId && !isNew && (
-                        <>
-                          <div className="o-group-separator">
-                            <div className="o-group-separator-line" />
-                            <span className="o-group-separator-text">
-                              Locations
-                            </span>
-                            <div className="o-group-separator-line" />
+                      <div className="inventory-warehouse-form-shell">
+                        <section className="inventory-warehouse-form-card">
+                          <div className="inventory-warehouse-form-head">
+                            <div className="inventory-warehouse-hero-icon">
+                              <WarehouseGlyph size={24} />
+                            </div>
+                            <div className="inventory-warehouse-form-main">
+                              <div className="inventory-warehouse-form-eyebrow">
+                                Warehouse
+                              </div>
+                              <input
+                                type="text"
+                                className="o-form-input inventory-warehouse-name-input"
+                                placeholder="Warehouse Name"
+                                value={warehouseForm.name}
+                                onChange={(e) =>
+                                  setWarehouseForm({
+                                    ...warehouseForm,
+                                    name: e.target.value,
+                                  })
+                                }
+                              />
+                              <p className="inventory-warehouse-form-subtitle">
+                                Keep the warehouse details, short code, and
+                                storage locations organized in one place.
+                              </p>
+                            </div>
                           </div>
 
-                          <div className="inventory-section-header">
-                            <span className="inventory-section-title">
-                              Warehouse Locations
-                            </span>
-                            <button
-                              className="o-btn o-btn-secondary"
-                              onClick={() => {
-                                setSelectedLocationId(null);
-                                setLocationForm({
-                                  warehouse_id: selectedWarehouseId,
-                                  name: "",
-                                  code: "",
-                                  is_primary: false,
-                                });
-                                setShowLocationModal(true);
-                              }}
-                            >
-                              + Add Location
-                            </button>
+                          <div className="inventory-warehouse-form-metrics">
+                            <div className="inventory-warehouse-form-metric">
+                              <span className="inventory-warehouse-form-metric-label">
+                                Total Locations
+                              </span>
+                              <strong className="inventory-warehouse-form-metric-value">
+                                {selectedWarehouseId
+                                  ? warehouseLocations(selectedWarehouseId).length
+                                  : 0}
+                              </strong>
+                            </div>
+                            <div className="inventory-warehouse-form-metric">
+                              <span className="inventory-warehouse-form-metric-label">
+                                Primary Locations
+                              </span>
+                              <strong className="inventory-warehouse-form-metric-value">
+                                {selectedWarehouseId
+                                  ? warehouseLocations(selectedWarehouseId).filter(
+                                      (location) => location.is_primary,
+                                    ).length
+                                  : 0}
+                              </strong>
+                            </div>
+                            <div className="inventory-warehouse-form-metric">
+                              <span className="inventory-warehouse-form-metric-label">
+                                Status
+                              </span>
+                              <strong className="inventory-warehouse-form-metric-value">
+                                {isNew ? "Draft" : "Active"}
+                              </strong>
+                            </div>
                           </div>
 
-                          <div className="o-inline-table">
-                            <table>
-                              <thead>
-                                <tr>
-                                  <th>Name</th>
-                                  <th>Code</th>
-                                  <th>Primary</th>
-                                  <th className="inventory-col-actions">
-                                    Actions
-                                  </th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {warehouseLocations(selectedWarehouseId).map(
-                                  (l) => (
-                                    <tr key={l.id}>
-                                      <td>{l.name}</td>
-                                      <td>{l.code}</td>
-                                      <td>{l.is_primary ? "Yes" : ""}</td>
-                                      <td>
-                                        <button
-                                          className="o-btn o-btn-link inventory-link-sm"
-                                          onClick={() => openLocationModal(l)}
-                                        >
-                                          Edit
-                                        </button>
-                                        <button
-                                          className="o-btn o-btn-link inventory-link-sm danger"
-                                          onClick={() => deleteLocation(l.id)}
-                                        >
-                                          Delete
-                                        </button>
+                          <div className="inventory-warehouse-form-fields">
+                            <div className="o-form-group">
+                              <label className="o-form-label">Short Code</label>
+                              <div className="o-form-field">
+                                <input
+                                  type="text"
+                                  className="o-form-input inventory-warehouse-code-input"
+                                  value={warehouseForm.code}
+                                  onChange={(e) =>
+                                    setWarehouseForm({
+                                      ...warehouseForm,
+                                      code: e.target.value.toUpperCase(),
+                                    })
+                                  }
+                                  placeholder="e.g., WH01"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="o-form-group">
+                              <label className="o-form-label">Address</label>
+                              <div className="o-form-field inventory-field-full">
+                                <textarea
+                                  className="o-form-textarea"
+                                  value={warehouseForm.address}
+                                  onChange={(e) =>
+                                    setWarehouseForm({
+                                      ...warehouseForm,
+                                      address: e.target.value,
+                                    })
+                                  }
+                                  rows={3}
+                                  placeholder="Warehouse address..."
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </section>
+
+                        {selectedWarehouseId && !isNew && (
+                          <section className="inventory-warehouse-locations-panel">
+                            <div className="inventory-warehouse-section-header">
+                              <div className="inventory-warehouse-section-title-wrap">
+                                <span className="inventory-warehouse-section-icon">
+                                  <LayoutGrid size={18} />
+                                </span>
+                                <div>
+                                  <h3 className="inventory-warehouse-section-title">
+                                    Locations
+                                  </h3>
+                                  <p className="inventory-warehouse-section-subtitle">
+                                    Manage the storage points inside this
+                                    warehouse.
+                                  </p>
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                className="o-btn o-btn-secondary inventory-warehouse-add-location-btn"
+                                onClick={() => {
+                                  setSelectedLocationId(null);
+                                  setLocationForm({
+                                    warehouse_id: selectedWarehouseId,
+                                    name: "",
+                                    code: "",
+                                    is_primary: false,
+                                    is_scrap: false,
+                                  });
+                                  setShowLocationModal(true);
+                                }}
+                              >
+                                <Plus size={16} />
+                                Add Location
+                              </button>
+                            </div>
+
+                            <div className="inventory-warehouse-locations-table-wrap">
+                              <table className="o-list-table inventory-warehouse-locations-table">
+                                <thead>
+                                  <tr>
+                                    <th>Name</th>
+                                    <th>Code</th>
+                                    <th>Type</th>
+                                    <th>Primary</th>
+                                    <th className="inventory-col-actions">
+                                      Actions
+                                    </th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {warehouseLocations(selectedWarehouseId).map(
+                                    (l) => (
+                                      <tr key={l.id}>
+                                        <td>{l.name}</td>
+                                        <td>{l.code}</td>
+                                        <td>
+                                          {l.is_scrap ? (
+                                            <span className="inventory-location-scrap-badge">
+                                              <TriangleAlert size={14} />
+                                              Scrap
+                                            </span>
+                                          ) : (
+                                            <span className="inventory-location-stock-badge">
+                                              <Package size={14} />
+                                              Stock
+                                            </span>
+                                          )}
+                                        </td>
+                                        <td>
+                                          {l.is_primary ? (
+                                            <span className="inventory-location-primary-badge">
+                                              <Check size={14} />
+                                              Primary
+                                            </span>
+                                          ) : (
+                                            <span className="inventory-location-secondary-text">
+                                              Secondary
+                                            </span>
+                                          )}
+                                        </td>
+                                        <td>
+                                          <div className="inventory-location-actions">
+                                            <button
+                                              type="button"
+                                              className="inventory-location-action-btn"
+                                              onClick={() => openLocationModal(l)}
+                                              title="Edit location"
+                                              aria-label="Edit location"
+                                            >
+                                              <PenLine size={15} />
+                                            </button>
+                                            <button
+                                              type="button"
+                                              className="inventory-location-action-btn inventory-location-action-btn-danger"
+                                              onClick={() => deleteLocation(l.id)}
+                                              title="Delete location"
+                                              aria-label="Delete location"
+                                            >
+                                              <Trash2 size={15} />
+                                            </button>
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    ),
+                                  )}
+                                  {warehouseLocations(selectedWarehouseId)
+                                    .length === 0 && (
+                                    <tr>
+                                      <td
+                                        colSpan={5}
+                                        className="inventory-empty-row inventory-muted-note"
+                                      >
+                                        No locations yet
                                       </td>
                                     </tr>
-                                  ),
-                                )}
-                                {warehouseLocations(selectedWarehouseId)
-                                  .length === 0 && (
-                                  <tr>
-                                    <td
-                                      colSpan={4}
-                                      className="inventory-empty-row inventory-muted-note"
-                                    >
-                                      No locations yet
-                                    </td>
-                                  </tr>
-                                )}
-                              </tbody>
-                            </table>
-                          </div>
-                        </>
-                      )}
+                                  )}
+                                </tbody>
+                              </table>
+                            </div>
+                          </section>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -6887,6 +6989,7 @@ export default function InventoryPage() {
                     }}
                   >
                     <button
+                      type="button"
                       className="o-btn o-btn-secondary"
                       onClick={() => {
                         setShowCategoryModal(false);
@@ -7101,7 +7204,32 @@ export default function InventoryPage() {
                   >
                     <input
                       type="checkbox"
+                      checked={locationForm.is_scrap}
+                      onChange={(e) =>
+                        setLocationForm({
+                          ...locationForm,
+                          is_scrap: e.target.checked,
+                          is_primary: e.target.checked
+                            ? false
+                            : locationForm.is_primary,
+                        })
+                      }
+                    />
+                    Scrap Location
+                  </label>
+                  <label
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      cursor: "pointer",
+                      marginTop: 12,
+                    }}
+                  >
+                    <input
+                      type="checkbox"
                       checked={locationForm.is_primary}
+                      disabled={locationForm.is_scrap}
                       onChange={(e) =>
                         setLocationForm({
                           ...locationForm,
@@ -7129,6 +7257,7 @@ export default function InventoryPage() {
                       Cancel
                     </button>
                     <button
+                      type="button"
                       className="o-btn o-btn-primary"
                       onClick={saveLocation}
                       disabled={saving}

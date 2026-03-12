@@ -8,12 +8,14 @@ class LocationCreate(BaseModel):
     name: str
     code: str = ""
     is_primary: bool = False
+    is_scrap: bool = False
 
 
 class LocationUpdate(BaseModel):
     name: Optional[str] = None
     code: Optional[str] = None
     is_primary: Optional[bool] = None
+    is_scrap: Optional[bool] = None
 
 
 class LocationRead(ORMBase):
@@ -22,3 +24,4 @@ class LocationRead(ORMBase):
     name: str
     code: str
     is_primary: bool
+    is_scrap: bool
