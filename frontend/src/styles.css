@@ -5026,6 +5026,45 @@ button.danger:hover {
   height: 16px;
 }
 
+.content-top-bar.purchases-top-bar {
+  width: 100%;
+}
+
+.content-top-bar.purchases-top-bar .purchases-search-slot {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.content-top-bar.purchases-top-bar .purchases-top-search {
+  width: min(520px, 100%);
+  max-width: 520px;
+  flex: 1;
+}
+
+.content-top-bar.purchases-top-bar .purchase-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.content-top-bar.purchases-top-bar .purchases-currency-select {
+  min-width: 140px;
+  max-width: 220px;
+}
+
+.content-top-bar.purchases-top-bar .o-btn.o-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.content-top-bar.purchases-top-bar .purchases-create-btn {
+  gap: 6px;
+}
+
 /* ── Sidebar Panel (base) ── */
 .sidebar-panel {
   /* background: var(--gray-400); */

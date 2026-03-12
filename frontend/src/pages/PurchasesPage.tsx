@@ -1020,10 +1020,93 @@ export default function PurchasesPage({
             </div>
 
             <div>
-              <div className="content-top-bar">
-                <div className="top-search">
-                  <span className="search-icon">
+              <div className="content-top-bar purchases-top-bar">
+                <div className="purchases-search-slot">
+                  <div className="top-search purchases-top-search">
+                    <span className="search-icon">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                      </svg>
+                    </span>
+                    <input
+                      placeholder="Search purchases…"
+                      value={listSearch}
+                      onChange={(e) => setListSearch(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="purchase-actions">
+                  <select
+                    className="form-select purchases-currency-select"
+                    value={listCurrency}
+                    onChange={(e) => setListCurrency(e.target.value)}
+                    aria-label="Filter by currency"
+                  >
+                    <option value="">All currencies</option>
+                    <option value="USD">USD</option>
+                    <option value="ZWG">ZWG</option>
+                  </select>
+                  <button
+                    className="o-btn o-btn-secondary purchases-export-btn"
+                    onClick={() => {
+                      const headers = [
+                        "Reference",
+                        "Supplier",
+                        "Status",
+                        "Paid State",
+                        "Order Date",
+                        "Expected Date",
+                        "Subtotal",
+                        "Tax",
+                        "Total",
+                      ];
+                      const rows = filteredOrders.map((order) => {
+                        const supplier = contacts.find(
+                          (c) => c.id === order.supplier_id,
+                        );
+                        return [
+                          order.reference,
+                          supplier?.name || "",
+                          order.status,
+                          order.paid_state || "unpaid",
+                          toDateInputValue(order.order_date),
+                          toDateInputValue(order.expected_date),
+                          order.subtotal || 0,
+                          order.tax_amount || 0,
+                          order.total_amount || 0,
+                        ];
+                      });
+                      const csvContent = [headers, ...rows]
+                        .map((row) =>
+                          row
+                            .map(
+                              (cell) => `"${String(cell).replace(/"/g, '""')}"`,
+                            )
+                            .join(","),
+                        )
+                        .join("\n");
+                      const blob = new Blob([csvContent], {
+                        type: "text/csv;charset=utf-8;",
+                      });
+                      const link = document.createElement("a");
+                      link.href = URL.createObjectURL(blob);
+                      link.download = `purchases_${new Date()
+                        .toISOString()
+                        .split("T")[0]}.csv`;
+                      link.click();
+                    }}
+                  >
                     <svg
+                      width="16"
+                      height="16"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
@@ -1031,110 +1114,31 @@ export default function PurchasesPage({
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     >
-                      <circle cx="11" cy="11" r="8" />
-                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" y1="15" x2="12" y2="3" />
                     </svg>
-                  </span>
-                  <input
-                    placeholder="Search purchases…"
-                    value={listSearch}
-                    onChange={(e) => setListSearch(e.target.value)}
-                  />
+                    Export
+                  </button>
+                  <button
+                    className="btn-create purchases-create-btn"
+                    onClick={() => {
+                      startNew();
+                      navigate("/purchases/new");
+                    }}
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <line x1="12" y1="5" x2="12" y2="19" />
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                    New Purchase
+                  </button>
                 </div>
-                <select
-                  className="form-select"
-                  style={{ maxWidth: 160 }}
-                  value={listCurrency}
-                  onChange={(e) => setListCurrency(e.target.value)}
-                  aria-label="Filter by currency"
-                >
-                  <option value="">All currencies</option>
-                  <option value="USD">USD</option>
-                  <option value="ZWG">ZWG</option>
-                </select>
-                <button
-                  className="o-btn o-btn-secondary"
-                  style={{ display: "flex", alignItems: "center", gap: 6 }}
-                  onClick={() => {
-                    const headers = [
-                      "Reference",
-                      "Supplier",
-                      "Status",
-                      "Paid State",
-                      "Order Date",
-                      "Expected Date",
-                      "Subtotal",
-                      "Tax",
-                      "Total",
-                    ];
-                    const rows = filteredOrders.map((order) => {
-                      const supplier = contacts.find(
-                        (c) => c.id === order.supplier_id,
-                      );
-                      return [
-                        order.reference,
-                        supplier?.name || "",
-                        order.status,
-                        order.paid_state || "unpaid",
-                        toDateInputValue(order.order_date),
-                        toDateInputValue(order.expected_date),
-                        order.subtotal || 0,
-                        order.tax_amount || 0,
-                        order.total_amount || 0,
-                      ];
-                    });
-                    const csvContent = [headers, ...rows]
-                      .map((row) =>
-                        row
-                          .map(
-                            (cell) => `"${String(cell).replace(/"/g, '""')}"`,
-                          )
-                          .join(","),
-                      )
-                      .join("\n");
-                    const blob = new Blob([csvContent], {
-                      type: "text/csv;charset=utf-8;",
-                    });
-                    const link = document.createElement("a");
-                    link.href = URL.createObjectURL(blob);
-                    link.download = `purchases_${new Date().toISOString().split("T")[0]}.csv`;
-                    link.click();
-                  }}
-                >
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="7 10 12 15 17 10" />
-                    <line x1="12" y1="15" x2="12" y2="3" />
-                  </svg>
-                  Export
-                </button>
-                <button
-                  className="btn-create"
-                  onClick={() => {
-                    startNew();
-                    navigate("/purchases/new");
-                  }}
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <line x1="12" y1="5" x2="12" y2="19" />
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                  </svg>
-                  New Purchase
-                </button>
               </div>
               <div className="card shadow-sm">
                 <div className="card-body">
@@ -1714,4 +1718,3 @@ export default function PurchasesPage({
     </div>
   );
 }
-

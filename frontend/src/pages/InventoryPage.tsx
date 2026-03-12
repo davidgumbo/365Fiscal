@@ -1512,7 +1512,8 @@ export default function InventoryPage() {
         (entry) => entry.id === move.warehouse_id,
       );
       return {
-        Reference: move.reference || `WH/MOV/${String(move.id).padStart(5, "0")}`,
+        Reference:
+          move.reference || `WH/MOV/${String(move.id).padStart(5, "0")}`,
         Date: formatStockMoveDate(move),
         Product: product?.name || "",
         Type: getMoveTypeLabel(move),
@@ -1522,7 +1523,8 @@ export default function InventoryPage() {
         "Unit Cost": Number.isFinite(move.unit_cost) ? move.unit_cost : 0,
         Total: Number.isFinite(move.total_cost) ? move.total_cost : 0,
         Status:
-          STATES.find((entry) => entry.value === move.state)?.label || move.state,
+          STATES.find((entry) => entry.value === move.state)?.label ||
+          move.state,
         "Source Document": move.source_document || "",
       };
     });
@@ -3345,7 +3347,10 @@ export default function InventoryPage() {
     [products],
   );
 
-  const recentStockMoves = useMemo(() => filteredMoves.slice(0, 6), [filteredMoves]);
+  const recentStockMoves = useMemo(
+    () => filteredMoves.slice(0, 6),
+    [filteredMoves],
+  );
 
   const warehouseLocations = (warehouseId: number) =>
     locations.filter((l) => l.warehouse_id === warehouseId);
@@ -3692,7 +3697,9 @@ export default function InventoryPage() {
                           />
                           {(mainView === "operations" &&
                             operationsTab === "moves") ||
-                          (mainView === "products" && subView === "list") ? (
+                          (mainView === "products" &&
+                            subView === "list" &&
+                            subView === "grid") ? (
                             <button
                               type="button"
                               className="inventory-filter-toggle-inside"
@@ -3808,7 +3815,9 @@ export default function InventoryPage() {
                                           ? "inventory-filter-chip-active"
                                           : ""
                                       }`}
-                                      onClick={() => setFilterCurrency(currency)}
+                                      onClick={() =>
+                                        setFilterCurrency(currency)
+                                      }
                                     >
                                       {currency}
                                     </button>
@@ -5902,7 +5911,8 @@ export default function InventoryPage() {
                                   Value
                                 </div>
                                 <div className="inventory-warehouse-stat-value">
-                                  ${totalValue.toLocaleString(undefined, {
+                                  $
+                                  {totalValue.toLocaleString(undefined, {
                                     minimumFractionDigits: 0,
                                     maximumFractionDigits: 0,
                                   })}
@@ -6018,7 +6028,8 @@ export default function InventoryPage() {
                               </span>
                               <strong className="inventory-warehouse-form-metric-value">
                                 {selectedWarehouseId
-                                  ? warehouseLocations(selectedWarehouseId).length
+                                  ? warehouseLocations(selectedWarehouseId)
+                                      .length
                                   : 0}
                               </strong>
                             </div>
@@ -6028,9 +6039,10 @@ export default function InventoryPage() {
                               </span>
                               <strong className="inventory-warehouse-form-metric-value">
                                 {selectedWarehouseId
-                                  ? warehouseLocations(selectedWarehouseId).filter(
-                                      (location) => location.is_primary,
-                                    ).length
+                                  ? warehouseLocations(
+                                      selectedWarehouseId,
+                                    ).filter((location) => location.is_primary)
+                                      .length
                                   : 0}
                               </strong>
                             </div>
@@ -6165,7 +6177,9 @@ export default function InventoryPage() {
                                             <button
                                               type="button"
                                               className="inventory-location-action-btn"
-                                              onClick={() => openLocationModal(l)}
+                                              onClick={() =>
+                                                openLocationModal(l)
+                                              }
                                               title="Edit location"
                                               aria-label="Edit location"
                                             >
@@ -6174,7 +6188,9 @@ export default function InventoryPage() {
                                             <button
                                               type="button"
                                               className="inventory-location-action-btn inventory-location-action-btn-danger"
-                                              onClick={() => deleteLocation(l.id)}
+                                              onClick={() =>
+                                                deleteLocation(l.id)
+                                              }
                                               title="Delete location"
                                               aria-label="Delete location"
                                             >
