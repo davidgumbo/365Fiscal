@@ -1255,19 +1255,32 @@
 .inventory-warehouse-stat-card {
   display: flex;
   justify-content: space-between;
-  border: solid 1px var(--gray-300) ;
+  border: solid 1px var(--gray-300);
   border-radius: 5px;
+  padding: 0.5rem;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .inventory-warehouse-stat-label{
   font-weight: bold;
+
 }
 
 .inventory-warehouse-stats-grid{
   display: grid;
   grid-template-columns: 1fr 1fr;
+  gap: 0.5rem
 }
 
 .inventory-warehouse-locations-list{
   margin-top: 1rem;
+  gap: 10px;
+  display: flex;;
+}
+
+.inventory-warehouse-code{
+  font-size: 0.8rem;
+  padding-bottom: 1rem;
+  color: var(--gray-500);
 }
