@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   Download,
   FileMinus,
+  FilePlus,
   FileText,
   PenLine,
   Plus,
@@ -228,7 +229,11 @@ const STATUS_FILTERS: FilterDefinition[] = [
 
 const TYPE_FILTERS: FilterDefinition[] = [
   { key: "", label: "ALL TYPES", icon: FileText, color: "var(--muted)" },
+<<<<<<< HEAD
   { key: "invoice", label: "INVOICE", icon: FileText, color: "var(--blue-500)" },
+=======
+  { key: "invoice", label: "INVOICE", icon: FilePlus, color: "var(--blue-500)" },
+>>>>>>> 8669d71 (fiexed icon import error)
   { key: "credit_note", label: "CREDIT NOTE", icon: FileMinus, color: "var(--violet-500)" },
 ];
 
