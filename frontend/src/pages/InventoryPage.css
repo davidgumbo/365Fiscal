@@ -1244,3 +1244,24 @@
 .inventory-form-panel.inventory-move-form .o-form-sheet {
   min-height: clamp(520px, calc(100vh - 320px), 860px);
 }
+
+.inventory-warehouse-card-head {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.inventory-warehouse-stat-card {
+  display: flex;
+  justify-content: space-between;
+  border: solid 2px var(--gray-300) ;
+}
+
+.inventory-warehouse-stat-label{
+  font-weight: bold;
+}
+
+.inventory-warehouse-stats-grid{
+  display: grid;
+  grid-template-columns: 1fr;
+}
