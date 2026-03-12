@@ -24,6 +24,7 @@ import {
   Zap,
   FunnelPlus,
   LayoutGrid,
+  ArrowRightLeft,
 } from "lucide-react";
 import ValidationAlert from "../components/ValidationAlert";
 import ValidatedField from "../components/ValidatedField";
@@ -205,24 +206,12 @@ type SubView = "list" | "kanban" | "form";
 type InventoryIconProps = { color?: string };
 
 const OverviewIcon = ({ color }: InventoryIconProps) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-    style={color ? { color } : undefined}
-  >
-    <rect x="3" y="3" width="7" height="7" rx="1" />
-    <rect x="14" y="3" width="7" height="7" rx="1" />
-    <rect x="3" y="14" width="7" height="7" rx="1" />
-    <rect x="14" y="14" width="7" height="7" rx="1" />
-  </svg>
+  <LayoutGrid
+    strokeWidth={1}
+    size={24}
+    color={color ?? "currentColor"}
+    aria-hidden
+  />
 );
 
 const ProductsIcon = ({ color }: InventoryIconProps) => (
@@ -462,7 +451,7 @@ export default function InventoryPage() {
     const operationsItem = {
       id: "menu-operations",
       label: "OPERATIONS",
-      icon: <LayoutGrid color="var(--violet-500)" />,
+      icon: <ArrowRightLeft color="var(--violet-500)" />,
       isActive: mainView === "operations",
       onClick: () => {
         setMainView("operations");
