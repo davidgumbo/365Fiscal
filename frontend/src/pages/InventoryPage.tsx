@@ -4082,10 +4082,11 @@ export default function InventoryPage() {
 
                     {mainView === "categories" && (
                       <button
-                        className="o-btn o-btn-primary"
+                        className="o-btn o-btn-primary inventory-category-create-btn"
                         onClick={() => openCategoryModal()}
                       >
-                        + New Category
+                        <Plus size={16} />
+                        New Category
                       </button>
                     )}
 
@@ -4533,8 +4534,8 @@ export default function InventoryPage() {
               {/* ============= CATEGORIES LIST ============= */}
               {mainView === "categories" && subView === "list" && (
                 <div className="o-main" style={{ width: "100%" }}>
-                  <div className="o-list-view">
-                    <table className="o-list-table">
+                  <div className="o-list-view inventory-category-list-view">
+                    <table className="o-list-table inventory-category-table">
                       <thead>
                         <tr>
                           <th>Category</th>
@@ -4545,23 +4546,38 @@ export default function InventoryPage() {
                       <tbody>
                         {filteredCategories.map((c) => (
                           <tr key={c.id}>
-                            <td style={{ fontWeight: 500 }}>{c.name}</td>
-                            <td>{categoryProductCounts.get(c.id) ?? 0}</td>
                             <td>
-                              <div className="action-icons">
+                              <div className="inventory-category-name-cell">
+                                <span className="inventory-category-name-icon">
+                                  <LayoutGrid size={16} />
+                                </span>
+                                <span className="inventory-category-name-text">
+                                  {c.name}
+                                </span>
+                              </div>
+                            </td>
+                            <td>
+                              <span className="inventory-category-count-badge">
+                                {categoryProductCounts.get(c.id) ?? 0}
+                              </span>
+                            </td>
+                            <td className="inventory-category-actions-cell">
+                              <div className="inventory-category-actions">
                                 <button
-                                  className="icon-btn"
+                                  type="button"
+                                  className="inventory-category-action-btn"
                                   aria-label={`Edit ${c.name}`}
                                   onClick={() => openCategoryModal(c)}
                                 >
-                                  <EditIcon />
+                                  <PenLine size={15} />
                                 </button>
                                 <button
-                                  className="icon-btn danger"
+                                  type="button"
+                                  className="inventory-category-action-btn inventory-category-action-btn-danger"
                                   aria-label={`Delete ${c.name}`}
                                   onClick={() => deleteCategory(c.id)}
                                 >
-                                  <TrashIcon />
+                                  <Trash2 size={15} />
                                 </button>
                               </div>
                             </td>
