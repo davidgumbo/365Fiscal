@@ -3612,27 +3612,26 @@ export default function InventoryPage() {
                                   State
                                 </div>
                                 <div className="inventory-filter-items">
-                                  {[
-                                    "all",
-                                    ...STATES.map((s) => s.value),
-                                  ].map((state) => (
-                                    <button
-                                      key={state}
-                                      type="button"
-                                      className={`inventory-filter-chip ${
-                                        filterState === state
-                                          ? "inventory-filter-chip-active"
-                                          : ""
-                                      }`}
-                                      onClick={() => setFilterState(state)}
-                                    >
-                                      {state === "all"
-                                        ? "All"
-                                        : STATES.find(
-                                            (s) => s.value === state,
-                                          )?.label}
-                                    </button>
-                                  ))}
+                                  {["all", ...STATES.map((s) => s.value)].map(
+                                    (state) => (
+                                      <button
+                                        key={state}
+                                        type="button"
+                                        className={`inventory-filter-chip ${
+                                          filterState === state
+                                            ? "inventory-filter-chip-active"
+                                            : ""
+                                        }`}
+                                        onClick={() => setFilterState(state)}
+                                      >
+                                        {state === "all"
+                                          ? "All"
+                                          : STATES.find(
+                                              (s) => s.value === state,
+                                            )?.label}
+                                      </button>
+                                    ),
+                                  )}
                                 </div>
                               </div>
                               <div className="inventory-filter-column">
@@ -3676,37 +3675,38 @@ export default function InventoryPage() {
                                 <div className="inventory-filter-title">
                                   Category
                                 </div>
-                                <select
-                                  className="o-form-select"
-                                  value={filterCategoryId ?? ""}
-                                  onChange={(e) =>
-                                    setFilterCategoryId(
-                                      e.target.value
-                                        ? Number(e.target.value)
-                                        : null,
-                                    )
-                                  }
-                                >
-                                  <option value="">
+                                <div className="inventory-filter-items">
+                                  <button
+                                    type="button"
+                                    className={`inventory-filter-chip ${
+                                      filterCategoryId === null
+                                        ? "inventory-filter-chip-active"
+                                        : ""
+                                    }`}
+                                    onClick={() => setFilterCategoryId(null)}
+                                  >
                                     All Products ({products.length})
-                                  </option>
+                                  </button>
                                   {categories.map((category) => (
-                                    <option
+                                    <button
                                       key={category.id}
-                                      value={category.id}
+                                      type="button"
+                                      className={`inventory-filter-chip ${
+                                        filterCategoryId === category.id
+                                          ? "inventory-filter-chip-active"
+                                          : ""
+                                      }`}
+                                      onClick={() =>
+                                        setFilterCategoryId(category.id)
+                                      }
                                     >
                                       {category.name} (
-                                      {
-                                        products.filter(
-                                          (product) =>
-                                            product.category_id ===
-                                            category.id,
-                                        ).length
-                                      }
+                                      {categoryProductCounts.get(category.id) ??
+                                        0}
                                       )
-                                    </option>
+                                    </button>
                                   ))}
-                                </select>
+                                </div>
                                 {categories.length === 0 && (
                                   <div className="inventory-filter-note">
                                     No categories yet.
@@ -3717,93 +3717,73 @@ export default function InventoryPage() {
                                 <div className="inventory-filter-title">
                                   Warehouse
                                 </div>
-                                <select
-                                  className="o-form-select"
-                                  value={filterWarehouseId ?? ""}
-                                  onChange={(e) =>
-                                    setFilterWarehouseId(
-                                      e.target.value
-                                        ? Number(e.target.value)
-                                        : null,
-                                    )
-                                  }
-                                >
-                                  <option value="">
+                                <div className="inventory-filter-items">
+                                  <button
+                                    type="button"
+                                    className={`inventory-filter-chip ${
+                                      filterWarehouseId === null
+                                        ? "inventory-filter-chip-active"
+                                        : ""
+                                    }`}
+                                    onClick={() => setFilterWarehouseId(null)}
+                                  >
                                     All Warehouses ({warehouses.length})
-                                  </option>
+                                  </button>
                                   {warehouses.map((warehouse) => (
-                                    <option
+                                    <button
                                       key={warehouse.id}
-                                      value={warehouse.id}
+                                      type="button"
+                                      className={`inventory-filter-chip ${
+                                        filterWarehouseId === warehouse.id
+                                          ? "inventory-filter-chip-active"
+                                          : ""
+                                      }`}
+                                      onClick={() =>
+                                        setFilterWarehouseId(warehouse.id)
+                                      }
                                     >
                                       {warehouse.name}
-                                    </option>
-                                  ))}
-                                </select>
-                                {activeProductWarehouse && (
-                                  <div className="inventory-filter-note">
-                                    <span>
-                                      Showing items in{" "}
-                                      {activeProductWarehouse.name}
-                                    </span>
-                                    <button
-                                      type="button"
-                                      className="inventory-clear-filter-btn"
-                                      onClick={() =>
-                                        setFilterWarehouseId(null)
-                                      }
-                                    >
-                                      Clear
                                     </button>
-                                  </div>
-                                )}
-                                <div className="inventory-filter-title">
-                                  Location
+                                  ))}
                                 </div>
-                                <select
-                                  className="o-form-select"
-                                  value={filterLocationId ?? ""}
-                                  onChange={(e) =>
-                                    setFilterLocationId(
-                                      e.target.value
-                                        ? Number(e.target.value)
-                                        : null,
-                                    )
-                                  }
-                                >
-                                  <option value="">
-                                    {filterWarehouseId !== null
-                                      ? `All Locations (${productFilterLocations.length})`
-                                      : `All Locations (${locations.length})`}
-                                  </option>
-                                  {productFilterLocations.map((location) => (
-                                    <option
-                                      key={location.id}
-                                      value={location.id}
-                                    >
-                                      {location.name}
-                                    </option>
-                                  ))}
-                                </select>
-                                {activeProductLocation && (
-                                  <div className="inventory-filter-note">
-                                    <span>
-                                      Showing items in location{" "}
-                                      {activeProductLocation.name}
-                                    </span>
+                                <div className="inventory-filter-column">
+                                  <div className="inventory-filter-title">
+                                    Location
+                                  </div>
+                                  <div className="inventory-filter-items">
                                     <button
                                       type="button"
-                                      className="inventory-clear-filter-btn"
-                                      onClick={() =>
-                                        setFilterLocationId(null)
-                                      }
+                                      className={`inventory-filter-chip ${
+                                        filterLocationId === null
+                                          ? "inventory-filter-chip-active"
+                                          : ""
+                                      }`}
+                                      onClick={() => setFilterLocationId(null)}
                                     >
-                                      Clear
+                                      {filterWarehouseId !== null
+                                        ? `All Locations (${productFilterLocations.length})`
+                                        : `All Locations (${locations.length})`}
                                     </button>
+                                    {productFilterLocations.map((location) => (
+                                      <button
+                                        key={location.id}
+                                        type="button"
+                                        className={`inventory-filter-chip ${
+                                          filterLocationId === location.id
+                                            ? "inventory-filter-chip-active"
+                                            : ""
+                                        }`}
+                                        onClick={() =>
+                                          setFilterLocationId(location.id)
+                                        }
+                                      >
+                                        {location.name}
+                                      </button>
+                                    ))}
                                   </div>
-                                )}
+                                </div>
                               </div>
-                              <div className="inventory-filter-column">
+                              <div className="inventory-filter-row">
                                 <div className="inventory-filter-title">
                                   Product Type
                                 </div>
@@ -4010,7 +3990,7 @@ export default function InventoryPage() {
                           >
                             {applyingAdjustments
                               ? "Applying..."
-                              : `Apply Changed (${adjustmentSummary.changedRows})`}
+                              : `Apply All (${adjustmentSummary.changedRows})`}
                           </button>
                         </div>
                       )}
@@ -6707,7 +6687,6 @@ export default function InventoryPage() {
                           </table>
                         </div>
                       </div>
-
                     </div>
                   </div>
                 </div>

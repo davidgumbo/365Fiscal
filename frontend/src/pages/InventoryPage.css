@@ -118,6 +118,14 @@
   gap: 10px;
 }
 
+.inventory-filter-row {
+  flex: 1;
+  min-width: 140px;
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+}
+
 .inventory-filter-title {
   font-weight: 600;
   font-size: 0.9rem;
