@@ -1,11 +1,26 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import html2pdf from "html2pdf.js";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import {
+  ArrowUpRight,
+  CheckCircle2,
+  Download,
+  FileInvoice,
+  FileMinus,
+  FileText,
+  MagnifyingGlass,
+  PenLine,
+  Plus,
+  ShieldCheck,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { apiFetch } from "../api";
 import { useMe } from "../hooks/useMe";
 import { useCompanies, Company } from "../hooks/useCompanies";
 import ValidationAlert from "../components/ValidationAlert";
 import ValidatedField from "../components/ValidatedField";
+import { Sidebar } from "../components/Sidebar";
+import type { SidebarSection } from "../types/sidebar";
 import "./InvoicesPage.css";
 import {
   getDocumentLinesError,
@@ -196,6 +211,27 @@ const getPaymentStatus = (amountPaid: number, amountDue: number) => {
   if (amountPaid > 0) return "Partial";
   return "Unpaid";
 };
+
+type FilterDefinition = {
+  key: string;
+  label: string;
+  icon: LucideIcon;
+  color: string;
+};
+
+const STATUS_FILTERS: FilterDefinition[] = [
+  { key: "", label: "ALL INVOICES", icon: FileText, color: "var(--indigo-500)" },
+  { key: "draft", label: "DRAFT", icon: PenLine, color: "var(--amber-500)" },
+  { key: "posted", label: "POSTED", icon: ArrowUpRight, color: "var(--blue-500)" },
+  { key: "paid", label: "PAID", icon: CheckCircle2, color: "var(--emerald-500)" },
+  { key: "fiscalized", label: "FISCALIZED", icon: ShieldCheck, color: "var(--violet-500)" },
+];
+
+const TYPE_FILTERS: FilterDefinition[] = [
+  { key: "", label: "ALL TYPES", icon: FileText, color: "var(--muted)" },
+  { key: "invoice", label: "INVOICE", icon: FileInvoice, color: "var(--blue-500)" },
+  { key: "credit_note", label: "CREDIT NOTE", icon: FileMinus, color: "var(--violet-500)" },
+];
 
 type Rgb = { r: number; g: number; b: number };
 
@@ -450,6 +486,58 @@ export default function InvoicesPage({
   const [listStatus, setListStatus] = useState("");
   const [listType, setListType] = useState("");
   const [listCurrency, setListCurrency] = useState("");
+  const invoiceSidebarSections = useMemo<SidebarSection[]>(() => {
+    const statusItems = STATUS_FILTERS.map((filter) => {
+      const IconComponent = filter.icon;
+      const count =
+        filter.key === ""
+          ? invoices.length
+          : invoices.filter((inv) => inv.status === filter.key).length;
+      return {
+        id: `status-${filter.key || "all"}`,
+        label: filter.label,
+        icon: (
+          <IconComponent
+            size={18}
+            strokeWidth={1.5}
+            aria-hidden="true"
+            color={filter.color}
+          />
+        ),
+        badge: count,
+        isActive: listStatus === filter.key,
+        onClick: () => setListStatus(filter.key),
+      };
+    });
+
+    const typeItems = TYPE_FILTERS.map((filter) => {
+      const IconComponent = filter.icon;
+      const count =
+        filter.key === ""
+          ? invoices.length
+          : invoices.filter((inv) => inv.invoice_type === filter.key).length;
+      return {
+        id: `type-${filter.key || "all"}`,
+        label: filter.label,
+        icon: (
+          <IconComponent
+            size={18}
+            strokeWidth={1.5}
+            aria-hidden="true"
+            color={filter.color}
+          />
+        ),
+        badge: count,
+        isActive: listType === filter.key,
+        onClick: () => setListType(filter.key),
+      };
+    });
+
+    return [
+      { id: "invoice-status", title: "STATUS", items: statusItems },
+      { id: "invoice-type", title: "TYPE", items: typeItems },
+    ];
+  }, [invoices, listStatus, listType]);
   const [linesPage, setLinesPage] = useState(1);
   const [linesPerPage, setLinesPerPage] = useState(10);
   const [paymentOpen, setPaymentOpen] = useState(false);
@@ -1607,484 +1695,240 @@ export default function InvoicesPage({
       {/* ───────────── LIST VIEW ───────────── */}
       {!showForm && (
         <>
-          <div className="two-panel two-panel-left invoice-dashboard-layout">
-            {/* Sidebar */}
-            <div className="o-sidebar">
-              <div className="o-sidebar-section">
-                <div className="o-sidebar-title">STATUS</div>
-                {[
-                  {
-                    key: "",
-                    label: "ALL INVOICES",
-                    icon: (
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="var(--indigo-500)"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <rect x="3" y="3" width="18" height="18" rx="2" />
-                        <path d="M3 9h18" />
-                        <path d="M9 21V9" />
-                      </svg>
-                    ),
-                  },
-                  {
-                    key: "draft",
-                    label: "DRAFT",
-                    icon: (
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="var(--amber-500)"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M12 20h9" />
-                        <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                      </svg>
-                    ),
-                  },
-                  {
-                    key: "posted",
-                    label: "POSTED",
-                    icon: (
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="var(--blue-500)"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                        <path d="m9 11 3 3L22 4" />
-                      </svg>
-                    ),
-                  },
-                  {
-                    key: "paid",
-                    label: "PAID",
-                    icon: (
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="var(--emerald-500)"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <circle cx="12" cy="12" r="10" />
-                        <path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8" />
-                        <path d="M12 18V6" />
-                      </svg>
-                    ),
-                  },
-                  {
-                    key: "fiscalized",
-                    label: "FISCALIZED",
-                    icon: (
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="var(--violet-500)"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                        <path d="m9 12 2 2 4-4" />
-                      </svg>
-                    ),
-                  },
-                ].map((item) => (
-                  <div
-                    key={item.key || "all"}
-                    className={`o-sidebar-item ${listStatus === item.key ? "active" : ""}`}
-                    onClick={() => setListStatus(item.key)}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <span
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 10,
-                        opacity: 0.85,
-                      }}
-                    >
-                      {item.icon}
-                      <span
-                        style={{
-                          letterSpacing: "0.5px",
-                          fontSize: 12,
-                          fontWeight: 500,
-                        }}
-                      >
-                        {item.label}
-                      </span>
-                    </span>
-                    <span className="o-sidebar-count">
-                      {item.key === ""
-                        ? invoices.length
-                        : invoices.filter((inv) => inv.status === item.key)
-                            .length}
-                    </span>
+          <div className="invoice-dashboard-layout">
+            <Sidebar sections={invoiceSidebarSections} />
+            <div className="invoice-dashboard-main">
+              <div className="o-control-panel inventory-main-search-panel invoice-top-panel">
+                <div className="inventory-search-wrapper">
+                  <div className="inventory-search-inner">
+                    <div className="inventory-centered-searchbox">
+                      <div className="o-searchbox">
+                        <span className="o-searchbox-icon">
+                          <MagnifyingGlass size={16} />
+                        </span>
+                        <input
+                          placeholder="Search invoices..."
+                          value={listSearch}
+                          onChange={(e) => setListSearch(e.target.value)}
+                        />
+                      </div>
+                    </div>
                   </div>
-                ))}
-              </div>
-
-              <div className="o-sidebar-section">
-                {[
-                  {
-                    key: "",
-                    label: "ALL TYPES",
-                    icon: (
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <rect x="3" y="3" width="7" height="7" rx="1" />
-                        <rect x="14" y="3" width="7" height="7" rx="1" />
-                        <rect x="14" y="14" width="7" height="7" rx="1" />
-                        <rect x="3" y="14" width="7" height="7" rx="1" />
-                      </svg>
-                    ),
-                  },
-                  {
-                    key: "invoice",
-                    label: "INVOICE",
-                    icon: (
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                        <path d="M14 2v6h6" />
-                        <path d="M16 13H8" />
-                        <path d="M16 17H8" />
-                        <path d="M10 9H8" />
-                      </svg>
-                    ),
-                  },
-                  {
-                    key: "credit_note",
-                    label: "CREDIT NOTE",
-                    icon: (
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                        <path d="M14 2v6h6" />
-                        <path d="m15 11-6 6" />
-                        <path d="m9 11 6 6" />
-                      </svg>
-                    ),
-                  },
-                ].map((item) => (
-                  <div
-                    key={item.key || "all"}
-                    className={`o-sidebar-item ${listType === item.key ? "active" : ""}`}
-                    onClick={() => setListType(item.key)}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <span
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 10,
-                        opacity: 0.85,
-                      }}
-                    >
-                      {item.icon}
-                      <span
-                        style={{
-                          letterSpacing: "0.5px",
-                          fontSize: 12,
-                          fontWeight: 500,
-                        }}
-                      >
-                        {item.label}
-                      </span>
-                    </span>
-                    <span className="o-sidebar-count">
-                      {item.key === ""
-                        ? invoices.length
-                        : invoices.filter(
-                            (inv) => inv.invoice_type === item.key,
-                          ).length}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="invoice-list-main">
-              <div className="content-top-bar">
-                <div className="top-search">
-                  <span className="search-icon">
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <circle cx="11" cy="11" r="8" />
-                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                    </svg>
-                  </span>
-                  <input
-                    placeholder="Search invoices..."
-                    value={listSearch}
-                    onChange={(e) => setListSearch(e.target.value)}
-                  />
                 </div>
-                <select
-                  className="form-select"
-                  style={{ maxWidth: 160 }}
-                  value={listCurrency}
-                  onChange={(e) => setListCurrency(e.target.value)}
-                  aria-label="Filter by currency"
-                >
-                  <option value="">All currencies</option>
-                  <option value="USD">USD</option>
-                  <option value="ZWG">ZWG</option>
-                </select>
-                <button
-                  className="o-btn o-btn-secondary"
-                  style={{ display: "flex", alignItems: "center", gap: 6 }}
-                  onClick={() => {
-                    const headers = [
-                      "Reference",
-                      "Type",
-                      "Customer",
-                      "Date",
-                      "Status",
-                      "Payment",
-                      "Subtotal",
-                      "Tax",
-                      "Total",
-                      "Paid",
-                      "Due",
-                    ];
-                    const rows = invoices.map((inv) => {
-                      const cust = contactById.get(inv.customer_id ?? 0);
-                      return [
-                        inv.reference,
-                        inv.invoice_type === "credit_note"
-                          ? "Credit Note"
-                          : "Invoice",
-                        cust?.name || "",
-                        inv.invoice_date
-                          ? new Date(inv.invoice_date).toLocaleDateString()
-                          : "",
-                        inv.status,
-                        getPaymentStatus(inv.amount_paid, inv.amount_due),
-                        inv.subtotal || 0,
-                        inv.tax_amount || 0,
-                        inv.total_amount || 0,
-                        inv.amount_paid || 0,
-                        inv.amount_due || 0,
+                <div className="o-control-panel-right">
+                  <select
+                    className="form-select"
+                    style={{ maxWidth: 160 }}
+                    value={listCurrency}
+                    onChange={(e) => setListCurrency(e.target.value)}
+                    aria-label="Filter by currency"
+                  >
+                    <option value="">All currencies</option>
+                    <option value="USD">USD</option>
+                    <option value="ZWG">ZWG</option>
+                  </select>
+                  <button
+                    className="o-btn o-btn-secondary"
+                    style={{ display: "flex", alignItems: "center", gap: 6 }}
+                    onClick={() => {
+                      const headers = [
+                        "Reference",
+                        "Type",
+                        "Customer",
+                        "Date",
+                        "Status",
+                        "Payment",
+                        "Subtotal",
+                        "Tax",
+                        "Total",
+                        "Paid",
+                        "Due",
                       ];
-                    });
-                    const csvContent = [headers, ...rows]
-                      .map((row) =>
-                        row
-                          .map(
-                            (cell) => `"${String(cell).replace(/"/g, '""')}"`,
-                          )
-                          .join(","),
-                      )
-                      .join("\n");
-                    const blob = new Blob([csvContent], {
-                      type: "text/csv;charset=utf-8;",
-                    });
-                    const link = document.createElement("a");
-                    link.href = URL.createObjectURL(blob);
-                    link.download = `invoices_${new Date().toISOString().split("T")[0]}.csv`;
-                    link.click();
-                  }}
-                >
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+                      const rows = invoices.map((inv) => {
+                        const cust = contactById.get(inv.customer_id ?? 0);
+                        return [
+                          inv.reference,
+                          inv.invoice_type === "credit_note"
+                            ? "Credit Note"
+                            : "Invoice",
+                          cust?.name || "",
+                          inv.invoice_date
+                            ? new Date(inv.invoice_date).toLocaleDateString()
+                            : "",
+                          inv.status,
+                          getPaymentStatus(inv.amount_paid, inv.amount_due),
+                          inv.subtotal || 0,
+                          inv.tax_amount || 0,
+                          inv.total_amount || 0,
+                          inv.amount_paid || 0,
+                          inv.amount_due || 0,
+                        ];
+                      });
+                      const csvContent = [headers, ...rows]
+                        .map((row) =>
+                          row
+                            .map(
+                              (cell) => `"${String(cell).replace(/"/g, '""')}"`,
+                            )
+                            .join(","),
+                        )
+                        .join("\n");
+                      const blob = new Blob([csvContent], {
+                        type: "text/csv;charset=utf-8;",
+                      });
+                      const link = document.createElement("a");
+                      link.href = URL.createObjectURL(blob);
+                      link.download = `invoices_${new Date()
+                        .toISOString()
+                        .split("T")[0]}.csv`;
+                      link.click();
+                    }}
                   >
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="7 10 12 15 17 10" />
-                    <line x1="12" y1="15" x2="12" y2="3" />
-                  </svg>
-                  Export
-                </button>
-                <button
-                  className="btn-create"
-                  onClick={() => {
-                    beginNew();
-                    navigate("/invoices/new");
-                  }}
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
+                    <Download size={16} />
+                    <span>Export</span>
+                  </button>
+                  <button
+                    className="o-btn o-btn-primary"
+                    style={{ display: "flex", alignItems: "center", gap: 6 }}
+                    onClick={() => {
+                      beginNew();
+                      navigate("/invoices/new");
+                    }}
                   >
-                    <line x1="12" y1="5" x2="12" y2="19" />
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                  </svg>
-                  New Invoice
-                </button>
+                    <Plus size={16} />
+                    <span>New Invoice</span>
+                  </button>
+                </div>
               </div>
-
-              <div className="card shadow-sm card-bg-shadow invoice-list-card">
-                <div className="card-body p-0">
-                  <div className="table-responsive">
-                    <table className="table table-hover align-middle mb-0">
-                      <thead className="table-light">
-                        <tr>
-                          <th>Reference</th>
-                          <th>Customer</th>
-                          <th>Date</th>
-                          <th>Status</th>
-                          <th>Payment</th>
-                          <th className="text-end">Total</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {loading && (
+              <div className="o-main inventory-view-main">
+                <div className="card shadow-sm card-bg-shadow invoice-list-card">
+                  <div className="card-body p-0">
+                    <div className="table-responsive">
+                      <table className="table table-hover align-middle mb-0">
+                        <thead className="table-light">
                           <tr>
-                            <td
-                              colSpan={6}
-                              className="text-center py-5 text-muted"
-                            >
-                              Loading invoices…
-                            </td>
+                            <th>Reference</th>
+                            <th>Customer</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Payment</th>
+                            <th className="text-end">Total</th>
                           </tr>
-                        )}
-                        {!loading && invoices.length === 0 && (
-                          <tr>
-                            <td
-                              colSpan={6}
-                              className="text-center py-5 text-muted"
-                            >
-                              No invoices yet. Click{" "}
-                              <strong>+ New Invoice</strong> to create one.
-                            </td>
-                          </tr>
-                        )}
-                        {invoices.map((inv) => {
-                          const cust = contactById.get(inv.customer_id ?? 0);
-                          return (
-                            <tr
-                              key={inv.id}
-                              role="button"
-                              onClick={() => navigate(`/invoices/${inv.id}`)}
-                            >
-                              <td>
-                                <div className="fw-semibold">
-                                  {inv.reference}
-                                </div>
-                                <small className="text-muted">
-                                  {inv.invoice_type === "credit_note"
-                                    ? "Credit Note"
-                                    : "Invoice"}
-                                </small>
-                              </td>
-                              <td>{cust?.name || "—"}</td>
-                              <td className="text-muted">
-                                {inv.invoice_date
-                                  ? new Date(
-                                      inv.invoice_date,
-                                    ).toLocaleDateString()
-                                  : "—"}
-                              </td>
-                              <td>
-                                <span
-                                  className={`badge ${inv.status === "paid" ? "bg-success" : inv.status === "posted" ? "bg-info" : inv.status === "fiscalized" ? "bg-primary" : "bg-secondary"}`}
-                                >
-                                  {inv.status}
-                                </span>
-                              </td>
-                              <td>
-                                <span
-                                  className={`badge bg-${getPaymentStatus(inv.amount_paid, inv.amount_due) === "Paid" ? "success" : getPaymentStatus(inv.amount_paid, inv.amount_due) === "Partial" ? "warning" : "secondary"}`}
-                                >
-                                  {getPaymentStatus(
-                                    inv.amount_paid,
-                                    inv.amount_due,
-                                  )}
-                                </span>
-                              </td>
-                              <td className="text-end fw-semibold">
-                                {formatCurrency(
-                                  inv.total_amount || 0,
-                                  inv.currency || "USD",
-                                )}
+                        </thead>
+                        <tbody>
+                          {loading && (
+                            <tr>
+                              <td
+                                colSpan={6}
+                                className="text-center py-5 text-muted"
+                              >
+                                Loading invoices…
                               </td>
                             </tr>
-                          );
-                        })}
-                      </tbody>
-                      <tfoot>
-                        <tr
-                          style={{
-                            background: "var(--slate-50)",
-                            fontWeight: 600,
-                          }}
-                        >
-                          <td colSpan={5} className="text-end">
-                            Grand Total:
-                          </td>
-                          <td className="text-end">
-                            {formatCurrency(
-                              invoices.reduce(
-                                (sum, inv) => sum + (inv.total_amount || 0),
-                                0,
-                              ),
-                              "USD",
-                            )}
-                          </td>
-                        </tr>
-                      </tfoot>
-                    </table>
+                          )}
+                          {!loading && invoices.length === 0 && (
+                            <tr>
+                              <td
+                                colSpan={6}
+                                className="text-center py-5 text-muted"
+                              >
+                                No invoices yet. Click{" "}
+                                <strong>+ New Invoice</strong> to create one.
+                              </td>
+                            </tr>
+                          )}
+                          {invoices.map((inv) => {
+                            const cust = contactById.get(inv.customer_id ?? 0);
+                            return (
+                              <tr
+                                key={inv.id}
+                                role="button"
+                                onClick={() => navigate(`/invoices/${inv.id}`)}
+                              >
+                                <td>
+                                  <div className="fw-semibold">
+                                    {inv.reference}
+                                  </div>
+                                  <small className="text-muted">
+                                    {inv.invoice_type === "credit_note"
+                                      ? "Credit Note"
+                                      : "Invoice"}
+                                  </small>
+                                </td>
+                                <td>{cust?.name || "—"}</td>
+                                <td className="text-muted">
+                                  {inv.invoice_date
+                                    ? new Date(
+                                        inv.invoice_date,
+                                      ).toLocaleDateString()
+                                    : "—"}
+                                </td>
+                                <td>
+                                  <span
+                                    className={`badge ${inv.status === "paid"
+                                      ? "bg-success"
+                                      : inv.status === "posted"
+                                        ? "bg-info"
+                                        : inv.status === "fiscalized"
+                                          ? "bg-primary"
+                                          : "bg-secondary"}`}
+                                  >
+                                    {inv.status}
+                                  </span>
+                                </td>
+                                <td>
+                                  <span
+                                    className={`badge bg-${getPaymentStatus(
+                                      inv.amount_paid,
+                                      inv.amount_due,
+                                    ) === "Paid"
+                                      ? "success"
+                                      : getPaymentStatus(
+                                        inv.amount_paid,
+                                        inv.amount_due,
+                                      ) === "Partial"
+                                        ? "warning"
+                                        : "secondary"}`}
+                                  >
+                                    {getPaymentStatus(
+                                      inv.amount_paid,
+                                      inv.amount_due,
+                                    )}
+                                  </span>
+                                </td>
+                                <td className="text-end fw-semibold">
+                                  {formatCurrency(
+                                    inv.total_amount || 0,
+                                    inv.currency || "USD",
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                        <tfoot>
+                          <tr
+                            style={{
+                              background: "var(--slate-50)",
+                              fontWeight: 600,
+                            }}
+                          >
+                            <td colSpan={5} className="text-end">
+                              Grand Total:
+                            </td>
+                            <td className="text-end">
+                              {formatCurrency(
+                                invoices.reduce(
+                                  (sum, inv) => sum + (inv.total_amount || 0),
+                                  0,
+                                ),
+                                "USD",
+                              )}
+                            </td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
                   </div>
                 </div>
               </div>
