@@ -512,7 +512,7 @@ export default function InventoryPage() {
         },
         {
           id: "operations-adjustments",
-          label: "Adjustments",
+          label: "Stock Count",
           isActive:
             mainView === "operations" && operationsTab === "adjustments",
           onClick: () => {
