@@ -1319,6 +1319,88 @@
   min-height: clamp(520px, calc(100vh - 320px), 860px);
 }
 
+.inventory-record-header-warehouse {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  margin: 4px 0 16px;
+  border: 1px solid #dce5f0;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%) !important;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+}
+
+.inventory-record-header-left,
+.inventory-record-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.inventory-record-back {
+  position: relative;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid #d8e1ee;
+  border-radius: 12px;
+  background: #ffffff;
+  color: transparent;
+  font-size: 0;
+}
+
+.inventory-record-back::before {
+  content: "\2190  Back to List";
+  color: #1d4ed8;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.inventory-record-title-warehouse {
+  margin-left: 0 !important;
+  font-size: 24px;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+}
+
+.inventory-record-action-btn {
+  min-height: 40px;
+  border-radius: 12px;
+  padding: 0 16px;
+  font-weight: 700;
+}
+
+.inventory-record-icon-btn {
+  width: 40px;
+  height: 40px;
+  border: 1px solid #d8e1ee;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #334155;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    color 0.18s ease;
+}
+
+.inventory-record-icon-btn:hover {
+  border-color: #c7d2fe;
+  background: #eef2ff;
+  color: #3730a3;
+}
+
+.inventory-record-icon-btn-danger:hover {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #dc2626;
+}
+
 .inventory-warehouse-form .o-form-sheet {
   border: 1px solid #dce5f0;
   border-radius: 20px;
@@ -1384,13 +1466,6 @@
   text-transform: uppercase;
   color: var(--muted);
   margin-bottom: 8px;
-}
-
-.inventory-warehouse-form-subtitle {
-  margin: 10px 0 0;
-  color: #607089;
-  font-size: 13px;
-  line-height: 1.5;
 }
 
 .inventory-warehouse-name-input {
@@ -1506,12 +1581,6 @@
   font-size: 20px;
   font-weight: 800;
   color: var(--ink);
-}
-
-.inventory-warehouse-section-subtitle {
-  margin: 4px 0 0;
-  color: #607089;
-  font-size: 13px;
 }
 
 .inventory-warehouse-add-location-btn {
@@ -1788,6 +1857,17 @@
 }
 
 @media (max-width: 900px) {
+  .inventory-record-header-warehouse {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .inventory-record-header-left,
+  .inventory-record-header-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
   .inventory-warehouse-form-shell {
     grid-template-columns: 1fr;
   }

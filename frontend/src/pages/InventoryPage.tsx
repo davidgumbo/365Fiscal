@@ -3575,23 +3575,43 @@ export default function InventoryPage() {
             {/* Form Sub Control Panel */}
             {subView === "form" && mainView !== "operations" && (
               <div
-                className="o-control-panel"
+                className={`o-control-panel ${
+                  mainView === "warehouses"
+                    ? "inventory-record-header inventory-record-header-warehouse"
+                    : ""
+                }`}
                 style={{ background: "var(--gray-50)", marginTop: -8 }}
               >
-                <div className="o-control-panel-left">
-                  <button className="o-btn o-btn-link" onClick={goBack}>
+                <div className="o-control-panel-left inventory-record-header-left">
+                  <button
+                    className={`o-btn o-btn-link ${
+                      mainView === "warehouses" ? "inventory-record-back" : ""
+                    }`}
+                    onClick={goBack}
+                  >
                     ← Back to List
                   </button>
-                  <span style={{ fontWeight: 600, marginLeft: 16 }}>
+                  <span
+                    className={
+                      mainView === "warehouses"
+                        ? "inventory-record-title inventory-record-title-warehouse"
+                        : ""
+                    }
+                    style={{ fontWeight: 600, marginLeft: 16 }}
+                  >
                     {mainView === "products" &&
                       (isNew ? "New Product" : selectedProduct?.name)}
                     {mainView === "warehouses" &&
                       (isNew ? "New Warehouse" : selectedWarehouse?.name)}
                   </span>
                 </div>
-                <div className="o-control-panel-right">
+                <div className="o-control-panel-right inventory-record-header-right">
                   <button
-                    className="o-btn o-btn-primary"
+                    className={`o-btn o-btn-primary ${
+                      mainView === "warehouses"
+                        ? "inventory-record-action-btn"
+                        : ""
+                    }`}
                     onClick={() => {
                       if (mainView === "products") saveProduct();
                       else if (mainView === "warehouses") saveWarehouse();
@@ -3603,7 +3623,11 @@ export default function InventoryPage() {
                   {!isNew && (
                     <>
                       <button
-                        className="danger"
+                        className={
+                          mainView === "warehouses"
+                            ? "inventory-record-icon-btn inventory-record-icon-btn-danger"
+                            : "danger"
+                        }
                         title="Delete"
                         aria-label="Delete"
                         onClick={() => {
@@ -3621,7 +3645,14 @@ export default function InventoryPage() {
                       </button>
                     </>
                   )}
-                  <button className="o-btn o-btn-secondary" onClick={goBack}>
+                  <button
+                    className={`o-btn o-btn-secondary ${
+                      mainView === "warehouses"
+                        ? "inventory-record-action-btn"
+                        : ""
+                    }`}
+                    onClick={goBack}
+                  >
                     Discard
                   </button>
                 </div>
@@ -5961,10 +5992,6 @@ export default function InventoryPage() {
                                   })
                                 }
                               />
-                              <p className="inventory-warehouse-form-subtitle">
-                                Keep the warehouse details, short code, and
-                                storage locations organized in one place.
-                              </p>
                             </div>
                           </div>
 
@@ -6051,10 +6078,6 @@ export default function InventoryPage() {
                                   <h3 className="inventory-warehouse-section-title">
                                     Locations
                                   </h3>
-                                  <p className="inventory-warehouse-section-subtitle">
-                                    Manage the storage points inside this
-                                    warehouse.
-                                  </p>
                                 </div>
                               </div>
                               <button
