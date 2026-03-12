@@ -11167,6 +11167,20 @@ button.danger:not(.icon-btn):not(.device-icon-btn):disabled {
   padding: 1px 5px;
   border-radius: 3px;
 }
+.pos-orders-return-tag {
+  display: inline-block;
+  font-size: 0.6rem;
+  font-weight: 600;
+  background: var(--emerald-100, #d1fae5);
+  color: var(--emerald-700, #047857);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+.pos-order-detail-line-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
 .pos-orders-panel-row-meta {
   display: flex;
   align-items: center;

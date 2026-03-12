@@ -122,6 +122,108 @@ def _resolve_pos_stock_location(
     return warehouse.id, location.id if location else None
 
 
+def _get_or_create_stock_quant(
+    db: Session,
+    *,
+    company_id: int,
+    product_id: int,
+    warehouse_id: int | None,
+    location_id: int | None,
+    unit_cost: float,
+) -> StockQuant:
+    quant_q = db.query(StockQuant).filter(
+        StockQuant.product_id == product_id,
+        StockQuant.company_id == company_id,
+    )
+    if warehouse_id is not None:
+        quant_q = quant_q.filter(StockQuant.warehouse_id == warehouse_id)
+    if location_id is not None:
+        quant_q = quant_q.filter(StockQuant.location_id == location_id)
+    quant = quant_q.order_by(StockQuant.id.asc()).first()
+    if quant:
+        return quant
+
+    quant = StockQuant(
+        company_id=company_id,
+        product_id=product_id,
+        warehouse_id=warehouse_id,
+        location_id=location_id,
+        quantity=0,
+        reserved_quantity=0,
+        available_quantity=0,
+        unit_cost=unit_cost,
+        total_value=0,
+    )
+    db.add(quant)
+    db.flush()
+    return quant
+
+
+def _apply_pos_inventory_move(
+    db: Session,
+    *,
+    company_id: int,
+    product: Product,
+    quantity: float,
+    warehouse_id: int | None,
+    location_id: int | None,
+    reference: str,
+    source_document: str,
+    move_type: str,
+    notes: str,
+) -> None:
+    if product.product_type != "storable" or not product.track_inventory or quantity <= 0:
+        return
+
+    unit_cost = product.sales_cost or product.purchase_cost or 0
+    quant = None
+    quant_q = db.query(StockQuant).filter(
+        StockQuant.product_id == product.id,
+        StockQuant.company_id == company_id,
+    )
+    if warehouse_id is not None:
+        quant_q = quant_q.filter(StockQuant.warehouse_id == warehouse_id)
+    if location_id is not None:
+        quant_q = quant_q.filter(StockQuant.location_id == location_id)
+    quant = quant_q.order_by(StockQuant.id.asc()).first()
+
+    if quant:
+        delta = quantity if move_type == "in" else -quantity
+        quant.quantity = round((quant.quantity or 0) + delta, 4)
+        quant.available_quantity = round((quant.available_quantity or 0) + delta, 4)
+        quant.unit_cost = unit_cost if unit_cost > 0 else (quant.unit_cost or 0)
+        quant.total_value = round(quant.quantity * (quant.unit_cost or 0), 2)
+    elif move_type == "in":
+        quant = _get_or_create_stock_quant(
+            db,
+            company_id=company_id,
+            product_id=product.id,
+            warehouse_id=warehouse_id,
+            location_id=location_id,
+            unit_cost=unit_cost,
+        )
+        quant.quantity = round(quantity, 4)
+        quant.available_quantity = round(quantity, 4)
+        quant.total_value = round(quantity * (quant.unit_cost or 0), 2)
+
+    db.add(StockMove(
+        company_id=company_id,
+        product_id=product.id,
+        reference=reference,
+        move_type=move_type,
+        quantity=quantity,
+        warehouse_id=warehouse_id,
+        location_id=location_id,
+        unit_cost=(quant.unit_cost if quant else unit_cost) or 0,
+        total_cost=round(quantity * ((quant.unit_cost if quant else unit_cost) or 0), 2),
+        source_document=source_document,
+        state="done",
+        done_date=datetime.utcnow(),
+        notes=notes,
+    ))
+    db.flush()
+
+
 # ── sessions ────────────────────────────────────────────────────────────────
 
 @router.post("/sessions/open", response_model=POSSessionRead)
@@ -444,40 +546,20 @@ def create_order(
         if not ld.product_id:
             continue
         product = db.query(Product).filter(Product.id == ld.product_id).first()
-        if not product or product.product_type != "storable" or not product.track_inventory:
+        if not product:
             continue
-        qty = ld.quantity
-        # Update stock quant (reduce available)
-        quant_q = db.query(StockQuant).filter(
-            StockQuant.product_id == product.id,
-            StockQuant.company_id == payload.company_id,
-        )
-        if resolved_warehouse_id is not None:
-            quant_q = quant_q.filter(StockQuant.warehouse_id == resolved_warehouse_id)
-        if resolved_location_id is not None:
-            quant_q = quant_q.filter(StockQuant.location_id == resolved_location_id)
-        quant = quant_q.order_by(StockQuant.id.asc()).first()
-        if quant:
-            quant.quantity = round(quant.quantity - qty, 4)
-            quant.available_quantity = round(quant.available_quantity - qty, 4)
-            quant.total_value = round(quant.quantity * quant.unit_cost, 2)
-        # Record stock move
-        db.add(StockMove(
+        _apply_pos_inventory_move(
+            db,
             company_id=payload.company_id,
-            product_id=product.id,
-            reference=ref,
-            move_type="out",
-            quantity=qty,
+            product=product,
+            quantity=ld.quantity,
             warehouse_id=resolved_warehouse_id,
             location_id=resolved_location_id,
-            unit_cost=product.sales_cost or product.purchase_cost,
-            total_cost=round(qty * (product.sales_cost or product.purchase_cost), 2),
+            reference=ref,
             source_document=ref,
-            state="done",
-            done_date=datetime.utcnow(),
+            move_type="out",
             notes=f"POS sale: {ref}",
-        ))
-        db.flush()
+        )
 
     # Calculate change
     paid = payload.cash_amount + payload.card_amount + payload.mobile_amount
@@ -699,6 +781,11 @@ def refund_order(
         raise HTTPException(400, f"Order is already {order.status}")
 
     session = db.query(POSSession).filter(POSSession.id == order.session_id).first()
+    refund_warehouse_id, refund_location_id = _resolve_pos_stock_location(
+        db,
+        order.company_id,
+        order.invoice.warehouse_id if order.invoice else None,
+    )
 
     # Create refund order
     refund_ref = _next_order_ref(db)
@@ -737,6 +824,23 @@ def refund_order(
             tax_amount=-line.tax_amount,
             total_price=-line.total_price,
         ))
+        if not line.product_id:
+            continue
+        product = db.query(Product).filter(Product.id == line.product_id).first()
+        if not product:
+            continue
+        _apply_pos_inventory_move(
+            db,
+            company_id=order.company_id,
+            product=product,
+            quantity=line.quantity,
+            warehouse_id=refund_warehouse_id,
+            location_id=refund_location_id,
+            reference=refund_ref,
+            source_document=order.reference,
+            move_type="in",
+            notes=f"POS refund return: {refund_ref} for {order.reference}",
+        )
 
     # Create credit note invoice
     cn_ref = f"CN-{refund_ref}"

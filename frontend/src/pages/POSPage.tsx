@@ -66,6 +66,7 @@ type POSSession = {
 type OrderLine = {
   id: number;
   description: string;
+  product_id?: number | null;
   quantity: number;
   uom: string;
   unit_price: number;
@@ -3040,7 +3041,14 @@ export default function POSPage() {
                   </div>
                   {(selectedOrder.lines || []).map((l, i) => (
                     <div key={i} className="pos-order-detail-line">
-                      <span>{l.description}</span>
+                      <span className="pos-order-detail-line-item">
+                        {l.description}
+                        {l.quantity < 0 && (
+                          <span className="pos-orders-return-tag">
+                            Returned
+                          </span>
+                        )}
+                      </span>
                       <span>{l.quantity}</span>
                       <span>{money(l.unit_price)}</span>
                       <span>{money(l.total_price)}</span>
@@ -3269,6 +3277,11 @@ export default function POSPage() {
                             {o.status === "refunded" && (
                               <span className="pos-orders-refund-tag">
                                 Refunded
+                              </span>
+                            )}
+                            {o.total_amount < 0 && (
+                              <span className="pos-orders-return-tag">
+                                Returned
                               </span>
                             )}
                           </div>
