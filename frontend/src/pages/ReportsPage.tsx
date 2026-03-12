@@ -4783,16 +4783,24 @@ export default function ReportsPage() {
                               </span>
                             </td>
                             <td>{order.currency}</td>
-                            <td className="text-right">
+                            <td
+                              className={`text-right ${order.total < 0 ? "report-negative-value" : ""}`}
+                            >
                               {order.currency} {order.total.toFixed(2)}
                             </td>
-                            <td className="text-right">
+                            <td
+                              className={`text-right ${order.cash < 0 ? "report-negative-value" : ""}`}
+                            >
                               {order.currency} {order.cash.toFixed(2)}
                             </td>
-                            <td className="text-right">
+                            <td
+                              className={`text-right ${order.card < 0 ? "report-negative-value" : ""}`}
+                            >
                               {order.currency} {order.card.toFixed(2)}
                             </td>
-                            <td className="text-right">
+                            <td
+                              className={`text-right ${order.mobile < 0 ? "report-negative-value" : ""}`}
+                            >
                               {order.currency} {order.mobile.toFixed(2)}
                             </td>
                             <td>{order.fiscalized ? "Yes" : "No"}</td>

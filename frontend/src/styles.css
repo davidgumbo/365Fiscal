@@ -6471,6 +6471,11 @@ button.danger:hover {
   text-align: right !important;
 }
 
+.report-table td.report-negative-value,
+.report-negative-value {
+  color: #ef4444 !important;
+}
+
 .chart-container {
   height: 180px;
   display: flex;
