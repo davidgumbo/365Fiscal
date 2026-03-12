@@ -396,14 +396,7 @@ export default function InventoryPage() {
     const operationsItem = {
       id: "menu-operations",
       label: "OPERATIONS",
-      icon: (
-        <ArrowRightLeft
-          strokeWidth={1}
-          size={24}
-          color={color ?? "currentColor"}
-          aria-hidden
-        />
-      ),
+      icon: <ArrowRightLeft strokeWidth={1} size={24} aria-hidden />,
       isActive: mainView === "operations",
       onClick: () => {
         setMainView("operations");
