@@ -25,6 +25,9 @@ import {
   FunnelPlus,
   LayoutGrid,
   ArrowRightLeft,
+  ShoppingBasket,
+  LayoutDashboard,
+  Warehouse,
 } from "lucide-react";
 import ValidationAlert from "../components/ValidationAlert";
 import ValidatedField from "../components/ValidatedField";
@@ -206,7 +209,7 @@ type SubView = "list" | "kanban" | "form";
 type InventoryIconProps = { color?: string };
 
 const OverviewIcon = ({ color }: InventoryIconProps) => (
-  <LayoutGrid
+  <LayoutDashboard
     strokeWidth={1}
     size={24}
     color={color ?? "currentColor"}
@@ -215,88 +218,30 @@ const OverviewIcon = ({ color }: InventoryIconProps) => (
 );
 
 const ProductsIcon = ({ color }: InventoryIconProps) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-    style={color ? { color } : undefined}
-  >
-    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-    <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-    <line x1="12" y1="22.08" x2="12" y2="12" />
-  </svg>
+  <ShoppingBasket
+    strokeWidth={1}
+    size={24}
+    color={color ?? "currentColor"}
+    aria-hidden
+  />
 );
 
 const CategoriesIcon = ({ color }: InventoryIconProps) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-    style={color ? { color } : undefined}
-  >
-    <rect x="3" y="4" width="7" height="7" rx="1" />
-    <rect x="3" y="13" width="7" height="7" rx="1" />
-    <rect x="14" y="6" width="7" height="12" rx="1" />
-  </svg>
+  <LayoutGrid
+    strokeWidth={1}
+    size={24}
+    color={color ?? "currentColor"}
+    aria-hidden
+  />
 );
 
 const WarehousesIcon = ({ color }: InventoryIconProps) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-    style={color ? { color } : undefined}
-  >
-    <path d="M3 7l9-4 9 4" />
-    <path d="M21 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7" />
-    <path d="M3 7l9 4 9-4" />
-    <path d="M7 11v6" />
-    <path d="M12 12v7" />
-    <path d="M17 11v6" />
-  </svg>
-);
-
-const OperationsIcon = ({ color }: InventoryIconProps) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-    style={color ? { color } : undefined}
-  >
-    <polyline points="16 3 21 3 21 8" />
-    <line x1="4" y1="20" x2="21" y2="3" />
-    <polyline points="21 16 21 21 16 21" />
-    <line x1="15" y1="15" x2="21" y2="21" />
-    <line x1="4" y1="4" x2="9" y2="9" />
-  </svg>
+  <Warehouse
+    strokeWidth={1}
+    size={24}
+    color={color ?? "currentColor"}
+    aria-hidden
+  />
 );
 
 type MenuTab = {
@@ -451,7 +396,14 @@ export default function InventoryPage() {
     const operationsItem = {
       id: "menu-operations",
       label: "OPERATIONS",
-      icon: <ArrowRightLeft color="var(--violet-500)" />,
+      icon: (
+        <ArrowRightLeft
+          strokeWidth={1}
+          size={24}
+          color={color ?? "currentColor"}
+          aria-hidden
+        />
+      ),
       isActive: mainView === "operations",
       onClick: () => {
         setMainView("operations");
