@@ -3864,37 +3864,6 @@ export default function POSPage() {
                 </div>
               )}
 
-              {lastOrder.fiscal_errors && (
-                <div className="pos-receipt-errors">
-                  <strong>Error:</strong> {lastOrder.fiscal_errors}
-                  <button
-                    className="pos-btn pos-btn-sm pos-btn-outline"
-                    style={{ marginTop: 8 }}
-                    onClick={() => fiscalizeOrder(lastOrder.id)}
-                  >
-                    Retry Fiscalization
-                  </button>
-                </div>
-              )}
-
-              {/* Fiscal Device Details */}
-              {activeDevice && (
-                <div className="pos-receipt-device">
-                  <div className="pos-receipt-device-label">Fiscal Device</div>
-                  <div className="pos-receipt-device-row">
-                    <span>Model:</span> <span>{activeDevice.model}</span>
-                  </div>
-                  <div className="pos-receipt-device-row">
-                    <span>Serial:</span>{" "}
-                    <span>{activeDevice.serial_number}</span>
-                  </div>
-                  <div className="pos-receipt-device-row">
-                    <span>Device ID:</span>{" "}
-                    <span>{activeDevice.device_id}</span>
-                  </div>
-                </div>
-              )}
-
               <div className="pos-receipt-footer">
                 Thank you for your business!
                 <br />

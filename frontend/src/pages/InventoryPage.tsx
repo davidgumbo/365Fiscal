@@ -181,6 +181,26 @@ function getMoveTypeLabel(move: StockMove) {
   );
 }
 
+function getStockMoveSortValue(move: StockMove) {
+  const primary = move.done_date || move.scheduled_date;
+  const timestamp = primary ? new Date(primary).getTime() : 0;
+  return Number.isFinite(timestamp) ? timestamp : 0;
+}
+
+function formatStockMoveDate(move: StockMove) {
+  const value = move.done_date || move.scheduled_date;
+  if (!value) return "-";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "-";
+  return parsed.toLocaleString([], {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 const STATES = [
   { value: "draft", label: "Draft" },
   { value: "confirmed", label: "Confirmed" },
@@ -3040,21 +3060,27 @@ export default function InventoryPage() {
     return labels;
   }, [locations, warehouses, stockQuants, products]);
 
-  const filteredMoves = stockMoves.filter((m) => {
-    if (filterState !== "all" && m.state !== filterState) return false;
-    if (filterMoveType !== "all" && m.move_type !== filterMoveType)
-      return false;
-    if (!searchQuery) return true;
-    const q = searchQuery.toLowerCase();
-    const product = products.find((p) => p.id === m.product_id);
-    return (
-      m.reference?.toLowerCase().includes(q) ||
-      product?.name.toLowerCase().includes(q) ||
-      MOVE_TYPES.find((type) => type.value === m.move_type)
-        ?.label.toLowerCase()
-        .includes(q)
-    );
-  });
+  const filteredMoves = useMemo(() => {
+    return [...stockMoves]
+      .filter((m) => {
+        if (filterState !== "all" && m.state !== filterState) return false;
+        if (filterMoveType !== "all" && m.move_type !== filterMoveType)
+          return false;
+        if (!searchQuery) return true;
+        const q = searchQuery.toLowerCase();
+        const product = products.find((p) => p.id === m.product_id);
+        return (
+          m.reference?.toLowerCase().includes(q) ||
+          product?.name.toLowerCase().includes(q) ||
+          getMoveTypeLabel(m).toLowerCase().includes(q)
+        );
+      })
+      .sort((a, b) => {
+        const timeDiff = getStockMoveSortValue(b) - getStockMoveSortValue(a);
+        if (timeDiff !== 0) return timeDiff;
+        return b.id - a.id;
+      });
+  }, [stockMoves, filterState, filterMoveType, searchQuery, products]);
 
   const moveLinesTotals = useMemo(() => {
     return moveLines.reduce(
@@ -3207,7 +3233,7 @@ export default function InventoryPage() {
     [products],
   );
 
-  const recentStockMoves = useMemo(() => stockMoves.slice(0, 6), [stockMoves]);
+  const recentStockMoves = useMemo(() => filteredMoves.slice(0, 6), [filteredMoves]);
 
   const warehouseLocations = (warehouseId: number) =>
     locations.filter((l) => l.warehouse_id === warehouseId);
@@ -5930,6 +5956,7 @@ export default function InventoryPage() {
                         <thead>
                           <tr>
                             <th>Reference</th>
+                            <th>Date</th>
                             <th>Product</th>
                             <th>Type</th>
                             <th>Warehouse</th>
@@ -5964,7 +5991,7 @@ export default function InventoryPage() {
                                       `WH/MOV/${String(m.id).padStart(5, "0")}`}
                                   </span>
                                 </td>
-                                <td>{product?.name || "-"}</td>
+                                <td>{formatStockMoveDate(m)}</td>
                                 <td>
                                   <div>
                                     <span
@@ -6058,7 +6085,7 @@ export default function InventoryPage() {
                           })}
                           {filteredMoves.length === 0 && (
                             <tr>
-                              <td colSpan={9} className="inventory-empty-row">
+                              <td colSpan={10} className="inventory-empty-row">
                                 <div className="inventory-muted-note inventory-empty-note">
                                   No stock moves found
                                 </div>
