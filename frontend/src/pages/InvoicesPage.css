@@ -89,11 +89,6 @@
   gap: 8px;
 }
 
-.invoice-top-panel-actions.invoice-top-panel-actions-left .invoice-filter-currency {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
 
 .invoice-list-main {
   min-width: 0;
@@ -127,6 +122,101 @@
 
 .inventory-main-search-panel.invoice-top-panel .inventory-centered-searchbox {
   width: min(100%, 520px);
+}
+
+.inventory-search-wrapper,
+.inventory-search-inner {
+  position: relative;
+}
+
+.inventory-centered-searchbox input {
+  padding-right: 52px;
+}
+
+.inventory-filter-toggle {
+  border: 1px solid var(--stroke);
+  background: var(--white-500);
+  border-radius: 4px;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.inventory-filter-toggle:hover {
+  border-color: var(--blue-500);
+}
+
+.inventory-filter-toggle-inside {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: solid 1px var(--gray-300);
+  background: var(--white-500);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  right: 0;
+}
+
+.inventory-filter-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: min(640px, 90vw);
+  background: var(--white-500);
+  border: 1px solid var(--stroke);
+  border-radius: 14px;
+  box-shadow: var(--shadow-lg);
+  padding: 16px;
+  z-index: 50;
+}
+
+.inventory-filter-columns {
+  display: flex;
+  gap: 0;
+}
+
+.inventory-filter-column {
+  flex: 1;
+  min-width: 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.inventory-filter-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.inventory-filter-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.inventory-filter-chip {
+  border: 1px solid transparent;
+  background: var(--slate-50);
+  color: var(--slate-700);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.inventory-filter-chip-active {
+  background: var(--blue-500);
+  color: var(--white-500);
 }
 
 .invoice-top-panel-actions {

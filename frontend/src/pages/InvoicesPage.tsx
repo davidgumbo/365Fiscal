@@ -498,6 +498,8 @@ export default function InvoicesPage({
   const [listStatus, setListStatus] = useState("");
   const [listType, setListType] = useState("");
   const [listCurrency, setListCurrency] = useState("");
+  const [filterMenuOpen, setFilterMenuOpen] = useState(false);
+  const filterMenuRef = useRef<HTMLDivElement | null>(null);
   const currencyFilters = useMemo(() => {
     const provided = currencyList
       .map((currency) => currency.code?.toUpperCase().trim())
@@ -733,6 +735,20 @@ export default function InvoicesPage({
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  useEffect(() => {
+    if (!filterMenuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (
+        filterMenuRef.current &&
+        !filterMenuRef.current.contains(e.target as Node)
+      ) {
+        setFilterMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [filterMenuOpen]);
 
   const loadAll = async () => {
     if (!companyId) return;
@@ -1349,21 +1365,6 @@ export default function InvoicesPage({
   }, [selectedInvoiceId, newMode]);
 
   const canEdit = isEditing && statusLabel === "draft" && !isCreditNote;
-  const hasFiscalDevice =
-    devices.length > 0 || Boolean(editDeviceId ?? selectedInvoice?.device_id);
-  const showEditAction = statusLabel === "draft";
-  const showPostAction = statusLabel === "draft";
-  const showFiscalizeAction =
-    hasFiscalDevice && (statusLabel === "posted" || statusLabel === "paid");
-  const showResetAction =
-    statusLabel === "posted" || statusLabel === "fiscalized";
-  const showRegisterPaymentAction =
-    !isCreditNote && (statusLabel === "posted" || statusLabel === "fiscalized");
-  const showCreditNoteAction =
-    !isCreditNote &&
-    (statusLabel === "posted" ||
-      statusLabel === "paid" ||
-      statusLabel === "fiscalized");
 
   const taxBreakdown = useMemo(() => {
     const map = new Map<number, number>();
@@ -1754,125 +1755,151 @@ export default function InvoicesPage({
               <div className="o-main inventory-view-main">
                 <div className="card shadow-sm card-bg-shadow invoice-list-card">
                   <div className="inventory-main-search-panel invoice-top-panel">
-                    <div className="invoice-top-panel-center">
-                      <div className="inventory-search-wrapper">
-                        <div className="inventory-search-inner">
-                          <div className="inventory-centered-searchbox">
-                            <div className="o-searchbox">
-                              <span className="o-searchbox-icon">
-                                <Search size={16} />
-                              </span>
-                              <input
-                                placeholder="Search invoices..."
-                                value={listSearch}
-                                onChange={(e) => setListSearch(e.target.value)}
-                              />
+                    <div className="invoice-top-panel-actions invoice-top-panel-actions-left">
+                      <div className="invoice-top-panel-center">
+                        <div className="inventory-search-wrapper">
+                          <div className="inventory-search-inner">
+                            <div className="inventory-centered-searchbox">
+                              <div className="o-searchbox">
+                                <span className="o-searchbox-icon">
+                                  <Search size={16} />
+                                </span>
+                                <input
+                                  placeholder="Search invoices..."
+                                  value={listSearch}
+                                  onChange={(e) =>
+                                    setListSearch(e.target.value)
+                                  }
+                                />
+                                <button
+                                  type="button"
+                                  className="inventory-filter-toggle-inside"
+                                  aria-label="Toggle filters"
+                                  onClick={() =>
+                                    setFilterMenuOpen((prev) => !prev)
+                                  }
+                                >
+                                  <FunnelPlus size={16} />
+                                </button>
+                              </div>
                             </div>
+                            {filterMenuOpen && (
+                              <div
+                                className="inventory-filter-dropdown"
+                                ref={filterMenuRef}
+                              >
+                                <div className="inventory-filter-columns">
+                                  <div className="inventory-filter-column">
+                                    <div className="inventory-filter-title">
+                                      Currency
+                                    </div>
+                                    <div className="inventory-filter-items">
+                                      <button
+                                        type="button"
+                                        className={`inventory-filter-chip ${
+                                          listCurrency === ""
+                                            ? "inventory-filter-chip-active"
+                                            : ""
+                                        }`}
+                                        onClick={() => setListCurrency("")}
+                                      >
+                                        All
+                                      </button>
+                                      {currencyFilters.map((code) => (
+                                        <button
+                                          key={code}
+                                          type="button"
+                                          className={`inventory-filter-chip ${
+                                            listCurrency === code
+                                              ? "inventory-filter-chip-active"
+                                              : ""
+                                          }`}
+                                          onClick={() => setListCurrency(code)}
+                                        >
+                                          {code}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                  <div className="invoice-top-panel-actions invoice-top-panel-actions-left">
-                    <div className="invoice-filter-currency">
-                      <div className="inventory-filter-items">
-                        <button
-                          type="button"
-                          className={`inventory-filter-chip ${
-                            listCurrency === ""
-                              ? "inventory-filter-chip-active"
-                              : ""
-                          }`}
-                          onClick={() => setListCurrency("")}
-                        >
-                          All
-                        </button>
-                        {currencyFilters.map((code) => (
-                          <button
-                            key={code}
-                            type="button"
-                            className={`inventory-filter-chip ${
-                              listCurrency === code
-                                ? "inventory-filter-chip-active"
-                                : ""
-                            }`}
-                            onClick={() => setListCurrency(code)}
-                          >
-                            {code}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <button
-                      className="o-btn o-btn-secondary invoice-top-panel-btn"
-                      onClick={() => {
-                        const headers = [
-                          "Reference",
-                          "Type",
-                          "Customer",
-                          "Date",
-                          "Status",
-                          "Payment",
-                          "Subtotal",
-                          "Tax",
-                          "Total",
-                          "Paid",
-                          "Due",
-                        ];
-                        const rows = invoices.map((inv) => {
-                          const cust = contactById.get(inv.customer_id ?? 0);
-                          return [
-                            inv.reference,
-                            inv.invoice_type === "credit_note"
-                              ? "Credit Note"
-                              : "Invoice",
-                            cust?.name || "",
-                            inv.invoice_date
-                              ? new Date(inv.invoice_date).toLocaleDateString()
-                              : "",
-                            inv.status,
-                            getPaymentStatus(inv.amount_paid, inv.amount_due),
-                            inv.subtotal || 0,
-                            inv.tax_amount || 0,
-                            inv.total_amount || 0,
-                            inv.amount_paid || 0,
-                            inv.amount_due || 0,
+                      <button
+                        className="o-btn o-btn-secondary invoice-top-panel-btn"
+                        onClick={() => {
+                          const headers = [
+                            "Reference",
+                            "Type",
+                            "Customer",
+                            "Date",
+                            "Status",
+                            "Payment",
+                            "Subtotal",
+                            "Tax",
+                            "Total",
+                            "Paid",
+                            "Due",
                           ];
-                        });
-                        const csvContent = [headers, ...rows]
-                          .map((row) =>
-                            row
-                              .map(
-                                (cell) =>
-                                  `"${String(cell).replace(/"/g, '""')}"`,
-                              )
-                              .join(","),
-                          )
-                          .join("\n");
-                        const blob = new Blob([csvContent], {
-                          type: "text/csv;charset=utf-8;",
-                        });
-                        const link = document.createElement("a");
-                        link.href = URL.createObjectURL(blob);
-                        link.download = `invoices_${
-                          new Date().toISOString().split("T")[0]
-                        }.csv`;
-                        link.click();
-                      }}
-                    >
-                      <Download size={16} />
-                      <span>Export</span>
-                    </button>
-                    <button
-                      className="o-btn o-btn-primary invoice-top-panel-btn"
-                      onClick={() => {
-                        beginNew();
-                        navigate("/invoices/new");
-                      }}
-                    >
-                      <Plus size={16} />
-                      <span>New Invoice</span>
-                    </button>
+                          const rows = invoices.map((inv) => {
+                            const cust = contactById.get(inv.customer_id ?? 0);
+                            return [
+                              inv.reference,
+                              inv.invoice_type === "credit_note"
+                                ? "Credit Note"
+                                : "Invoice",
+                              cust?.name || "",
+                              inv.invoice_date
+                                ? new Date(
+                                    inv.invoice_date,
+                                  ).toLocaleDateString()
+                                : "",
+                              inv.status,
+                              getPaymentStatus(inv.amount_paid, inv.amount_due),
+                              inv.subtotal || 0,
+                              inv.tax_amount || 0,
+                              inv.total_amount || 0,
+                              inv.amount_paid || 0,
+                              inv.amount_due || 0,
+                            ];
+                          });
+                          const csvContent = [headers, ...rows]
+                            .map((row) =>
+                              row
+                                .map(
+                                  (cell) =>
+                                    `"${String(cell).replace(/"/g, '""')}"`,
+                                )
+                                .join(","),
+                            )
+                            .join("\n");
+                          const blob = new Blob([csvContent], {
+                            type: "text/csv;charset=utf-8;",
+                          });
+                          const link = document.createElement("a");
+                          link.href = URL.createObjectURL(blob);
+                          link.download = `invoices_${
+                            new Date().toISOString().split("T")[0]
+                          }.csv`;
+                          link.click();
+                        }}
+                      >
+                        <Download size={16} />
+                        <span>Export</span>
+                      </button>
+                      <button
+                        className="o-btn o-btn-primary invoice-top-panel-btn"
+                        onClick={() => {
+                          beginNew();
+                          navigate("/invoices/new");
+                        }}
+                      >
+                        <Plus size={16} />
+                        <span>New Invoice</span>
+                      </button>
+                    </div>
                   </div>
                   <div className="o-list-view inventory-table-panel">
                     <table className="o-list-table">
@@ -2061,7 +2088,7 @@ export default function InvoicesPage({
             ) : (
               <div className="d-flex align-items-center gap-2">
                 <button
-                  className="btn btn-sm invoice-detail-btn invoice-detail-btn-neutral"
+                  className="btn btn-sm btn-light border"
                   onClick={goBackToList}
                 >
                   ← Back
@@ -2080,18 +2107,18 @@ export default function InvoicesPage({
                 )}
               </div>
             )}
-            <div className="d-flex flex-wrap gap-2 invoice-detail-actions">
+            <div className="d-flex flex-wrap gap-1">
               {newMode ? (
                 <>
                   <button
-                    className="btn btn-sm invoice-detail-btn invoice-detail-btn-primary"
+                    className="btn btn-sm btn-primary"
                     onClick={createInvoice}
                     disabled={loading}
                   >
                     {loading ? "Saving…" : "Create Invoice"}
                   </button>
                   <button
-                    className="btn btn-sm invoice-detail-btn invoice-detail-btn-neutral"
+                    className="btn btn-sm btn-light border"
                     onClick={goBackToList}
                   >
                     Discard
@@ -2100,14 +2127,14 @@ export default function InvoicesPage({
               ) : isEditing ? (
                 <>
                   <button
-                    className="btn btn-sm invoice-detail-btn invoice-detail-btn-primary"
+                    className="btn btn-sm btn-primary"
                     onClick={saveInvoice}
                     disabled={loading}
                   >
                     {loading ? "Saving…" : "Save"}
                   </button>
                   <button
-                    className="btn btn-sm invoice-detail-btn invoice-detail-btn-neutral"
+                    className="btn btn-sm btn-light border"
                     onClick={() => setIsEditing(false)}
                   >
                     Discard
@@ -2115,60 +2142,59 @@ export default function InvoicesPage({
                 </>
               ) : (
                 <>
-                  {showEditAction && (
+                  {statusLabel === "draft" && (
                     <button
-                      className="btn btn-sm invoice-detail-btn invoice-detail-btn-primary"
+                      className="btn btn-sm btn-light border"
                       onClick={() => setIsEditing(true)}
                     >
                       Edit
                     </button>
                   )}
-                  {showPostAction && (
-                    <button
-                      className="btn btn-sm invoice-detail-btn invoice-detail-btn-success"
-                      onClick={postInvoice}
-                    >
-                      Post
-                    </button>
-                  )}
-                  {showFiscalizeAction && (
-                    <button
-                      className="btn btn-sm invoice-detail-btn invoice-detail-btn-warning"
-                      onClick={fiscalizeInvoice}
-                    >
-                      Fiscalize
-                    </button>
-                  )}
-                  {showResetAction && (
-                    <button
-                      className="btn btn-sm invoice-detail-btn invoice-detail-btn-neutral"
-                      onClick={resetInvoice}
-                    >
-                      Reset
-                    </button>
-                  )}
                   <button
-                    className="btn btn-sm invoice-detail-btn invoice-detail-btn-info"
+                    className="btn btn-sm btn-light border"
+                    onClick={postInvoice}
+                    disabled={statusLabel !== "draft"}
+                  >
+                    Post
+                  </button>
+                  <button
+                    className="btn btn-sm btn-light border"
+                    onClick={fiscalizeInvoice}
+                    disabled={
+                      statusLabel !== "posted" && statusLabel !== "paid"
+                    }
+                  >
+                    Fiscalize
+                  </button>
+                  <button
+                    className="btn btn-sm btn-light border"
+                    onClick={resetInvoice}
+                    disabled={
+                      statusLabel !== "posted" && statusLabel !== "fiscalized"
+                    }
+                  >
+                    Reset
+                  </button>
+                  <button
+                    className="btn btn-sm btn-light border"
                     onClick={printInvoice}
                   >
                     Print PDF
                   </button>
-                  {showRegisterPaymentAction && (
-                    <button
-                      className="btn btn-sm invoice-detail-btn invoice-detail-btn-success-soft"
-                      onClick={() => setPaymentOpen(true)}
-                    >
-                      Register Payment
-                    </button>
-                  )}
-                  {showCreditNoteAction && (
-                    <button
-                      className="btn btn-sm invoice-detail-btn invoice-detail-btn-danger-soft"
-                      onClick={createCreditNote}
-                    >
-                      Credit Note
-                    </button>
-                  )}
+                  <button
+                    className="btn btn-sm btn-light border"
+                    onClick={() => setPaymentOpen(true)}
+                    disabled={statusLabel === "draft"}
+                  >
+                    Register Payment
+                  </button>
+                  <button
+                    className="btn btn-sm btn-light border"
+                    onClick={createCreditNote}
+                    disabled={statusLabel === "draft" || isCreditNote}
+                  >
+                    Credit Note
+                  </button>
                 </>
               )}
             </div>
@@ -2414,7 +2440,6 @@ export default function InvoicesPage({
                 <div className="d-flex flex-wrap justify-content-between align-items-center mb-2">
                   <h6 className="fw-semibold mb-0">Invoice Lines</h6>
                 </div>
-                {activeLinesTotalPages > 1 && (
                 <div className="d-flex justify-content-between align-items-center mb-2">
                   <small className="text-muted">
                     Showing {visibleLineStart}-{visibleLineEnd} of{" "}
@@ -2459,7 +2484,6 @@ export default function InvoicesPage({
                     </button>
                   </div>
                 </div>
-                )}
                 <div className="table-responsive invoice-lines-table-wrap">
                   <table className="table table-bordered align-middle mb-0 invoice-lines-table">
                     <thead className="table-light">
@@ -2972,7 +2996,6 @@ export default function InvoicesPage({
                 <div className="d-flex justify-content-between align-items-center mb-2">
                   <div className="fw-semibold">Invoice Lines</div>
                 </div>
-                {activeLinesTotalPages > 1 && (
                 <div className="d-flex justify-content-between align-items-center mb-2">
                   <small className="text-muted">
                     Showing {visibleLineStart}-{visibleLineEnd} of{" "}
@@ -3017,7 +3040,6 @@ export default function InvoicesPage({
                     </button>
                   </div>
                 </div>
-                )}
                 <div className="table-responsive invoice-lines-table-wrap">
                   <table className="table table-bordered align-middle mb-0 invoice-lines-table">
                     <thead className="table-light">
