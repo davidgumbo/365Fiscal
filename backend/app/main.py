@@ -61,31 +61,30 @@ def ensure_new_columns():
         table_names = set(insp.get_table_names())
         _startup_logger.info(">>> ensure_new_columns: found %d tables", len(table_names))
 
-        if "pos_orders" not in table_names:
-            _startup_logger.info(">>> ensure_new_columns: pos_orders table not found — skipping")
-            return
-
-        cols = {c["name"] for c in insp.get_columns("pos_orders")}
-        _startup_logger.info(">>> ensure_new_columns: pos_orders columns = %s", cols)
-
         with engine.begin() as conn:
-            if "cashier_name" not in cols:
-                _startup_logger.info(">>> Adding cashier_name column to pos_orders")
-                conn.execute(text(
-                    "ALTER TABLE pos_orders ADD COLUMN cashier_name VARCHAR(200) DEFAULT ''"
-                ))
-                _startup_logger.info(">>> cashier_name column added successfully")
-            else:
-                _startup_logger.info(">>> cashier_name column already exists")
+            if "pos_orders" in table_names:
+                cols = {c["name"] for c in insp.get_columns("pos_orders")}
+                _startup_logger.info(">>> ensure_new_columns: pos_orders columns = %s", cols)
 
-            if "till_id" not in cols:
-                _startup_logger.info(">>> Adding till_id column to pos_orders")
-                conn.execute(text(
-                    "ALTER TABLE pos_orders ADD COLUMN till_id INTEGER"
-                ))
-                _startup_logger.info(">>> till_id column added successfully")
+                if "cashier_name" not in cols:
+                    _startup_logger.info(">>> Adding cashier_name column to pos_orders")
+                    conn.execute(text(
+                        "ALTER TABLE pos_orders ADD COLUMN cashier_name VARCHAR(200) DEFAULT ''"
+                    ))
+                    _startup_logger.info(">>> cashier_name column added successfully")
+                else:
+                    _startup_logger.info(">>> cashier_name column already exists")
+
+                if "till_id" not in cols:
+                    _startup_logger.info(">>> Adding till_id column to pos_orders")
+                    conn.execute(text(
+                        "ALTER TABLE pos_orders ADD COLUMN till_id INTEGER"
+                    ))
+                    _startup_logger.info(">>> till_id column added successfully")
+                else:
+                    _startup_logger.info(">>> till_id column already exists")
             else:
-                _startup_logger.info(">>> till_id column already exists")
+                _startup_logger.info(">>> ensure_new_columns: pos_orders table not found — skipping pos_orders patch")
 
             if "locations" in table_names:
                 location_cols = {c["name"] for c in insp.get_columns("locations")}
@@ -109,39 +108,38 @@ def ensure_new_columns():
                 else:
                     _startup_logger.info(">>> portal_apps column already exists")
 
-        if "pos_tills" in table_names:
-            till_cols = {c["name"] for c in insp.get_columns("pos_tills")}
-            if "warehouse_id" not in till_cols:
-                _startup_logger.info(">>> Adding warehouse_id column to pos_tills")
-                conn.execute(text(
-                    "ALTER TABLE pos_tills ADD COLUMN warehouse_id INTEGER"
-                ))
-                _startup_logger.info(">>> Adding foreign key fk_pos_tills_warehouse_id")
-                conn.execute(text(
-                    "ALTER TABLE pos_tills ADD CONSTRAINT fk_pos_tills_warehouse_id FOREIGN KEY (warehouse_id) REFERENCES warehouses(id)"
-                ))
-                _startup_logger.info(">>> warehouse_id column added successfully")
-            else:
-                _startup_logger.info(">>> warehouse_id column already exists")
+            if "pos_tills" in table_names:
+                till_cols = {c["name"] for c in insp.get_columns("pos_tills")}
+                if "warehouse_id" not in till_cols:
+                    _startup_logger.info(">>> Adding warehouse_id column to pos_tills")
+                    conn.execute(text(
+                        "ALTER TABLE pos_tills ADD COLUMN warehouse_id INTEGER"
+                    ))
+                    _startup_logger.info(">>> Adding foreign key fk_pos_tills_warehouse_id")
+                    conn.execute(text(
+                        "ALTER TABLE pos_tills ADD CONSTRAINT fk_pos_tills_warehouse_id FOREIGN KEY (warehouse_id) REFERENCES warehouses(id)"
+                    ))
+                    _startup_logger.info(">>> warehouse_id column added successfully")
+                else:
+                    _startup_logger.info(">>> warehouse_id column already exists")
 
-            if "fiscal_device_id" not in till_cols:
-                _startup_logger.info(">>> Adding fiscal_device_id column to pos_tills")
-                conn.execute(text(
-                    "ALTER TABLE pos_tills ADD COLUMN fiscal_device_id INTEGER"
-                ))
-                _startup_logger.info(">>> Adding foreign key fk_pos_tills_fiscal_device_id")
-                conn.execute(text(
-                    "ALTER TABLE pos_tills ADD CONSTRAINT fk_pos_tills_fiscal_device_id FOREIGN KEY (fiscal_device_id) REFERENCES devices(id)"
-                ))
-                _startup_logger.info(">>> fiscal_device_id column added successfully")
-            else:
-                _startup_logger.info(">>> fiscal_device_id column already exists")
+                if "fiscal_device_id" not in till_cols:
+                    _startup_logger.info(">>> Adding fiscal_device_id column to pos_tills")
+                    conn.execute(text(
+                        "ALTER TABLE pos_tills ADD COLUMN fiscal_device_id INTEGER"
+                    ))
+                    _startup_logger.info(">>> Adding foreign key fk_pos_tills_fiscal_device_id")
+                    conn.execute(text(
+                        "ALTER TABLE pos_tills ADD CONSTRAINT fk_pos_tills_fiscal_device_id FOREIGN KEY (fiscal_device_id) REFERENCES devices(id)"
+                    ))
+                    _startup_logger.info(">>> fiscal_device_id column added successfully")
+                else:
+                    _startup_logger.info(">>> fiscal_device_id column already exists")
 
-        _startup_logger.info(">>> ensure_new_columns: COMPLETE")
+            _startup_logger.info(">>> ensure_new_columns: COMPLETE")
 
-        # Stamp alembic so 'alembic upgrade head' won't re-run this migration
-        if "alembic_version" in table_names:
-            with engine.begin() as conn:
+            # Stamp alembic so 'alembic upgrade head' won't re-run this migration
+            if "alembic_version" in table_names:
                 row = conn.execute(text(
                     "SELECT version_num FROM alembic_version"
                 )).fetchone()
