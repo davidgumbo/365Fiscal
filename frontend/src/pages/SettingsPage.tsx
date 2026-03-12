@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ChevronDown, Monitor, PencilLine, Store, Trash2 } from "lucide-react";
 import { apiFetch } from "../api";
 import { useCompanies, Company } from "../hooks/useCompanies";
 import { useMe } from "../hooks/useMe";
@@ -4644,7 +4645,7 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
                                           borderRadius: 6,
                                         }}
                                       >
-                                        <EditIcon />
+                                        <PencilLine size={15} />
                                       </button>
                                     </td>
                                   </tr>
@@ -4717,20 +4718,7 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
                             gap: 8,
                           }}
                         >
-                          <svg
-                            width="18"
-                            height="18"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="var(--slate-600)"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <rect x="2" y="3" width="20" height="14" rx="2" />
-                            <path d="M8 21h8" />
-                            <path d="M12 17v4" />
-                          </svg>
+                          <Monitor size={18} color="var(--slate-600)" />
                           <h5
                             style={{
                               margin: 0,
@@ -4769,19 +4757,6 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
                             : "transparent",
                         }}
                       >
-                        {tillEditing && (
-                          <div
-                            style={{
-                              fontSize: 12,
-                              fontWeight: 600,
-                              color: "var(--violet-600)",
-                              marginBottom: 8,
-                            }}
-                          >
-                            <EditIcon /> Editing:{" "}
-                            {posTills.find((t) => t.id === tillEditing)?.name}
-                          </div>
-                        )}
                         <div
                           style={{
                             display: "grid",
@@ -4827,7 +4802,7 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
                                 color: "var(--slate-500)",
                               }}
                             >
-                              Employees (select who can use this Point Of Sales)
+                              Employees
                             </span>
                             {/* Selected tags + trigger */}
                             <div
@@ -4910,15 +4885,9 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
                                 );
                               })}
                               {/* Chevron */}
-                              <svg
-                                width="14"
-                                height="14"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="var(--slate-400)"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
+                              <ChevronDown
+                                size={14}
+                                color="var(--slate-400)"
                                 style={{
                                   position: "absolute",
                                   right: 10,
@@ -4927,9 +4896,7 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
                                   transition: "transform 150ms",
                                   pointerEvents: "none",
                                 }}
-                              >
-                                <polyline points="6 9 12 15 18 9" />
-                              </svg>
+                              />
                             </div>
                             {/* Dropdown list */}
                             {tillDropdownOpen && (
@@ -5079,7 +5046,7 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
                                 color: "var(--slate-500)",
                               }}
                             >
-                              Warehouse (optional)
+                              Warehouse
                             </span>
                             <select
                               value={tillForm.warehouse_id ?? ""}
@@ -5119,7 +5086,7 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
                                 color: "var(--slate-500)",
                               }}
                             >
-                              Fiscal Device (optional)
+                              Fiscal Device
                             </span>
                             <select
                               value={tillForm.fiscal_device_id ?? ""}
@@ -5205,7 +5172,7 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
 
                       {/* Tills list */}
                       {posTills.length > 0 ? (
-                        <div style={{ overflow: "auto" }}>
+                        <div style={{ overflow: "auto", maxHeight: 420 }}>
                           <table
                             style={{
                               width: "100%",
@@ -5341,26 +5308,10 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
                                           justifyContent: "center",
                                         }}
                                       >
-                                        <svg
-                                          width="16"
-                                          height="16"
-                                          viewBox="0 0 24 24"
-                                          fill="none"
-                                          stroke="var(--violet-600)"
-                                          strokeWidth="2"
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                        >
-                                          <rect
-                                            x="2"
-                                            y="3"
-                                            width="20"
-                                            height="14"
-                                            rx="2"
-                                          />
-                                          <path d="M8 21h8" />
-                                          <path d="M12 17v4" />
-                                        </svg>
+                                        <Store
+                                          size={16}
+                                          color="var(--violet-600)"
+                                        />
                                       </div>
                                       {till.name}
                                     </div>
@@ -5544,7 +5495,7 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
                                           borderRadius: 6,
                                         }}
                                       >
-                                        <TrashIcon />
+                                        <Trash2 size={15} />
                                       </button>
                                     </div>
                                   </td>
@@ -5557,34 +5508,19 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
                         <div
                           style={{ padding: "32px 20px", textAlign: "center" }}
                         >
-                          <svg
-                            width="40"
-                            height="40"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="var(--slate-300)"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
+                          <Monitor
+                            size={40}
+                            strokeWidth={1.5}
+                            color="var(--slate-300)"
                             style={{ marginBottom: 8 }}
-                          >
-                            <rect x="2" y="3" width="20" height="14" rx="2" />
-                            <path d="M8 21h8" />
-                            <path d="M12 17v4" />
-                          </svg>
+                          />
                           <div
                             style={{
                               color: "var(--slate-400)",
                               fontSize: 13,
-                              marginBottom: 4,
                             }}
                           >
                             No Point Of Sales configured yet
-                          </div>
-                          <div
-                            style={{ color: "var(--slate-300)", fontSize: 12 }}
-                          >
-                            Add a Point Of Sales above and assign employees who
-                            can use it
                           </div>
                         </div>
                       )}
