@@ -2323,8 +2323,8 @@ export default function ExpensesPage() {
               {/* ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â SUPPLIERS TABLE VIEW ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â */}
               {mainView === "suppliers" && subView === "list" && (
                 <div className="o-main" style={{ width: "100%" }}>
-                  <div className="o-list-view">
-                    <table className="o-list-table">
+                  <div className="o-list-view expense-suppliers-list-view">
+                    <table className="o-list-table expense-suppliers-table">
                       <thead>
                         <tr>
                           <th>Supplier</th>
@@ -2338,7 +2338,21 @@ export default function ExpensesPage() {
                       <tbody>
                         {filteredSuppliers.map((s) => (
                           <tr key={s.id}>
-                            <td style={{ fontWeight: 500 }}>{s.name}</td>
+                            <td>
+                              <div className="expense-supplier-name-cell">
+                                <span className="expense-supplier-name-icon">
+                                  <WalletCards size={16} />
+                                </span>
+                                <div className="expense-supplier-name-copy">
+                                  <strong>{s.name}</strong>
+                                  <span>
+                                    {s.expenseCount === 1
+                                      ? "1 expense"
+                                      : `${s.expenseCount} expenses`}
+                                  </span>
+                                </div>
+                              </div>
+                            </td>
                             <td className="text-end">{s.expenseCount}</td>
                             <td className="text-end">
                               {formatCurrency(s.subtotal, "USD")}
@@ -2352,9 +2366,9 @@ export default function ExpensesPage() {
                             >
                               {formatCurrency(s.total, "USD")}
                             </td>
-                            <td>
+                            <td className="expense-suppliers-actions-cell">
                               <button
-                                className="o-btn o-btn-secondary"
+                                className="o-btn o-btn-secondary expense-suppliers-view-btn"
                                 onClick={() => {
                                   setSupplierFilter(s.id);
                                   setMainView("expenses");
@@ -2363,6 +2377,7 @@ export default function ExpensesPage() {
                                   setSearchQuery("");
                                 }}
                               >
+                                <FileText size={15} />
                                 View Expenses
                               </button>
                             </td>
@@ -2372,16 +2387,27 @@ export default function ExpensesPage() {
                           <tr>
                             <td
                               colSpan={6}
-                              style={{ textAlign: "center", padding: 40 }}
+                              className="expense-suppliers-empty-cell"
                             >
                               {contacts.length === 0 ? (
-                                <span style={{ color: "var(--muted)" }}>
-                                  No suppliers found.
-                                </span>
+                                <div className="expense-suppliers-empty-state">
+                                  <div className="expense-suppliers-empty-icon">
+                                    <WalletCards size={22} />
+                                  </div>
+                                  <strong>No suppliers found</strong>
+                                  <span>
+                                    Add a supplier to start tracking expense
+                                    history.
+                                  </span>
+                                </div>
                               ) : (
-                                <span style={{ color: "var(--muted)" }}>
-                                  No suppliers match your search.
-                                </span>
+                                <div className="expense-suppliers-empty-state">
+                                  <div className="expense-suppliers-empty-icon">
+                                    <Search size={22} />
+                                  </div>
+                                  <strong>No suppliers match your search</strong>
+                                  <span>Try a different search term.</span>
+                                </div>
                               )}
                             </td>
                           </tr>

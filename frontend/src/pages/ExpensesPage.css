@@ -14,6 +14,15 @@
   overflow-x: hidden;
 }
 
+.expense-dashboard-shell .o-main {
+  height: auto;
+  min-height: 0;
+}
+
+.expense-dashboard-shell .o-content {
+  align-content: flex-start;
+}
+
 .expense-dashboard-topbar {
   display: flex;
   align-items: center;
@@ -205,6 +214,105 @@
   color: #2f3b6b;
   font-size: 15px;
   font-weight: 700;
+}
+
+.expense-suppliers-list-view {
+  border: 1px solid #dfe4f2;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+  box-shadow: 0 12px 30px rgba(33, 45, 96, 0.06);
+  overflow: hidden;
+}
+
+.expense-suppliers-table th {
+  background: #f7f9ff;
+}
+
+.expense-supplier-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.expense-supplier-name-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: #eaf0ff;
+  color: #325fd8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.expense-supplier-name-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.expense-supplier-name-copy strong {
+  color: #182349;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.expense-supplier-name-copy span {
+  color: #7280a7;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.expense-suppliers-actions-cell {
+  text-align: right;
+}
+
+.expense-suppliers-view-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  border-radius: 12px;
+  font-weight: 700;
+}
+
+.expense-suppliers-empty-cell {
+  text-align: center;
+  padding: 54px 24px !important;
+}
+
+.expense-suppliers-empty-state {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: #6d789b;
+}
+
+.expense-suppliers-empty-state strong {
+  color: #1d2852;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.expense-suppliers-empty-state span {
+  max-width: 320px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.expense-suppliers-empty-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 16px;
+  background: #eef3ff;
+  color: #315fdf;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .expense-dashboard-section-row {
