@@ -130,6 +130,7 @@ type Device = {
   device_id: string;
   serial_number?: string;
   model?: string;
+  fiscal_day_status?: string;
 };
 
 type Warehouse = {
@@ -1159,9 +1160,22 @@ export default function InvoicesPage({
       setEditDeviceId(deviceId);
     }
     if (!deviceId) {
-      setError(
-        "No fiscal device available. Create a device on the Devices page first.",
-      );
+      const message =
+        "No fiscal device available. Create a device on the Devices page first.";
+      setError(message);
+      window.alert(message);
+      return;
+    }
+
+    const selectedDevice = devices.find((device) => device.id === deviceId);
+    if (
+      selectedDevice?.fiscal_day_status &&
+      selectedDevice.fiscal_day_status.toLowerCase() !== "open"
+    ) {
+      const message =
+        "No fiscal day is open for the selected fiscal device. Open the fiscal day first.";
+      setError(message);
+      window.alert(message);
       return;
     }
 
@@ -1178,7 +1192,11 @@ export default function InvoicesPage({
       });
       await loadAll();
     } catch (err: any) {
-      setError(err.message || "Failed to fiscalize invoice");
+      const message = err.message || "Failed to fiscalize invoice";
+      setError(message);
+      if (String(message).toLowerCase().includes("fiscal day")) {
+        window.alert(message);
+      }
       await loadAll(); // Reload to show stored zimra_errors
     }
   };
@@ -2395,20 +2413,6 @@ export default function InvoicesPage({
                 <hr className="my-4" />
                 <div className="d-flex flex-wrap justify-content-between align-items-center mb-2">
                   <h6 className="fw-semibold mb-0">Invoice Lines</h6>
-                  <div className="d-flex gap-2">
-                    <button
-                      className="btn btn-sm btn-light border"
-                      onClick={addLine}
-                    >
-                      + Add Line
-                    </button>
-                    <button
-                      className="btn btn-sm btn-light border"
-                      onClick={() => setCreateProductOpen(true)}
-                    >
-                      + New Product
-                    </button>
-                  </div>
                 </div>
                 {activeLinesTotalPages > 1 && (
                 <div className="d-flex justify-content-between align-items-center mb-2">
@@ -2580,13 +2584,31 @@ export default function InvoicesPage({
                       {!editLines.length && (
                         <tr>
                           <td
-                            colSpan={9}
+                            colSpan={7}
                             className="text-center py-4 text-muted"
                           >
-                            Click <strong>+ Add Line</strong> to add products
+                            No invoice lines yet.
                           </td>
                         </tr>
                       )}
+                      <tr className="invoice-lines-action-row">
+                        <td colSpan={7}>
+                          <div className="invoice-lines-actions-inline">
+                            <button
+                              className="invoice-lines-add-btn"
+                              onClick={addLine}
+                            >
+                              + Add Line
+                            </button>
+                            <button
+                              className="invoice-lines-secondary-btn"
+                              onClick={() => setCreateProductOpen(true)}
+                            >
+                              + New Product
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
                     </tbody>
                     <tfoot className="table-light">
                       <tr>
@@ -2949,22 +2971,6 @@ export default function InvoicesPage({
                 {/* Lines table */}
                 <div className="d-flex justify-content-between align-items-center mb-2">
                   <div className="fw-semibold">Invoice Lines</div>
-                  {canEdit && (
-                    <div className="d-flex gap-2">
-                      <button
-                        className="btn btn-sm btn-light border"
-                        onClick={addLine}
-                      >
-                        + Add Line
-                      </button>
-                      <button
-                        className="btn btn-sm btn-light border"
-                        onClick={() => setCreateProductOpen(true)}
-                      >
-                        + New Product
-                      </button>
-                    </div>
-                  )}
                 </div>
                 {activeLinesTotalPages > 1 && (
                 <div className="d-flex justify-content-between align-items-center mb-2">
@@ -3160,6 +3166,26 @@ export default function InvoicesPage({
                             className="text-center py-4 text-muted"
                           >
                             No invoice lines
+                          </td>
+                        </tr>
+                      )}
+                      {canEdit && (
+                        <tr className="invoice-lines-action-row">
+                          <td colSpan={7}>
+                            <div className="invoice-lines-actions-inline">
+                              <button
+                                className="invoice-lines-add-btn"
+                                onClick={addLine}
+                              >
+                                + Add Line
+                              </button>
+                              <button
+                                className="invoice-lines-secondary-btn"
+                                onClick={() => setCreateProductOpen(true)}
+                              >
+                                + New Product
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       )}

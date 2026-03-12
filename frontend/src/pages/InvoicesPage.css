@@ -271,6 +271,47 @@ button.invoice-detail-btn:disabled {
   color: #334155;
 }
 
+.invoice-lines-action-row td {
+  background: #fff !important;
+  border-top: none;
+  padding: 10px 16px !important;
+}
+
+.invoice-lines-actions-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.invoice-lines-add-btn,
+.invoice-lines-secondary-btn {
+  border: none;
+  background: transparent;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.invoice-lines-add-btn {
+  color: #2563eb;
+}
+
+.invoice-lines-add-btn:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+.invoice-lines-secondary-btn {
+  color: #5b6b88;
+}
+
+.invoice-lines-secondary-btn:hover {
+  color: #334155;
+  text-decoration: underline;
+}
+
 .content-top-bar.invoice-dashboard-topbar {
   display: flex;
   flex-direction: column;

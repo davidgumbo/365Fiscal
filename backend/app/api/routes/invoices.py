@@ -11,6 +11,7 @@ from app.models.invoice import Invoice
 from app.models.invoice_line import InvoiceLine
 from app.models.quotation import Quotation
 from app.models.contact import Contact
+from app.models.device import Device
 from app.models.stock_move import StockMove
 from app.models.stock_quant import StockQuant
 from app.models.company_settings import CompanySettings
@@ -600,6 +601,19 @@ def fiscalize_invoice(
     
     if invoice.zimra_status == "submitted":
         raise HTTPException(status_code=400, detail="Invoice already fiscalized")
+
+    if not invoice.device_id:
+        raise HTTPException(status_code=400, detail="No fiscal device assigned to this invoice")
+
+    device = db.query(Device).filter(Device.id == invoice.device_id).first()
+    if not device:
+        raise HTTPException(status_code=400, detail="Assigned fiscal device was not found")
+
+    if (device.fiscal_day_status or "").lower() != "open":
+        raise HTTPException(
+            status_code=400,
+            detail="No fiscal day is open for the selected fiscal device. Open the fiscal day first.",
+        )
     
     try:
         submit_invoice(invoice, db)
