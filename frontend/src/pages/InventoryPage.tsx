@@ -5670,16 +5670,21 @@ export default function InventoryPage() {
                             onClick={() => openWarehouse(w)}
                           >
                             <div className="inventory-warehouse-card-head">
-                              <div>
-                                <h3 className="inventory-warehouse-title">
-                                  {w.name}
-                                </h3>
-                                <div className="inventory-warehouse-code">
-                                  {w.code}
+                              <div className="inventory-warehouse-card-head-main">
+                                <div className="inventory-warehouse-icon-badge">
+                                  <WarehouseGlyph size={20} />
+                                </div>
+                                <div className="inventory-warehouse-heading-block">
+                                  <h3 className="inventory-warehouse-title">
+                                    {w.name}
+                                  </h3>
+                                  <div className="inventory-warehouse-code">
+                                    {w.code}
+                                  </div>
                                 </div>
                               </div>
                               <button
-                                className="o-btn o-btn-secondary o-btn-icon"
+                                className="inventory-warehouse-action-btn"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setSelectedLocationId(null);
@@ -5691,8 +5696,10 @@ export default function InventoryPage() {
                                   });
                                   setShowLocationModal(true);
                                 }}
+                                title={`Add location to ${w.name}`}
+                                aria-label={`Add location to ${w.name}`}
                               >
-                                +
+                                <Plus size={16} />
                               </button>
                             </div>
 
@@ -5704,6 +5711,9 @@ export default function InventoryPage() {
 
                             <div className="inventory-warehouse-stats-grid">
                               <div className="inventory-warehouse-stat-card">
+                                <div className="inventory-warehouse-stat-icon">
+                                  <LayoutGrid size={16} />
+                                </div>
                                 <div className="inventory-warehouse-stat-label">
                                   Locations
                                 </div>
@@ -5720,21 +5730,28 @@ export default function InventoryPage() {
                                 }}
                                 title={`View items in ${w.name}`}
                               >
-                                
+                                <div className="inventory-warehouse-stat-icon">
+                                  <Package size={16} />
+                                </div>
                                 <div className="inventory-warehouse-stat-label">
                                   Items
                                 </div>
                                 <div className="inventory-warehouse-stat-value">
-                                  {totalItems}
+                                  {totalItems.toLocaleString()}
                                 </div>
                               </button>
                               <div className="inventory-warehouse-stat-card">
-                                
+                                <div className="inventory-warehouse-stat-icon">
+                                  <DollarSign size={16} />
+                                </div>
                                 <div className="inventory-warehouse-stat-label">
                                   Value
                                 </div>
                                 <div className="inventory-warehouse-stat-value">
-                                  ${totalValue.toFixed(0)}
+                                  ${totalValue.toLocaleString(undefined, {
+                                    minimumFractionDigits: 0,
+                                    maximumFractionDigits: 0,
+                                  })}
                                 </div>
                               </div>
                             </div>

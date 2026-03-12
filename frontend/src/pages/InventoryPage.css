@@ -1329,32 +1329,190 @@
 
 .inventory-warehouse-card-head {
   display: flex;
-  flex-direction: row;
+  align-items: flex-start;
   justify-content: space-between;
-  border-bottom: 90% var(--gray-300);
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.inventory-warehouse-card {
+  position: relative;
+  border-radius: 18px;
+  border: 1px solid var(--stroke);
+  background:
+    radial-gradient(circle at top right, rgba(59, 130, 246, 0.08), transparent 34%),
+    linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+  padding: 20px;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.inventory-warehouse-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 34px rgba(15, 23, 42, 0.12);
+  border-color: rgba(59, 130, 246, 0.22);
+}
+
+.inventory-warehouse-card-head-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 0;
+}
+
+.inventory-warehouse-icon-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  color: var(--blue-700);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.inventory-warehouse-heading-block {
+  min-width: 0;
+}
+
+.inventory-warehouse-title {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.inventory-warehouse-code {
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.inventory-warehouse-action-btn {
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.inventory-warehouse-action-btn:hover {
+  background: var(--blue-600);
+  border-color: var(--blue-600);
+  color: var(--white-500);
+  transform: translateY(-1px);
+}
+
+.inventory-warehouse-address {
+  margin-bottom: 16px;
+  padding-left: 58px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .inventory-warehouse-stat-card {
   display: flex;
-  justify-content: space-between;
-  border: solid 1px var(--gray-300);
-  border-radius: 5px;
-  padding: 0.5rem;
+  justify-content: flex-start;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 14px;
+  padding: 14px 14px 12px;
   flex-direction: column;
   align-items: flex-start;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.82);
+  min-height: 104px;
 }
 
-.inventory-warehouse-stat-label{
-  font-weight: bold;
-
+.inventory-warehouse-stat-card-clickable {
+  cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
 }
 
-.inventory-warehouse-stats-grid{
+.inventory-warehouse-stat-card-clickable:hover {
+  border-color: rgba(37, 99, 235, 0.28);
+  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.08);
+  transform: translateY(-1px);
+}
+
+.inventory-warehouse-stat-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--slate-50);
+  color: var(--blue-700);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.inventory-warehouse-stat-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.inventory-warehouse-stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+
+.inventory-warehouse-stats-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.5rem
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
 }
 
-.inventory-warehouse-locations-list{
+.inventory-warehouse-locations {
+  margin-top: 16px;
+}
+
+.inventory-warehouse-locations-list {
   margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.inventory-location-chip-btn {
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .inventory-warehouse-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .inventory-warehouse-address {
+    padding-left: 0;
+  }
 }
