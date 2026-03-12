@@ -16,12 +16,18 @@ def update_stock_quant(db: Session, move: StockMove):
     """Update stock quantities after a stock move is confirmed."""
     if move.state != "done":
         return
-    
+
     quant = db.query(StockQuant).filter(
         StockQuant.product_id == move.product_id,
         StockQuant.location_id == move.location_id
     ).first()
-    
+
+    if move.move_type == "adjustment" and move.quantity <= 0:
+        if quant:
+            db.delete(quant)
+            db.flush()
+        return
+
     if not quant:
         quant = StockQuant(
             company_id=move.company_id,

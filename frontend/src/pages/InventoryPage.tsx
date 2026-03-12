@@ -363,6 +363,9 @@ export default function InventoryPage() {
   const [productFilterMenuOpen, setProductFilterMenuOpen] = useState(false);
 
   const [showImportExportModal, setShowImportExportModal] = useState(false);
+  const [importExportTarget, setImportExportTarget] = useState<
+    "products" | "moves"
+  >("products");
 
   // Operations sub-tab
   const [operationsTab, setOperationsTab] = useState<
@@ -1454,6 +1457,52 @@ export default function InventoryPage() {
     XLSX.writeFile(
       workbook,
       `inventory_products_${new Date().toISOString().split("T")[0]}.xlsx`,
+    );
+  };
+
+  const exportStockMoves = (format: "csv" | "xlsx") => {
+    const rows = filteredMoves.map((move) => {
+      const product = products.find((entry) => entry.id === move.product_id);
+      const warehouse = warehouses.find(
+        (entry) => entry.id === move.warehouse_id,
+      );
+      return {
+        Reference: move.reference || `WH/MOV/${String(move.id).padStart(5, "0")}`,
+        Date: formatStockMoveDate(move),
+        Product: product?.name || "",
+        Type: getMoveTypeLabel(move),
+        Warehouse: warehouse?.name || "",
+        Quantity: Number.isFinite(move.quantity) ? move.quantity : 0,
+        UOM: product?.uom || "Units",
+        "Unit Cost": Number.isFinite(move.unit_cost) ? move.unit_cost : 0,
+        Total: Number.isFinite(move.total_cost) ? move.total_cost : 0,
+        Status:
+          STATES.find((entry) => entry.value === move.state)?.label || move.state,
+        "Source Document": move.source_document || "",
+      };
+    });
+    if (!rows.length) {
+      alert("There are no stock moves to export.");
+      return;
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    if (format === "csv") {
+      const csv = XLSX.utils.sheet_to_csv(worksheet);
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `inventory_stock_moves_${new Date().toISOString().split("T")[0]}.csv`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+      return;
+    }
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Stock Moves");
+    XLSX.writeFile(
+      workbook,
+      `inventory_stock_moves_${new Date().toISOString().split("T")[0]}.xlsx`,
     );
   };
 
@@ -3171,16 +3220,6 @@ export default function InventoryPage() {
     showOnlyChangedAdjustments,
   ]);
 
-  const adjustmentSummary = useMemo(() => {
-    const changedRows = adjustmentRows.filter((row) => row.changed).length;
-    const invalidRows = adjustmentRows.filter((row) => !row.isValid).length;
-    return {
-      totalRows: adjustmentRows.length,
-      changedRows,
-      invalidRows,
-    };
-  }, [adjustmentRows]);
-
   const productMonetaryTotals = useMemo(() => {
     return filteredProducts.reduce(
       (acc, p) => {
@@ -3881,7 +3920,10 @@ export default function InventoryPage() {
                         />
                         <button
                           className="o-btn o-btn-secondary inventory-inline-action-btn"
-                          onClick={() => setShowImportExportModal(true)}
+                          onClick={() => {
+                            setImportExportTarget("products");
+                            setShowImportExportModal(true);
+                          }}
                           title="Import or export products"
                         >
                           <Upload size={14} />
@@ -3917,6 +3959,20 @@ export default function InventoryPage() {
                         onClick={startNewWarehouse}
                       >
                         + New Warehouse
+                      </button>
+                    )}
+
+                    {mainView === "operations" && operationsTab === "moves" && (
+                      <button
+                        className="o-btn o-btn-secondary inventory-inline-action-btn"
+                        onClick={() => {
+                          setImportExportTarget("moves");
+                          setShowImportExportModal(true);
+                        }}
+                        title="Export stock moves"
+                      >
+                        <Download size={14} />
+                        <span>Export</span>
                       </button>
                     )}
 
@@ -3961,12 +4017,12 @@ export default function InventoryPage() {
                             onClick={() => void applyInventoryAdjustments()}
                             disabled={
                               applyingAdjustments ||
-                              adjustmentSummary.changedRows === 0
+                              adjustmentRows.every((row) => !row.changed)
                             }
                           >
                             {applyingAdjustments
                               ? "Applying..."
-                              : `Apply All (${adjustmentSummary.changedRows})`}
+                              : `Apply All (${adjustmentRows.filter((row) => row.changed).length})`}
                           </button>
                         </div>
                       )}
@@ -5906,24 +5962,6 @@ export default function InventoryPage() {
               {/* ============= OPERATIONS ============= */}
               {mainView === "operations" && subView === "list" && (
                 <div className="o-main inventory-view-main">
-                  {operationsTab === "adjustments" && (
-                    <div className="inventory-adjustment-summary">
-                      <div className="inventory-adjustment-summary-card">
-                        <span className="inventory-filter-title">
-                          Total Rows
-                        </span>
-                        <strong>{adjustmentSummary.totalRows}</strong>
-                      </div>
-                      <div className="inventory-adjustment-summary-card">
-                        <span className="inventory-filter-title">Changed</span>
-                        <strong>{adjustmentSummary.changedRows}</strong>
-                      </div>
-                      <div className="inventory-adjustment-summary-card">
-                        <span className="inventory-filter-title">Invalid</span>
-                        <strong>{adjustmentSummary.invalidRows}</strong>
-                      </div>
-                    </div>
-                  )}
                   {operationsTab === "moves" && (
                     <div className="o-list-view inventory-table-panel">
                       <div className="inventory-move-list-toolbar">
@@ -6261,21 +6299,19 @@ export default function InventoryPage() {
                                     : "-"}
                                 </td>
                                 <td>
-                                  <button
-                                    className="o-btn o-btn-primary"
-                                    onClick={() =>
-                                      void applyInventoryAdjustments([
-                                        row.quantId,
-                                      ])
-                                    }
-                                    disabled={
-                                      applyingAdjustments ||
-                                      !row.isValid ||
-                                      !row.changed
-                                    }
-                                  >
-                                    Apply
-                                  </button>
+                                  {row.isValid && row.changed ? (
+                                    <button
+                                      className="o-btn o-btn-primary"
+                                      onClick={() =>
+                                        void applyInventoryAdjustments([
+                                          row.quantId,
+                                        ])
+                                      }
+                                      disabled={applyingAdjustments}
+                                    >
+                                      Apply
+                                    </button>
+                                  ) : null}
                                 </td>
                               </tr>
                             );
@@ -6789,7 +6825,11 @@ export default function InventoryPage() {
                     textAlign: "center",
                   }}
                 >
-                  <h3 style={{ margin: "0 0 16px" }}>Import or Export</h3>
+                  <h3 style={{ margin: "0 0 16px" }}>
+                    {importExportTarget === "products"
+                      ? "Import or Export"
+                      : "Export Stock Moves"}
+                  </h3>
                   <div
                     style={{
                       display: "flex",
@@ -6798,20 +6838,26 @@ export default function InventoryPage() {
                       marginBottom: 16,
                     }}
                   >
+                    {importExportTarget === "products" && (
+                      <button
+                        className="o-btn o-btn-secondary"
+                        onClick={() => {
+                          productImportInputRef.current?.click();
+                          setShowImportExportModal(false);
+                        }}
+                      >
+                        <Upload size={14} />
+                        <span>Import products</span>
+                      </button>
+                    )}
                     <button
                       className="o-btn o-btn-secondary"
                       onClick={() => {
-                        productImportInputRef.current?.click();
-                        setShowImportExportModal(false);
-                      }}
-                    >
-                      <Upload size={14} />
-                      <span>Import products</span>
-                    </button>
-                    <button
-                      className="o-btn o-btn-secondary"
-                      onClick={() => {
-                        exportProducts("csv");
+                        if (importExportTarget === "products") {
+                          exportProducts("csv");
+                        } else {
+                          exportStockMoves("csv");
+                        }
                         setShowImportExportModal(false);
                       }}
                     >
@@ -6821,7 +6867,11 @@ export default function InventoryPage() {
                     <button
                       className="o-btn o-btn-secondary"
                       onClick={() => {
-                        exportProducts("xlsx");
+                        if (importExportTarget === "products") {
+                          exportProducts("xlsx");
+                        } else {
+                          exportStockMoves("xlsx");
+                        }
                         setShowImportExportModal(false);
                       }}
                     >
