@@ -1,5 +1,6 @@
 import { Fragment, type KeyboardEvent } from "react";
 import type { SidebarSection } from "../types/sidebar";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 const isActivationKey = (key: string) => key === "Enter" || key === " ";
 
@@ -49,11 +50,9 @@ export function Sidebar({ sections, className }: SidebarProps) {
                   {hasDropdown && (
                     <span
                       aria-hidden="true"
-                      className={`o-sidebar-dropdown-indicator ${
-                        dropdownOpen ? "open" : ""
-                      }`}
+                      className="o-sidebar-dropdown-indicator"
                     >
-                      ▼
+                      {dropdownOpen ? <ChevronUp /> : <ChevronDown />}
                     </span>
                   )}
                   {item.badge && <span className="o-sidebar-count">{item.badge}</span>}
