@@ -1736,107 +1736,6 @@ export default function InvoicesPage({
               <div className="o-main inventory-view-main">
                 <div className="card shadow-sm card-bg-shadow invoice-list-card">
                   <div className="inventory-main-search-panel invoice-top-panel">
-                    <div className="invoice-top-panel-actions invoice-top-panel-actions-left">
-                      <div className="invoice-filter-currency">
-                        <div className="inventory-filter-items">
-                          <button
-                            type="button"
-                            className={`inventory-filter-chip ${
-                              listCurrency === "" ? "inventory-filter-chip-active" : ""
-                            }`}
-                            onClick={() => setListCurrency("")}
-                          >
-                            All
-                          </button>
-                          {currencyFilters.map((code) => (
-                            <button
-                              key={code}
-                              type="button"
-                              className={`inventory-filter-chip ${
-                                listCurrency === code
-                                  ? "inventory-filter-chip-active"
-                                  : ""
-                              }`}
-                              onClick={() => setListCurrency(code)}
-                            >
-                              {code}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                      <button
-                        className="o-btn o-btn-secondary invoice-top-panel-btn"
-                        onClick={() => {
-                          const headers = [
-                            "Reference",
-                            "Type",
-                            "Customer",
-                            "Date",
-                            "Status",
-                            "Payment",
-                            "Subtotal",
-                            "Tax",
-                            "Total",
-                            "Paid",
-                            "Due",
-                          ];
-                          const rows = invoices.map((inv) => {
-                            const cust = contactById.get(inv.customer_id ?? 0);
-                            return [
-                              inv.reference,
-                              inv.invoice_type === "credit_note"
-                                ? "Credit Note"
-                                : "Invoice",
-                              cust?.name || "",
-                              inv.invoice_date
-                                ? new Date(
-                                    inv.invoice_date,
-                                  ).toLocaleDateString()
-                                : "",
-                              inv.status,
-                              getPaymentStatus(inv.amount_paid, inv.amount_due),
-                              inv.subtotal || 0,
-                              inv.tax_amount || 0,
-                              inv.total_amount || 0,
-                              inv.amount_paid || 0,
-                              inv.amount_due || 0,
-                            ];
-                          });
-                          const csvContent = [headers, ...rows]
-                            .map((row) =>
-                              row
-                                .map(
-                                  (cell) =>
-                                    `"${String(cell).replace(/"/g, '""')}"`,
-                                )
-                                .join(","),
-                            )
-                            .join("\n");
-                          const blob = new Blob([csvContent], {
-                            type: "text/csv;charset=utf-8;",
-                          });
-                          const link = document.createElement("a");
-                          link.href = URL.createObjectURL(blob);
-                          link.download = `invoices_${
-                            new Date().toISOString().split("T")[0]
-                          }.csv`;
-                          link.click();
-                        }}
-                      >
-                        <Download size={16} />
-                        <span>Export</span>
-                      </button>
-                      <button
-                        className="o-btn o-btn-primary invoice-top-panel-btn"
-                        onClick={() => {
-                          beginNew();
-                          navigate("/invoices/new");
-                        }}
-                      >
-                        <Plus size={16} />
-                        <span>New Invoice</span>
-                      </button>
-                    </div>
                     <div className="invoice-top-panel-center">
                       <div className="inventory-search-wrapper">
                         <div className="inventory-search-inner">
@@ -1855,7 +1754,107 @@ export default function InvoicesPage({
                         </div>
                       </div>
                     </div>
-                    <div className="invoice-top-panel-right" />
+                  </div>
+                  <div className="invoice-top-panel-actions invoice-top-panel-actions-left">
+                    <div className="invoice-filter-currency">
+                      <div className="inventory-filter-items">
+                        <button
+                          type="button"
+                          className={`inventory-filter-chip ${
+                            listCurrency === ""
+                              ? "inventory-filter-chip-active"
+                              : ""
+                          }`}
+                          onClick={() => setListCurrency("")}
+                        >
+                          All
+                        </button>
+                        {currencyFilters.map((code) => (
+                          <button
+                            key={code}
+                            type="button"
+                            className={`inventory-filter-chip ${
+                              listCurrency === code
+                                ? "inventory-filter-chip-active"
+                                : ""
+                            }`}
+                            onClick={() => setListCurrency(code)}
+                          >
+                            {code}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <button
+                      className="o-btn o-btn-secondary invoice-top-panel-btn"
+                      onClick={() => {
+                        const headers = [
+                          "Reference",
+                          "Type",
+                          "Customer",
+                          "Date",
+                          "Status",
+                          "Payment",
+                          "Subtotal",
+                          "Tax",
+                          "Total",
+                          "Paid",
+                          "Due",
+                        ];
+                        const rows = invoices.map((inv) => {
+                          const cust = contactById.get(inv.customer_id ?? 0);
+                          return [
+                            inv.reference,
+                            inv.invoice_type === "credit_note"
+                              ? "Credit Note"
+                              : "Invoice",
+                            cust?.name || "",
+                            inv.invoice_date
+                              ? new Date(inv.invoice_date).toLocaleDateString()
+                              : "",
+                            inv.status,
+                            getPaymentStatus(inv.amount_paid, inv.amount_due),
+                            inv.subtotal || 0,
+                            inv.tax_amount || 0,
+                            inv.total_amount || 0,
+                            inv.amount_paid || 0,
+                            inv.amount_due || 0,
+                          ];
+                        });
+                        const csvContent = [headers, ...rows]
+                          .map((row) =>
+                            row
+                              .map(
+                                (cell) =>
+                                  `"${String(cell).replace(/"/g, '""')}"`,
+                              )
+                              .join(","),
+                          )
+                          .join("\n");
+                        const blob = new Blob([csvContent], {
+                          type: "text/csv;charset=utf-8;",
+                        });
+                        const link = document.createElement("a");
+                        link.href = URL.createObjectURL(blob);
+                        link.download = `invoices_${
+                          new Date().toISOString().split("T")[0]
+                        }.csv`;
+                        link.click();
+                      }}
+                    >
+                      <Download size={16} />
+                      <span>Export</span>
+                    </button>
+                    <button
+                      className="o-btn o-btn-primary invoice-top-panel-btn"
+                      onClick={() => {
+                        beginNew();
+                        navigate("/invoices/new");
+                      }}
+                    >
+                      <Plus size={16} />
+                      <span>New Invoice</span>
+                    </button>
                   </div>
                   <div className="o-list-view inventory-table-panel">
                     <table className="o-list-table">
@@ -1912,7 +1911,9 @@ export default function InvoicesPage({
                               <td>{cust?.name || "—"}</td>
                               <td className="text-muted">
                                 {inv.invoice_date
-                                  ? new Date(inv.invoice_date).toLocaleDateString()
+                                  ? new Date(
+                                      inv.invoice_date,
+                                    ).toLocaleDateString()
                                   : "—"}
                               </td>
                               <td>
@@ -1954,7 +1955,9 @@ export default function InvoicesPage({
                               </td>
                               <td
                                 className={`text-end fw-semibold ${
-                                  inv.total_amount < 0 ? "invoice-total-negative" : ""
+                                  inv.total_amount < 0
+                                    ? "invoice-total-negative"
+                                    : ""
                                 }`}
                               >
                                 {formatCurrency(
