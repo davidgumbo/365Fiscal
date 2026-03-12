@@ -5,12 +5,12 @@ import {
   ArrowUpRight,
   CheckCircle2,
   Download,
-  FileInvoice,
   FileMinus,
+  FilePlus,
   FileText,
-  MagnifyingGlass,
   PenLine,
   Plus,
+  Search,
   ShieldCheck,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -229,7 +229,7 @@ const STATUS_FILTERS: FilterDefinition[] = [
 
 const TYPE_FILTERS: FilterDefinition[] = [
   { key: "", label: "ALL TYPES", icon: FileText, color: "var(--muted)" },
-  { key: "invoice", label: "INVOICE", icon: FileInvoice, color: "var(--blue-500)" },
+  { key: "invoice", label: "INVOICE", icon: FilePlus, color: "var(--blue-500)" },
   { key: "credit_note", label: "CREDIT NOTE", icon: FileMinus, color: "var(--violet-500)" },
 ];
 
@@ -1704,7 +1704,7 @@ export default function InvoicesPage({
                     <div className="inventory-centered-searchbox">
                       <div className="o-searchbox">
                         <span className="o-searchbox-icon">
-                          <MagnifyingGlass size={16} />
+                          <Search size={16} />
                         </span>
                         <input
                           placeholder="Search invoices..."
