@@ -954,6 +954,111 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
     }
   };
 
+  const resetPosEmployeeForm = () => {
+    setPosEmpForm({ name: "", pin: "", role: "cashier", email: "" });
+    setPosEmpEditing(null);
+  };
+
+  const resetPosPaymentMethodForm = () => {
+    setPosPmForm({ name: "", code: "cash" });
+    setPosPmEditing(null);
+  };
+
+  const resetPosTillForm = () => {
+    setTillForm({
+      name: "",
+      employee_ids: [],
+      warehouse_id: null,
+      fiscal_device_id: null,
+    });
+    setTillEditing(null);
+    setTillDropdownOpen(false);
+  };
+
+  const isPosEmployeeDirty = Boolean(
+    posEmpEditing ||
+      posEmpForm.name ||
+      posEmpForm.pin ||
+      posEmpForm.email ||
+      posEmpForm.role !== "cashier",
+  );
+
+  const isPosPaymentMethodDirty = Boolean(
+    posPmEditing || posPmForm.name || posPmForm.code !== "cash",
+  );
+
+  const isPosTillDirty = Boolean(
+    tillEditing ||
+      tillForm.name.trim() ||
+      tillForm.employee_ids.length ||
+      tillForm.warehouse_id !== null ||
+      tillForm.fiscal_device_id !== null,
+  );
+
+  const saveCurrentSection = () => {
+    if (activeTopTab !== "general") return;
+    if (activeSection === "pos-settings") {
+      if (posConfigTab === "employees") {
+        void savePosEmployee();
+        return;
+      }
+      if (posConfigTab === "payments") {
+        void savePosPaymentMethod();
+        return;
+      }
+      if (posConfigTab === "tills") {
+        void savePosTill();
+        return;
+      }
+    }
+    void saveCompanySettings();
+  };
+
+  const discardCurrentSection = () => {
+    if (activeTopTab !== "general") return;
+    if (activeSection === "pos-settings") {
+      if (posConfigTab === "employees") {
+        resetPosEmployeeForm();
+        return;
+      }
+      if (posConfigTab === "payments") {
+        resetPosPaymentMethodForm();
+        return;
+      }
+      if (posConfigTab === "tills") {
+        resetPosTillForm();
+        return;
+      }
+    }
+    discardChanges();
+  };
+
+  const isCurrentSectionSaveDisabled = () => {
+    if (activeTopTab !== "general") return true;
+    if (activeSection === "pos-settings") {
+      if (posConfigTab === "employees") {
+        return posEmpSaving || !posEmpForm.name;
+      }
+      if (posConfigTab === "payments") {
+        return posPmSaving || !posPmForm.name;
+      }
+      if (posConfigTab === "tills") {
+        return tillSaving || !tillForm.name;
+      }
+    }
+    return !hasUnsavedChanges;
+  };
+
+  const isCurrentSectionDiscardDisabled = () => {
+    if (activeTopTab !== "general") return true;
+    if (activeSection === "pos-settings") {
+      if (posConfigTab === "employees") return !isPosEmployeeDirty;
+      if (posConfigTab === "payments") return !isPosPaymentMethodDirty;
+      if (posConfigTab === "tills") return !isPosTillDirty;
+    }
+    return !hasUnsavedChanges;
+  };
+
   const handleLogoChange = (file: File | null) => {
     if (!file) return;
     const reader = new FileReader();
@@ -1732,15 +1837,15 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
     <>
       <button
         className="primary"
-        onClick={saveCompanySettings}
-        disabled={!hasUnsavedChanges || activeTopTab !== "general"}
+        onClick={saveCurrentSection}
+        disabled={isCurrentSectionSaveDisabled()}
       >
         Save
       </button>
       <button
         className="outline"
-        onClick={discardChanges}
-        disabled={!hasUnsavedChanges || activeTopTab !== "general"}
+        onClick={discardCurrentSection}
+        disabled={isCurrentSectionDiscardDisabled()}
       >
         Discard
       </button>

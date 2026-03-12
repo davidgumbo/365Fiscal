@@ -2444,44 +2444,6 @@ export default function InvoicesPage({
                     Showing {visibleLineStart}-{visibleLineEnd} of{" "}
                     {activeLineCount}
                   </small>
-                  <div className="d-flex align-items-center gap-2">
-                    <select
-                      className="form-select form-select-sm"
-                      style={{ width: 90 }}
-                      value={linesPerPage}
-                      onChange={(e) => {
-                        setLinesPerPage(Number(e.target.value));
-                        setLinesPage(1);
-                      }}
-                    >
-                      <option value={5}>5 / page</option>
-                      <option value={10}>10 / page</option>
-                      <option value={20}>20 / page</option>
-                    </select>
-                    <button
-                      className="btn btn-sm btn-light border"
-                      onClick={() =>
-                        setLinesPage((prev) => Math.max(1, prev - 1))
-                      }
-                      disabled={linesPage <= 1}
-                    >
-                      Prev
-                    </button>
-                    <small className="text-muted">
-                      Page {linesPage} / {activeLinesTotalPages}
-                    </small>
-                    <button
-                      className="btn btn-sm btn-light border"
-                      onClick={() =>
-                        setLinesPage((prev) =>
-                          Math.min(activeLinesTotalPages, prev + 1),
-                        )
-                      }
-                      disabled={linesPage >= activeLinesTotalPages}
-                    >
-                      Next
-                    </button>
-                  </div>
                 </div>
                 <div className="table-responsive invoice-lines-table-wrap">
                   <table className="table table-bordered align-middle mb-0 invoice-lines-table">
@@ -3000,44 +2962,6 @@ export default function InvoicesPage({
                     Showing {visibleLineStart}-{visibleLineEnd} of{" "}
                     {activeLineCount}
                   </small>
-                  <div className="d-flex align-items-center gap-2">
-                    <select
-                      className="form-select form-select-sm"
-                      style={{ width: 90 }}
-                      value={linesPerPage}
-                      onChange={(e) => {
-                        setLinesPerPage(Number(e.target.value));
-                        setLinesPage(1);
-                      }}
-                    >
-                      <option value={5}>5 / page</option>
-                      <option value={10}>10 / page</option>
-                      <option value={20}>20 / page</option>
-                    </select>
-                    <button
-                      className="btn btn-sm btn-light border"
-                      onClick={() =>
-                        setLinesPage((prev) => Math.max(1, prev - 1))
-                      }
-                      disabled={linesPage <= 1}
-                    >
-                      Prev
-                    </button>
-                    <small className="text-muted">
-                      Page {linesPage} / {activeLinesTotalPages}
-                    </small>
-                    <button
-                      className="btn btn-sm btn-light border"
-                      onClick={() =>
-                        setLinesPage((prev) =>
-                          Math.min(activeLinesTotalPages, prev + 1),
-                        )
-                      }
-                      disabled={linesPage >= activeLinesTotalPages}
-                    >
-                      Next
-                    </button>
-                  </div>
                 </div>
                 <div className="table-responsive invoice-lines-table-wrap">
                   <table className="table table-bordered align-middle mb-0 invoice-lines-table">

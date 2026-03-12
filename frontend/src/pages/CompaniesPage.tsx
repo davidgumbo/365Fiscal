@@ -152,6 +152,21 @@ const DownloadIcon = () => (
   </svg>
 );
 
+const ChevronDownIcon = () => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <polyline points="6 9 12 15 18 9" />
+  </svg>
+);
+
 const XIcon = () => (
   <svg
     width="16"
@@ -237,7 +252,8 @@ export default function CompaniesPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [search, setSearch] = useState("");
-  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
+  const [showActionMenu, setShowActionMenu] = useState(false);
 
   const loadCompanies = async () => {
     const params = new URLSearchParams();
@@ -681,24 +697,81 @@ export default function CompaniesPage() {
                 Grid
               </button>
             </div>
-            <button
-              className="ghost"
-              type="button"
-              onClick={exportCsv}
-              style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}
-            >
-              <DownloadIcon />
-              Export CSV
-            </button>
-            <button
-              className="ghost"
-              type="button"
-              onClick={exportXlsx}
-              style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}
-            >
-              <DownloadIcon />
-              Export XLSX
-            </button>
+            <div style={{ position: "relative" }}>
+              <button
+                className="ghost"
+                type="button"
+                onClick={() => setShowActionMenu((prev) => !prev)}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  minWidth: "120px",
+                  justifyContent: "space-between",
+                }}
+              >
+                <span style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                  <DownloadIcon />
+                  Action
+                </span>
+                <ChevronDownIcon />
+              </button>
+              {showActionMenu && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "calc(100% + 8px)",
+                    right: 0,
+                    minWidth: "180px",
+                    background: "var(--white-500)",
+                    border: "1px solid var(--stroke)",
+                    borderRadius: "12px",
+                    boxShadow: "var(--shadow)",
+                    padding: "8px",
+                    zIndex: 20,
+                    display: "grid",
+                    gap: "4px",
+                  }}
+                >
+                  <button
+                    className="ghost"
+                    type="button"
+                    onClick={() => {
+                      exportCsv();
+                      setShowActionMenu(false);
+                    }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      justifyContent: "flex-start",
+                      border: "none",
+                    }}
+                  >
+                    <DownloadIcon />
+                    Export CSV
+                  </button>
+                  <button
+                    className="ghost"
+                    type="button"
+                    onClick={() => {
+                      exportXlsx();
+                      setShowActionMenu(false);
+                    }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      justifyContent: "flex-start",
+                      border: "none",
+                    }}
+                  >
+                    <DownloadIcon />
+                    Export XLSX
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
