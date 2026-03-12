@@ -8,6 +8,7 @@ import {
   FileMinus,
   FilePlus,
   FileText,
+  FunnelPlus,
   PenLine,
   Plus,
   Search,
@@ -1767,9 +1768,7 @@ export default function InvoicesPage({
                                 <input
                                   placeholder="Search invoices..."
                                   value={listSearch}
-                                  onChange={(e) =>
-                                    setListSearch(e.target.value)
-                                  }
+                                  onChange={(e) => setListSearch(e.target.value)}
                                 />
                                 <button
                                   type="button"
@@ -1831,75 +1830,74 @@ export default function InvoicesPage({
                         <button
                           className="o-btn o-btn-secondary invoice-top-panel-btn"
                           onClick={() => {
-                          const headers = [
-                            "Reference",
-                            "Type",
-                            "Customer",
-                            "Date",
-                            "Status",
-                            "Payment",
-                            "Subtotal",
-                            "Tax",
-                            "Total",
-                            "Paid",
-                            "Due",
-                          ];
-                          const rows = invoices.map((inv) => {
-                            const cust = contactById.get(inv.customer_id ?? 0);
-                            return [
-                              inv.reference,
-                              inv.invoice_type === "credit_note"
-                                ? "Credit Note"
-                                : "Invoice",
-                              cust?.name || "",
-                              inv.invoice_date
-                                ? new Date(
-                                    inv.invoice_date,
-                                  ).toLocaleDateString()
-                                : "",
-                              inv.status,
-                              getPaymentStatus(inv.amount_paid, inv.amount_due),
-                              inv.subtotal || 0,
-                              inv.tax_amount || 0,
-                              inv.total_amount || 0,
-                              inv.amount_paid || 0,
-                              inv.amount_due || 0,
+                            const headers = [
+                              "Reference",
+                              "Type",
+                              "Customer",
+                              "Date",
+                              "Status",
+                              "Payment",
+                              "Subtotal",
+                              "Tax",
+                              "Total",
+                              "Paid",
+                              "Due",
                             ];
-                          });
-                          const csvContent = [headers, ...rows]
-                            .map((row) =>
-                              row
-                                .map(
-                                  (cell) =>
-                                    `"${String(cell).replace(/"/g, '""')}"`,
-                                )
-                                .join(","),
-                            )
-                            .join("\n");
-                          const blob = new Blob([csvContent], {
-                            type: "text/csv;charset=utf-8;",
-                          });
-                          const link = document.createElement("a");
-                          link.href = URL.createObjectURL(blob);
-                          link.download = `invoices_${
-                            new Date().toISOString().split("T")[0]
-                          }.csv`;
-                          link.click();
-                        }}
-                      >
-                        <Download size={16} />
-                        <span>Export</span>
-                      </button>
-                      <button
-                        className="o-btn o-btn-primary invoice-top-panel-btn"
-                        onClick={() => {
-                          beginNew();
-                          navigate("/invoices/new");
-                        }}
-                      >
-                        <Plus size={16} />
-                        <span>New Invoice</span>
-                      </button>
+                            const rows = invoices.map((inv) => {
+                              const cust = contactById.get(inv.customer_id ?? 0);
+                              return [
+                                inv.reference,
+                                inv.invoice_type === "credit_note"
+                                  ? "Credit Note"
+                                  : "Invoice",
+                                cust?.name || "",
+                                inv.invoice_date
+                                  ? new Date(inv.invoice_date).toLocaleDateString()
+                                  : "",
+                                inv.status,
+                                getPaymentStatus(inv.amount_paid, inv.amount_due),
+                                inv.subtotal || 0,
+                                inv.tax_amount || 0,
+                                inv.total_amount || 0,
+                                inv.amount_paid || 0,
+                                inv.amount_due || 0,
+                              ];
+                            });
+                            const csvContent = [headers, ...rows]
+                              .map((row) =>
+                                row
+                                  .map(
+                                    (cell) =>
+                                      `"${String(cell).replace(/"/g, '""')}"`,
+                                  )
+                                  .join(","),
+                              )
+                              .join("\n");
+                            const blob = new Blob([csvContent], {
+                              type: "text/csv;charset=utf-8;",
+                            });
+                            const link = document.createElement("a");
+                            link.href = URL.createObjectURL(blob);
+                            link.download = `invoices_${
+                              new Date().toISOString().split("T")[0]
+                            }.csv`;
+                            link.click();
+                          }}
+                        >
+                          <Download size={16} />
+                          <span>Export</span>
+                        </button>
+                        <button
+                          className="o-btn o-btn-primary invoice-top-panel-btn"
+                          onClick={() => {
+                            beginNew();
+                            navigate("/invoices/new");
+                          }}
+                        >
+                          <Plus size={16} />
+                          <span>New Invoice</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                   <div className="o-list-view inventory-table-panel">
