@@ -632,6 +632,36 @@
   gap: 10px;
 }
 
+.expense-list-toolbar-actions .btn-create {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 14px;
+  background: #3166e3;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition:
+    background-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+}
+
+.expense-list-toolbar-actions .btn-create:hover {
+  background: #2457d3;
+  box-shadow: 0 10px 20px rgba(49, 102, 227, 0.22);
+  transform: translateY(-1px);
+}
+
+.expense-list-toolbar-actions .btn-create svg {
+  width: 16px;
+  height: 16px;
+}
+
 .expense-list-table-card {
   width: 100%;
 }
