@@ -201,6 +201,19 @@ function formatStockMoveDate(move: StockMove) {
   });
 }
 
+function formatStockMoveShortDate(value: string | null | undefined) {
+  if (!value) return "-";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "-";
+  return parsed.toLocaleString([], {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 const STATES = [
   { value: "draft", label: "Draft" },
   { value: "confirmed", label: "Confirmed" },
@@ -6317,6 +6330,49 @@ export default function InventoryPage() {
                           : selectedMove?.reference ||
                             `Move #${selectedMoveId}`}
                       </h2>
+                      <div className="inventory-move-meta-strip">
+                        <div className="inventory-move-meta-card">
+                          <span className="inventory-move-meta-label">
+                            Status
+                          </span>
+                          <span className="inventory-move-meta-value">
+                            {selectedMove
+                              ? STATES.find((s) => s.value === selectedMove.state)
+                                  ?.label || selectedMove.state
+                              : "Draft"}
+                          </span>
+                        </div>
+                        <div className="inventory-move-meta-card">
+                          <span className="inventory-move-meta-label">
+                            Warehouse
+                          </span>
+                          <span className="inventory-move-meta-value">
+                            {warehouses.find((w) => w.id === moveForm.warehouse_id)
+                              ?.name || "-"}
+                          </span>
+                        </div>
+                        <div className="inventory-move-meta-card">
+                          <span className="inventory-move-meta-label">
+                            Effective Date
+                          </span>
+                          <span className="inventory-move-meta-value">
+                            {selectedMove
+                              ? formatStockMoveShortDate(
+                                  selectedMove.done_date ||
+                                    selectedMove.scheduled_date,
+                                )
+                              : "Not posted yet"}
+                          </span>
+                        </div>
+                        <div className="inventory-move-meta-card">
+                          <span className="inventory-move-meta-label">
+                            Product Lines
+                          </span>
+                          <span className="inventory-move-meta-value">
+                            {moveLines.length}
+                          </span>
+                        </div>
+                      </div>
                       <div className="inventory-move-header-actions">
                         <button
                           className="o-btn o-btn-primary"
@@ -6351,13 +6407,6 @@ export default function InventoryPage() {
                     </div>
 
                     <div className="inventory-form-actions">
-                      <button
-                        className="o-btn o-btn-secondary inventory-inline-action-btn"
-                        onClick={() => void printMovePdf()}
-                      >
-                        <Printer size={14} />
-                        <span>Print PDF</span>
-                      </button>
                       {selectedMove && !isNew && (
                         <div className="o-statusbar inventory-statusbar">
                           {STATES.map((s, i) => (
