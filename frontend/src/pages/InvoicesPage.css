@@ -276,8 +276,16 @@
   transition: background-color 160ms ease;
 }
 
+.invoice-page-shell .table-hover tbody tr:nth-child(odd) {
+  background: #ffffff;
+}
+
+.invoice-page-shell .table-hover tbody tr:nth-child(even) {
+  background: #f7f8fb;
+}
+
 .invoice-page-shell .table-hover tbody tr:hover {
-  background: #f9fbff;
+  background: #eef3f9;
 }
 
 .invoice-page-shell .fw-semibold {
