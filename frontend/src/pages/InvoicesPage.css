@@ -1,8 +1,4 @@
-.invoice-page-shell {
-  padding: 28px 28px 34px;
-  background: #f2f1fb;
-  min-height: calc(100vh - 120px);
-}
+
 
 .invoice-page-shell .invoice-dashboard-layout {
   display: grid;
