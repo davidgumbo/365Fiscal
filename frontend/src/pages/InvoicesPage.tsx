@@ -7,9 +7,11 @@ import {
   Download,
   FileMinus,
   FilePlus,
+  FilePlus,
   FileText,
   PenLine,
   Plus,
+  Search,
   Search,
   ShieldCheck,
 } from "lucide-react";
@@ -220,21 +222,47 @@ type FilterDefinition = {
 };
 
 const STATUS_FILTERS: FilterDefinition[] = [
-  { key: "", label: "ALL INVOICES", icon: FileText, color: "var(--indigo-500)" },
+  {
+    key: "",
+    label: "ALL INVOICES",
+    icon: FileText,
+    color: "var(--indigo-500)",
+  },
   { key: "draft", label: "DRAFT", icon: PenLine, color: "var(--amber-500)" },
-  { key: "posted", label: "POSTED", icon: ArrowUpRight, color: "var(--blue-500)" },
-  { key: "paid", label: "PAID", icon: CheckCircle2, color: "var(--emerald-500)" },
-  { key: "fiscalized", label: "FISCALIZED", icon: ShieldCheck, color: "var(--violet-500)" },
+  {
+    key: "posted",
+    label: "POSTED",
+    icon: ArrowUpRight,
+    color: "var(--blue-500)",
+  },
+  {
+    key: "paid",
+    label: "PAID",
+    icon: CheckCircle2,
+    color: "var(--emerald-500)",
+  },
+  {
+    key: "fiscalized",
+    label: "FISCALIZED",
+    icon: ShieldCheck,
+    color: "var(--violet-500)",
+  },
 ];
 
 const TYPE_FILTERS: FilterDefinition[] = [
   { key: "", label: "ALL TYPES", icon: FileText, color: "var(--muted)" },
-<<<<<<< HEAD
-  { key: "invoice", label: "INVOICE", icon: FileText, color: "var(--blue-500)" },
-=======
-  { key: "invoice", label: "INVOICE", icon: FilePlus, color: "var(--blue-500)" },
->>>>>>> 8669d71 (fiexed icon import error)
-  { key: "credit_note", label: "CREDIT NOTE", icon: FileMinus, color: "var(--violet-500)" },
+  {
+    key: "invoice",
+    label: "INVOICE",
+    icon: FilePlus,
+    color: "var(--blue-500)",
+  },
+  {
+    key: "credit_note",
+    label: "CREDIT NOTE",
+    icon: FileMinus,
+    color: "var(--violet-500)",
+  },
 ];
 
 type Rgb = { r: number; g: number; b: number };
@@ -1782,9 +1810,9 @@ export default function InvoicesPage({
                       });
                       const link = document.createElement("a");
                       link.href = URL.createObjectURL(blob);
-                      link.download = `invoices_${new Date()
-                        .toISOString()
-                        .split("T")[0]}.csv`;
+                      link.download = `invoices_${
+                        new Date().toISOString().split("T")[0]
+                      }.csv`;
                       link.click();
                     }}
                   >
@@ -1869,30 +1897,34 @@ export default function InvoicesPage({
                                 </td>
                                 <td>
                                   <span
-                                    className={`badge ${inv.status === "paid"
-                                      ? "bg-success"
-                                      : inv.status === "posted"
-                                        ? "bg-info"
-                                        : inv.status === "fiscalized"
-                                          ? "bg-primary"
-                                          : "bg-secondary"}`}
+                                    className={`badge ${
+                                      inv.status === "paid"
+                                        ? "bg-success"
+                                        : inv.status === "posted"
+                                          ? "bg-info"
+                                          : inv.status === "fiscalized"
+                                            ? "bg-primary"
+                                            : "bg-secondary"
+                                    }`}
                                   >
                                     {inv.status}
                                   </span>
                                 </td>
                                 <td>
                                   <span
-                                    className={`badge bg-${getPaymentStatus(
-                                      inv.amount_paid,
-                                      inv.amount_due,
-                                    ) === "Paid"
-                                      ? "success"
-                                      : getPaymentStatus(
+                                    className={`badge bg-${
+                                      getPaymentStatus(
                                         inv.amount_paid,
                                         inv.amount_due,
-                                      ) === "Partial"
-                                        ? "warning"
-                                        : "secondary"}`}
+                                      ) === "Paid"
+                                        ? "success"
+                                        : getPaymentStatus(
+                                              inv.amount_paid,
+                                              inv.amount_due,
+                                            ) === "Partial"
+                                          ? "warning"
+                                          : "secondary"
+                                    }`}
                                   >
                                     {getPaymentStatus(
                                       inv.amount_paid,
