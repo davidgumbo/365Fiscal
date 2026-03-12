@@ -164,6 +164,20 @@ const MOVE_TYPES = [
   { value: "adjustment", label: "Inventory Adjustment" },
 ];
 
+function isRefundReturnMove(move: StockMove) {
+  const notes = (move.notes || "").toLowerCase();
+  const source = (move.source_document || "").toLowerCase();
+  return (
+    move.move_type === "in" &&
+    (notes.includes("pos refund return") || source.startsWith("pos-ord-"))
+  );
+}
+
+function getMoveTypeLabel(move: StockMove) {
+  if (isRefundReturnMove(move)) return "Returned";
+  return MOVE_TYPES.find((type) => type.value === move.move_type)?.label || move.move_type;
+}
+
 const STATES = [
   { value: "draft", label: "Draft" },
   { value: "confirmed", label: "Confirmed" },
@@ -5929,9 +5943,7 @@ export default function InventoryPage() {
                             const warehouse = warehouses.find(
                               (w) => w.id === m.warehouse_id,
                             );
-                            const moveType = MOVE_TYPES.find(
-                              (t) => t.value === m.move_type,
-                            );
+                            const isReturned = isRefundReturnMove(m);
                             return (
                               <tr
                                 key={m.id}
@@ -5949,13 +5961,35 @@ export default function InventoryPage() {
                                 </td>
                                 <td>{product?.name || "-"}</td>
                                 <td>
+                                  <div>
+                                    <span
+                                      className="inventory-link-cell"
+                                      onClick={() => openMove(m)}
+                                    >
+                                      {product?.name || "-"}
+                                    </span>
+                                    {isReturned && m.source_document && (
+                                      <div className="inventory-subtext">
+                                        Returned from {m.source_document}
+                                      </div>
+                                    )}
+                                  </div>
+                                </td>
+                                <td>
                                   <span
-                                    className={`o-tag o-tag-${m.move_type}`}
+                                    className={`o-tag o-tag-${isReturned ? "in" : m.move_type}`}
                                   >
-                                    {moveType?.label}
+                                    {getMoveTypeLabel(m)}
                                   </span>
                                 </td>
-                                <td>{warehouse?.name || "-"}</td>
+                                <td>
+                                  {warehouse?.name || "-"}
+                                  {isReturned && (
+                                    <div className="inventory-subtext">
+                                      POS customer return
+                                    </div>
+                                  )}
+                                </td>
                                 <td className="inventory-strong-cell">
                                   {m.quantity}{" "}
                                   {(product?.uom === "PCS"
