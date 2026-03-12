@@ -1755,8 +1755,8 @@ export default function InvoicesPage({
               <div className="o-main inventory-view-main">
                 <div className="card shadow-sm card-bg-shadow invoice-list-card">
                   <div className="inventory-main-search-panel invoice-top-panel">
-                    <div className="invoice-top-panel-actions invoice-top-panel-actions-left">
-                      <div className="invoice-top-panel-center">
+                    <div className="invoice-top-panel-row">
+                      <div className="invoice-top-panel-left">
                         <div className="inventory-search-wrapper">
                           <div className="inventory-search-inner">
                             <div className="inventory-centered-searchbox">
@@ -1827,9 +1827,10 @@ export default function InvoicesPage({
                           </div>
                         </div>
                       </div>
-                      <button
-                        className="o-btn o-btn-secondary invoice-top-panel-btn"
-                        onClick={() => {
+                      <div className="invoice-top-panel-right">
+                        <button
+                          className="o-btn o-btn-secondary invoice-top-panel-btn"
+                          onClick={() => {
                           const headers = [
                             "Reference",
                             "Type",

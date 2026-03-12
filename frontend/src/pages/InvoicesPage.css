@@ -83,32 +83,32 @@
   box-shadow: 0 8px 18px rgba(49, 102, 227, 0.18);
 }
 
-.invoice-top-panel-actions.invoice-top-panel-actions-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-
 .invoice-list-main {
   min-width: 0;
 }
 
 .invoice-top-panel {
-  display: grid;
-  grid-template-columns: auto minmax(320px, 520px) minmax(0, 1fr);
-  align-items: center;
-  gap: 14px;
+  display: flex;
+  width: 100%;
+  padding: 0;
 }
 
-.invoice-top-panel-center {
-  min-width: 0;
+.invoice-top-panel-row {
+  width: 100%;
   display: flex;
-  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+
+.invoice-top-panel-left {
+  flex: 1;
+  min-width: 0;
 }
 
 .invoice-top-panel-right {
-  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .inventory-main-search-panel.invoice-top-panel .inventory-search-wrapper {
