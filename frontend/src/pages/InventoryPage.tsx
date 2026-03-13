@@ -4126,7 +4126,7 @@ export default function InventoryPage() {
                         className="o-btn o-btn-primary"
                         onClick={() => startNewMove()}
                       >
-                        <CirclePlus />
+                        <CirclePlus size={14} />
                       </button>
                       // <div className="inventory-op-actions">
                       //   {MOVE_TYPES.filter((t) => t.value !== "adjustment").map(
