@@ -4120,7 +4120,7 @@ export default function InventoryPage() {
                       </button>
                     )}
 
-                    {/* {mainView === "operations" && operationsTab === "moves" && (
+                    {mainView === "operations" && operationsTab === "moves" && (
                       <div className="inventory-op-actions">
                         {MOVE_TYPES.filter((t) => t.value !== "adjustment").map(
                           (t) => (
@@ -4135,7 +4135,7 @@ export default function InventoryPage() {
                           ),
                         )}
                       </div>
-                    )} */}
+                    )}
                     {mainView === "operations" &&
                       operationsTab === "adjustments" && (
                         <div className="inventory-op-actions">
