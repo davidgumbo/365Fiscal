@@ -236,6 +236,10 @@ export default function PurchasesPage({
   const [listCurrency, setListCurrency] = useState("");
   const [listFrom, setListFrom] = useState("");
   const [listTo, setListTo] = useState("");
+  const [selectedOrderIds, setSelectedOrderIds] = useState<Set<number>>(
+    new Set(),
+  );
+  const [exportingSelected, setExportingSelected] = useState(false);
 
   const [form, setForm] = useState({
     supplier_id: null as number | null,
@@ -272,6 +276,7 @@ export default function PurchasesPage({
         p.filter((prod) => prod.is_active && prod.can_be_purchased === true),
       );
       setOrders(o);
+      setSelectedOrderIds(new Set());
       setWarehouses(w);
       setCompanySettings(settingsData ?? null);
       if (!form.warehouse_id && w.length) {
@@ -757,6 +762,83 @@ export default function PurchasesPage({
     listTo,
     contacts,
   ]);
+  const allFilteredOrdersSelected =
+    filteredOrders.length > 0 &&
+    filteredOrders.every((order) => selectedOrderIds.has(order.id));
+  const selectedOrders = filteredOrders.filter((order) =>
+    selectedOrderIds.has(order.id),
+  );
+
+  const toggleSelectOrder = (orderId: number) => {
+    setSelectedOrderIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(orderId)) next.delete(orderId);
+      else next.add(orderId);
+      return next;
+    });
+  };
+
+  const toggleSelectAllOrders = () => {
+    setSelectedOrderIds((prev) => {
+      const next = new Set(prev);
+      if (allFilteredOrdersSelected) {
+        filteredOrders.forEach((order) => next.delete(order.id));
+      } else {
+        filteredOrders.forEach((order) => next.add(order.id));
+      }
+      return next;
+    });
+  };
+
+  const exportSelectedOrders = () => {
+    if (!selectedOrders.length) return;
+    setExportingSelected(true);
+    try {
+      const headers = [
+        "Reference",
+        "Supplier",
+        "Status",
+        "Paid",
+        "Order Date",
+        "Expected Date",
+        "Subtotal",
+        "Tax",
+        "Total",
+      ];
+      const rows = selectedOrders.map((order) => {
+        const supplier = contacts.find((c) => c.id === order.supplier_id);
+        return [
+          order.reference,
+          supplier?.name || "",
+          order.status,
+          order.paid_state || "unpaid",
+          toDateInputValue(order.order_date),
+          toDateInputValue(order.expected_date),
+          order.subtotal || 0,
+          order.tax_amount || 0,
+          order.total_amount || 0,
+        ];
+      });
+      const csvContent = [headers, ...rows]
+        .map((row) =>
+          row
+            .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
+            .join(","),
+        )
+        .join("\n");
+      const blob = new Blob([csvContent], {
+        type: "text/csv;charset=utf-8;",
+      });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `purchases_selected_${
+        new Date().toISOString().split("T")[0]
+      }.csv`;
+      link.click();
+    } finally {
+      setExportingSelected(false);
+    }
+  };
 
   const currentStatus = selectedOrder?.status || "draft";
   const canEdit = isEditing || mode === "new" || currentStatus === "draft";
@@ -1097,10 +1179,47 @@ export default function PurchasesPage({
               </div>
               <div className="card shadow-sm">
                 <div className="card-body">
+                  {selectedOrderIds.size > 0 && (
+                    <div className="batch-action-bar">
+                      <label className="batch-master-toggle">
+                        <input
+                          type="checkbox"
+                          checked={allFilteredOrdersSelected}
+                          onChange={toggleSelectAllOrders}
+                          className="batch-checkbox"
+                        />
+                        <span>Select all</span>
+                      </label>
+                      <span className="batch-count">
+                        {selectedOrderIds.size} selected
+                      </span>
+                      <button
+                        className="batch-btn export-btn"
+                        onClick={exportSelectedOrders}
+                        disabled={exportingSelected}
+                      >
+                        {exportingSelected ? "Exporting..." : "Export Selected"}
+                      </button>
+                      <button
+                        className="batch-btn clear-btn"
+                        onClick={() => setSelectedOrderIds(new Set())}
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  )}
                   <div className="table-responsive">
                     <table className="table table-hover align-middle">
                       <thead>
                         <tr>
+                          <th style={{ width: 40 }}>
+                            <input
+                              type="checkbox"
+                              checked={allFilteredOrdersSelected}
+                              onChange={toggleSelectAllOrders}
+                              className="batch-checkbox"
+                            />
+                          </th>
                           <th>Reference</th>
                           <th>Supplier</th>
                           <th>Status</th>
@@ -1113,7 +1232,7 @@ export default function PurchasesPage({
                         {filteredOrders.length === 0 ? (
                           <tr>
                             <td
-                              colSpan={6}
+                              colSpan={7}
                               className="text-center text-muted py-4"
                             >
                               {loadingData
@@ -1125,9 +1244,23 @@ export default function PurchasesPage({
                           filteredOrders.map((order) => (
                             <tr
                               key={order.id}
+                              className={
+                                selectedOrderIds.has(order.id)
+                                  ? "row-selected"
+                                  : ""
+                              }
                               style={{ cursor: "pointer" }}
                               onClick={() => navigate(`/purchases/${order.id}`)}
                             >
+                              <td onClick={(e) => e.stopPropagation()}>
+                                <input
+                                  type="checkbox"
+                                  checked={selectedOrderIds.has(order.id)}
+                                  onChange={() => toggleSelectOrder(order.id)}
+                                  className="batch-checkbox"
+                                  aria-label={`Select ${order.reference}`}
+                                />
+                              </td>
                               <td
                                 className="purchase-reference-cell"
                                 style={{
@@ -1175,7 +1308,7 @@ export default function PurchasesPage({
                             fontWeight: 600,
                           }}
                         >
-                          <td colSpan={5} className="text-end">
+                          <td colSpan={6} className="text-end">
                             Grand Total:
                           </td>
                           <td className="text-end">

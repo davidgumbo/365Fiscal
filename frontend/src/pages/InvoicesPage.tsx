@@ -537,6 +537,10 @@ export default function InvoicesPage({
   const [listStatus, setListStatus] = useState("");
   const [listType, setListType] = useState("");
   const [listCurrency, setListCurrency] = useState("");
+  const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<Set<number>>(
+    new Set(),
+  );
+  const [exportingSelected, setExportingSelected] = useState(false);
   const [filterMenuOpen, setFilterMenuOpen] = useState(false);
   const filterMenuRef = useRef<HTMLDivElement | null>(null);
   const currencyFilters = useMemo(() => {
@@ -866,6 +870,91 @@ export default function InvoicesPage({
   useEffect(() => {
     loadAll();
   }, [companyId, listSearch, listStatus, listType, listCurrency]);
+
+  useEffect(() => {
+    setSelectedInvoiceIds(new Set());
+  }, [companyId, listSearch, listStatus, listType, listCurrency]);
+
+  const allInvoicesSelected =
+    invoices.length > 0 && invoices.every((inv) => selectedInvoiceIds.has(inv.id));
+  const selectedInvoices = invoices.filter((inv) =>
+    selectedInvoiceIds.has(inv.id),
+  );
+
+  const toggleSelectInvoice = (invoiceId: number) => {
+    setSelectedInvoiceIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(invoiceId)) next.delete(invoiceId);
+      else next.add(invoiceId);
+      return next;
+    });
+  };
+
+  const toggleSelectAllInvoices = () => {
+    setSelectedInvoiceIds((prev) => {
+      const next = new Set(prev);
+      if (allInvoicesSelected) {
+        invoices.forEach((inv) => next.delete(inv.id));
+      } else {
+        invoices.forEach((inv) => next.add(inv.id));
+      }
+      return next;
+    });
+  };
+
+  const exportSelectedInvoices = () => {
+    if (!selectedInvoices.length) return;
+    setExportingSelected(true);
+    try {
+      const headers = [
+        "Reference",
+        "Type",
+        "Customer",
+        "Date",
+        "Status",
+        "Payment",
+        "Subtotal",
+        "Tax",
+        "Total",
+        "Paid",
+        "Due",
+      ];
+      const rows = selectedInvoices.map((inv) => {
+        const cust = contactById.get(inv.customer_id ?? 0);
+        return [
+          inv.reference,
+          inv.invoice_type === "credit_note" ? "Credit Note" : "Invoice",
+          cust?.name || "",
+          inv.invoice_date ? new Date(inv.invoice_date).toLocaleDateString() : "",
+          inv.status,
+          getPaymentStatus(inv.amount_paid, inv.amount_due),
+          inv.subtotal || 0,
+          inv.tax_amount || 0,
+          inv.total_amount || 0,
+          inv.amount_paid || 0,
+          inv.amount_due || 0,
+        ];
+      });
+      const csvContent = [headers, ...rows]
+        .map((row) =>
+          row
+            .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
+            .join(","),
+        )
+        .join("\n");
+      const blob = new Blob([csvContent], {
+        type: "text/csv;charset=utf-8;",
+      });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `invoices_selected_${
+        new Date().toISOString().split("T")[0]
+      }.csv`;
+      link.click();
+    } finally {
+      setExportingSelected(false);
+    }
+  };
 
   useEffect(() => {
     if (mode === "list") {
@@ -1953,9 +2042,46 @@ export default function InvoicesPage({
                     </div>
                   </div>
                   <div className="o-list-view inventory-table-panel">
+                    {selectedInvoiceIds.size > 0 && (
+                      <div className="batch-action-bar">
+                        <label className="batch-master-toggle">
+                          <input
+                            type="checkbox"
+                            checked={allInvoicesSelected}
+                            onChange={toggleSelectAllInvoices}
+                            className="batch-checkbox"
+                          />
+                          <span>Select all</span>
+                        </label>
+                        <span className="batch-count">
+                          {selectedInvoiceIds.size} selected
+                        </span>
+                        <button
+                          className="batch-btn export-btn"
+                          onClick={exportSelectedInvoices}
+                          disabled={exportingSelected}
+                        >
+                          {exportingSelected ? "Exporting..." : "Export Selected"}
+                        </button>
+                        <button
+                          className="batch-btn clear-btn"
+                          onClick={() => setSelectedInvoiceIds(new Set())}
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    )}
                     <table className="o-list-table">
                       <thead>
                         <tr>
+                          <th style={{ width: 40 }}>
+                            <input
+                              type="checkbox"
+                              checked={allInvoicesSelected}
+                              onChange={toggleSelectAllInvoices}
+                              className="batch-checkbox"
+                            />
+                          </th>
                           <th>Reference</th>
                           <th>Customer</th>
                           <th>Date</th>
@@ -1968,7 +2094,7 @@ export default function InvoicesPage({
                         {loading && (
                           <tr>
                             <td
-                              colSpan={6}
+                              colSpan={7}
                               className="text-center py-5 text-muted"
                             >
                               Loading invoices…
@@ -1978,7 +2104,7 @@ export default function InvoicesPage({
                         {!loading && invoices.length === 0 && (
                           <tr>
                             <td
-                              colSpan={6}
+                              colSpan={7}
                               className="text-center py-5 text-muted"
                             >
                               No invoices yet. Click{" "}
@@ -1992,8 +2118,22 @@ export default function InvoicesPage({
                             <tr
                               key={inv.id}
                               role="button"
+                              className={
+                                selectedInvoiceIds.has(inv.id)
+                                  ? "row-selected"
+                                  : ""
+                              }
                               onClick={() => navigate(`/invoices/${inv.id}`)}
                             >
+                              <td onClick={(e) => e.stopPropagation()}>
+                                <input
+                                  type="checkbox"
+                                  checked={selectedInvoiceIds.has(inv.id)}
+                                  onChange={() => toggleSelectInvoice(inv.id)}
+                                  className="batch-checkbox"
+                                  aria-label={`Select ${inv.reference}`}
+                                />
+                              </td>
                               <td>
                                 <div className="fw-semibold">
                                   {inv.reference}
@@ -2072,7 +2212,7 @@ export default function InvoicesPage({
                             fontWeight: 600,
                           }}
                         >
-                          <td colSpan={5} className="text-end">
+                          <td colSpan={6} className="text-end">
                             Grand Total:
                           </td>
                           <td className="text-end">
