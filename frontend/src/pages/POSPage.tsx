@@ -158,7 +158,9 @@ function buildReceiptHtml(
   device: Device | null,
 ): string {
   const lines = order.lines || [];
-  const hasFiscalDevice = Boolean(device?.device_id);
+  const hasFiscalReceipt = Boolean(
+    order.is_fiscalized || order.zimra_verification_code,
+  );
   const payLabel =
     order.payment_method === "split"
       ? "Split"
@@ -175,7 +177,7 @@ function buildReceiptHtml(
     .filter(Boolean)
     .join("<br>");
 
-  if (!hasFiscalDevice) {
+  if (!hasFiscalReceipt) {
     return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Receipt - ${order.reference}</title>
 <style>
   @page { size: 80mm auto; margin: 0; }
@@ -1639,7 +1641,9 @@ export default function POSPage() {
 
   // Get the active device for this session
   const activeDevice = devices.find((d) => d.id === session?.device_id) || null;
-  const receiptHasFiscalDevice = Boolean(activeDevice?.device_id);
+  const receiptHasFiscalDevice = Boolean(
+    lastOrder?.is_fiscalized || lastOrder?.zimra_verification_code,
+  );
   const canAutoFiscalize = Boolean(selectedTill?.fiscal_device_id);
 
   useEffect(() => {
