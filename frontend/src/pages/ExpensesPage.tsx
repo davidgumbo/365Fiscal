@@ -21,10 +21,13 @@ import {
   ShoppingBag,
   Trash2,
   UtensilsCrossed,
+  Users,
   WalletCards,
   X,
 } from "lucide-react";
 import { apiFetch, apiRequest } from "../api";
+import { Sidebar } from "../components/Sidebar";
+import type { SidebarSection } from "../types/sidebar";
 import { useMe } from "../hooks/useMe";
 import { useCompanies, Company } from "../hooks/useCompanies";
 import ValidationAlert from "../components/ValidationAlert";
@@ -136,6 +139,38 @@ const formatCurrency = (value: number, currency: string = "USD") => {
     return `${currency} ${(value || 0).toFixed(2)}`;
   }
 };
+
+type ExpensesMenuItem = {
+  key: MainView;
+  label: string;
+  icon: LucideIcon;
+  color: string;
+  background: string;
+};
+
+const EXPENSES_MENU_ITEMS: ExpensesMenuItem[] = [
+  {
+    key: "expenses",
+    label: "EXPENSES",
+    icon: ReceiptText,
+    color: "var(--blue-600)",
+    background: "rgba(37, 99, 235, 0.12)",
+  },
+  {
+    key: "suppliers",
+    label: "SUPPLIERS",
+    icon: Users,
+    color: "var(--green-600)",
+    background: "rgba(5, 150, 105, 0.15)",
+  },
+  {
+    key: "categories",
+    label: "CATEGORIES",
+    icon: LayoutGrid,
+    color: "var(--teal-600)",
+    background: "rgba(6, 182, 212, 0.15)",
+  },
+];
 
 /* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ SVG Icon helpers (matching Inventory) ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
 const EditIcon = () => (
@@ -520,6 +555,49 @@ export default function ExpensesPage() {
       }),
     [dateFilteredExpenses],
   );
+
+  const resetMainView = (view: MainView) => {
+    setMainView(view);
+    setSubView("list");
+    setSearchQuery("");
+    setSearch("");
+    setSupplierFilter("");
+    setCategoryFilter("");
+    setStatusFilter("");
+    setSelectedExpenseId(null);
+    setIsNew(false);
+    setIsEditing(false);
+  };
+
+  const expensesSidebarSections = useMemo<SidebarSection[]>(() => {
+    const items = EXPENSES_MENU_ITEMS.map((item) => {
+      const Icon = item.icon;
+      return {
+        id: `menu-${item.key}`,
+        label: item.label,
+        icon: (
+          <Icon
+            size={18}
+            strokeWidth={1.5}
+            aria-hidden="true"
+            color={item.color}
+          />
+        ),
+        isActive: mainView === item.key,
+        onClick: () => resetMainView(item.key),
+        iconColor: item.color,
+        iconBackground: item.background,
+      };
+    });
+
+    return [
+      {
+        id: "expenses-menu",
+        title: "MENU",
+        items,
+      },
+    ];
+  }, [mainView]);
 
   const transactionTotalPages = Math.max(
     1,
@@ -1867,95 +1945,7 @@ export default function ExpensesPage() {
         style={{ display: "flex", gap: 0, flexWrap: "nowrap" }}
       >
         <div id="main-content" className="two-panel two-panel-left">
-          {/* ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â MAIN SIDEBAR (like Inventory MENU) ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â */}
-          <div className="o-sidebar">
-            <div className="o-sidebar-section">
-              <div className="o-sidebar-title">MENU</div>
-              {[
-                {
-                  key: "expenses" as MainView,
-                  label: "EXPENSES",
-                  icon: (
-                    <svg
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="var(--blue-600)"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <rect x="2" y="5" width="20" height="14" rx="2" />
-                      <line x1="2" y1="10" x2="22" y2="10" />
-                    </svg>
-                  ),
-                },
-                {
-                  key: "suppliers" as MainView,
-                  label: "SUPPLIERS",
-                  icon: (
-                    <svg
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="var(--blue-600)"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                      <circle cx="12" cy="7" r="4" />
-                    </svg>
-                  ),
-                },
-                {
-                  key: "categories" as MainView,
-                  label: "CATEGORIES",
-                  icon: (
-                    <LayoutGrid
-                      size={18}
-                      strokeWidth={1.7}
-                      color="var(--blue-600)"
-                    />
-                  ),
-                },
-              ].map((tab) => (
-                <div
-                  key={tab.key}
-                  className={`o-sidebar-item ${mainView === tab.key ? "active" : ""}`}
-                  onClick={() => {
-                    setMainView(tab.key);
-                    setSubView("list");
-                    setSearchQuery("");
-                    setSearch("");
-                    setSupplierFilter("");
-                    setCategoryFilter("");
-                    setStatusFilter("");
-                    setSelectedExpenseId(null);
-                    setIsNew(false);
-                    setIsEditing(false);
-                  }}
-                >
-                  <span
-                    style={{ display: "flex", alignItems: "center", gap: 10 }}
-                  >
-                    {tab.icon}
-                    <span
-                      style={{
-                        letterSpacing: "0.5px",
-                        fontSize: 12,
-                        fontWeight: 500,
-                      }}
-                    >
-                      {tab.label}
-                    </span>
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
+          <Sidebar sections={expensesSidebarSections} />
 
           {/* ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â MAIN CONTENT AREA ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â */}
           <div className="o-main">
@@ -2977,4 +2967,3 @@ export default function ExpensesPage() {
     </>
   );
 }
-
