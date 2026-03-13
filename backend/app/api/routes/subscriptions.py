@@ -10,9 +10,9 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_db, require_admin, get_current_user, require_portal_user
 from app.models.company import Company
 from app.models.company_user import CompanyUser
+from app.models.notification import Notification
 from app.models.subscription import Subscription, ActivationCode
 from app.models.user import User
-from app.services.email import send_plain_email
 
 router = APIRouter(prefix="/subscriptions", tags=["subscriptions"])
 
@@ -230,33 +230,26 @@ def notify_portal_user(
         )
 
     expires = sub.expires_at.strftime("%b %d, %Y") if sub.expires_at else "No expiry date"
-    subject = f"365Fiscal Subscription Update for {company.name}"
-    body = (
-        f"Hello {portal_user.name or portal_user.email},\n\n"
-        f"This is an update for your 365Fiscal subscription.\n\n"
-        f"Company: {company.name}\n"
-        f"Plan: {sub.plan.title()}\n"
-        f"Status: {sub.status.title()}\n"
-        f"Max Users: {sub.max_users}\n"
-        f"Expiry Date: {expires}\n\n"
-        f"Notes: {sub.notes or 'No notes'}\n\n"
-        f"Sent by: {admin.email}\n"
+    notification = Notification(
+        user_id=portal_user.id,
+        company_id=company.id,
+        title="Subscription Updated",
+        message=(
+            f"{company.name} subscription: {sub.plan.title()} plan, "
+            f"status {sub.status.title()}, max users {sub.max_users}, "
+            f"expiry {expires}."
+            + (f" Notes: {sub.notes}" if sub.notes else "")
+        ),
+        link_url="/",
+        notification_type="subscription",
+        is_read=False,
     )
-
-    try:
-        send_plain_email(portal_user.email, subject, body)
-    except NotImplementedError:
-        return {
-            "status": "queued",
-            "detail": (
-                f"Notification prepared for {portal_user.email}. "
-                "Configure an email provider to send it automatically."
-            ),
-        }
+    db.add(notification)
+    db.commit()
 
     return {
         "status": "sent",
-        "detail": f"Subscription notice sent to {portal_user.email}.",
+        "detail": f"In-app notification sent to {portal_user.email}.",
     }
 
 

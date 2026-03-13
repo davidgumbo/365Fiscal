@@ -8,6 +8,7 @@ import {
   useNavigate,
 } from "react-router-dom";
 import {
+  Bell,
   Boxes,
   Building2,
   Calculator,
@@ -140,6 +141,16 @@ type CustomField = {
   valuesEndpoint?: string;
 };
 
+type AppNotification = {
+  id: number;
+  title: string;
+  message: string;
+  link_url: string;
+  notification_type: string;
+  is_read: boolean;
+  created_at: string | null;
+};
+
 function POSWindowLauncher() {
   const navigate = useNavigate();
   const [popupBlocked, setPopupBlocked] = useState(false);
@@ -192,6 +203,9 @@ function AppContent() {
   const [fieldValues, setFieldValues] = useState<Record<string, string[]>>({});
   const [appMenuOpen, setAppMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [notificationMenuOpen, setNotificationMenuOpen] = useState(false);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [notificationUnreadCount, setNotificationUnreadCount] = useState(0);
 
   // (moved) fetch choice field values when filter menu opens; placed after currentPath declaration
   const [conditions, setConditions] = useState<FilterCondition[]>([
@@ -294,11 +308,63 @@ function AppContent() {
       if (topbarRef.current && !topbarRef.current.contains(target)) {
         setAppMenuOpen(false);
         setUserMenuOpen(false);
+        setNotificationMenuOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
+
+  useEffect(() => {
+    if (!me) return;
+    let cancelled = false;
+
+    const loadNotifications = () => {
+      apiFetch<{ unread_count: number; items: AppNotification[] }>(
+        "/notifications",
+      )
+        .then((payload) => {
+          if (cancelled) return;
+          setNotificationUnreadCount(payload.unread_count || 0);
+          setNotifications(payload.items || []);
+        })
+        .catch(() => {
+          if (cancelled) return;
+          setNotificationUnreadCount(0);
+          setNotifications([]);
+        });
+    };
+
+    loadNotifications();
+    const timer = window.setInterval(loadNotifications, 30000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [me]);
+
+  const openNotification = async (notification: AppNotification) => {
+    try {
+      if (!notification.is_read) {
+        await apiFetch(`/notifications/${notification.id}/read`, {
+          method: "POST",
+        });
+        setNotifications((prev) =>
+          prev.map((item) =>
+            item.id === notification.id ? { ...item, is_read: true } : item,
+          ),
+        );
+        setNotificationUnreadCount((prev) => Math.max(0, prev - 1));
+      }
+    } catch {
+      // ignore read errors and still navigate
+    }
+
+    setNotificationMenuOpen(false);
+    if (notification.link_url) {
+      window.location.href = notification.link_url;
+    }
+  };
 
   const isHomePage = currentPath === "/";
   const launcherApps = useMemo(() => {
@@ -379,6 +445,133 @@ function AppContent() {
                 </div>
               </div>
               <div className="topbar-right">
+                <button
+                  className="user-menu"
+                  onClick={() => setNotificationMenuOpen((v) => !v)}
+                  style={{ position: "relative" }}
+                  aria-label="Notifications"
+                >
+                  <Bell size={18} />
+                  {notificationUnreadCount > 0 && (
+                    <span
+                      style={{
+                        position: "absolute",
+                        top: -4,
+                        right: -2,
+                        minWidth: 18,
+                        height: 18,
+                        padding: "0 5px",
+                        borderRadius: 999,
+                        background: "var(--red-500)",
+                        color: "white",
+                        fontSize: 11,
+                        fontWeight: 700,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {notificationUnreadCount > 9
+                        ? "9+"
+                        : notificationUnreadCount}
+                    </span>
+                  )}
+                </button>
+                {notificationMenuOpen && (
+                  <div className="menu-popover right" style={{ width: 340 }}>
+                    <div
+                      className="menu-title"
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <span>Notifications</span>
+                      {notificationUnreadCount > 0 && (
+                        <button
+                          className="menu-item"
+                          style={{ padding: 0, minHeight: "auto" }}
+                          onClick={async () => {
+                            await apiFetch("/notifications/read-all", {
+                              method: "POST",
+                            });
+                            setNotifications((prev) =>
+                              prev.map((item) => ({ ...item, is_read: true })),
+                            );
+                            setNotificationUnreadCount(0);
+                          }}
+                        >
+                          Mark all read
+                        </button>
+                      )}
+                    </div>
+                    <div style={{ maxHeight: 360, overflowY: "auto" }}>
+                      {notifications.length ? (
+                        notifications.map((notification) => (
+                          <button
+                            key={notification.id}
+                            className="menu-item"
+                            onClick={() => openNotification(notification)}
+                            style={{
+                              display: "block",
+                              textAlign: "left",
+                              minHeight: "auto",
+                              borderLeft: notification.is_read
+                                ? "3px solid transparent"
+                                : "3px solid var(--blue-500)",
+                              background: notification.is_read
+                                ? "transparent"
+                                : "rgba(59, 130, 246, 0.06)",
+                            }}
+                          >
+                            <div
+                              style={{
+                                fontSize: 13,
+                                fontWeight: 700,
+                                marginBottom: 4,
+                              }}
+                            >
+                              {notification.title}
+                            </div>
+                            <div
+                              style={{
+                                fontSize: 12,
+                                color: "var(--muted)",
+                                lineHeight: 1.45,
+                              }}
+                            >
+                              {notification.message}
+                            </div>
+                            {notification.created_at && (
+                              <div
+                                style={{
+                                  marginTop: 6,
+                                  fontSize: 11,
+                                  color: "var(--muted)",
+                                }}
+                              >
+                                {new Date(
+                                  notification.created_at,
+                                ).toLocaleString()}
+                              </div>
+                            )}
+                          </button>
+                        ))
+                      ) : (
+                        <div
+                          style={{
+                            padding: 16,
+                            color: "var(--muted)",
+                            fontSize: 13,
+                          }}
+                        >
+                          No notifications yet.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
                 <button
                   className="user-menu"
                   onClick={() => setUserMenuOpen((v) => !v)}

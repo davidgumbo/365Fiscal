@@ -25,6 +25,7 @@ from app.models.payment import Payment, PaymentMethod
 from app.models.expense import Expense
 from app.models.expense_category import ExpenseCategory
 from app.models.subscription import Subscription, ActivationCode
+from app.models.notification import Notification
 from app.models.pos_session import POSSession, POSOrder, POSOrderLine
 from app.models.pos_employee import POSEmployee
 from app.models.pos_till import POSTill, pos_till_employees
