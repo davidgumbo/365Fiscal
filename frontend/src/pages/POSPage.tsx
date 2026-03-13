@@ -1640,6 +1640,13 @@ export default function POSPage() {
   // Get the active device for this session
   const activeDevice = devices.find((d) => d.id === session?.device_id) || null;
   const receiptHasFiscalDevice = Boolean(activeDevice?.device_id);
+  const canAutoFiscalize = Boolean(selectedTill?.fiscal_device_id);
+
+  useEffect(() => {
+    if (!canAutoFiscalize && autoFiscalize) {
+      setAutoFiscalize(false);
+    }
+  }, [autoFiscalize, canAutoFiscalize]);
 
   const handlePrint = () => {
     if (lastOrder)
@@ -3709,7 +3716,8 @@ export default function POSPage() {
                 <label className="pos-toggle-label">
                   <input
                     type="checkbox"
-                    checked={autoFiscalize}
+                    checked={canAutoFiscalize && autoFiscalize}
+                    disabled={!canAutoFiscalize}
                     onChange={(e) => setAutoFiscalize(e.target.checked)}
                   />
                   <span className="pos-toggle-text">
@@ -3726,6 +3734,11 @@ export default function POSPage() {
                     Auto-Fiscalize (ZIMRA)
                   </span>
                 </label>
+                {!canAutoFiscalize && (
+                  <div className="pos-fiscalize-hint">
+                    Select a fiscal device on this POS to enable auto-fiscalize.
+                  </div>
+                )}
               </div>
 
               {error && <div className="pos-error">{error}</div>}
