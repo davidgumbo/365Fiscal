@@ -7,7 +7,7 @@ import { useCompanies } from "../hooks/useCompanies";
 import { useMe } from "../hooks/useMe";
 import {
   Briefcase,
-  LayoutKanban,
+  LayoutGrid,
   List,
   User,
   LayoutGrid,
