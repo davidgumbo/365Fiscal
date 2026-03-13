@@ -7,6 +7,8 @@ import {
   getMissingRequiredFields,
   getRequiredFieldError,
 } from "../utils/formValidation";
+import { useAlert } from "../context/AlertContext";
+import type { AlertModalVariant } from "../components/AlertModal";
 
 type Product = {
   id: number;
@@ -89,6 +91,10 @@ export default function ProductsPage() {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [invalidFields, setInvalidFields] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const { showAlert } = useAlert();
+  const showAlertMessage = (message: string, variant: AlertModalVariant = "danger") => {
+    showAlert({ message, variant });
+  };
 
   useEffect(() => {
     if (companies.length && companyId === null) {
@@ -197,11 +203,11 @@ export default function ProductsPage() {
     if (!companyId) return;
     if (!validateProductRequiredFields()) return;
     if (Number(form.sale_price) < 0) {
-      alert("Sale price cannot be negative.");
+      showAlertMessage("Sale price cannot be negative.");
       return;
     }
     if (Number(form.tax_rate) < 0) {
-      alert("Tax rate cannot be negative.");
+      showAlertMessage("Tax rate cannot be negative.");
       return;
     }
     await apiFetch<Product>("/products", {
@@ -216,11 +222,11 @@ export default function ProductsPage() {
     if (!selectedProductId) return;
     if (!validateProductRequiredFields()) return;
     if (Number(form.sale_price) < 0) {
-      alert("Sale price cannot be negative.");
+      showAlertMessage("Sale price cannot be negative.");
       return;
     }
     if (Number(form.tax_rate) < 0) {
-      alert("Tax rate cannot be negative.");
+      showAlertMessage("Tax rate cannot be negative.");
       return;
     }
     await apiFetch<Product>(`/products/${selectedProductId}`, {
@@ -284,7 +290,7 @@ export default function ProductsPage() {
       setProductImageUrl(updated.image_url || "");
       loadProducts(companyId!);
     } catch {
-      alert("Failed to upload image");
+      showAlertMessage("Failed to upload image");
     } finally {
       setUploadingImage(false);
       if (imageInputRef.current) imageInputRef.current.value = "";
@@ -299,7 +305,7 @@ export default function ProductsPage() {
       setProductImageUrl(updated.image_url || "");
       loadProducts(companyId!);
     } catch {
-      alert("Failed to remove image");
+      showAlertMessage("Failed to remove image");
     } finally {
       setUploadingImage(false);
     }

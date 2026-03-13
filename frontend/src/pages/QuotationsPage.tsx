@@ -3,7 +3,9 @@ import html2pdf from "html2pdf.js";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiFetch } from "../api";
 import { Sidebar } from "../components/Sidebar";
+import type { AlertModalVariant } from "../components/AlertModal";
 import type { SidebarSection } from "../types/sidebar";
+import { useAlert } from "../context/AlertContext";
 import { useMe } from "../hooks/useMe";
 import { useCompanies, Company } from "../hooks/useCompanies";
 import ValidationAlert from "../components/ValidationAlert";
@@ -216,6 +218,10 @@ export default function QuotationsPage({
     expires_at: "",
     currency: "USD",
   });
+  const { showAlert } = useAlert();
+  const showAlertMessage = (message: string, variant: AlertModalVariant = "danger") => {
+    showAlert({ message, variant });
+  };
   const [lines, setLines] = useState<QuotationLine[]>([emptyLine()]);
   const [invalidFields, setInvalidFields] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -425,7 +431,7 @@ export default function QuotationsPage({
 
   const saveQuotation = async () => {
     if (!companyId) {
-      alert("Please select a company first.");
+      showAlertMessage("Please select a company first.");
       return;
     }
     if (!validateQuotationRequiredFields()) {
@@ -433,7 +439,7 @@ export default function QuotationsPage({
     }
     const linesError = getDocumentLinesError(lines);
     if (linesError) {
-      alert(linesError);
+      showAlertMessage(linesError);
       return;
     }
     setSaving(true);
@@ -481,7 +487,7 @@ export default function QuotationsPage({
       });
       loadData(companyId);
     } catch (err: any) {
-      alert(err.message || "Failed to send quotation");
+      showAlertMessage(err.message || "Failed to send quotation");
     }
   };
 
@@ -493,7 +499,7 @@ export default function QuotationsPage({
       });
       loadData(companyId);
     } catch (err: any) {
-      alert(err.message || "Failed to accept quotation");
+      showAlertMessage(err.message || "Failed to accept quotation");
     }
   };
 
@@ -505,7 +511,7 @@ export default function QuotationsPage({
       });
       loadData(companyId);
     } catch (err: any) {
-      alert(err.message || "Failed to reject quotation");
+      showAlertMessage(err.message || "Failed to reject quotation");
     }
   };
 
@@ -516,10 +522,10 @@ export default function QuotationsPage({
         `/quotations/${selectedQuotationId}/convert`,
         { method: "POST" },
       );
-      alert(`Invoice created successfully! Invoice ID: ${result.invoice_id}`);
+      showAlertMessage(`Invoice created successfully! Invoice ID: ${result.invoice_id}`, "success");
       loadData(companyId);
     } catch (err: any) {
-      alert(err.message || "Failed to convert quotation to invoice");
+      showAlertMessage(err.message || "Failed to convert quotation to invoice");
     }
   };
 
@@ -739,15 +745,15 @@ export default function QuotationsPage({
   const createProduct = async () => {
     if (!companyId) return;
     if (!productName.trim()) {
-      alert("Product name is required.");
+      showAlertMessage("Product name is required.");
       return;
     }
     if (Number(productPrice || 0) < 0) {
-      alert("Product price cannot be negative.");
+      showAlertMessage("Product price cannot be negative.");
       return;
     }
     if (Number(productTaxRate || 0) < 0) {
-      alert("Product VAT rate cannot be negative.");
+      showAlertMessage("Product VAT rate cannot be negative.");
       return;
     }
     const payload = {
@@ -773,7 +779,7 @@ export default function QuotationsPage({
         await loadData(companyId);
       }
     } catch (err: any) {
-      alert(err.message || "Failed to create product");
+      showAlertMessage(err.message || "Failed to create product");
     }
   };
 

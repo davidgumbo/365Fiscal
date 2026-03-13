@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-type AlertModalVariant = "info" | "success" | "warning" | "danger";
+export type AlertModalVariant = "info" | "success" | "warning" | "danger";
 
 export type AlertModalProps = {
   title?: string;

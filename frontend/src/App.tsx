@@ -58,6 +58,7 @@ import ListViewContext, {
   ListViewState,
   SavedFilter,
 } from "./context/ListViewContext";
+import { AlertProvider } from "./context/AlertContext";
 import AuthGuard from "./components/AuthGuard";
 
 const adminNav = [
@@ -496,19 +497,21 @@ function AppContent() {
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/portal-login" element={<PortalLoginPage />} />
-      <Route path="/pos/customer-display" element={<CustomerDisplayPage />} />
-      <Route
-        path="/*"
-        element={
-          // <AuthGuard>
-          <AppContent />
-          // </AuthGuard>
-        }
-      />
-    </Routes>
+    <AlertProvider>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/portal-login" element={<PortalLoginPage />} />
+        <Route path="/pos/customer-display" element={<CustomerDisplayPage />} />
+        <Route
+          path="/*"
+          element={
+            // <AuthGuard>
+            <AppContent />
+            // </AuthGuard>
+          }
+        />
+      </Routes>
+    </AlertProvider>
   );
 }
 

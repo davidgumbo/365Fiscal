@@ -2,9 +2,11 @@
 import { useNavigate } from "react-router-dom";
 import { apiFetch, apiRequest } from "../api";
 import { Sidebar } from "../components/Sidebar";
+import type { AlertModalVariant } from "../components/AlertModal";
 import type { SidebarSection } from "../types/sidebar";
 import { useCompanies } from "../hooks/useCompanies";
 import { useMe } from "../hooks/useMe";
+import { useAlert } from "../context/AlertContext";
 import { Briefcase, LayoutGrid, List, User, Users } from "lucide-react";
 
 type Contact = {
@@ -39,6 +41,10 @@ export default function ContactsPage() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [deleting, setDeleting] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const { showAlert } = useAlert();
+  const showAlertMessage = (message: string, variant: AlertModalVariant = "danger") => {
+    showAlert({ message, variant });
+  };
 
   useEffect(() => {
     if (!isAdmin && me?.company_ids?.length && !selectedCompanyId) {
@@ -130,9 +136,10 @@ export default function ContactsPage() {
       });
       if (companyId) await loadContacts(companyId);
     } catch (err) {
-      alert(
+      showAlertMessage(
         "Failed to delete contacts. " +
           (err instanceof Error ? err.message : ""),
+        "danger",
       );
     } finally {
       setDeleting(false);
@@ -158,9 +165,10 @@ export default function ContactsPage() {
       a.remove();
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      alert(
+      showAlertMessage(
         "Failed to export contacts. " +
           (err instanceof Error ? err.message : ""),
+        "danger",
       );
     } finally {
       setExporting(false);
