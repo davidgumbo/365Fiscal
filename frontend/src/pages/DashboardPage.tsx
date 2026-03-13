@@ -2,9 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 import { NavLink } from "react-router-dom";
 import { apiFetch } from "../api";
+import { Sidebar } from "../components/Sidebar";
 import { TablePagination } from "../components/TablePagination";
 import { useMe } from "../hooks/useMe";
 import { useCompanies } from "../hooks/useCompanies";
+import type { SidebarSection } from "../types/sidebar";
+import { LayoutDashboard, FileText, ReceiptText, ShoppingCart, CreditCard, Box } from "lucide-react";
 import { buildRevenueTrendChart } from "../utils/revenueTrend";
 
 interface DashboardMetrics {
@@ -114,6 +117,21 @@ const formatDateRangeLabel = (isoDate?: string) => {
     month: "short",
     day: "numeric",
   });
+};
+
+type DashboardAppKey =
+  | "overview"
+  | "invoices"
+  | "quotations"
+  | "purchases"
+  | "payments"
+  | "inventory";
+
+const formatStatusLabel = (value?: string) => {
+  if (!value) return "Unknown";
+  return value
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
 // SVG Icons
@@ -298,6 +316,9 @@ export default function DashboardPage() {
   const [companyStatusPageSize, setCompanyStatusPageSize] = useState(8);
   const [auditPage, setAuditPage] = useState(1);
   const [auditPageSize, setAuditPageSize] = useState(8);
+  const [activeApp, setActiveApp] = useState<DashboardAppKey>("overview");
+  const [purchasePage, setPurchasePage] = useState(1);
+  const [purchasePageSize, setPurchasePageSize] = useState(6);
 
   useEffect(() => {
     const now = new Date();
@@ -422,7 +443,25 @@ export default function DashboardPage() {
     return { total, count: filteredPurchases.length };
   }, [filteredPurchases]);
 
+  const purchaseStatusEntries = useMemo(() => {
+    const counts: Record<string, number> = {};
+    filteredPurchases.forEach((purchase) => {
+      const status = purchase.status?.toLowerCase() || "unknown";
+      counts[status] = (counts[status] || 0) + 1;
+    });
+    return Object.entries(counts)
+      .map(([status, count]) => ({ status, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [filteredPurchases]);
+
   const profitTotal = invoiceStats.total - purchaseStats.total;
+
+  const avgInvoiceAmount = invoiceStats.count
+    ? invoiceStats.total / invoiceStats.count
+    : 0;
+  const purchaseAverageAmount = purchaseStats.count
+    ? purchaseStats.total / purchaseStats.count
+    : 0;
 
   // Calculate quotation stats with new workflow states
   const quotationStats = useMemo(() => {
@@ -460,6 +499,45 @@ export default function DashboardPage() {
     return { totalPaid, totalDue, paidInvoices, partialPaid };
   }, [invoices]);
 
+  const paymentSummary = useMemo(() => {
+    const totalPayments = paymentStats?.total_payments || 0;
+    const totalAmount = paymentStats?.total_amount || 0;
+    const reconciled = paymentStats?.reconciled_count || 0;
+    const pending = paymentStats?.pending_count || 0;
+    return {
+      totalPayments,
+      totalAmount,
+      reconciled,
+      pending,
+      invoicesPaid: invoicePaymentStats.paidInvoices,
+      invoicesPartial: invoicePaymentStats.partialPaid,
+      totalDue: invoicePaymentStats.totalDue,
+      totalPaid: invoicePaymentStats.totalPaid,
+    };
+  }, [paymentStats, invoicePaymentStats]);
+
+  const invoicesWithDue = useMemo(() => {
+    return filteredInvoices
+      .filter((invoice) => (invoice.amount_due || 0) > 0)
+      .sort(
+        (a, b) =>
+          (b.amount_due || 0) - (a.amount_due || 0) ||
+          (new Date(b.fiscalized_at || b.created_at || "").getTime() ||
+            0) -
+            (new Date(a.fiscalized_at || a.created_at || "").getTime() || 0),
+      );
+  }, [filteredInvoices]);
+
+  const invoicePaidShare = invoiceStats.count
+    ? Math.min(100, (invoicePaymentStats.paidInvoices / invoiceStats.count) * 100)
+    : 0;
+  const invoicePartialShare = invoiceStats.count
+    ? Math.min(100, (invoicePaymentStats.partialPaid / invoiceStats.count) * 100)
+    : 0;
+  const invoiceDueShare = invoiceStats.total
+    ? Math.min(100, (invoicePaymentStats.totalDue / invoiceStats.total) * 100)
+    : 0;
+
   const sortedInvoicesForTable = useMemo(() => {
     return filteredInvoices.slice().sort((a, b) => {
       const ad = a.fiscalized_at || a.created_at || "";
@@ -484,6 +562,32 @@ export default function DashboardPage() {
           new Date(b.action_at).getTime() - new Date(a.action_at).getTime(),
       );
   }, [recentAuditLogs]);
+
+  const inventorySummary = useMemo(() => {
+    if (!products.length) {
+      return { count: 0, avgSalePrice: 0, avgCost: 0, marginPercent: 0 };
+    }
+    const totalSale = products.reduce(
+      (sum, product) => sum + (product.sale_price || 0),
+      0,
+    );
+    const totalCost = products.reduce(
+      (sum, product) => sum + (product.purchase_cost || 0),
+      0,
+    );
+    const avgSalePrice = totalSale / products.length;
+    const avgCost = totalCost / products.length;
+    const marginPercent =
+      avgCost > 0 ? ((avgSalePrice - avgCost) / avgCost) * 100 : 0;
+    return { count: products.length, avgSalePrice, avgCost, marginPercent };
+  }, [products]);
+
+  const topProducts = useMemo(() => {
+    return products
+      .slice()
+      .sort((a, b) => (b.sale_price || 0) - (a.sale_price || 0))
+      .slice(0, 6);
+  }, [products]);
 
   const invoiceTotalPages = Math.max(
     1,
@@ -517,6 +621,15 @@ export default function DashboardPage() {
     companyStatusPage,
     companyStatusPageSize,
   );
+  const purchaseTotalPages = Math.max(
+    1,
+    Math.ceil(filteredPurchases.length / purchasePageSize),
+  );
+  const pagedPurchases = paginateRows(
+    filteredPurchases,
+    purchasePage,
+    purchasePageSize,
+  );
   const pagedAuditLogs = paginateRows(
     sortedAuditLogs,
     auditPage,
@@ -540,11 +653,20 @@ export default function DashboardPage() {
   }, [auditTotalPages]);
 
   useEffect(() => {
+    setPurchasePage((prev) => Math.min(prev, purchaseTotalPages));
+  }, [purchaseTotalPages]);
+
+  useEffect(() => {
     setInvoicePage(1);
     setQuotationPage(1);
     setCompanyStatusPage(1);
     setAuditPage(1);
+    setPurchasePage(1);
   }, [companyId, dateRange.from, dateRange.to]);
+
+  useEffect(() => {
+    setActiveApp("overview");
+  }, [companyId]);
 
   const formatCurrency = (value: number) =>
     `$${value.toLocaleString(undefined, {
@@ -584,6 +706,84 @@ export default function DashboardPage() {
       total: summary?.metrics.devices_total || 0,
     };
   }, [filteredCompanyStatus, summary]);
+
+  const dashboardSidebarSections = useMemo<SidebarSection[]>(() => {
+    const formatBadge = (value: number) =>
+      value > 0 ? value.toLocaleString() : undefined;
+    return [
+      {
+        id: "apps",
+        title: "App dashboards",
+        items: [
+          {
+            id: "overview",
+            label: "Overview",
+            icon: <LayoutDashboard size={18} />,
+            isActive: activeApp === "overview",
+            onClick: () => setActiveApp("overview"),
+          },
+          {
+            id: "invoices",
+            label: "Invoices",
+            icon: <FileText size={18} />,
+            badge: formatBadge(invoiceStats.count),
+            isActive: activeApp === "invoices",
+            onClick: () => setActiveApp("invoices"),
+          },
+          {
+            id: "quotations",
+            label: "Quotations",
+            icon: <ReceiptText size={18} />,
+            badge: formatBadge(quotationStats.count),
+            isActive: activeApp === "quotations",
+            onClick: () => setActiveApp("quotations"),
+          },
+          {
+            id: "purchases",
+            label: "Purchases",
+            icon: <ShoppingCart size={18} />,
+            badge: formatBadge(purchaseStats.count),
+            isActive: activeApp === "purchases",
+            onClick: () => setActiveApp("purchases"),
+          },
+          {
+            id: "payments",
+            label: "Payments",
+            icon: <CreditCard size={18} />,
+            badge: formatBadge(paymentSummary.totalPayments),
+            isActive: activeApp === "payments",
+            onClick: () => setActiveApp("payments"),
+          },
+          {
+            id: "inventory",
+            label: "Inventory",
+            icon: <Box size={18} />,
+            badge: formatBadge(inventorySummary.count),
+            isActive: activeApp === "inventory",
+            onClick: () => setActiveApp("inventory"),
+          },
+        ],
+      },
+    ];
+  }, [
+    activeApp,
+    invoiceStats.count,
+    quotationStats.count,
+    purchaseStats.count,
+    paymentSummary.totalPayments,
+    inventorySummary.count,
+  ]);
+
+  const dashboardTitles: Record<DashboardAppKey, string> = {
+    overview: "overview",
+    invoices: "invoice analytics",
+    quotations: "quotation pipeline",
+    purchases: "purchase orders",
+    payments: "payment performance",
+    inventory: "inventory health",
+  };
+
+  const activeAppTitle = dashboardTitles[activeApp];
 
   if (companiesLoading && !companyId) {
     return <div className="loading-indicator">Loading companies...</div>;
@@ -708,592 +908,1087 @@ export default function DashboardPage() {
     <div className="dashboard-page">
       {error && <div className="dashboard-error">{error}</div>}
 
-      <div className="dashboard-header">
-        <div className="dashboard-actions">
-          <div className="date-range">
-            <label htmlFor="from-date">From:</label>
-            <input
-              id="from-date"
-              type="date"
-              value={dateRange.from}
-              onChange={(e) =>
-                setDateRange((prev) => ({ ...prev, from: e.target.value }))
-              }
-            />
-            <label htmlFor="to-date">To:</label>
-            <input
-              id="to-date"
-              type="date"
-              value={dateRange.to}
-              onChange={(e) =>
-                setDateRange((prev) => ({ ...prev, to: e.target.value }))
-              }
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* KPI Cards */}
-      <div className="dashboard-kpis">
-        <div className="kpi-card card-bg-shadow">
-          <div className="kpi-icon bg-blue-200">
-            <BuildingIcon />
-          </div>
-          <div className="kpi-content">
-            <div className="kpi-value">
-              {isAdmin ? summary?.metrics.active_companies || 0 : 1}
+      <div className="dashboard-layout">
+        <Sidebar sections={dashboardSidebarSections} className="dashboard-sidebar" />
+        <div className="dashboard-main">
+          <div className="dashboard-header">
+            <div>
+              <h1>Dashboard</h1>
+              <p className="dashboard-subtitle">
+                {`Review ${activeAppTitle} stats for the selected company.`}
+              </p>
             </div>
-            <div className="kpi-label">
-              {isAdmin ? "Active Companies" : "Your Company"}
+            <div className="dashboard-actions">
+              <div className="date-range">
+                <label htmlFor="from-date">From:</label>
+                <input
+                  id="from-date"
+                  type="date"
+                  value={dateRange.from}
+                  onChange={(e) =>
+                    setDateRange((prev) => ({ ...prev, from: e.target.value }))
+                  }
+                />
+                <label htmlFor="to-date">To:</label>
+                <input
+                  id="to-date"
+                  type="date"
+                  value={dateRange.to}
+                  onChange={(e) =>
+                    setDateRange((prev) => ({ ...prev, to: e.target.value }))
+                  }
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="kpi-card card-bg-shadow">
-          <div className="kpi-icon bg-teal-200">
-            <MonitorIcon />
-          </div>
-          <div className="kpi-content">
-            <div className="kpi-value">
-              {deviceStats.online}/{deviceStats.total}
-            </div>
-            <div className="kpi-label">Devices Online</div>
-          </div>
-        </div>
-
-        <div className="kpi-card card-bg-shadow">
-          <div className="kpi-icon bg-purple-200">
-            <FileTextIcon />
-          </div>
-          <div className="kpi-content">
-            <div className="kpi-value">{invoiceStats.count}</div>
-            <div className="kpi-label">Total Invoices</div>
-          </div>
-          <div className="kpi-badge">
-            $
-            {invoiceStats.total.toLocaleString(undefined, {
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 0,
-            })}
-          </div>
-        </div>
-
-        <div className="kpi-card card-bg-shadow">
-          <div className="kpi-icon bg-orange-200">
-            <AlertTriangleIcon />
-          </div>
-          <div className="kpi-content">
-            <div className="kpi-value">{invoiceStats.pending}</div>
-            <div className="kpi-label">Pending Invoices</div>
-          </div>
-        </div>
-
-        <div className="kpi-card card-bg-shadow">
           <div
-            className={`kpi-icon ${profitTotal >= 0 ? "bg-red-200" : "bg-green-200"}`}
+            className={`dashboard-app-panel ${
+              activeApp === "overview" ? "active" : ""
+            }`}
           >
-            <FileTextIcon />
-          </div>
-          <div className="kpi-content">
-            <div className="kpi-value">
-              $
-              {profitTotal.toLocaleString(undefined, {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0,
-              })}
-            </div>
-            <div className="kpi-label">Profit</div>
-          </div>
-          <div className="kpi-badge">
-            Sales $
-            {invoiceStats.total.toLocaleString(undefined, {
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 0,
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Charts Row */}
-      <div className="dashboard-charts ">
-        <div className="chart-card card-bg-shadow">
-          <div className="chart-header">
-            <h3 className="bg-gray-200 py-1 px-2 rounded-lg">Revenue Trend</h3>
-            <span className="chart-period">{trendPeriodLabel}</span>
-          </div>
-          {hasRevenueTrend ? (
-            <div className="trend-card-body">
-              <div className="trend-chart-grid">
-                <div className="axis-labels" aria-hidden="true">
-                  {revenueTrendChart.axisTicks.map((value) => (
-                    <span key={value}>{formatCurrency(value)}</span>
-                  ))}
+            <div className="dashboard-kpis">
+              <div className="kpi-card card-bg-shadow">
+                <div className="kpi-icon bg-blue-200">
+                  <BuildingIcon />
                 </div>
-                <div className="bar-axis">
-                  <div
-                    className="trend-bar-scroll"
-                    role="img"
-                    aria-label="Revenue trend bars"
-                  >
-                    <div
-                      className="trend-bar-columns"
-                      style={axisGridStyle}
-                    >
-                      {revenueTrendChart.bars.map((bar) => (
-                        <div key={bar.key} className="trend-bar-column">
-                          <div className="trend-bar-track">
-                            <span className="trend-bar-tooltip">
-                              {formatCurrency(bar.value)}
-                            </span>
-                            <div
-                              className="bar"
-                              style={{ height: `${bar.heightPercent}%` }}
-                              title={`${bar.label}: ${formatCurrency(bar.value)}`}
-                            />
+                <div className="kpi-content">
+                  <div className="kpi-value">
+                    {isAdmin ? summary?.metrics.active_companies || 0 : 1}
+                  </div>
+                  <div className="kpi-label">
+                    {isAdmin ? "Active Companies" : "Your Company"}
+                  </div>
+                </div>
+              </div>
+
+              <div className="kpi-card card-bg-shadow">
+                <div className="kpi-icon bg-teal-200">
+                  <MonitorIcon />
+                </div>
+                <div className="kpi-content">
+                  <div className="kpi-value">
+                    {deviceStats.online}/{deviceStats.total}
+                  </div>
+                  <div className="kpi-label">Devices Online</div>
+                </div>
+              </div>
+
+              <div className="kpi-card card-bg-shadow">
+                <div className="kpi-icon bg-purple-200">
+                  <Box size={18} />
+                </div>
+                <div className="kpi-content">
+                  <div className="kpi-value">{products.length}</div>
+                  <div className="kpi-label">Products</div>
+                </div>
+                <div className="kpi-badge">
+                  Avg {formatCurrency(inventorySummary.avgSalePrice)}
+                </div>
+              </div>
+
+              <div className="kpi-card card-bg-shadow">
+                <div className="kpi-icon bg-yellow-200">
+                  <SendIcon />
+                </div>
+                <div className="kpi-content">
+                  <div className="kpi-value">{contacts.length}</div>
+                  <div className="kpi-label">Contacts</div>
+                </div>
+              </div>
+            </div>
+
+            {filteredCompanyStatus.length > 0 && (
+              <div className="table-card full-width card-bg-shadow">
+                <div className="table-header">
+                  <h3>
+                    {isAdmin ? "Company Status Overview" : "Your Company Status"}
+                  </h3>
+                  {isAdmin && (
+                    <NavLink to="/companies" className="view-all-link">
+                      Manage Companies →
+                    </NavLink>
+                  )}
+                </div>
+                <table className="dashboard-table">
+                  <thead>
+                    <tr>
+                      <th>Company</th>
+                      <th>Devices</th>
+                      <th>Fiscal Day</th>
+                      <th>Certificate</th>
+                      <th>Last Sync</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pagedCompanyStatus.map((company) => (
+                      <tr key={company.company_id}>
+                        <td className="company-cell">{company.company_name}</td>
+                        <td>
+                          <span
+                            className={
+                              company.devices_online > 0 ? "text-green" : "text-red"
+                            }
+                          >
+                            {company.devices_online}/{company.device_count}
+                          </span>
+                        </td>
+                        <td>Day #{company.last_fiscal_day_no}</td>
+                        <td>
+                          <span
+                            className={`cert-badge ${company.certificate_status.toLowerCase()}`}
+                          >
+                            {company.certificate_status}
+                            {company.certificate_days_remaining !== null && (
+                              <span className="cert-days">
+                                ({company.certificate_days_remaining}d)
+                              </span>
+                            )}
+                          </span>
+                        </td>
+                        <td className="date-cell">
+                          {company.last_sync
+                            ? new Date(company.last_sync).toLocaleString()
+                            : "Never"}
+                        </td>
+                        <td>
+                          <span
+                            className={`status-pill ${company.open_day_status.toLowerCase()}`}
+                          >
+                            {company.open_day_status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <TablePagination
+                  page={companyStatusPage}
+                  totalItems={filteredCompanyStatus.length}
+                  onPageChange={setCompanyStatusPage}
+                  pageSize={companyStatusPageSize}
+                  onPageSizeChange={(size) => {
+                    setCompanyStatusPageSize(size);
+                    setCompanyStatusPage(1);
+                  }}
+                />
+              </div>
+            )}
+
+            <div className="dashboard-footer card-bg-shadow">
+              <div className="footer-stat">
+                <span className="footer-label">Products</span>
+                <span className="footer-value">{products.length}</span>
+              </div>
+              <div className="footer-stat">
+                <span className="footer-label">Contacts</span>
+                <span className="footer-value">{contacts.length}</span>
+              </div>
+              <div className="footer-stat">
+                <span className="footer-label">Payments</span>
+                <span className="footer-value">
+                  {paymentStats?.total_payments || 0}
+                </span>
+              </div>
+              <div className="footer-stat">
+                <span className="footer-label">Amount Collected</span>
+                <span className="footer-value">
+                  {formatCurrency(invoicePaymentStats.totalPaid)}
+                </span>
+              </div>
+              {filteredCompanyStatus.length > 0 &&
+                filteredCompanyStatus[0].certificate_days_remaining !== null && (
+                  <div className="footer-stat">
+                    <span className="footer-label">Certificate Days</span>
+                    <span className="footer-value">
+                      {filteredCompanyStatus[0].certificate_days_remaining}
+                    </span>
+                  </div>
+                )}
+            </div>
+
+            {recentAuditLogs.length > 0 && (
+              <div className="table-card full-width card-bg-shadow">
+                <div className="table-header">
+                  <h3>Recent Activity</h3>
+                  <NavLink to="/audit-logs" className="view-all-link">
+                    View All →
+                  </NavLink>
+                </div>
+                <table className="dashboard-table">
+                  <thead>
+                    <tr>
+                      <th>Action</th>
+                      <th>Resource</th>
+                      <th>User</th>
+                      <th>Time</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pagedAuditLogs.map((log) => (
+                      <tr key={log.id}>
+                        <td>
+                          <span
+                            className={`action-badge ${log.action.includes("create")
+                              ? "green"
+                              : log.action.includes("delete")
+                                ? "red"
+                                : "blue"}`}
+                          >
+                            {log.action.replace(/_/g, " ")}
+                          </span>
+                        </td>
+                        <td>{log.resource_type}</td>
+                        <td>{log.user_email || "System"}</td>
+                        <td className="date-cell">
+                          {new Date(log.action_at).toLocaleString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <TablePagination
+                  page={auditPage}
+                  totalItems={sortedAuditLogs.length}
+                  onPageChange={setAuditPage}
+                  pageSize={auditPageSize}
+                  onPageSizeChange={(size) => {
+                    setAuditPageSize(size);
+                    setAuditPage(1);
+                  }}
+                />
+              </div>
+            )}
+          </div>
+
+          <div
+            className={`dashboard-app-panel ${
+              activeApp === "invoices" ? "active" : ""
+            }`}
+          >
+            <div className="dashboard-kpis">
+              <div className="kpi-card card-bg-shadow">
+                <div className="kpi-icon bg-green-200">
+                  <FileTextIcon />
+                </div>
+                <div className="kpi-content">
+                  <div className="kpi-value">{formatCurrency(invoiceStats.total)}</div>
+                  <div className="kpi-label">Revenue</div>
+                </div>
+                <div className="kpi-badge">
+                  Avg {formatCurrency(avgInvoiceAmount)}
+                </div>
+              </div>
+              <div className="kpi-card card-bg-shadow">
+                <div className="kpi-icon bg-purple-200">
+                  <PlusIcon />
+                </div>
+                <div className="kpi-content">
+                  <div className="kpi-value">{invoiceStats.count}</div>
+                  <div className="kpi-label">Invoices</div>
+                </div>
+              </div>
+              <div className="kpi-card card-bg-shadow">
+                <div className="kpi-icon bg-blue-200">
+                  <CheckIcon />
+                </div>
+                <div className="kpi-content">
+                  <div className="kpi-value">{invoiceStats.fiscalized}</div>
+                  <div className="kpi-label">Fiscalized</div>
+                </div>
+              </div>
+              <div className="kpi-card card-bg-shadow">
+                <div className="kpi-icon bg-orange-200">
+                  <AlertTriangleIcon />
+                </div>
+                <div className="kpi-content">
+                  <div className="kpi-value">{invoiceStats.pending}</div>
+                  <div className="kpi-label">Pending</div>
+                </div>
+                <div className="kpi-badge">
+                  Due {formatCurrency(invoicePaymentStats.totalDue)}
+                </div>
+              </div>
+            </div>
+
+            <div className="dashboard-charts">
+              <div className="chart-card card-bg-shadow">
+                <div className="chart-header">
+                  <h3 className="bg-gray-200 py-1 px-2 rounded-lg">Revenue Trend</h3>
+                  <span className="chart-period">{trendPeriodLabel}</span>
+                </div>
+                {hasRevenueTrend ? (
+                  <div className="trend-card-body">
+                    <div className="trend-chart-grid">
+                      <div className="axis-labels" aria-hidden="true">
+                        {revenueTrendChart.axisTicks.map((value) => (
+                          <span key={value}>{formatCurrency(value)}</span>
+                        ))}
+                      </div>
+                      <div className="bar-axis">
+                        <div
+                          className="trend-bar-scroll"
+                          role="img"
+                          aria-label="Revenue trend bars"
+                        >
+                          <div
+                            className="trend-bar-columns"
+                            style={axisGridStyle}
+                          >
+                            {revenueTrendChart.bars.map((bar) => (
+                              <div key={bar.key} className="trend-bar-column">
+                                <div className="trend-bar-track">
+                                  <span className="trend-bar-tooltip">
+                                    {formatCurrency(bar.value)}
+                                  </span>
+                                  <div
+                                    className="bar"
+                                    style={{ height: `${bar.heightPercent}%` }}
+                                    title={`${bar.label}: ${formatCurrency(bar.value)}`}
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="trend-bar-label-row" aria-hidden="true">
+                            {revenueTrendChart.bars.map((bar) => (
+                              <span
+                                key={`label-${bar.key}`}
+                                className="trend-bar-label"
+                              >
+                                {bar.label}
+                              </span>
+                            ))}
                           </div>
                         </div>
-                      ))}
+                      </div>
                     </div>
-                    <div className="trend-bar-label-row" aria-hidden="true">
-                      {revenueTrendChart.bars.map((bar) => (
-                        <span
-                          key={`label-${bar.key}`}
-                          className="trend-bar-label"
-                        >
-                          {bar.label}
+                    <div className="trend-summary">
+                      <div>
+                        <span>Total revenue</span>
+                        <strong>
+                          {formatCurrency(revenueTrendChart.totalRevenue)}
+                        </strong>
+                      </div>
+                      <div>
+                        <span>
+                          Latest
+                          {revenueTrendChart.latestLabel
+                            ? ` (${revenueTrendChart.latestLabel})`
+                            : ""}
                         </span>
-                      ))}
+                        <strong>
+                          {formatCurrency(revenueTrendChart.latestValue)}
+                        </strong>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="empty-state" style={{ margin: "24px 0" }}>
+                    No invoices exist in the selected period to display revenue.
+                  </div>
+                )}
+              </div>
+
+              <div className="chart-card card-bg-shadow">
+                <div className="chart-header">
+                  <h3 className="bg-gray-200 py-1 px-2 rounded-lg">Invoice Status</h3>
+                  <span className="chart-period">Current period</span>
+                </div>
+                <div className="donut-chart">
+                  <svg viewBox="0 0 100 100" className="donut-svg">
+                    <circle className="donut-bg" cx="50" cy="50" r="40" />
+                    <circle
+                      className="donut-segment green"
+                      cx="50"
+                      cy="50"
+                      r="40"
+                      strokeDasharray={`${(invoiceStats.fiscalized / Math.max(invoiceStats.count, 1)) * 251.2} 251.2`}
+                      strokeDashoffset="0"
+                    />
+                    <circle
+                      className="donut-segment orange"
+                      cx="50"
+                      cy="50"
+                      r="40"
+                      strokeDasharray={`${(invoiceStats.pending / Math.max(invoiceStats.count, 1)) * 251.2} 251.2`}
+                      strokeDashoffset={`-${(invoiceStats.fiscalized / Math.max(invoiceStats.count, 1)) * 251.2}`}
+                    />
+                  </svg>
+                  <div className="donut-center">
+                    <div className="donut-value">{invoiceStats.count}</div>
+                    <div className="donut-label">Total</div>
+                  </div>
+                </div>
+                <div className="donut-legend">
+                  <div className="legend-item">
+                    <span className="legend-dot green"></span>
+                    <span>Fiscalized ({invoiceStats.fiscalized})</span>
+                  </div>
+                  <div className="legend-item">
+                    <span className="legend-dot orange"></span>
+                    <span>Pending ({invoiceStats.pending})</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="chart-card card-bg-shadow">
+              <div className="chart-header">
+                <h3 className="bg-gray-200 py-1 px-2 rounded-lg">Payment Coverage</h3>
+                <span className="chart-period">Invoice collection</span>
+              </div>
+              <div className="stats-list">
+                <div className="stat-row">
+                  <div className="stat-icon green">
+                    <CheckIcon />
+                  </div>
+                  <div className="stat-info">
+                    <span className="stat-label">Paid Invoices</span>
+                    <span className="stat-value">
+                      {invoicePaymentStats.paidInvoices}
+                    </span>
+                  </div>
+                  <div className="stat-bar">
+                    <div
+                      className="stat-fill green"
+                      style={{ width: `${invoicePaidShare}%` }}
+                    ></div>
+                  </div>
+                </div>
+                <div className="stat-row">
+                  <div className="stat-icon blue">
+                    <SendIcon />
+                  </div>
+                  <div className="stat-info">
+                    <span className="stat-label">Partial Payments</span>
+                    <span className="stat-value">
+                      {invoicePaymentStats.partialPaid}
+                    </span>
+                  </div>
+                  <div className="stat-bar">
+                    <div
+                      className="stat-fill blue"
+                      style={{ width: `${invoicePartialShare}%` }}
+                    ></div>
+                  </div>
+                </div>
+                <div className="stat-row">
+                  <div className="stat-icon orange">
+                    <AlertTriangleIcon />
+                  </div>
+                  <div className="stat-info">
+                    <span className="stat-label">Amount Due</span>
+                    <span className="stat-value">
+                      {formatCurrency(invoicePaymentStats.totalDue)}
+                    </span>
+                  </div>
+                  <div className="stat-bar">
+                    <div
+                      className="stat-fill orange"
+                      style={{ width: `${invoiceDueShare}%` }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="table-card card-bg-shadow">
+              <div className="table-header">
+                <h3 className="bg-gray-200 py-1 px-2 rounded-lg">Recent Invoices</h3>
+                <NavLink to="/invoices" className="view-all-link">
+                  View All →
+                </NavLink>
+              </div>
+              <table className="dashboard-table">
+                <thead>
+                  <tr>
+                    <th>Reference</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pagedInvoices.map((invoice) => (
+                    <tr key={invoice.id}>
+                      <td className="ref-cell">{invoice.reference}</td>
+                      <td>${invoice.total_amount?.toLocaleString() || "0"}</td>
+                      <td>
+                        <span className={`status-pill ${invoice.status}`}>
+                          {invoice.status}
+                        </span>
+                      </td>
+                      <td className="date-cell">
+                        {invoice.fiscalized_at
+                          ? new Date(invoice.fiscalized_at).toLocaleDateString()
+                          : invoice.created_at
+                            ? new Date(invoice.created_at).toLocaleDateString()
+                            : "-"}
+                      </td>
+                    </tr>
+                  ))}
+                  {pagedInvoices.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="empty-cell">
+                        No invoices yet
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+              <TablePagination
+                page={invoicePage}
+                totalItems={sortedInvoicesForTable.length}
+                onPageChange={setInvoicePage}
+                pageSize={invoicePageSize}
+                onPageSizeChange={(size) => {
+                  setInvoicePageSize(size);
+                  setInvoicePage(1);
+                }}
+              />
+            </div>
+          </div>
+
+          <div
+            className={`dashboard-app-panel ${
+              activeApp === "quotations" ? "active" : ""
+            }`}
+          >
+            <div className="dashboard-kpis">
+              <div className="kpi-card card-bg-shadow">
+                <div className="kpi-icon bg-blue-200">
+                  <FileTextIcon />
+                </div>
+                <div className="kpi-content">
+                  <div className="kpi-value">{quotationStats.count}</div>
+                  <div className="kpi-label">Total Quotations</div>
+                </div>
+              </div>
+              <div className="kpi-card card-bg-shadow">
+                <div className="kpi-icon bg-green-200">
+                  <CheckIcon />
+                </div>
+                <div className="kpi-content">
+                  <div className="kpi-value">{quotationStats.accepted}</div>
+                  <div className="kpi-label">Accepted</div>
+                </div>
+              </div>
+              <div className="kpi-card card-bg-shadow">
+                <div className="kpi-icon bg-purple-200">
+                  <SendIcon />
+                </div>
+                <div className="kpi-content">
+                  <div className="kpi-value">{quotationStats.sent}</div>
+                  <div className="kpi-label">Sent</div>
+                </div>
+              </div>
+              <div className="kpi-card card-bg-shadow">
+                <div className="kpi-icon bg-indigo-200">
+                  <FileTextIcon />
+                </div>
+                <div className="kpi-content">
+                  <div className="kpi-value">{quotationStats.converted}</div>
+                  <div className="kpi-label">Converted</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="dashboard-charts">
+              <div className="chart-card card-bg-shadow">
+                <div className="chart-header">
+                  <h3 className="bg-gray-200 py-1 px-2 rounded-lg">Quotations Pipeline</h3>
+                  <span className="chart-period">Workflow status</span>
+                </div>
+                <div className="stats-list">
+                  <div className="stat-row">
+                    <div className="stat-icon green">
+                      <CheckIcon />
+                    </div>
+                    <div className="stat-info">
+                      <span className="stat-label">Accepted</span>
+                      <span className="stat-value">{quotationStats.accepted}</span>
+                    </div>
+                    <div className="stat-bar">
+                      <div
+                        className="stat-fill green"
+                        style={{
+                          width: `${(quotationStats.accepted / Math.max(quotationStats.count, 1)) * 100}%`,
+                        }}
+                      ></div>
+                    </div>
+                  </div>
+                  <div className="stat-row">
+                    <div className="stat-icon blue">
+                      <SendIcon />
+                    </div>
+                    <div className="stat-info">
+                      <span className="stat-label">Sent</span>
+                      <span className="stat-value">{quotationStats.sent}</span>
+                    </div>
+                    <div className="stat-bar">
+                      <div
+                        className="stat-fill blue"
+                        style={{
+                          width: `${(quotationStats.sent / Math.max(quotationStats.count, 1)) * 100}%`,
+                        }}
+                      ></div>
+                    </div>
+                  </div>
+                  <div className="stat-row">
+                    <div className="stat-icon gray">
+                      <EditIcon />
+                    </div>
+                    <div className="stat-info">
+                      <span className="stat-label">Draft</span>
+                      <span className="stat-value">{quotationStats.draft}</span>
+                    </div>
+                    <div className="stat-bar">
+                      <div
+                        className="stat-fill gray"
+                        style={{
+                          width: `${(quotationStats.draft / Math.max(quotationStats.count, 1)) * 100}%`,
+                        }}
+                      ></div>
+                    </div>
+                  </div>
+                  <div className="stat-row">
+                    <div className="stat-icon purple">
+                      <FileTextIcon />
+                    </div>
+                    <div className="stat-info">
+                      <span className="stat-label">Converted</span>
+                      <span className="stat-value">{quotationStats.converted}</span>
+                    </div>
+                    <div className="stat-bar">
+                      <div
+                        className="stat-fill purple"
+                        style={{
+                          width: `${(quotationStats.converted / Math.max(quotationStats.count, 1)) * 100}%`,
+                        }}
+                      ></div>
                     </div>
                   </div>
                 </div>
               </div>
-              <div className="trend-summary">
-                <div>
-                  <span>Total revenue</span>
-                  <strong>
-                    {formatCurrency(revenueTrendChart.totalRevenue)}
-                  </strong>
+            </div>
+
+            <div className="dashboard-tables">
+              <div className="table-card card-bg-shadow">
+                <div className="table-header">
+                  <h3 className="bg-gray-200 py-1 px-2 rounded-lg">Recent Quotations</h3>
+                  <NavLink to="/quotations" className="view-all-link">
+                    View All →
+                  </NavLink>
                 </div>
-                <div>
-                  <span>
-                    Latest
-                    {revenueTrendChart.latestLabel
-                      ? ` (${revenueTrendChart.latestLabel})`
-                      : ""}
-                  </span>
-                  <strong>
-                    {formatCurrency(revenueTrendChart.latestValue)}
-                  </strong>
+                <table className="dashboard-table">
+                  <thead>
+                    <tr>
+                      <th>Reference</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pagedQuotations.map((quotation) => (
+                      <tr key={quotation.id}>
+                        <td className="ref-cell">{quotation.reference}</td>
+                        <td>
+                          <span className={`status-pill ${quotation.status}`}>
+                            {quotation.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                    {pagedQuotations.length === 0 && (
+                      <tr>
+                        <td colSpan={2} className="empty-cell">
+                          No quotations yet
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+                <TablePagination
+                  page={quotationPage}
+                  totalItems={sortedQuotationsForTable.length}
+                  onPageChange={setQuotationPage}
+                  pageSize={quotationPageSize}
+                  onPageSizeChange={(size) => {
+                    setQuotationPageSize(size);
+                    setQuotationPage(1);
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div
+            className={`dashboard-app-panel ${
+              activeApp === "purchases" ? "active" : ""
+            }`}
+          >
+            <div className="dashboard-kpis">
+              <div className="kpi-card card-bg-shadow">
+                <div className="kpi-icon bg-blue-200">
+                  <ShoppingCart size={18} />
+                </div>
+                <div className="kpi-content">
+                  <div className="kpi-value">{purchaseStats.count}</div>
+                  <div className="kpi-label">Purchase Orders</div>
+                </div>
+              </div>
+              <div className="kpi-card card-bg-shadow">
+                <div className="kpi-icon bg-purple-200">
+                  <FileTextIcon />
+                </div>
+                <div className="kpi-content">
+                  <div className="kpi-value">{formatCurrency(purchaseStats.total)}</div>
+                  <div className="kpi-label">Total Spend</div>
+                </div>
+              </div>
+              <div className="kpi-card card-bg-shadow">
+                <div className="kpi-icon bg-teal-200">
+                  <PlusIcon />
+                </div>
+                <div className="kpi-content">
+                  <div className="kpi-value">
+                    {formatCurrency(purchaseAverageAmount)}
+                  </div>
+                  <div className="kpi-label">Avg Order</div>
                 </div>
               </div>
             </div>
-          ) : (
-            <div className="empty-state" style={{ margin: "24px 0" }}>
-              No invoices exist in the selected period to display revenue.
-            </div>
-          )}
-        </div>
 
-        <div className="chart-card card-bg-shadow">
-          <div className="chart-header">
-            <h3 className="bg-gray-200 py-1 px-2 rounded-lg">Invoice Status</h3>
-            <span className="chart-period">Current period</span>
-          </div>
-          <div className="donut-chart">
-            <svg viewBox="0 0 100 100" className="donut-svg">
-              <circle className="donut-bg" cx="50" cy="50" r="40" />
-              <circle
-                className="donut-segment green"
-                cx="50"
-                cy="50"
-                r="40"
-                strokeDasharray={`${(invoiceStats.fiscalized / Math.max(invoiceStats.count, 1)) * 251.2} 251.2`}
-                strokeDashoffset="0"
+            {filteredPurchases.length > 0 && (
+              <div className="chart-card card-bg-shadow">
+                <div className="chart-header">
+                  <h3 className="bg-gray-200 py-1 px-2 rounded-lg">Purchase Status</h3>
+                  <span className="chart-period">{`Current snapshot`}</span>
+                </div>
+                <div className="stats-list">
+                  {purchaseStatusEntries.slice(0, 4).map((entry) => (
+                    <div className="stat-row" key={entry.status}>
+                      <div className="stat-icon gray">
+                        <span style={{ fontWeight: 700 }}>
+                          {entry.status.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="stat-info">
+                        <span className="stat-label">
+                          {formatStatusLabel(entry.status)}
+                        </span>
+                        <span className="stat-value">{entry.count}</span>
+                      </div>
+                      <div className="stat-bar">
+                        <div
+                          className="stat-fill gray"
+                          style={{
+                            width: `${
+                              (entry.count / Math.max(filteredPurchases.length, 1)) * 100
+                            }%`,
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="table-card card-bg-shadow">
+              <div className="table-header">
+                <h3 className="bg-gray-200 py-1 px-2 rounded-lg">Recent Purchase Orders</h3>
+                <NavLink to="/purchases" className="view-all-link">
+                  View All →
+                </NavLink>
+              </div>
+              <table className="dashboard-table">
+                <thead>
+                  <tr>
+                    <th>Reference</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pagedPurchases.map((purchase) => (
+                    <tr key={purchase.id}>
+                      <td className="ref-cell">{purchase.reference}</td>
+                      <td>${purchase.total_amount?.toLocaleString() || "0"}</td>
+                      <td>
+                        <span className={`status-pill ${purchase.status}`}>
+                          {purchase.status}
+                        </span>
+                      </td>
+                      <td className="date-cell">
+                        {purchase.order_date
+                          ? new Date(purchase.order_date).toLocaleDateString()
+                          : "-"}
+                      </td>
+                    </tr>
+                  ))}
+                  {pagedPurchases.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="empty-cell">
+                        No purchase orders yet
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+              <TablePagination
+                page={purchasePage}
+                totalItems={filteredPurchases.length}
+                onPageChange={setPurchasePage}
+                pageSize={purchasePageSize}
+                onPageSizeChange={(size) => {
+                  setPurchasePageSize(size);
+                  setPurchasePage(1);
+                }}
               />
-              <circle
-                className="donut-segment orange"
-                cx="50"
-                cy="50"
-                r="40"
-                strokeDasharray={`${(invoiceStats.pending / Math.max(invoiceStats.count, 1)) * 251.2} 251.2`}
-                strokeDashoffset={`-${(invoiceStats.fiscalized / Math.max(invoiceStats.count, 1)) * 251.2}`}
-              />
-            </svg>
-            <div className="donut-center">
-              <div className="donut-value">{invoiceStats.count}</div>
-              <div className="donut-label">Total</div>
             </div>
           </div>
-          <div className="donut-legend">
-            <div className="legend-item">
-              <span className="legend-dot green"></span>
-              <span>Fiscalized ({invoiceStats.fiscalized})</span>
-            </div>
-            <div className="legend-item">
-              <span className="legend-dot orange"></span>
-              <span>Pending ({invoiceStats.pending})</span>
-            </div>
-          </div>
-        </div>
 
-        <div className="chart-card card-bg-shadow">
-          <div className="chart-header">
-            <h3 className="bg-gray-200 py-1 px-2 rounded-lg">
-              Quotations Pipeline
-            </h3>
-            <span className="chart-period">Workflow status</span>
-          </div>
-          <div className="stats-list">
-            <div className="stat-row">
-              <div className="stat-icon green">
-                <CheckIcon />
+          <div
+            className={`dashboard-app-panel ${
+              activeApp === "payments" ? "active" : ""
+            }`}
+          >
+            <div className="dashboard-kpis">
+              <div className="kpi-card card-bg-shadow">
+                <div className="kpi-icon bg-blue-200">
+                  <CreditCard size={18} />
+                </div>
+                <div className="kpi-content">
+                  <div className="kpi-value">{paymentSummary.totalPayments}</div>
+                  <div className="kpi-label">Payments</div>
+                </div>
               </div>
-              <div className="stat-info">
-                <span className="stat-label">Accepted</span>
-                <span className="stat-value">{quotationStats.accepted}</span>
+              <div className="kpi-card card-bg-shadow">
+                <div className="kpi-icon bg-green-200">
+                  <CreditCard size={18} />
+                </div>
+                <div className="kpi-content">
+                  <div className="kpi-value">
+                    {formatCurrency(paymentSummary.totalAmount)}
+                  </div>
+                  <div className="kpi-label">Collected</div>
+                </div>
               </div>
-              <div className="stat-bar">
-                <div
-                  className="stat-fill green"
-                  style={{
-                    width: `${(quotationStats.accepted / Math.max(quotationStats.count, 1)) * 100}%`,
-                  }}
-                ></div>
+              <div className="kpi-card card-bg-shadow">
+                <div className="kpi-icon bg-purple-200">
+                  <CheckIcon />
+                </div>
+                <div className="kpi-content">
+                  <div className="kpi-value">{paymentSummary.reconciled}</div>
+                  <div className="kpi-label">Reconciled</div>
+                </div>
               </div>
-            </div>
-            <div className="stat-row">
-              <div className="stat-icon blue">
-                <SendIcon />
-              </div>
-              <div className="stat-info">
-                <span className="stat-label">Sent</span>
-                <span className="stat-value">{quotationStats.sent}</span>
-              </div>
-              <div className="stat-bar">
-                <div
-                  className="stat-fill blue"
-                  style={{
-                    width: `${(quotationStats.sent / Math.max(quotationStats.count, 1)) * 100}%`,
-                  }}
-                ></div>
-              </div>
-            </div>
-            <div className="stat-row">
-              <div className="stat-icon gray">
-                <EditIcon />
-              </div>
-              <div className="stat-info">
-                <span className="stat-label">Draft</span>
-                <span className="stat-value">{quotationStats.draft}</span>
-              </div>
-              <div className="stat-bar">
-                <div
-                  className="stat-fill gray"
-                  style={{
-                    width: `${(quotationStats.draft / Math.max(quotationStats.count, 1)) * 100}%`,
-                  }}
-                ></div>
+              <div className="kpi-card card-bg-shadow">
+                <div className="kpi-icon bg-orange-200">
+                  <AlertTriangleIcon />
+                </div>
+                <div className="kpi-content">
+                  <div className="kpi-value">{paymentSummary.pending}</div>
+                  <div className="kpi-label">Pending</div>
+                </div>
               </div>
             </div>
-            <div className="stat-row">
-              <div className="stat-icon purple">
-                <FileTextIcon />
-              </div>
-              <div className="stat-info">
-                <span className="stat-label">Converted</span>
-                <span className="stat-value">{quotationStats.converted}</span>
-              </div>
-              <div className="stat-bar">
-                <div
-                  className="stat-fill purple"
-                  style={{
-                    width: `${(quotationStats.converted / Math.max(quotationStats.count, 1)) * 100}%`,
-                  }}
-                ></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Tables Row */}
-      <div className="dashboard-tables">
-        <div className="table-card card-bg-shadow">
-          <div className="table-header">
-            <h3 className="bg-gray-200 py-1 px-2 rounded-lg">
-              Recent Invoices
-            </h3>
-            <NavLink to="/invoices" className="view-all-link">
-              View All →
-            </NavLink>
-          </div>
-          <table className="dashboard-table">
-            <thead>
-              <tr>
-                <th>Reference</th>
-                <th>Amount</th>
-                <th>Status</th>
-                <th>Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pagedInvoices.map((invoice) => (
-                <tr key={invoice.id}>
-                  <td className="ref-cell">{invoice.reference}</td>
-                  <td>${invoice.total_amount?.toLocaleString() || "0"}</td>
-                  <td>
-                    <span className={`status-pill ${invoice.status}`}>
-                      {invoice.status}
+            <div className="chart-card card-bg-shadow">
+              <div className="chart-header">
+                <h3 className="bg-gray-200 py-1 px-2 rounded-lg">Accounts Receivable</h3>
+                <span className="chart-period">Outstanding invoices</span>
+              </div>
+              <div className="stats-list">
+                <div className="stat-row">
+                  <div className="stat-icon green">
+                    <CheckIcon />
+                  </div>
+                  <div className="stat-info">
+                    <span className="stat-label">Invoices Paid</span>
+                    <span className="stat-value">{paymentSummary.invoicesPaid}</span>
+                  </div>
+                  <div className="stat-bar">
+                    <div
+                      className="stat-fill green"
+                      style={{
+                        width: `${invoicePaidShare}%`,
+                      }}
+                    ></div>
+                  </div>
+                </div>
+                <div className="stat-row">
+                  <div className="stat-icon blue">
+                    <SendIcon />
+                  </div>
+                  <div className="stat-info">
+                    <span className="stat-label">Partially Paid</span>
+                    <span className="stat-value">{paymentSummary.invoicesPartial}</span>
+                  </div>
+                  <div className="stat-bar">
+                    <div
+                      className="stat-fill blue"
+                      style={{
+                        width: `${invoicePartialShare}%`,
+                      }}
+                    ></div>
+                  </div>
+                </div>
+                <div className="stat-row">
+                  <div className="stat-icon orange">
+                    <AlertTriangleIcon />
+                  </div>
+                  <div className="stat-info">
+                    <span className="stat-label">Amount Due</span>
+                    <span className="stat-value">
+                      {formatCurrency(paymentSummary.totalDue)}
                     </span>
-                  </td>
-                  <td className="date-cell">
-                    {invoice.fiscalized_at
-                      ? new Date(invoice.fiscalized_at).toLocaleDateString()
-                      : invoice.created_at
-                        ? new Date(invoice.created_at).toLocaleDateString()
-                        : "-"}
-                  </td>
-                </tr>
-              ))}
-              {pagedInvoices.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="empty-cell">
-                    No invoices yet
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-          <TablePagination
-            page={invoicePage}
-            totalItems={sortedInvoicesForTable.length}
-            onPageChange={setInvoicePage}
-            pageSize={invoicePageSize}
-            onPageSizeChange={(size) => {
-              setInvoicePageSize(size);
-              setInvoicePage(1);
-            }}
-          />
-        </div>
+                  </div>
+                  <div className="stat-bar">
+                    <div
+                      className="stat-fill orange"
+                      style={{
+                        width: `${invoiceDueShare}%`,
+                      }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-        <div className="table-card card-bg-shadow">
-          <div className="table-header">
-            <h3 className="bg-gray-200 py-1 px-2 rounded-lg">
-              Recent Quotations
-            </h3>
-            <NavLink to="/quotations" className="view-all-link">
-              View All →
-            </NavLink>
-          </div>
-          <table className="dashboard-table">
-            <thead>
-              <tr>
-                <th>Reference</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pagedQuotations.map((quotation) => (
-                <tr key={quotation.id}>
-                  <td className="ref-cell">{quotation.reference}</td>
-                  <td>
-                    <span className={`status-pill ${quotation.status}`}>
-                      {quotation.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-              {pagedQuotations.length === 0 && (
-                <tr>
-                  <td colSpan={2} className="empty-cell">
-                    No quotations yet
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-          <TablePagination
-            page={quotationPage}
-            totalItems={sortedQuotationsForTable.length}
-            onPageChange={setQuotationPage}
-            pageSize={quotationPageSize}
-            onPageSizeChange={(size) => {
-              setQuotationPageSize(size);
-              setQuotationPage(1);
-            }}
-          />
-        </div>
-      </div>
-
-      {/* Company Status Table */}
-      {filteredCompanyStatus.length > 0 && (
-        <div className="table-card full-width">
-          <div className="table-header">
-            <h3>
-              {isAdmin ? "Company Status Overview" : "Your Company Status"}
-            </h3>
-            {isAdmin && (
-              <NavLink to="/companies" className="view-all-link">
-                Manage Companies →
-              </NavLink>
+            {invoicesWithDue.length > 0 && (
+              <div className="table-card card-bg-shadow">
+                <div className="table-header">
+                  <h3 className="bg-gray-200 py-1 px-2 rounded-lg">Top Due Invoices</h3>
+                </div>
+                <table className="dashboard-table">
+                  <thead>
+                    <tr>
+                      <th>Reference</th>
+                      <th>Due Amount</th>
+                      <th>Status</th>
+                      <th>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {invoicesWithDue.slice(0, 6).map((invoice) => (
+                      <tr key={invoice.id}>
+                        <td className="ref-cell">{invoice.reference}</td>
+                        <td>{formatCurrency(invoice.amount_due || 0)}</td>
+                        <td>
+                          <span className={`status-pill ${invoice.status}`}>
+                            {invoice.status}
+                          </span>
+                        </td>
+                        <td className="date-cell">
+                          {invoice.fiscalized_at
+                            ? new Date(invoice.fiscalized_at).toLocaleDateString()
+                            : invoice.created_at
+                              ? new Date(invoice.created_at).toLocaleDateString()
+                              : "-"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
-          <table className="dashboard-table">
-            <thead>
-              <tr>
-                <th>Company</th>
-                <th>Devices</th>
-                <th>Fiscal Day</th>
-                <th>Certificate</th>
-                <th>Last Sync</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pagedCompanyStatus.map((company) => (
-                <tr key={company.company_id}>
-                  <td className="company-cell">{company.company_name}</td>
-                  <td>
-                    <span
-                      className={
-                        company.devices_online > 0 ? "text-green" : "text-red"
-                      }
-                    >
-                      {company.devices_online}/{company.device_count}
-                    </span>
-                  </td>
-                  <td>Day #{company.last_fiscal_day_no}</td>
-                  <td>
-                    <span
-                      className={`cert-badge ${company.certificate_status.toLowerCase()}`}
-                    >
-                      {company.certificate_status}
-                      {company.certificate_days_remaining !== null && (
-                        <span className="cert-days">
-                          {" "}
-                          ({company.certificate_days_remaining}d)
-                        </span>
-                      )}
-                    </span>
-                  </td>
-                  <td className="date-cell">
-                    {company.last_sync
-                      ? new Date(company.last_sync).toLocaleString()
-                      : "Never"}
-                  </td>
-                  <td>
-                    <span
-                      className={`status-pill ${company.open_day_status.toLowerCase()}`}
-                    >
-                      {company.open_day_status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <TablePagination
-            page={companyStatusPage}
-            totalItems={filteredCompanyStatus.length}
-            onPageChange={setCompanyStatusPage}
-            pageSize={companyStatusPageSize}
-            onPageSizeChange={(size) => {
-              setCompanyStatusPageSize(size);
-              setCompanyStatusPage(1);
-            }}
-          />
-        </div>
-      )}
 
-      {/* Quick Stats Footer */}
-      <div className="dashboard-footer card-bg-shadow">
-        <div className="footer-stat">
-          <span className="footer-label">Products</span>
-          <span className="footer-value">{products.length}</span>
-        </div>
-        <div className="footer-stat">
-          <span className="footer-label">Contacts</span>
-          <span className="footer-value">{contacts.length}</span>
-        </div>
-        <div className="footer-stat">
-          <span className="footer-label">Payments</span>
-          <span className="footer-value">
-            {paymentStats?.total_payments || 0}
-          </span>
-        </div>
-        <div className="footer-stat">
-          <span className="footer-label">Amount Collected</span>
-          <span className="footer-value">
-            $
-            {invoicePaymentStats.totalPaid.toLocaleString(undefined, {
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 0,
-            })}
-          </span>
-        </div>
-        {filteredCompanyStatus.length > 0 &&
-          filteredCompanyStatus[0].certificate_days_remaining !== null && (
-            <div className="footer-stat">
-              <span className="footer-label">Certificate Days</span>
-              <span className="footer-value">
-                {filteredCompanyStatus[0].certificate_days_remaining}
-              </span>
+          <div
+            className={`dashboard-app-panel ${
+              activeApp === "inventory" ? "active" : ""
+            }`}
+          >
+            <div className="dashboard-kpis">
+              <div className="kpi-card card-bg-shadow">
+                <div className="kpi-icon bg-purple-200">
+                  <Box size={18} />
+                </div>
+                <div className="kpi-content">
+                  <div className="kpi-value">{inventorySummary.count}</div>
+                  <div className="kpi-label">Products</div>
+                </div>
+              </div>
+              <div className="kpi-card card-bg-shadow">
+                <div className="kpi-icon bg-green-200">
+                  <FileTextIcon />
+                </div>
+                <div className="kpi-content">
+                  <div className="kpi-value">
+                    {formatCurrency(inventorySummary.avgSalePrice)}
+                  </div>
+                  <div className="kpi-label">Avg Sale Price</div>
+                </div>
+              </div>
+              <div className="kpi-card card-bg-shadow">
+                <div className="kpi-icon bg-teal-200">
+                  <FileTextIcon />
+                </div>
+                <div className="kpi-content">
+                  <div className="kpi-value">
+                    {formatCurrency(inventorySummary.avgCost)}
+                  </div>
+                  <div className="kpi-label">Avg Cost</div>
+                </div>
+              </div>
+              <div className="kpi-card card-bg-shadow">
+                <div className="kpi-icon bg-orange-200">
+                  <AlertTriangleIcon />
+                </div>
+                <div className="kpi-content">
+                  <div className="kpi-value">
+                    {inventorySummary.marginPercent.toFixed(1)}%
+                  </div>
+                  <div className="kpi-label">Avg Margin</div>
+                </div>
+              </div>
             </div>
-          )}
-      </div>
 
-      {/* Recent Activity Section */}
-      {recentAuditLogs.length > 0 && (
-        <div
-          className="table-card full-width card-bg-shadow"
-          style={{ marginTop: 20 }}
-        >
-          <div className="table-header">
-            <h3>Recent Activity</h3>
-            <NavLink to="/audit-logs" className="view-all-link">
-              View All →
-            </NavLink>
+            {topProducts.length > 0 ? (
+              <div className="table-card card-bg-shadow">
+                <div className="table-header">
+                  <h3 className="bg-gray-200 py-1 px-2 rounded-lg">Top Products</h3>
+                </div>
+                <table className="dashboard-table">
+                  <thead>
+                    <tr>
+                      <th>Product</th>
+                      <th>Sale Price</th>
+                      <th>Cost</th>
+                      <th>Margin</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {topProducts.map((product) => {
+                      const marginValue = product.sale_price - product.purchase_cost;
+                      const marginPercent = product.purchase_cost
+                        ? Math.round((marginValue / product.purchase_cost) * 100)
+                        : 0;
+                      return (
+                        <tr key={product.id}>
+                          <td className="company-cell">{product.name}</td>
+                          <td>{formatCurrency(product.sale_price)}</td>
+                          <td>{formatCurrency(product.purchase_cost)}</td>
+                          <td>
+                            {formatCurrency(marginValue)}
+                            <span className="stat-label"> ({marginPercent}%)</span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="empty-state">No products available.</div>
+            )}
           </div>
-          <table className="dashboard-table">
-            <thead>
-              <tr>
-                <th>Action</th>
-                <th>Resource</th>
-                <th>User</th>
-                <th>Time</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pagedAuditLogs.map((log) => (
-                <tr key={log.id}>
-                  <td>
-                    <span
-                      className={`action-badge ${log.action.includes("create") ? "green" : log.action.includes("delete") ? "red" : "blue"}`}
-                    >
-                      {log.action.replace(/_/g, " ")}
-                    </span>
-                  </td>
-                  <td>{log.resource_type}</td>
-                  <td>{log.user_email || "System"}</td>
-                  <td className="date-cell">
-                    {new Date(log.action_at).toLocaleString()}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <TablePagination
-            page={auditPage}
-            totalItems={sortedAuditLogs.length}
-            onPageChange={setAuditPage}
-            pageSize={auditPageSize}
-            onPageSizeChange={(size) => {
-              setAuditPageSize(size);
-              setAuditPage(1);
-            }}
-          />
         </div>
-      )}
+      </div>
     </div>
   );
 }
