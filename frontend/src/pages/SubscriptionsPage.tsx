@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { CalendarDays, CreditCard, ShieldCheck, Users } from "lucide-react";
 import { apiFetch, apiRequest } from "../api";
 import { useMe } from "../hooks/useMe";
 import { useCompanies, Company } from "../hooks/useCompanies";
@@ -62,6 +63,11 @@ const daysRemaining = (d: string | null) => {
   return diff;
 };
 
+const SUBSCRIPTION_DEFAULTS = {
+  max_devices: 2,
+  max_invoices_per_month: 500,
+};
+
 export default function SubscriptionsPage() {
   const navigate = useNavigate();
   const { me } = useMe();
@@ -108,8 +114,8 @@ export default function SubscriptionsPage() {
     plan: "starter",
     duration_days: 365,
     max_users: 5,
-    max_devices: 2,
-    max_invoices_per_month: 500,
+    max_devices: SUBSCRIPTION_DEFAULTS.max_devices,
+    max_invoices_per_month: SUBSCRIPTION_DEFAULTS.max_invoices_per_month,
     notes: "",
   });
 
@@ -119,8 +125,8 @@ export default function SubscriptionsPage() {
     plan: "starter",
     duration_days: 365,
     max_users: 5,
-    max_devices: 2,
-    max_invoices_per_month: 500,
+    max_devices: SUBSCRIPTION_DEFAULTS.max_devices,
+    max_invoices_per_month: SUBSCRIPTION_DEFAULTS.max_invoices_per_month,
   });
 
   // Generated code modal
@@ -547,19 +553,23 @@ export default function SubscriptionsPage() {
             <div
               style={{
                 background: "var(--bg-card)",
-                borderRadius: 12,
+                borderRadius: 18,
                 border: "1px solid var(--border)",
                 overflow: "hidden",
+                boxShadow: "0 14px 34px rgba(15, 23, 42, 0.06)",
               }}
             >
               {/* Header */}
               <div
                 style={{
-                  padding: "24px 28px",
+                  padding: "28px 32px 22px",
                   borderBottom: "1px solid var(--border)",
                   display: "flex",
                   justifyContent: "space-between",
-                  alignItems: "center",
+                  alignItems: "flex-start",
+                  gap: 24,
+                  background:
+                    "linear-gradient(180deg, rgba(99, 102, 241, 0.06) 0%, rgba(255, 255, 255, 0) 100%)",
                 }}
               >
                 <div>
@@ -588,9 +598,21 @@ export default function SubscriptionsPage() {
                           STATUS_COLORS[currentSub.status] ||
                           "var(--slate-500)",
                       }}
-                    >
-                      {currentSub.status}
-                    </span>
+                  >
+                    {currentSub.status}
+                  </span>
+                  </div>
+                  <div
+                    style={{
+                      marginTop: 10,
+                      fontSize: 13,
+                      color: "var(--muted)",
+                      maxWidth: 540,
+                    }}
+                  >
+                    Portal user limits use this subscription. The maximum users
+                    count includes the portal super user and all general portal
+                    users.
                   </div>
                 </div>
                 <div style={{ textAlign: "right" }}>
@@ -619,50 +641,87 @@ export default function SubscriptionsPage() {
               {/* Details grid */}
               <div
                 style={{
-                  padding: "20px 28px",
+                  padding: "24px 32px",
                   display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
-                  gap: 20,
+                  gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                  gap: 16,
                 }}
               >
                 {[
-                  { label: "Start Date", value: fmtDate(currentSub.starts_at) },
+                  {
+                    label: "Start Date",
+                    value: fmtDate(currentSub.starts_at),
+                    icon: CalendarDays,
+                  },
                   {
                     label: "Expiry Date",
                     value: fmtDate(currentSub.expires_at),
+                    icon: CalendarDays,
                   },
-                  { label: "Max Users", value: String(currentSub.max_users) },
+                  {
+                    label: "Max Users",
+                    value: String(currentSub.max_users),
+                    icon: Users,
+                  },
                   {
                     label: "Max Devices",
                     value: String(currentSub.max_devices),
+                    icon: ShieldCheck,
                   },
                   {
                     label: "Invoices / Month",
                     value: String(currentSub.max_invoices_per_month),
+                    icon: CreditCard,
                   },
-                ].map((item) => (
-                  <div key={item.label}>
+                ].map((item) => {
+                  const Icon = item.icon;
+                  return (
                     <div
+                      key={item.label}
                       style={{
-                        fontSize: 11,
-                        color: "var(--muted)",
-                        textTransform: "uppercase",
-                        letterSpacing: 0.5,
-                        marginBottom: 4,
+                        border: "1px solid var(--border)",
+                        borderRadius: 16,
+                        padding: "16px 18px",
+                        background: "rgba(255,255,255,0.92)",
                       }}
                     >
-                      {item.label}
+                      <div
+                        style={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: 12,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          background: "rgba(99, 102, 241, 0.08)",
+                          color: "var(--violet-600)",
+                          marginBottom: 12,
+                        }}
+                      >
+                        <Icon size={18} />
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 11,
+                          color: "var(--muted)",
+                          textTransform: "uppercase",
+                          letterSpacing: 0.5,
+                          marginBottom: 6,
+                        }}
+                      >
+                        {item.label}
+                      </div>
+                      <div style={{ fontSize: 20, fontWeight: 700 }}>
+                        {item.value}
+                      </div>
                     </div>
-                    <div style={{ fontSize: 15, fontWeight: 600 }}>
-                      {item.value}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               {currentSub.notes && (
                 <div
                   style={{
-                    padding: "0 28px 20px",
+                    padding: "0 32px 22px",
                     fontSize: 13,
                     color: "var(--muted)",
                   }}
@@ -674,11 +733,12 @@ export default function SubscriptionsPage() {
               {/* Actions */}
               <div
                 style={{
-                  padding: "16px 28px",
+                  padding: "18px 32px",
                   borderTop: "1px solid var(--border)",
                   display: "flex",
                   gap: 8,
                   flexWrap: "wrap",
+                  background: "var(--slate-50, #f8fafc)",
                 }}
               >
                 {currentSub.status === "active" && (
@@ -817,6 +877,31 @@ export default function SubscriptionsPage() {
                       marginBottom: 4,
                     }}
                   >
+                    Plan
+                  </label>
+                  <select
+                    className="form-control"
+                    value={subForm.plan}
+                    onChange={(e) =>
+                      setSubForm({ ...subForm, plan: e.target.value })
+                    }
+                  >
+                    {PLANS.filter((p) => p.value !== "trial").map((p) => (
+                      <option key={p.value} value={p.value}>
+                        {p.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      display: "block",
+                      marginBottom: 4,
+                    }}
+                  >
                     Duration (days)
                   </label>
                   <input
@@ -857,49 +942,6 @@ export default function SubscriptionsPage() {
                       marginBottom: 4,
                     }}
                   >
-                    Max Devices
-                  </label>
-                  <input
-                    className="form-control"
-                    type="number"
-                    value={subForm.max_devices}
-                    onChange={(e) =>
-                      setSubForm({ ...subForm, max_devices: +e.target.value })
-                    }
-                  />
-                </div>
-                <div>
-                  <label
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 600,
-                      display: "block",
-                      marginBottom: 4,
-                    }}
-                  >
-                    Invoices / Month
-                  </label>
-                  <input
-                    className="form-control"
-                    type="number"
-                    value={subForm.max_invoices_per_month}
-                    onChange={(e) =>
-                      setSubForm({
-                        ...subForm,
-                        max_invoices_per_month: +e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div>
-                  <label
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 600,
-                      display: "block",
-                      marginBottom: 4,
-                    }}
-                  >
                     Notes
                   </label>
                   <input
@@ -909,6 +951,15 @@ export default function SubscriptionsPage() {
                       setSubForm({ ...subForm, notes: e.target.value })
                     }
                   />
+                </div>
+                <div
+                  style={{
+                    gridColumn: "1 / -1",
+                    fontSize: 12,
+                    color: "var(--muted)",
+                  }}
+                >
+                  Max devices and invoices per month use the plan defaults.
                 </div>
               </div>
               <div style={{ display: "flex", gap: 8, marginTop: 20 }}>
@@ -1055,48 +1106,14 @@ export default function SubscriptionsPage() {
                     }
                   />
                 </div>
-                <div>
-                  <label
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 600,
-                      display: "block",
-                      marginBottom: 4,
-                    }}
-                  >
-                    Max Devices
-                  </label>
-                  <input
-                    className="form-control form-control-sm"
-                    type="number"
-                    value={codeForm.max_devices}
-                    onChange={(e) =>
-                      setCodeForm({ ...codeForm, max_devices: +e.target.value })
-                    }
-                  />
-                </div>
-                <div>
-                  <label
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 600,
-                      display: "block",
-                      marginBottom: 4,
-                    }}
-                  >
-                    Invoices / Month
-                  </label>
-                  <input
-                    className="form-control form-control-sm"
-                    type="number"
-                    value={codeForm.max_invoices_per_month}
-                    onChange={(e) =>
-                      setCodeForm({
-                        ...codeForm,
-                        max_invoices_per_month: +e.target.value,
-                      })
-                    }
-                  />
+                <div
+                  style={{
+                    gridColumn: "1 / -1",
+                    fontSize: 12,
+                    color: "var(--muted)",
+                  }}
+                >
+                  Max devices and invoices per month use the plan defaults.
                 </div>
               </div>
               <div style={{ display: "flex", gap: 8, marginTop: 16 }}>

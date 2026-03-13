@@ -1,9 +1,12 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, get_db, get_user_company_link, require_admin
 from app.models.company import Company
 from app.models.company_user import CompanyUser
+from app.models.subscription import Subscription
 from app.models.user import User
 from app.schemas.company_user import CompanyUserCreate, CompanyUserRead
 from app.security.security import hash_password
@@ -83,6 +86,60 @@ def build_effective_apps(db: Session, company: Company, link: CompanyUser) -> li
     elif "settings" not in apps:
         apps.append("settings")
     return apps
+
+
+def get_active_subscription(db: Session, company_id: int) -> Subscription | None:
+    subscription = (
+        db.query(Subscription)
+        .filter(Subscription.company_id == company_id)
+        .first()
+    )
+    if not subscription:
+        return None
+    if (subscription.status or "").lower() != "active":
+        return None
+    if subscription.expires_at:
+        expires_at = subscription.expires_at
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        if expires_at < datetime.now(timezone.utc):
+            return None
+    return subscription
+
+
+def count_active_portal_users(db: Session, company_id: int, exclude_user_id: int | None = None) -> int:
+    query = (
+        db.query(CompanyUser)
+        .join(User, User.id == CompanyUser.user_id)
+        .filter(
+            CompanyUser.company_id == company_id,
+            CompanyUser.role == "portal",
+            CompanyUser.is_active == True,
+            User.is_active == True,
+        )
+    )
+    if exclude_user_id is not None:
+        query = query.filter(CompanyUser.user_id != exclude_user_id)
+    return query.count()
+
+
+def enforce_subscription_user_limit(
+    db: Session,
+    company_id: int,
+    exclude_user_id: int | None = None,
+) -> None:
+    subscription = get_active_subscription(db, company_id)
+    if not subscription or not subscription.max_users:
+        return
+    current_count = count_active_portal_users(db, company_id, exclude_user_id)
+    if current_count >= subscription.max_users:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Portal user limit reached for this subscription. "
+                f"Maximum allowed users is {subscription.max_users}, including the portal super user."
+            ),
+        )
 
 
 @router.post("", response_model=CompanyUserRead, dependencies=[Depends(require_admin)])
@@ -178,6 +235,8 @@ def create_manageable_portal_user(
     if not name or not email or not password:
         raise HTTPException(status_code=400, detail="Name, email and password are required")
 
+    enforce_subscription_user_limit(db, company_id)
+
     existing_user = db.query(User).filter(User.email == email).first()
     if existing_user:
         existing_link = db.query(CompanyUser).filter(
@@ -251,6 +310,8 @@ def update_manageable_portal_user(
     if new_password:
         user.hashed_password = hash_password(str(new_password))
     if is_active is not None:
+        if bool(is_active) and (not link.is_active or not user.is_active):
+            enforce_subscription_user_limit(db, company_id, exclude_user_id=user.id)
         user.is_active = bool(is_active)
         link.is_active = bool(is_active)
     if portal_apps is not None:
