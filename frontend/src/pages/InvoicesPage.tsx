@@ -177,6 +177,13 @@ const formatCurrency = (value: number, currency: string) => {
   }
 };
 
+const formatDateTime = (value: string | null | undefined) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleString();
+};
+
 const normalizeUom = (value: string) => (value === "PCS" ? "Units" : value);
 
 const toDateInputValue = (value: string | null) => {
@@ -925,7 +932,7 @@ export default function InvoicesPage({
           inv.reference,
           inv.invoice_type === "credit_note" ? "Credit Note" : "Invoice",
           cust?.name || "",
-          inv.invoice_date ? new Date(inv.invoice_date).toLocaleDateString() : "",
+          formatDateTime(inv.invoice_date),
           inv.status,
           getPaymentStatus(inv.amount_paid, inv.amount_due),
           inv.subtotal || 0,
@@ -1066,10 +1073,10 @@ export default function InvoicesPage({
       : null;
 
   const invoiceDateLabel = selectedInvoice?.invoice_date
-    ? new Date(selectedInvoice.invoice_date).toLocaleDateString()
+    ? formatDateTime(selectedInvoice.invoice_date)
     : selectedInvoice?.fiscalized_at
-      ? new Date(selectedInvoice.fiscalized_at).toLocaleDateString()
-      : "-";
+      ? formatDateTime(selectedInvoice.fiscalized_at)
+      : "—";
 
   const invoiceCurrency = newMode
     ? newCurrency
@@ -1673,7 +1680,7 @@ export default function InvoicesPage({
               <div class="row"><div>Order No:</div><div>${linkedQuotation?.reference || "-"}</div></div>
               <div class="row"><div>Device Serial No:</div><div>${devices.find((d) => d.id === selectedInvoice.device_id)?.serial_number || "-"}</div></div>
               <div class="row"><div>Device ID:</div><div>${devices.find((d) => d.id === selectedInvoice.device_id)?.device_id || "-"}</div></div>
-              <div class="row"><div>Date:</div><div>${invoiceDateLabel}${selectedInvoice.fiscalized_at ? ` ${new Date(selectedInvoice.fiscalized_at).toLocaleTimeString()}` : ""}</div></div>
+              <div class="row"><div>Date:</div><div>${invoiceDateLabel}</div></div>
               <div class="row"><div>Fiscal day No:</div><div>${selectedInvoice.zimra_receipt_counter || "-"}</div></div>
             </div>
 
@@ -1992,9 +1999,7 @@ export default function InvoicesPage({
                                   ? "Credit Note"
                                   : "Invoice",
                                 cust?.name || "",
-                                inv.invoice_date
-                                  ? new Date(inv.invoice_date).toLocaleDateString()
-                                  : "",
+                                formatDateTime(inv.invoice_date),
                                 inv.status,
                                 getPaymentStatus(inv.amount_paid, inv.amount_due),
                                 inv.subtotal || 0,
@@ -2146,11 +2151,7 @@ export default function InvoicesPage({
                               </td>
                               <td>{cust?.name || "—"}</td>
                               <td className="text-muted">
-                                {inv.invoice_date
-                                  ? new Date(
-                                      inv.invoice_date,
-                                    ).toLocaleDateString()
-                                  : "—"}
+                                {formatDateTime(inv.invoice_date) || "—"}
                               </td>
                               <td>
                                 <span
