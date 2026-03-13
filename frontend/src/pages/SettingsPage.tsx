@@ -14,6 +14,7 @@ import { apiFetch } from "../api";
 import { useCompanies, Company } from "../hooks/useCompanies";
 import { useMe } from "../hooks/useMe";
 import type { CurrencyItem, CurrencyRateRead } from "../types/currency";
+import { InlineTabs } from "../components/InlineTabs";
 
 type DeviceBasic = {
   id: number;
@@ -3454,26 +3455,24 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
                   </div> */}
                   </div>
 
-                  <div className="tabs-nav-settings">
-                    <button
-                      className={`tab-btn ${posConfigTab === "employees" ? "tab active" : "tab"}`}
-                      onClick={() => setPosConfigTab("employees")}
-                    >
-                      Employees &amp; Login
-                    </button>
-                    <button
-                      className={`tab-btn ${posConfigTab === "payments" ? "tab active" : "tab"}`}
-                      onClick={() => setPosConfigTab("payments")}
-                    >
-                      Payment Methods
-                    </button>
-                    <button
-                      className={`tab-btn ${posConfigTab === "tills" ? "tab active" : "tab"}`}
-                      onClick={() => setPosConfigTab("tills")}
-                    >
-                      Point Of Sales
-                    </button>
-                  </div>
+                  <InlineTabs
+                    value={posConfigTab}
+                    onChange={(value) => setPosConfigTab(value)}
+                    items={[
+                      {
+                        value: "employees" as const,
+                        label: "Employees & Login",
+                      },
+                      {
+                        value: "payments" as const,
+                        label: "Payment Methods",
+                      },
+                      {
+                        value: "tills" as const,
+                        label: "Point Of Sales",
+                      },
+                    ]}
+                  />
 
                   {posError && (
                     <div
@@ -5962,33 +5961,28 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
                   <h4>{isPortalSuperUser ? "Portal Users" : "Your Account"}</h4>
                 </div>
                 {isPortalSuperUser ? (
-                  <div className="settings-card">
-                    <div className="settings-inline-tabs">
-                      <button
-                        type="button"
-                        className={`settings-inline-tab ${portalUsersTab === "add" ? "active" : ""}`}
-                        onClick={() => setPortalUsersTab("add")}
-                      >
-                        <UserPlus size={16} />
-                        <span>{portalUserEditingId ? "Edit User" : "Add User"}</span>
-                      </button>
-                      <button
-                        type="button"
-                        className={`settings-inline-tab ${portalUsersTab === "manage" ? "active" : ""}`}
-                        onClick={() => setPortalUsersTab("manage")}
-                      >
-                        <Users size={16} />
-                        <span>Manage Users</span>
-                      </button>
-                      <button
-                        type="button"
-                        className={`settings-inline-tab ${portalUsersTab === "audit" ? "active" : ""}`}
-                        onClick={() => setPortalUsersTab("audit")}
-                      >
-                        <Monitor size={16} />
-                        <span>Audit Trail</span>
-                      </button>
-                    </div>
+                    <div className="settings-card">
+                    <InlineTabs
+                      value={portalUsersTab}
+                      onChange={(value) => setPortalUsersTab(value)}
+                      items={[
+                        {
+                          value: "add" as const,
+                          icon: <UserPlus size={16} />,
+                          label: portalUserEditingId ? "Edit User" : "Add User",
+                        },
+                        {
+                          value: "manage" as const,
+                          icon: <Users size={16} />,
+                          label: "Manage Users",
+                        },
+                        {
+                          value: "audit" as const,
+                          icon: <Monitor size={16} />,
+                          label: "Audit Trail",
+                        },
+                      ]}
+                    />
                     {portalUsersTab === "add" ? (
                       <>
                         <div className="form-grid">

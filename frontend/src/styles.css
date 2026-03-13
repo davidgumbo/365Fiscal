@@ -12036,6 +12036,11 @@ button.danger:not(.icon-btn):not(.device-icon-btn):disabled {
   transition: background-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
 }
 
+.settings-inline-tab-icon {
+  display: inline-flex;
+  align-items: center;
+}
+
 .settings-inline-tab.active {
   background: #fff;
   color: var(--blue-700);
@@ -12094,4 +12099,3 @@ button.danger:not(.icon-btn):not(.device-icon-btn):disabled {
   align-items: center;
   gap: 8px;
 }
-
