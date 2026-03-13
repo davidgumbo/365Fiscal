@@ -158,6 +158,7 @@ function buildReceiptHtml(
   device: Device | null,
 ): string {
   const lines = order.lines || [];
+  const hasFiscalDevice = Boolean(device?.device_id);
   const payLabel =
     order.payment_method === "split"
       ? "Split"
@@ -174,48 +175,79 @@ function buildReceiptHtml(
     .filter(Boolean)
     .join("<br>");
 
-  if (!device?.device_id) {
+  if (!hasFiscalDevice) {
     return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Receipt - ${order.reference}</title>
 <style>
   @page { size: 80mm auto; margin: 0; }
   * { box-sizing: border-box; }
-  body { font-family: Arial, Helvetica, sans-serif; font-size: 12px; width: 80mm; padding: 5mm; color: #111; background: #fff; }
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 12px; width: 80mm; padding: 5mm; color: #334155; background: #fff; }
   .center { text-align: center; }
-  .logo { max-width: 42mm; max-height: 20mm; margin: 0 auto 8px; display: block; }
-  .company { font-size: 12px; line-height: 1.45; }
-  .served { margin-top: 8px; font-size: 12px; }
-  .receipt-no { font-size: 18px; font-weight: 700; margin: 8px 0 14px; }
-  .item { margin-bottom: 12px; }
-  .item-head { display: flex; justify-content: space-between; gap: 10px; font-weight: 700; font-size: 11px; }
-  .item-name { flex: 1; text-transform: uppercase; }
-  .item-meta { margin-top: 4px; font-size: 12px; }
-  .qty-box { display: inline-block; min-width: 32px; padding: 1px 4px; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: 700; }
-  .divider { border-top: 1px dashed #666; margin: 12px 0; }
-  .total { display: flex; justify-content: space-between; font-size: 14px; }
-  .amount { font-weight: 500; }
+  .brand { font-size: 24px; font-weight: 800; color: #0f172a; margin-bottom: 2px; }
+  .brand-accent { color: #dc2626; }
+  .logo { max-width: 42mm; max-height: 20mm; margin: 0 auto 6px; display: block; }
+  .company-title { font-size: 18px; font-weight: 800; color: #0f172a; margin-bottom: 8px; }
+  .company { font-size: 11px; line-height: 1.45; color: #64748b; }
+  .divider { border-top: 1px dashed #cbd5e1; margin: 12px 0; }
+  .receipt-meta { text-align: center; font-size: 11px; line-height: 1.45; color: #94a3b8; }
+  .receipt-table-head, .receipt-row { display: grid; grid-template-columns: 1.8fr 0.6fr 0.9fr 0.9fr; gap: 8px; }
+  .receipt-table-head { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; padding: 0 0 8px; border-bottom: 1px solid #cbd5e1; }
+  .receipt-table-head span:nth-child(n+2), .receipt-row span:nth-child(n+2) { text-align: right; }
+  .receipt-row { padding: 10px 0; border-bottom: 1px solid #e2e8f0; font-size: 11px; color: #334155; }
+  .receipt-item-name { font-weight: 700; color: #0f172a; }
+  .receipt-summary { margin-top: 10px; }
+  .summary-row { display: flex; justify-content: space-between; padding: 3px 0; font-size: 11px; color: #475569; }
+  .grand { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 800; color: #0f172a; border-top: 2px solid #334155; border-bottom: 2px solid #334155; padding: 8px 0; margin: 8px 0; }
+  .payment-block { margin-top: 10px; }
+  .footer { margin-top: 18px; text-align: center; font-size: 11px; color: #94a3b8; line-height: 1.45; }
 </style></head><body>
   <div class="center">
+    <div class="brand"><span class="brand-accent">365</span>Fiscal</div>
     ${company?.logo_data ? `<img class="logo" src="${company.logo_data}" alt="Logo" />` : ""}
-    <div class="company">${company?.name || ""}</div>
-    ${company?.tin ? `<div class="company">Tax ID: ${company.tin}</div>` : ""}
+    <div class="company-title">${company?.name || ""}</div>
+    ${company?.address ? `<div class="company">${company.address}</div>` : ""}
+    ${company?.phone ? `<div class="company">Tel: ${company.phone}</div>` : ""}
     ${company?.email ? `<div class="company">${company.email}</div>` : ""}
-    <div class="served">Served by ${order.cashier_name || "Cashier"}</div>
-    <div class="receipt-no">${order.reference.replace(/\D/g, "").slice(-6) || order.id}</div>
+    ${(company?.tin || company?.vat) ? `<div class="company">${company?.tin ? `TIN: ${company.tin}` : ""}${company?.tin && company?.vat ? " | " : ""}${company?.vat ? `VAT: ${company.vat}` : ""}</div>` : ""}
+  </div>
+  <div class="divider"></div>
+  <div class="receipt-meta">
+    <div>${order.reference}</div>
+    <div>${new Date(order.order_date).toLocaleString()}</div>
+    ${session?.name ? `<div>Session: ${session.name}</div>` : ""}
+    ${order.cashier_name ? `<div>Cashier: ${order.cashier_name}</div>` : ""}
+    ${customer?.name ? `<div>Customer: ${customer.name}</div>` : ""}
+  </div>
+  <div class="divider"></div>
+  <div class="receipt-table-head">
+    <span>Item</span>
+    <span>Qty</span>
+    <span>Price</span>
+    <span>Total</span>
   </div>
   ${lines
     .map(
       (l) => `
-    <div class="item">
-      <div class="item-head">
-        <span class="item-name">${l.description}</span>
-        <span>${order.currency} ${fmt(l.total_price)}</span>
-      </div>
-      <div class="item-meta"><span class="qty-box">${fmt(l.quantity)}</span> x ${order.currency} ${fmt(l.unit_price)} / ${l.uom}</div>
+    <div class="receipt-row">
+      <span class="receipt-item-name">${l.description}</span>
+      <span>${Number.isFinite(l.quantity) ? Number(l.quantity) : 0}</span>
+      <span>${fmt(l.unit_price)}</span>
+      <span>${fmt(l.total_price)}</span>
     </div>`,
     )
     .join("")}
-  <div class="divider"></div>
-  <div class="total"><span>TOTAL</span><span class="amount">${order.currency} ${fmt(order.total_amount)}</span></div>
+  <div class="receipt-summary">
+    <div class="summary-row"><span>Subtotal</span><span>${order.currency} ${fmt(order.subtotal)}</span></div>
+    <div class="summary-row"><span>Tax</span><span>${order.currency} ${fmt(order.tax_amount)}</span></div>
+  </div>
+  <div class="grand"><span>TOTAL</span><span>${order.currency} ${fmt(order.total_amount)}</span></div>
+  <div class="payment-block">
+    <div class="summary-row"><span>Payment</span><span>${payLabel}</span></div>
+    ${order.cash_amount ? `<div class="summary-row"><span>Cash</span><span>${order.currency} ${fmt(order.cash_amount)}</span></div>` : ""}
+    ${order.card_amount ? `<div class="summary-row"><span>Card</span><span>${order.currency} ${fmt(order.card_amount)}</span></div>` : ""}
+    ${order.mobile_amount ? `<div class="summary-row"><span>Mobile</span><span>${order.currency} ${fmt(order.mobile_amount)}</span></div>` : ""}
+    ${order.change_amount ? `<div class="summary-row"><span>Change</span><span>${order.currency} ${fmt(order.change_amount)}</span></div>` : ""}
+  </div>
+  <div class="footer">Thank you for your business!<br>Powered by 365 Fiscal</div>
 </body></html>`;
   }
 
@@ -1607,6 +1639,7 @@ export default function POSPage() {
 
   // Get the active device for this session
   const activeDevice = devices.find((d) => d.id === session?.device_id) || null;
+  const receiptHasFiscalDevice = Boolean(activeDevice?.device_id);
 
   const handlePrint = () => {
     if (lastOrder)
@@ -3733,9 +3766,16 @@ export default function POSPage() {
             className="pos-dialog pos-dialog-receipt"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="pos-receipt">
+            <div
+              className={`pos-receipt${receiptHasFiscalDevice ? "" : " pos-receipt-non-fiscal"}`}
+            >
               {/* Company header with logo */}
               <div className="pos-receipt-company">
+                {!receiptHasFiscalDevice && (
+                  <div className="pos-receipt-brand">
+                    <span className="pos-receipt-brand-accent">365</span>Fiscal
+                  </div>
+                )}
                 {companyInfo?.logo_data && (
                   <img
                     className="pos-receipt-logo"
@@ -3811,7 +3851,9 @@ export default function POSPage() {
                     <span className="pos-receipt-item-name">
                       {l.description}
                     </span>
-                    <span>{l.quantity}</span>
+                    <span>
+                      {Number.isFinite(l.quantity) ? Number(l.quantity) : 0}
+                    </span>
                     <span>{fmt(l.unit_price)}</span>
                     <span>{fmt(l.total_price)}</span>
                   </div>
@@ -3878,7 +3920,7 @@ export default function POSPage() {
               </div>
 
               {/* ZIMRA Verification (only show code, not "Fiscalized" badge) */}
-              {lastOrder.zimra_verification_code && (
+              {receiptHasFiscalDevice && lastOrder.zimra_verification_code && (
                 <div className="pos-receipt-fiscal">
                   <div className="pos-receipt-fiscal-label">
                     ZIMRA Verification
