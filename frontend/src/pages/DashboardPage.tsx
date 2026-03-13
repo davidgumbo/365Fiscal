@@ -7,7 +7,14 @@ import { TablePagination } from "../components/TablePagination";
 import { useMe } from "../hooks/useMe";
 import { useCompanies } from "../hooks/useCompanies";
 import type { SidebarSection } from "../types/sidebar";
-import { LayoutDashboard, FileText, ReceiptText, ShoppingCart, CreditCard, Box } from "lucide-react";
+import {
+  LayoutDashboard,
+  FileText,
+  ReceiptText,
+  ShoppingCart,
+  CreditCard,
+  Box,
+} from "lucide-react";
 import { buildRevenueTrendChart } from "../utils/revenueTrend";
 
 interface DashboardMetrics {
@@ -522,17 +529,22 @@ export default function DashboardPage() {
       .sort(
         (a, b) =>
           (b.amount_due || 0) - (a.amount_due || 0) ||
-          (new Date(b.fiscalized_at || b.created_at || "").getTime() ||
-            0) -
+          (new Date(b.fiscalized_at || b.created_at || "").getTime() || 0) -
             (new Date(a.fiscalized_at || a.created_at || "").getTime() || 0),
       );
   }, [filteredInvoices]);
 
   const invoicePaidShare = invoiceStats.count
-    ? Math.min(100, (invoicePaymentStats.paidInvoices / invoiceStats.count) * 100)
+    ? Math.min(
+        100,
+        (invoicePaymentStats.paidInvoices / invoiceStats.count) * 100,
+      )
     : 0;
   const invoicePartialShare = invoiceStats.count
-    ? Math.min(100, (invoicePaymentStats.partialPaid / invoiceStats.count) * 100)
+    ? Math.min(
+        100,
+        (invoicePaymentStats.partialPaid / invoiceStats.count) * 100,
+      )
     : 0;
   const invoiceDueShare = invoiceStats.total
     ? Math.min(100, (invoicePaymentStats.totalDue / invoiceStats.total) * 100)
@@ -909,15 +921,12 @@ export default function DashboardPage() {
       {error && <div className="dashboard-error">{error}</div>}
 
       <div className="dashboard-layout">
-        <Sidebar sections={dashboardSidebarSections} className="dashboard-sidebar" />
+        <Sidebar
+          sections={dashboardSidebarSections}
+          className="dashboard-sidebar"
+        />
         <div className="dashboard-main">
           <div className="dashboard-header">
-            <div>
-              <h1>Dashboard</h1>
-              <p className="dashboard-subtitle">
-                {`Review ${activeAppTitle} stats for the selected company.`}
-              </p>
-            </div>
             <div className="dashboard-actions">
               <div className="date-range">
                 <label htmlFor="from-date">From:</label>
@@ -1002,7 +1011,9 @@ export default function DashboardPage() {
               <div className="table-card full-width card-bg-shadow">
                 <div className="table-header">
                   <h3>
-                    {isAdmin ? "Company Status Overview" : "Your Company Status"}
+                    {isAdmin
+                      ? "Company Status Overview"
+                      : "Your Company Status"}
                   </h3>
                   {isAdmin && (
                     <NavLink to="/companies" className="view-all-link">
@@ -1028,7 +1039,9 @@ export default function DashboardPage() {
                         <td>
                           <span
                             className={
-                              company.devices_online > 0 ? "text-green" : "text-red"
+                              company.devices_online > 0
+                                ? "text-green"
+                                : "text-red"
                             }
                           >
                             {company.devices_online}/{company.device_count}
@@ -1098,7 +1111,8 @@ export default function DashboardPage() {
                 </span>
               </div>
               {filteredCompanyStatus.length > 0 &&
-                filteredCompanyStatus[0].certificate_days_remaining !== null && (
+                filteredCompanyStatus[0].certificate_days_remaining !==
+                  null && (
                   <div className="footer-stat">
                     <span className="footer-label">Certificate Days</span>
                     <span className="footer-value">
@@ -1130,11 +1144,13 @@ export default function DashboardPage() {
                       <tr key={log.id}>
                         <td>
                           <span
-                            className={`action-badge ${log.action.includes("create")
-                              ? "green"
-                              : log.action.includes("delete")
-                                ? "red"
-                                : "blue"}`}
+                            className={`action-badge ${
+                              log.action.includes("create")
+                                ? "green"
+                                : log.action.includes("delete")
+                                  ? "red"
+                                  : "blue"
+                            }`}
                           >
                             {log.action.replace(/_/g, " ")}
                           </span>
@@ -1173,7 +1189,9 @@ export default function DashboardPage() {
                   <FileTextIcon />
                 </div>
                 <div className="kpi-content">
-                  <div className="kpi-value">{formatCurrency(invoiceStats.total)}</div>
+                  <div className="kpi-value">
+                    {formatCurrency(invoiceStats.total)}
+                  </div>
                   <div className="kpi-label">Revenue</div>
                 </div>
                 <div className="kpi-badge">
@@ -1215,7 +1233,9 @@ export default function DashboardPage() {
             <div className="dashboard-charts">
               <div className="chart-card card-bg-shadow">
                 <div className="chart-header">
-                  <h3 className="bg-gray-200 py-1 px-2 rounded-lg">Revenue Trend</h3>
+                  <h3 className="bg-gray-200 py-1 px-2 rounded-lg">
+                    Revenue Trend
+                  </h3>
                   <span className="chart-period">{trendPeriodLabel}</span>
                 </div>
                 {hasRevenueTrend ? (
@@ -1251,7 +1271,10 @@ export default function DashboardPage() {
                               </div>
                             ))}
                           </div>
-                          <div className="trend-bar-label-row" aria-hidden="true">
+                          <div
+                            className="trend-bar-label-row"
+                            aria-hidden="true"
+                          >
                             {revenueTrendChart.bars.map((bar) => (
                               <span
                                 key={`label-${bar.key}`}
@@ -1293,7 +1316,9 @@ export default function DashboardPage() {
 
               <div className="chart-card card-bg-shadow">
                 <div className="chart-header">
-                  <h3 className="bg-gray-200 py-1 px-2 rounded-lg">Invoice Status</h3>
+                  <h3 className="bg-gray-200 py-1 px-2 rounded-lg">
+                    Invoice Status
+                  </h3>
                   <span className="chart-period">Current period</span>
                 </div>
                 <div className="donut-chart">
@@ -1336,7 +1361,9 @@ export default function DashboardPage() {
 
             <div className="chart-card card-bg-shadow">
               <div className="chart-header">
-                <h3 className="bg-gray-200 py-1 px-2 rounded-lg">Payment Coverage</h3>
+                <h3 className="bg-gray-200 py-1 px-2 rounded-lg">
+                  Payment Coverage
+                </h3>
                 <span className="chart-period">Invoice collection</span>
               </div>
               <div className="stats-list">
@@ -1396,7 +1423,9 @@ export default function DashboardPage() {
 
             <div className="table-card card-bg-shadow">
               <div className="table-header">
-                <h3 className="bg-gray-200 py-1 px-2 rounded-lg">Recent Invoices</h3>
+                <h3 className="bg-gray-200 py-1 px-2 rounded-lg">
+                  Recent Invoices
+                </h3>
                 <NavLink to="/invoices" className="view-all-link">
                   View All →
                 </NavLink>
@@ -1498,7 +1527,9 @@ export default function DashboardPage() {
             <div className="dashboard-charts">
               <div className="chart-card card-bg-shadow">
                 <div className="chart-header">
-                  <h3 className="bg-gray-200 py-1 px-2 rounded-lg">Quotations Pipeline</h3>
+                  <h3 className="bg-gray-200 py-1 px-2 rounded-lg">
+                    Quotations Pipeline
+                  </h3>
                   <span className="chart-period">Workflow status</span>
                 </div>
                 <div className="stats-list">
@@ -1508,7 +1539,9 @@ export default function DashboardPage() {
                     </div>
                     <div className="stat-info">
                       <span className="stat-label">Accepted</span>
-                      <span className="stat-value">{quotationStats.accepted}</span>
+                      <span className="stat-value">
+                        {quotationStats.accepted}
+                      </span>
                     </div>
                     <div className="stat-bar">
                       <div
@@ -1559,7 +1592,9 @@ export default function DashboardPage() {
                     </div>
                     <div className="stat-info">
                       <span className="stat-label">Converted</span>
-                      <span className="stat-value">{quotationStats.converted}</span>
+                      <span className="stat-value">
+                        {quotationStats.converted}
+                      </span>
                     </div>
                     <div className="stat-bar">
                       <div
@@ -1577,7 +1612,9 @@ export default function DashboardPage() {
             <div className="dashboard-tables">
               <div className="table-card card-bg-shadow">
                 <div className="table-header">
-                  <h3 className="bg-gray-200 py-1 px-2 rounded-lg">Recent Quotations</h3>
+                  <h3 className="bg-gray-200 py-1 px-2 rounded-lg">
+                    Recent Quotations
+                  </h3>
                   <NavLink to="/quotations" className="view-all-link">
                     View All →
                   </NavLink>
@@ -1643,7 +1680,9 @@ export default function DashboardPage() {
                   <FileTextIcon />
                 </div>
                 <div className="kpi-content">
-                  <div className="kpi-value">{formatCurrency(purchaseStats.total)}</div>
+                  <div className="kpi-value">
+                    {formatCurrency(purchaseStats.total)}
+                  </div>
                   <div className="kpi-label">Total Spend</div>
                 </div>
               </div>
@@ -1663,7 +1702,9 @@ export default function DashboardPage() {
             {filteredPurchases.length > 0 && (
               <div className="chart-card card-bg-shadow">
                 <div className="chart-header">
-                  <h3 className="bg-gray-200 py-1 px-2 rounded-lg">Purchase Status</h3>
+                  <h3 className="bg-gray-200 py-1 px-2 rounded-lg">
+                    Purchase Status
+                  </h3>
                   <span className="chart-period">{`Current snapshot`}</span>
                 </div>
                 <div className="stats-list">
@@ -1685,7 +1726,9 @@ export default function DashboardPage() {
                           className="stat-fill gray"
                           style={{
                             width: `${
-                              (entry.count / Math.max(filteredPurchases.length, 1)) * 100
+                              (entry.count /
+                                Math.max(filteredPurchases.length, 1)) *
+                              100
                             }%`,
                           }}
                         ></div>
@@ -1698,7 +1741,9 @@ export default function DashboardPage() {
 
             <div className="table-card card-bg-shadow">
               <div className="table-header">
-                <h3 className="bg-gray-200 py-1 px-2 rounded-lg">Recent Purchase Orders</h3>
+                <h3 className="bg-gray-200 py-1 px-2 rounded-lg">
+                  Recent Purchase Orders
+                </h3>
                 <NavLink to="/purchases" className="view-all-link">
                   View All →
                 </NavLink>
@@ -1762,7 +1807,9 @@ export default function DashboardPage() {
                   <CreditCard size={18} />
                 </div>
                 <div className="kpi-content">
-                  <div className="kpi-value">{paymentSummary.totalPayments}</div>
+                  <div className="kpi-value">
+                    {paymentSummary.totalPayments}
+                  </div>
                   <div className="kpi-label">Payments</div>
                 </div>
               </div>
@@ -1799,7 +1846,9 @@ export default function DashboardPage() {
 
             <div className="chart-card card-bg-shadow">
               <div className="chart-header">
-                <h3 className="bg-gray-200 py-1 px-2 rounded-lg">Accounts Receivable</h3>
+                <h3 className="bg-gray-200 py-1 px-2 rounded-lg">
+                  Accounts Receivable
+                </h3>
                 <span className="chart-period">Outstanding invoices</span>
               </div>
               <div className="stats-list">
@@ -1809,7 +1858,9 @@ export default function DashboardPage() {
                   </div>
                   <div className="stat-info">
                     <span className="stat-label">Invoices Paid</span>
-                    <span className="stat-value">{paymentSummary.invoicesPaid}</span>
+                    <span className="stat-value">
+                      {paymentSummary.invoicesPaid}
+                    </span>
                   </div>
                   <div className="stat-bar">
                     <div
@@ -1826,7 +1877,9 @@ export default function DashboardPage() {
                   </div>
                   <div className="stat-info">
                     <span className="stat-label">Partially Paid</span>
-                    <span className="stat-value">{paymentSummary.invoicesPartial}</span>
+                    <span className="stat-value">
+                      {paymentSummary.invoicesPartial}
+                    </span>
                   </div>
                   <div className="stat-bar">
                     <div
@@ -1862,7 +1915,9 @@ export default function DashboardPage() {
             {invoicesWithDue.length > 0 && (
               <div className="table-card card-bg-shadow">
                 <div className="table-header">
-                  <h3 className="bg-gray-200 py-1 px-2 rounded-lg">Top Due Invoices</h3>
+                  <h3 className="bg-gray-200 py-1 px-2 rounded-lg">
+                    Top Due Invoices
+                  </h3>
                 </div>
                 <table className="dashboard-table">
                   <thead>
@@ -1885,9 +1940,13 @@ export default function DashboardPage() {
                         </td>
                         <td className="date-cell">
                           {invoice.fiscalized_at
-                            ? new Date(invoice.fiscalized_at).toLocaleDateString()
+                            ? new Date(
+                                invoice.fiscalized_at,
+                              ).toLocaleDateString()
                             : invoice.created_at
-                              ? new Date(invoice.created_at).toLocaleDateString()
+                              ? new Date(
+                                  invoice.created_at,
+                                ).toLocaleDateString()
                               : "-"}
                         </td>
                       </tr>
@@ -1951,7 +2010,9 @@ export default function DashboardPage() {
             {topProducts.length > 0 ? (
               <div className="table-card card-bg-shadow">
                 <div className="table-header">
-                  <h3 className="bg-gray-200 py-1 px-2 rounded-lg">Top Products</h3>
+                  <h3 className="bg-gray-200 py-1 px-2 rounded-lg">
+                    Top Products
+                  </h3>
                 </div>
                 <table className="dashboard-table">
                   <thead>
@@ -1964,9 +2025,12 @@ export default function DashboardPage() {
                   </thead>
                   <tbody>
                     {topProducts.map((product) => {
-                      const marginValue = product.sale_price - product.purchase_cost;
+                      const marginValue =
+                        product.sale_price - product.purchase_cost;
                       const marginPercent = product.purchase_cost
-                        ? Math.round((marginValue / product.purchase_cost) * 100)
+                        ? Math.round(
+                            (marginValue / product.purchase_cost) * 100,
+                          )
                         : 0;
                       return (
                         <tr key={product.id}>
@@ -1975,7 +2039,10 @@ export default function DashboardPage() {
                           <td>{formatCurrency(product.purchase_cost)}</td>
                           <td>
                             {formatCurrency(marginValue)}
-                            <span className="stat-label"> ({marginPercent}%)</span>
+                            <span className="stat-label">
+                              {" "}
+                              ({marginPercent}%)
+                            </span>
                           </td>
                         </tr>
                       );

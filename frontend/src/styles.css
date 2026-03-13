@@ -7867,7 +7867,6 @@ button.danger:hover {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 2em;
   position: sticky;
   top: 0;
   z-index: 20;
