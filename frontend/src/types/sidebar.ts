@@ -16,6 +16,8 @@ export type SidebarItem = {
   isActive?: boolean;
   onClick: () => void;
   dropdownItems?: SidebarDropdownItem[];
+  iconColor?: string;
+  iconBackground?: string;
 };
 
 export type SidebarSection = {

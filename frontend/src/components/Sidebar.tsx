@@ -1,4 +1,4 @@
-import { Fragment, type KeyboardEvent } from "react";
+import { Fragment, type CSSProperties, type KeyboardEvent } from "react";
 import type { SidebarSection } from "../types/sidebar";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
@@ -20,6 +20,13 @@ type SidebarProps = {
 
 export function Sidebar({ sections, className }: SidebarProps) {
   const wrapperClass = ["o-sidebar", className].filter(Boolean).join(" ");
+  const buildIconStyle = (
+    color?: string,
+    background?: string,
+  ): CSSProperties => ({
+    "--sidebar-icon-color": color,
+    "--sidebar-icon-bg": background,
+  } as CSSProperties);
 
   return (
     <div className={wrapperClass}>
@@ -32,6 +39,10 @@ export function Sidebar({ sections, className }: SidebarProps) {
               (dropdownItem) => dropdownItem.isActive,
             );
             const dropdownOpen = hasDropdown && (item.isActive || dropdownActive);
+            const iconStyle = buildIconStyle(
+              item.iconColor,
+              item.iconBackground,
+            );
 
             return (
               <Fragment key={item.id}>
@@ -44,7 +55,14 @@ export function Sidebar({ sections, className }: SidebarProps) {
                   onKeyDown={(event) => handleActivationKey(event, item.onClick)}
                 >
                   <span className="o-sidebar-item-label">
-                    {item.icon}
+                    {item.icon && (
+                      <span
+                        className="o-sidebar-item-icon"
+                        style={iconStyle}
+                      >
+                        {item.icon}
+                      </span>
+                    )}
                     <span className="o-sidebar-item-text">{item.label}</span>
                   </span>
                   {hasDropdown && (

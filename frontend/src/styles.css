@@ -5784,6 +5784,32 @@ button.danger:hover {
   transition: all 0.15s;
 }
 
+.o-sidebar-item-icon {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--sidebar-icon-bg, transparent);
+  color: var(--sidebar-icon-color, currentColor);
+  border: 1px solid transparent;
+  transition: background 0.2s ease, color 0.2s ease, border 0.2s ease;
+}
+
+.o-sidebar-item-icon svg {
+  width: 18px;
+  height: 18px;
+  color: inherit;
+  stroke: currentColor;
+  fill: none;
+}
+
+.o-sidebar-item.active .o-sidebar-item-icon {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
 .o-sidebar-item:hover {
   background: var(--gray-200);
 }

@@ -141,6 +141,33 @@ const formatStatusLabel = (value?: string) => {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
+const APP_ICON_STYLE: Record<DashboardAppKey, { color: string; background: string }> = {
+  overview: {
+    color: "var(--blue-600)",
+    background: "rgba(59, 130, 246, 0.12)",
+  },
+  invoices: {
+    color: "var(--emerald-600)",
+    background: "rgba(16, 185, 129, 0.15)",
+  },
+  quotations: {
+    color: "var(--violet-600)",
+    background: "rgba(129, 140, 248, 0.15)",
+  },
+  purchases: {
+    color: "var(--amber-600)",
+    background: "rgba(251, 191, 36, 0.15)",
+  },
+  payments: {
+    color: "var(--cyan-600)",
+    background: "rgba(6, 182, 212, 0.15)",
+  },
+  inventory: {
+    color: "var(--teal-600)",
+    background: "rgba(20, 184, 166, 0.15)",
+  },
+};
+
 // SVG Icons
 const BuildingIcon = () => (
   <svg
@@ -731,9 +758,10 @@ export default function DashboardPage() {
             id: "overview",
             label: "Overview",
             icon: <LayoutDashboard size={18} />,
-            color: "var(--amber-600)",
             isActive: activeApp === "overview",
             onClick: () => setActiveApp("overview"),
+            iconColor: APP_ICON_STYLE.overview.color,
+            iconBackground: APP_ICON_STYLE.overview.background,
           },
           {
             id: "invoices",
@@ -742,6 +770,8 @@ export default function DashboardPage() {
             badge: formatBadge(invoiceStats.count),
             isActive: activeApp === "invoices",
             onClick: () => setActiveApp("invoices"),
+            iconColor: APP_ICON_STYLE.invoices.color,
+            iconBackground: APP_ICON_STYLE.invoices.background,
           },
           {
             id: "quotations",
@@ -750,6 +780,8 @@ export default function DashboardPage() {
             badge: formatBadge(quotationStats.count),
             isActive: activeApp === "quotations",
             onClick: () => setActiveApp("quotations"),
+            iconColor: APP_ICON_STYLE.quotations.color,
+            iconBackground: APP_ICON_STYLE.quotations.background,
           },
           {
             id: "purchases",
@@ -758,6 +790,8 @@ export default function DashboardPage() {
             badge: formatBadge(purchaseStats.count),
             isActive: activeApp === "purchases",
             onClick: () => setActiveApp("purchases"),
+            iconColor: APP_ICON_STYLE.purchases.color,
+            iconBackground: APP_ICON_STYLE.purchases.background,
           },
           {
             id: "payments",
@@ -766,6 +800,8 @@ export default function DashboardPage() {
             badge: formatBadge(paymentSummary.totalPayments),
             isActive: activeApp === "payments",
             onClick: () => setActiveApp("payments"),
+            iconColor: APP_ICON_STYLE.payments.color,
+            iconBackground: APP_ICON_STYLE.payments.background,
           },
           {
             id: "inventory",
@@ -774,6 +810,8 @@ export default function DashboardPage() {
             badge: formatBadge(inventorySummary.count),
             isActive: activeApp === "inventory",
             onClick: () => setActiveApp("inventory"),
+            iconColor: APP_ICON_STYLE.inventory.color,
+            iconBackground: APP_ICON_STYLE.inventory.background,
           },
         ],
       },
