@@ -4959,7 +4959,6 @@ button.danger:hover {
   position: sticky;
   top: 0;
   z-index: 20;
-  background: var(--white-500);
   padding: 12px 0;
 }
 
@@ -6490,15 +6489,10 @@ button.danger:hover {
   gap: 16px;
   padding: 14px 18px;
   margin-bottom: 20px;
-  background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
-  border: 1px solid var(--stroke);
-  border-radius: 16px;
-  box-shadow: var(--shadow-soft);
 }
 
 .page-content .report-filter-bar {
   top: 0;
-  background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
 }
 
 .report-filter-group {
