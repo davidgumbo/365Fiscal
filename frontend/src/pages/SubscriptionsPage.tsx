@@ -1049,156 +1049,200 @@ export default function SubscriptionsPage() {
           {showEditSubForm && currentSub && (
             <div
               style={{
-                marginTop: 24,
-                background: "var(--bg-card)",
-                borderRadius: 12,
-                border: "1px solid var(--border)",
-                padding: 28,
+                position: "fixed",
+                inset: 0,
+                zIndex: 9999,
+                background: "rgba(15, 23, 42, 0.42)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: 24,
               }}
             >
-              <h4 style={{ margin: "0 0 20px", fontWeight: 700 }}>
-                Edit Subscription
-              </h4>
               <div
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: 16,
+                  width: "min(760px, 100%)",
+                  maxHeight: "90vh",
+                  overflowY: "auto",
+                  background: "var(--bg-card)",
+                  borderRadius: 18,
+                  border: "1px solid var(--border)",
+                  boxShadow: "0 24px 60px rgba(15, 23, 42, 0.22)",
                 }}
               >
-                <div>
-                  <label
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 600,
-                      display: "block",
-                      marginBottom: 4,
-                    }}
-                  >
-                    Plan
-                  </label>
-                  <select
-                    className="form-control"
-                    value={subForm.plan}
-                    onChange={(e) =>
-                      setSubForm({ ...subForm, plan: e.target.value })
-                    }
-                  >
-                    {PLANS.filter((p) => p.value !== "trial").map((p) => (
-                      <option key={p.value} value={p.value}>
-                        {p.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 600,
-                      display: "block",
-                      marginBottom: 4,
-                    }}
-                  >
-                    Status
-                  </label>
-                  <select
-                    className="form-control"
-                    value={subForm.status}
-                    onChange={(e) =>
-                      setSubForm({ ...subForm, status: e.target.value })
-                    }
-                  >
-                    <option value="active">Active</option>
-                    <option value="suspended">Suspended</option>
-                    <option value="expired">Expired</option>
-                  </select>
-                </div>
-                <div>
-                  <label
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 600,
-                      display: "block",
-                      marginBottom: 4,
-                    }}
-                  >
-                    Expiry Date
-                  </label>
-                  <input
-                    className="form-control"
-                    type="date"
-                    value={subForm.expires_at}
-                    onChange={(e) =>
-                      setSubForm({ ...subForm, expires_at: e.target.value })
-                    }
-                  />
-                </div>
-                <div>
-                  <label
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 600,
-                      display: "block",
-                      marginBottom: 4,
-                    }}
-                  >
-                    Max Users
-                  </label>
-                  <input
-                    className="form-control"
-                    type="number"
-                    min={1}
-                    value={subForm.max_users}
-                    onChange={(e) =>
-                      setSubForm({ ...subForm, max_users: +e.target.value })
-                    }
-                  />
-                </div>
-                <div style={{ gridColumn: "1 / -1" }}>
-                  <label
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 600,
-                      display: "block",
-                      marginBottom: 4,
-                    }}
-                  >
-                    Notes
-                  </label>
-                  <textarea
-                    className="form-control"
-                    rows={3}
-                    value={subForm.notes}
-                    onChange={(e) =>
-                      setSubForm({ ...subForm, notes: e.target.value })
-                    }
-                  />
-                </div>
-              </div>
-              <div style={{ display: "flex", gap: 8, marginTop: 20 }}>
-                <button
-                  className="o-btn o-btn-primary"
-                  onClick={() => {
-                    handleUpdateSubscription({
-                      plan: subForm.plan,
-                      status: subForm.status,
-                      max_users: subForm.max_users,
-                      notes: subForm.notes,
-                      expires_at: subForm.expires_at
-                        ? new Date(`${subForm.expires_at}T23:59:59`).toISOString()
-                        : currentSub.expires_at,
-                    });
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "22px 24px 16px",
+                    borderBottom: "1px solid var(--border)",
                   }}
                 >
-                  Save Changes
-                </button>
-                <button
-                  className="o-btn o-btn-secondary"
-                  onClick={() => setShowEditSubForm(false)}
+                  <h4 style={{ margin: 0, fontWeight: 700, fontSize: 22 }}>
+                    Edit Subscription
+                  </h4>
+                  <button
+                    className="o-btn o-btn-secondary"
+                    onClick={() => setShowEditSubForm(false)}
+                    style={{ minWidth: 0, padding: "8px 12px" }}
+                  >
+                    Close
+                  </button>
+                </div>
+                <div style={{ padding: 24 }}>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: 16,
+                    }}
+                  >
+                    <div>
+                      <label
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 600,
+                          display: "block",
+                          marginBottom: 4,
+                        }}
+                      >
+                        Plan
+                      </label>
+                      <select
+                        className="form-control"
+                        value={subForm.plan}
+                        onChange={(e) =>
+                          setSubForm({ ...subForm, plan: e.target.value })
+                        }
+                      >
+                        {PLANS.filter((p) => p.value !== "trial").map((p) => (
+                          <option key={p.value} value={p.value}>
+                            {p.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 600,
+                          display: "block",
+                          marginBottom: 4,
+                        }}
+                      >
+                        Status
+                      </label>
+                      <select
+                        className="form-control"
+                        value={subForm.status}
+                        onChange={(e) =>
+                          setSubForm({ ...subForm, status: e.target.value })
+                        }
+                      >
+                        <option value="active">Active</option>
+                        <option value="suspended">Suspended</option>
+                        <option value="expired">Expired</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 600,
+                          display: "block",
+                          marginBottom: 4,
+                        }}
+                      >
+                        Expiry Date
+                      </label>
+                      <input
+                        className="form-control"
+                        type="date"
+                        value={subForm.expires_at}
+                        onChange={(e) =>
+                          setSubForm({ ...subForm, expires_at: e.target.value })
+                        }
+                      />
+                    </div>
+                    <div>
+                      <label
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 600,
+                          display: "block",
+                          marginBottom: 4,
+                        }}
+                      >
+                        Max Users
+                      </label>
+                      <input
+                        className="form-control"
+                        type="number"
+                        min={1}
+                        value={subForm.max_users}
+                        onChange={(e) =>
+                          setSubForm({ ...subForm, max_users: +e.target.value })
+                        }
+                      />
+                    </div>
+                    <div style={{ gridColumn: "1 / -1" }}>
+                      <label
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 600,
+                          display: "block",
+                          marginBottom: 4,
+                        }}
+                      >
+                        Notes
+                      </label>
+                      <textarea
+                        className="form-control"
+                        rows={4}
+                        value={subForm.notes}
+                        onChange={(e) =>
+                          setSubForm({ ...subForm, notes: e.target.value })
+                        }
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    gap: 8,
+                    padding: "16px 24px 24px",
+                    borderTop: "1px solid var(--border)",
+                  }}
                 >
-                  Cancel
-                </button>
+                  <button
+                    className="o-btn o-btn-secondary"
+                    onClick={() => setShowEditSubForm(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="o-btn o-btn-primary"
+                    onClick={() => {
+                      handleUpdateSubscription({
+                        plan: subForm.plan,
+                        status: subForm.status,
+                        max_users: subForm.max_users,
+                        notes: subForm.notes,
+                        expires_at: subForm.expires_at
+                          ? new Date(
+                              `${subForm.expires_at}T23:59:59`,
+                            ).toISOString()
+                          : currentSub.expires_at,
+                      });
+                    }}
+                  >
+                    Save
+                  </button>
+                </div>
               </div>
             </div>
           )}
