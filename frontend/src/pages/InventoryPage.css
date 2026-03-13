@@ -1996,3 +1996,15 @@
     padding-left: 0;
   }
 }
+.inventory-inline-count {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--slate-200);
+  border-radius: 10px;
+  background: var(--white-500);
+  color: var(--slate-600);
+  font-size: 13px;
+  font-weight: 700;
+}

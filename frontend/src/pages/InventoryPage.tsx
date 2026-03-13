@@ -37,6 +37,7 @@ import {
   getRequiredFieldError,
 } from "../utils/formValidation";
 import { Sidebar } from "../components/Sidebar";
+import { TablePagination } from "../components/TablePagination";
 import type { SidebarSection } from "../types/sidebar";
 import type { CurrencyItem } from "../types/currency";
 import "./InventoryPage.css";
@@ -381,6 +382,8 @@ export default function InventoryPage() {
   );
   const [exportingSelectedProducts, setExportingSelectedProducts] =
     useState(false);
+  const [productsPage, setProductsPage] = useState(1);
+  const [productsPageSize, setProductsPageSize] = useState(20);
 
   const [showImportExportModal, setShowImportExportModal] = useState(false);
   const [importExportTarget, setImportExportTarget] = useState<
@@ -3149,9 +3152,17 @@ export default function InventoryPage() {
       p.barcode?.toLowerCase().includes(q)
     );
   });
+  const productTotalPages = Math.max(
+    1,
+    Math.ceil(filteredProducts.length / productsPageSize),
+  );
+  const pagedProducts = useMemo(() => {
+    const start = (productsPage - 1) * productsPageSize;
+    return filteredProducts.slice(start, start + productsPageSize);
+  }, [filteredProducts, productsPage, productsPageSize]);
   const allFilteredProductsSelected =
-    filteredProducts.length > 0 &&
-    filteredProducts.every((product) => selectedProductIds.has(product.id));
+    pagedProducts.length > 0 &&
+    pagedProducts.every((product) => selectedProductIds.has(product.id));
   const selectedProducts = filteredProducts.filter((product) =>
     selectedProductIds.has(product.id),
   );
@@ -3169,9 +3180,9 @@ export default function InventoryPage() {
     setSelectedProductIds((prev) => {
       const next = new Set(prev);
       if (allFilteredProductsSelected) {
-        filteredProducts.forEach((product) => next.delete(product.id));
+        pagedProducts.forEach((product) => next.delete(product.id));
       } else {
-        filteredProducts.forEach((product) => next.add(product.id));
+        pagedProducts.forEach((product) => next.add(product.id));
       }
       return next;
     });
@@ -3207,6 +3218,22 @@ export default function InventoryPage() {
       setExportingSelectedProducts(false);
     }
   };
+
+  useEffect(() => {
+    setProductsPage((prev) => Math.min(prev, productTotalPages));
+  }, [productTotalPages]);
+
+  useEffect(() => {
+    setProductsPage(1);
+  }, [
+    mainView,
+    subView,
+    searchQuery,
+    filterCategoryId,
+    filterLocationId,
+    filterWarehouseId,
+    productsPageSize,
+  ]);
 
   const activeProductWarehouse = warehouses.find(
     (warehouse) => warehouse.id === filterWarehouseId,
@@ -4170,6 +4197,10 @@ export default function InventoryPage() {
 
                     {mainView === "products" && (
                       <>
+                        <div className="inventory-inline-count">
+                          {filteredProducts.length} Product
+                          {filteredProducts.length === 1 ? "" : "s"}
+                        </div>
                         <input
                           ref={productImportInputRef}
                           type="file"
@@ -4591,7 +4622,7 @@ export default function InventoryPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {filteredProducts.map((p) => {
+                        {pagedProducts.map((p) => {
                           const category = categories.find(
                             (c) => c.id === p.category_id,
                           );
@@ -4715,6 +4746,14 @@ export default function InventoryPage() {
                         </tr>
                       </tfoot>
                     </table>
+                    <TablePagination
+                      page={productsPage}
+                      pageSize={productsPageSize}
+                      totalItems={filteredProducts.length}
+                      onPageChange={setProductsPage}
+                      onPageSizeChange={setProductsPageSize}
+                      pageSizeOptions={[20, 50, 100]}
+                    />
                   </div>
                 </div>
               )}
@@ -4802,7 +4841,7 @@ export default function InventoryPage() {
               {mainView === "products" && subView === "kanban" && (
                 <div className="o-main inventory-view-main">
                   <div className="o-kanban inventory-product-kanban">
-                    {filteredProducts.map((p) => {
+                    {pagedProducts.map((p) => {
                       const category = categories.find(
                         (c) => c.id === p.category_id,
                       );
@@ -4876,6 +4915,18 @@ export default function InventoryPage() {
                         </div>
                       );
                     })}
+                    {filteredProducts.length > 0 && (
+                      <div style={{ gridColumn: "1 / -1" }}>
+                        <TablePagination
+                          page={productsPage}
+                          pageSize={productsPageSize}
+                          totalItems={filteredProducts.length}
+                          onPageChange={setProductsPage}
+                          onPageSizeChange={setProductsPageSize}
+                          pageSizeOptions={[20, 50, 100]}
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
