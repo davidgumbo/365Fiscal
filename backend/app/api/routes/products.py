@@ -3,7 +3,9 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 import base64
 
-from app.api.deps import get_db, ensure_company_access, require_company_access, require_portal_user
+from app.api.deps import get_db, ensure_company_access, require_company_access, require_portal_user, log_audit
+from app.models.audit_log import AuditAction, ResourceType
+from app.models.company import Company
 from app.models.product import Product
 from app.models.stock_quant import StockQuant
 from app.schemas.product import ProductCreate, ProductRead, ProductUpdate, ProductWithStock
@@ -22,6 +24,24 @@ def create_product(
     db.add(product)
     db.commit()
     db.refresh(product)
+    company = db.query(Company).filter(Company.id == product.company_id).first()
+    log_audit(
+        db=db,
+        user=user,
+        action=AuditAction.CREATE,
+        resource_type=ResourceType.PRODUCT,
+        resource_id=product.id,
+        resource_reference=product.reference or product.name,
+        company_id=product.company_id,
+        company_name=company.name if company else "",
+        new_values={
+            "name": product.name,
+            "reference": product.reference,
+            "sale_price": product.sale_price,
+        },
+        changes_summary=f"Product {product.name} created",
+    )
+    db.commit()
     return product
 
 
@@ -109,11 +129,35 @@ def update_product(
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     ensure_company_access(db, user, product.company_id)
+    company = db.query(Company).filter(Company.id == product.company_id).first()
+    old_values = {
+        "name": product.name,
+        "reference": product.reference,
+        "sale_price": product.sale_price,
+    }
     updates = payload.dict(exclude_unset=True)
     for field, value in updates.items():
         setattr(product, field, value)
     db.commit()
     db.refresh(product)
+    log_audit(
+        db=db,
+        user=user,
+        action=AuditAction.UPDATE,
+        resource_type=ResourceType.PRODUCT,
+        resource_id=product.id,
+        resource_reference=product.reference or product.name,
+        company_id=product.company_id,
+        company_name=company.name if company else "",
+        old_values=old_values,
+        new_values={
+            "name": product.name,
+            "reference": product.reference,
+            "sale_price": product.sale_price,
+        },
+        changes_summary=f"Product {product.name} updated",
+    )
+    db.commit()
     return product
 
 
@@ -135,8 +179,26 @@ def delete_product(
     ).first()
     if has_stock:
         raise HTTPException(status_code=400, detail="Cannot delete product with stock on hand")
-    
+    company = db.query(Company).filter(Company.id == product.company_id).first()
+    product_reference = product.reference or product.name
+    product_name = product.name
     db.delete(product)
+    db.commit()
+    log_audit(
+        db=db,
+        user=user,
+        action=AuditAction.DELETE,
+        resource_type=ResourceType.PRODUCT,
+        resource_id=product_id,
+        resource_reference=product_reference,
+        company_id=product.company_id,
+        company_name=company.name if company else "",
+        old_values={
+            "name": product_name,
+            "reference": product_reference,
+        },
+        changes_summary=f"Product {product_name} deleted",
+    )
     db.commit()
     return {"status": "deleted"}
 
