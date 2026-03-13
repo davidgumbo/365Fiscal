@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -392,7 +392,8 @@ export default function ExpensesPage() {
       if (dateFilter === "this_year") return date.getFullYear() === currentYear;
       if (dateFilter === "last_month") {
         return (
-          date.getFullYear() === previousYear && date.getMonth() === previousMonth
+          date.getFullYear() === previousYear &&
+          date.getMonth() === previousMonth
         );
       }
       return (
@@ -425,7 +426,11 @@ export default function ExpensesPage() {
 
   const previousMonthTotal = useMemo(() => {
     const now = new Date();
-    const previousMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const previousMonthDate = new Date(
+      now.getFullYear(),
+      now.getMonth() - 1,
+      1,
+    );
     const year = previousMonthDate.getFullYear();
     const month = previousMonthDate.getMonth();
     return filteredExpenses.reduce((sum, expense) => {
@@ -438,12 +443,19 @@ export default function ExpensesPage() {
   }, [filteredExpenses]);
 
   const monthlyBudget = useMemo(() => {
-    const baseline = Math.max(currentMonthTotal, previousMonthTotal, totalExpense, 1);
+    const baseline = Math.max(
+      currentMonthTotal,
+      previousMonthTotal,
+      totalExpense,
+      1,
+    );
     return Math.max(500, Math.ceil((baseline * 1.6) / 250) * 250);
   }, [currentMonthTotal, previousMonthTotal, totalExpense]);
 
   const budgetUsedPercent =
-    monthlyBudget > 0 ? Math.min((currentMonthTotal / monthlyBudget) * 100, 100) : 0;
+    monthlyBudget > 0
+      ? Math.min((currentMonthTotal / monthlyBudget) * 100, 100)
+      : 0;
   const remainingBalance = Math.max(monthlyBudget - currentMonthTotal, 0);
   const isOnTrack = currentMonthTotal <= monthlyBudget;
   const monthChangePercent =
@@ -461,7 +473,10 @@ export default function ExpensesPage() {
     const grouped = new Map<string, number>();
     dateFilteredExpenses.forEach((expense) => {
       const category = (expense.category || "Other").trim() || "Other";
-      grouped.set(category, (grouped.get(category) || 0) + (expense.total_amount || 0));
+      grouped.set(
+        category,
+        (grouped.get(category) || 0) + (expense.total_amount || 0),
+      );
     });
 
     const rows = Array.from(grouped.entries())
@@ -520,9 +535,13 @@ export default function ExpensesPage() {
       const date = new Date(expense.expense_date);
       if (Number.isNaN(date.getTime())) return;
       if (dateFilter === "this_month") {
-        if (date.getMonth() !== thisMonth || date.getFullYear() !== thisYear) return;
+        if (date.getMonth() !== thisMonth || date.getFullYear() !== thisYear)
+          return;
       }
-      const weekIndex = Math.min(3, Math.max(0, Math.floor((date.getDate() - 1) / 7)));
+      const weekIndex = Math.min(
+        3,
+        Math.max(0, Math.floor((date.getDate() - 1) / 7)),
+      );
       totals[weekIndex] += expense.total_amount || 0;
     });
 
@@ -1059,7 +1078,8 @@ export default function ExpensesPage() {
       return;
     }
     const currentCategory = editingCategoryId
-      ? categories.find((category) => category.id === editingCategoryId) ?? null
+      ? (categories.find((category) => category.id === editingCategoryId) ??
+        null)
       : null;
     const duplicateCategory = categories.find(
       (category) =>
@@ -1078,9 +1098,9 @@ export default function ExpensesPage() {
         savedCategory = await apiFetch<ExpenseCategory>(
           `/expense-categories/${editingCategoryId}`,
           {
-          method: "PATCH",
-          body: JSON.stringify({ name: nextName }),
-        },
+            method: "PATCH",
+            body: JSON.stringify({ name: nextName }),
+          },
         );
       } else {
         savedCategory = await apiFetch<ExpenseCategory>("/expense-categories", {
@@ -1102,7 +1122,8 @@ export default function ExpensesPage() {
         }
         if (
           currentCategory &&
-          currentName.toLowerCase() === currentCategory.name.trim().toLowerCase()
+          currentName.toLowerCase() ===
+            currentCategory.name.trim().toLowerCase()
         ) {
           return { ...prev, category: savedCategory.name };
         }
@@ -1299,7 +1320,11 @@ export default function ExpensesPage() {
 
   const useLegacyExpenseDashboard = false;
 
-  if (useLegacyExpenseDashboard && mainView === "expenses" && subView === "list") {
+  if (
+    useLegacyExpenseDashboard &&
+    mainView === "expenses" &&
+    subView === "list"
+  ) {
     return (
       <>
         {isAdmin && company && (
@@ -1360,7 +1385,9 @@ export default function ExpensesPage() {
             <article className="expense-dashboard-stat-card">
               <span
                 className="expense-dashboard-stat-icon"
-                style={{ background: "linear-gradient(135deg, #dff6ff, #c6ebff)" }}
+                style={{
+                  background: "linear-gradient(135deg, #dff6ff, #c6ebff)",
+                }}
               >
                 <WalletCards size={22} color="#1b8cca" />
               </span>
@@ -1382,7 +1409,9 @@ export default function ExpensesPage() {
             <article className="expense-dashboard-stat-card">
               <span
                 className="expense-dashboard-stat-icon"
-                style={{ background: "linear-gradient(135deg, #dff8ee, #cbf0df)" }}
+                style={{
+                  background: "linear-gradient(135deg, #dff8ee, #cbf0df)",
+                }}
               >
                 <BadgeCheck size={22} color="#0ca678" />
               </span>
@@ -1396,7 +1425,9 @@ export default function ExpensesPage() {
             <article className="expense-dashboard-stat-card">
               <span
                 className="expense-dashboard-stat-icon"
-                style={{ background: "linear-gradient(135deg, #fff0dc, #ffe4bf)" }}
+                style={{
+                  background: "linear-gradient(135deg, #fff0dc, #ffe4bf)",
+                }}
               >
                 <FileText size={22} color="#eb8a15" />
               </span>
@@ -1410,7 +1441,9 @@ export default function ExpensesPage() {
             <article className="expense-dashboard-stat-card">
               <span
                 className="expense-dashboard-stat-icon"
-                style={{ background: "linear-gradient(135deg, #ece6ff, #ddd4ff)" }}
+                style={{
+                  background: "linear-gradient(135deg, #ece6ff, #ddd4ff)",
+                }}
               >
                 <PieChart size={22} color="#6d54e8" />
               </span>
@@ -1496,7 +1529,9 @@ export default function ExpensesPage() {
                             </span>
                             {category.name}
                           </span>
-                          <strong>{categoryExpenseCount.get(category.name) || 0}</strong>
+                          <strong>
+                            {categoryExpenseCount.get(category.name) || 0}
+                          </strong>
                         </button>
                       );
                     })}
@@ -1532,7 +1567,9 @@ export default function ExpensesPage() {
                 <label className="expense-dashboard-select">
                   <select
                     value={dateFilter}
-                    onChange={(e) => setDateFilter(e.target.value as DateFilter)}
+                    onChange={(e) =>
+                      setDateFilter(e.target.value as DateFilter)
+                    }
                   >
                     <option value="this_month">This Month</option>
                     <option value="last_month">Last Month</option>
@@ -1565,7 +1602,7 @@ export default function ExpensesPage() {
                   <h3>Expenses</h3>
                   <div className="expense-dashboard-card-actions">
                     <button
-                      className="expense-add-btn"
+                      className="o-btn o-btn-primary"
                       type="button"
                       onClick={startNew}
                     >
@@ -1615,10 +1652,13 @@ export default function ExpensesPage() {
                           pagedTransactions.map((expense) => {
                             const categoryName = expense.category || "Other";
                             const supplierName =
-                              contacts.find((contact) => contact.id === expense.supplier_id)
-                                ?.name || "-";
+                              contacts.find(
+                                (contact) => contact.id === expense.supplier_id,
+                              )?.name || "-";
                             const visual =
-                              CATEGORY_VISUALS[normalizeCategoryKey(categoryName)];
+                              CATEGORY_VISUALS[
+                                normalizeCategoryKey(categoryName)
+                              ];
                             const Icon = visual.icon;
                             return (
                               <tr
@@ -1643,7 +1683,9 @@ export default function ExpensesPage() {
                                 </td>
                                 <td>
                                   {expense.expense_date
-                                    ? new Date(expense.expense_date).toLocaleDateString()
+                                    ? new Date(
+                                        expense.expense_date,
+                                      ).toLocaleDateString()
                                     : "-"}
                                 </td>
                                 <td>
@@ -1654,10 +1696,16 @@ export default function ExpensesPage() {
                                   </span>
                                 </td>
                                 <td className="amount">
-                                  {formatCurrency(expense.subtotal, expense.currency)}
+                                  {formatCurrency(
+                                    expense.subtotal,
+                                    expense.currency,
+                                  )}
                                 </td>
                                 <td className="amount expense-cell-strong">
-                                  {formatCurrency(expense.total_amount, expense.currency)}
+                                  {formatCurrency(
+                                    expense.total_amount,
+                                    expense.currency,
+                                  )}
                                 </td>
                               </tr>
                             );
@@ -1670,7 +1718,8 @@ export default function ExpensesPage() {
                             <td className="amount">
                               {formatCurrency(
                                 dateFilteredExpenses.reduce(
-                                  (sum, expense) => sum + (expense.subtotal || 0),
+                                  (sum, expense) =>
+                                    sum + (expense.subtotal || 0),
                                   0,
                                 ),
                               )}
@@ -1678,7 +1727,8 @@ export default function ExpensesPage() {
                             <td className="amount">
                               {formatCurrency(
                                 dateFilteredExpenses.reduce(
-                                  (sum, expense) => sum + (expense.total_amount || 0),
+                                  (sum, expense) =>
+                                    sum + (expense.total_amount || 0),
                                   0,
                                 ),
                               )}
@@ -1693,7 +1743,9 @@ export default function ExpensesPage() {
                       <span>Rows</span>
                       <select
                         value={transactionsPageSize}
-                        onChange={(e) => setTransactionsPageSize(Number(e.target.value))}
+                        onChange={(e) =>
+                          setTransactionsPageSize(Number(e.target.value))
+                        }
                       >
                         <option value={8}>8</option>
                         <option value={12}>12</option>
@@ -1701,8 +1753,12 @@ export default function ExpensesPage() {
                       </select>
                     </label>
                     <span>
-                      Page {sortedTransactions.length === 0 ? 0 : transactionsPage} of{" "}
-                      {sortedTransactions.length === 0 ? 0 : transactionTotalPages}
+                      Page{" "}
+                      {sortedTransactions.length === 0 ? 0 : transactionsPage}{" "}
+                      of{" "}
+                      {sortedTransactions.length === 0
+                        ? 0
+                        : transactionTotalPages}
                     </span>
                     <div>
                       <button
@@ -1733,7 +1789,6 @@ export default function ExpensesPage() {
                 </section>
               </section>
             </div>
-
           </div>
         </div>
 
@@ -1768,7 +1823,8 @@ export default function ExpensesPage() {
                 </div>
                 <div className="expense-category-choices">
                   {quickCategoryOptions.map((category) => {
-                    const visual = CATEGORY_VISUALS[normalizeCategoryKey(category)];
+                    const visual =
+                      CATEGORY_VISUALS[normalizeCategoryKey(category)];
                     const Icon = visual.icon;
                     return (
                       <button
@@ -1777,7 +1833,10 @@ export default function ExpensesPage() {
                         className={`expense-category-choice ${quickCategory === category ? "selected" : ""}`}
                         onClick={() => setQuickCategory(category)}
                         style={{
-                          color: quickCategory === category ? visual.color : undefined,
+                          color:
+                            quickCategory === category
+                              ? visual.color
+                              : undefined,
                         }}
                       >
                         <span
@@ -1859,7 +1918,9 @@ export default function ExpensesPage() {
               onClick={(event) => event.stopPropagation()}
             >
               <h3 className="expense-category-modal-title">
-                {editingCategoryId ? "Edit Expense Category" : "New Expense Category"}
+                {editingCategoryId
+                  ? "Edit Expense Category"
+                  : "New Expense Category"}
               </h3>
               <div className="o-form-group">
                 <label className="o-form-label">Name</label>
@@ -2026,7 +2087,10 @@ export default function ExpensesPage() {
               }}
             >
               {false && subView !== "form" && mainView === "expenses" && (
-                <div className="content-top-bar" style={{ width: "100%", flex: "1 1 100%" }}>
+                <div
+                  className="content-top-bar"
+                  style={{ width: "100%", flex: "1 1 100%" }}
+                >
                   <div className="top-search">
                     <span className="search-icon">
                       <svg
@@ -2045,9 +2109,7 @@ export default function ExpensesPage() {
                       type="text"
                       placeholder="Search expenses..."
                       value={search}
-                      onChange={(e) =>
-                        setSearch(e.target.value)
-                      }
+                      onChange={(e) => setSearch(e.target.value)}
                     />
                   </div>
                   {mainView === "expenses" && (
@@ -2055,7 +2117,11 @@ export default function ExpensesPage() {
                       <button
                         className="o-btn o-btn-secondary"
                         onClick={exportCSV}
-                        style={{ display: "flex", alignItems: "center", gap: 6 }}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 6,
+                        }}
                       >
                         <svg
                           width="16"
@@ -2127,16 +2193,24 @@ export default function ExpensesPage() {
                                 </div>
                                 <div className="expense-filter-items">
                                   {[
-                                    { key: "", label: "All", count: expenses.length },
+                                    {
+                                      key: "",
+                                      label: "All",
+                                      count: expenses.length,
+                                    },
                                     {
                                       key: "posted",
                                       label: "Posted",
-                                      count: expenses.filter((e) => e.status === "posted").length,
+                                      count: expenses.filter(
+                                        (e) => e.status === "posted",
+                                      ).length,
                                     },
                                     {
                                       key: "draft",
                                       label: "Draft",
-                                      count: expenses.filter((e) => e.status === "draft").length,
+                                      count: expenses.filter(
+                                        (e) => e.status === "draft",
+                                      ).length,
                                     },
                                   ].map((item) => (
                                     <button
@@ -2172,7 +2246,9 @@ export default function ExpensesPage() {
                                   </button>
                                   {contacts
                                     .slice()
-                                    .sort((a, b) => a.name.localeCompare(b.name))
+                                    .sort((a, b) =>
+                                      a.name.localeCompare(b.name),
+                                    )
                                     .map((contact) => (
                                       <button
                                         key={contact.id}
@@ -2209,7 +2285,9 @@ export default function ExpensesPage() {
                                   </button>
                                   {categories
                                     .slice()
-                                    .sort((a, b) => a.name.localeCompare(b.name))
+                                    .sort((a, b) =>
+                                      a.name.localeCompare(b.name),
+                                    )
                                     .map((category) => (
                                       <button
                                         key={category.id}
@@ -2224,7 +2302,9 @@ export default function ExpensesPage() {
                                         }
                                       >
                                         {category.name} (
-                                        {categoryExpenseCount.get(category.name) || 0}
+                                        {categoryExpenseCount.get(
+                                          category.name,
+                                        ) || 0}
                                         )
                                       </button>
                                     ))}
@@ -2258,7 +2338,11 @@ export default function ExpensesPage() {
                       <button
                         className="o-btn o-btn-secondary"
                         onClick={exportCSV}
-                        style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 6,
+                        }}
                       >
                         <Download size={16} />
                         Export
@@ -2276,100 +2360,103 @@ export default function ExpensesPage() {
                         <div className="table-responsive">
                           <table className="table table-hover align-middle mb-0">
                             <thead className="table-light">
-                          <tr>
-                            <th>Reference</th>
-                            <th>Supplier</th>
-                            <th>Category</th>
-                            <th>Date</th>
-                            <th>Status</th>
-                            <th className="text-end">Subtotal</th>
-                            <th className="text-end">VAT</th>
-                            <th className="text-end">Total</th>
-                          </tr>
+                              <tr>
+                                <th>Reference</th>
+                                <th>Supplier</th>
+                                <th>Category</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th className="text-end">Subtotal</th>
+                                <th className="text-end">VAT</th>
+                                <th className="text-end">Total</th>
+                              </tr>
                             </thead>
                             <tbody>
-                          {loading && (
-                            <tr>
-                              <td
-                                colSpan={8}
-                                style={{
-                                  textAlign: "center",
-                                  padding: 40,
-                                  color: "var(--muted)",
-                                }}
-                              >
-                                Loading expenses...
-                              </td>
-                            </tr>
-                          )}
-                          {!loading && filteredExpenses.length === 0 && (
-                            <tr>
-                              <td
-                                colSpan={8}
-                                style={{ textAlign: "center", padding: 40 }}
-                              >
-                                {expenses.length === 0 ? (
-                                  <button
-                                    className="o-btn o-btn-primary"
-                                    onClick={startNew}
+                              {loading && (
+                                <tr>
+                                  <td
+                                    colSpan={8}
+                                    style={{
+                                      textAlign: "center",
+                                      padding: 40,
+                                      color: "var(--muted)",
+                                    }}
                                   >
-                                    + Create Expense
-                                  </button>
-                                ) : (
-                                  <span style={{ color: "var(--muted)" }}>
-                                    No expenses match your filters.
-                                  </span>
-                                )}
-                              </td>
-                            </tr>
-                          )}
-                          {filteredExpenses.map((e) => {
-                            const supplierName =
-                              contacts.find((c) => c.id === e.supplier_id)
-                                ?.name || "\u2014";
-                            return (
-                              <tr
-                                key={e.id}
-                                onClick={() => openExpense(e.id)}
-                                style={{ cursor: "pointer" }}
-                              >
-                                <td style={{ fontWeight: 500 }}>
-                                  {e.reference || "\u2014"}
-                                </td>
-                                <td>{supplierName}</td>
-                                <td>{e.category || "\u2014"}</td>
-                                <td style={{ color: "var(--muted)" }}>
-                                  {e.expense_date
-                                    ? new Date(
-                                        e.expense_date,
-                                      ).toLocaleDateString()
-                                    : "\u2014"}
-                                </td>
-                                <td>
-                                  <span
-                                    className={`badge ${e.status === "posted" ? "bg-info" : "bg-secondary"}`}
+                                    Loading expenses...
+                                  </td>
+                                </tr>
+                              )}
+                              {!loading && filteredExpenses.length === 0 && (
+                                <tr>
+                                  <td
+                                    colSpan={8}
+                                    style={{ textAlign: "center", padding: 40 }}
                                   >
-                                    {e.status}
-                                  </span>
-                                </td>
-                                <td className="text-end">
-                                  {formatCurrency(e.subtotal, e.currency)}
-                                </td>
-                                <td
-                                  className="text-end"
-                                  style={{ color: "var(--muted)" }}
-                                >
-                                  {formatCurrency(e.tax_amount, e.currency)}
-                                </td>
-                                <td
-                                  className="text-end"
-                                  style={{ fontWeight: 600 }}
-                                >
-                                  {formatCurrency(e.total_amount, e.currency)}
-                                </td>
-                              </tr>
-                            );
-                          })}
+                                    {expenses.length === 0 ? (
+                                      <button
+                                        className="o-btn o-btn-primary"
+                                        onClick={startNew}
+                                      >
+                                        + Create Expense
+                                      </button>
+                                    ) : (
+                                      <span style={{ color: "var(--muted)" }}>
+                                        No expenses match your filters.
+                                      </span>
+                                    )}
+                                  </td>
+                                </tr>
+                              )}
+                              {filteredExpenses.map((e) => {
+                                const supplierName =
+                                  contacts.find((c) => c.id === e.supplier_id)
+                                    ?.name || "\u2014";
+                                return (
+                                  <tr
+                                    key={e.id}
+                                    onClick={() => openExpense(e.id)}
+                                    style={{ cursor: "pointer" }}
+                                  >
+                                    <td style={{ fontWeight: 500 }}>
+                                      {e.reference || "\u2014"}
+                                    </td>
+                                    <td>{supplierName}</td>
+                                    <td>{e.category || "\u2014"}</td>
+                                    <td style={{ color: "var(--muted)" }}>
+                                      {e.expense_date
+                                        ? new Date(
+                                            e.expense_date,
+                                          ).toLocaleDateString()
+                                        : "\u2014"}
+                                    </td>
+                                    <td>
+                                      <span
+                                        className={`badge ${e.status === "posted" ? "bg-info" : "bg-secondary"}`}
+                                      >
+                                        {e.status}
+                                      </span>
+                                    </td>
+                                    <td className="text-end">
+                                      {formatCurrency(e.subtotal, e.currency)}
+                                    </td>
+                                    <td
+                                      className="text-end"
+                                      style={{ color: "var(--muted)" }}
+                                    >
+                                      {formatCurrency(e.tax_amount, e.currency)}
+                                    </td>
+                                    <td
+                                      className="text-end"
+                                      style={{ fontWeight: 600 }}
+                                    >
+                                      {formatCurrency(
+                                        e.total_amount,
+                                        e.currency,
+                                      )}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
                             </tbody>
                             {filteredExpenses.length > 0 && (
                               <tfoot>
@@ -2422,7 +2509,10 @@ export default function ExpensesPage() {
 
               {/* ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â SUPPLIERS TABLE VIEW ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â */}
               {mainView === "suppliers" && subView === "list" && (
-                <div className="o-main expense-suppliers-page" style={{ width: "100%" }}>
+                <div
+                  className="o-main expense-suppliers-page"
+                  style={{ width: "100%" }}
+                >
                   <div className="expense-suppliers-toolbar">
                     <label className="expense-suppliers-search">
                       <Search size={16} />
@@ -2519,7 +2609,8 @@ export default function ExpensesPage() {
                                   </div>
                                   <strong>No suppliers found</strong>
                                   <span>
-                                    Add a supplier to start tracking expense history.
+                                    Add a supplier to start tracking expense
+                                    history.
                                   </span>
                                 </div>
                               ) : (
@@ -2527,7 +2618,9 @@ export default function ExpensesPage() {
                                   <div className="expense-suppliers-empty-icon">
                                     <Search size={22} />
                                   </div>
-                                  <strong>No suppliers match your search</strong>
+                                  <strong>
+                                    No suppliers match your search
+                                  </strong>
                                   <span>Try a different search term.</span>
                                 </div>
                               )}
@@ -2547,15 +2640,21 @@ export default function ExpensesPage() {
                     <div className="expense-form-card-head">
                       <div className="expense-form-total-card">
                         <span>Total</span>
-                        <strong>{formatCurrency(calc.total, form.currency)}</strong>
-                        <small>Tax {formatCurrency(calc.tax, form.currency)}</small>
+                        <strong>
+                          {formatCurrency(calc.total, form.currency)}
+                        </strong>
+                        <small>
+                          Tax {formatCurrency(calc.tax, form.currency)}
+                        </small>
                       </div>
                     </div>
 
                     <div className="expense-form-section">
                       <div className="expense-form-section-head">
                         <h4>General Information</h4>
-                        <span>{isEditing ? "Fields are editable" : "Read-only view"}</span>
+                        <span>
+                          {isEditing ? "Fields are editable" : "Read-only view"}
+                        </span>
                       </div>
                       <div className="row g-4">
                         <div className="col-md-6">
@@ -2798,7 +2897,10 @@ export default function ExpensesPage() {
 
               {/* ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â EXPENSE CATEGORIES LIST (like Inventory) ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â */}
               {mainView === "categories" && subView === "list" && (
-                <div className="o-main expense-categories-page" style={{ width: "100%" }}>
+                <div
+                  className="o-main expense-categories-page"
+                  style={{ width: "100%" }}
+                >
                   <div className="expense-categories-toolbar">
                     <label className="expense-categories-search">
                       <Search size={16} />
