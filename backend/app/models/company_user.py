@@ -16,6 +16,7 @@ class CompanyUser(Base, TimestampMixin):
     role_id: Mapped[int | None] = mapped_column(ForeignKey("roles.id"), nullable=True, index=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_company_admin: Mapped[bool] = mapped_column(Boolean, default=False)  # Shortcut flag
+    portal_apps: Mapped[str] = mapped_column(String(1000), default="")
 
     company = relationship("Company", back_populates="users")
     user = relationship("User", back_populates="company_links")

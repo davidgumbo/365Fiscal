@@ -12,6 +12,8 @@ export type MeCompany = {
   city?: string;
   country?: string;
   portal_apps?: string[];
+  user_portal_apps?: string[];
+  is_portal_super_user?: boolean;
 };
 
 export type Me = {

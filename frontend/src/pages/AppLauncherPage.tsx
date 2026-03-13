@@ -278,14 +278,19 @@ const portalApps: AppItem[] = [
 export default function AppLauncherPage() {
   const { me, loading } = useMe();
   const isAdmin = Boolean(me?.is_admin);
-  const allowedPortalApps = (me?.companies?.[0]?.portal_apps ?? [])
+  const allowedPortalApps = (
+    me?.companies?.[0]?.user_portal_apps ??
+    me?.companies?.[0]?.portal_apps ??
+    []
+  )
     .map((item) => item.trim().toLowerCase())
     .filter(Boolean);
+  const isPortalSuperUser = Boolean(me?.companies?.[0]?.is_portal_super_user);
   const apps = isAdmin
     ? adminApps
     : portalApps.filter((app) =>
         app.key === "settings"
-          ? true
+          ? isPortalSuperUser
           : allowedPortalApps.length
             ? allowedPortalApps.includes(app.key)
             : true,
@@ -583,15 +588,17 @@ export default function AppLauncherPage() {
               <div className="menu-title">
                 <span className="user-name-sm">{displayName}</span>
               </div>
-              <button
-                className="menu-item"
-                onClick={() => {
-                  window.location.href = "/settings";
-                }}
-                role="menuitem"
-              >
-                Settings
-              </button>
+              {(isAdmin || isPortalSuperUser) && (
+                <button
+                  className="menu-item"
+                  onClick={() => {
+                    window.location.href = "/settings";
+                  }}
+                  role="menuitem"
+                >
+                  Settings
+                </button>
+              )}
               <button
                 className="menu-item danger"
                 onClick={handleLogout}

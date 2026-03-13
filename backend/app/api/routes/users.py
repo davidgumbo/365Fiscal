@@ -36,6 +36,7 @@ def read_me(user: User = Depends(get_current_user), db: Session = Depends(get_db
     links = db.query(CompanyUser).filter(CompanyUser.user_id == user.id, CompanyUser.is_active == True).all()
     company_ids = [link.company_id for link in links]
     companies = db.query(Company).filter(Company.id.in_(company_ids)).all() if company_ids else []
+    link_by_company = {link.company_id: link for link in links}
     return {
         "id": user.id,
         "email": user.email,
@@ -51,6 +52,20 @@ def read_me(user: User = Depends(get_current_user), db: Session = Depends(get_db
                 "phone": c.phone,
                 "address": c.address,
                 "portal_apps": parse_portal_apps(c.portal_apps),
+                "user_portal_apps": (
+                    parse_portal_apps(link_by_company[c.id].portal_apps)
+                    if link_by_company.get(c.id) and link_by_company[c.id].portal_apps
+                    else [
+                        app
+                        for app in parse_portal_apps(c.portal_apps)
+                        if link_by_company.get(c.id) is None
+                        or link_by_company[c.id].is_company_admin
+                        or app != "settings"
+                    ]
+                ),
+                "is_portal_super_user": bool(
+                    link_by_company.get(c.id) and link_by_company[c.id].is_company_admin
+                ),
             }
             for c in companies
         ],

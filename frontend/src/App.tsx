@@ -184,15 +184,19 @@ function AppContent() {
   const topbarRef = useRef<HTMLDivElement | null>(null);
 
   const allowedPortalApps = useMemo(() => {
-    const apps = me?.companies?.[0]?.portal_apps ?? [];
+    const apps =
+      me?.companies?.[0]?.user_portal_apps ??
+      me?.companies?.[0]?.portal_apps ??
+      [];
     const normalized = apps
       .map((item) => item.trim().toLowerCase())
       .filter(Boolean);
     return normalized.length ? normalized : null;
   }, [me?.companies]);
+  const isPortalSuperUser = Boolean(me?.companies?.[0]?.is_portal_super_user);
   const navItems = isPortalMode
     ? portalNav.filter((item) => {
-        if (item.to === "/settings") return true;
+        if (item.to === "/settings") return isPortalSuperUser;
         if (!allowedPortalApps) return true;
         const appKey = PORTAL_NAV_APP_KEYS[item.to];
         return appKey ? allowedPortalApps.includes(appKey) : true;
@@ -325,14 +329,16 @@ function AppContent() {
                     <div className="menu-title">
                       <span className="user-name-sm">{displayName}</span>
                     </div>
-                    <button
-                      className="menu-item"
-                      onClick={() => {
-                        window.location.href = "/settings";
-                      }}
-                    >
-                      Settings
-                    </button>
+                    {(me?.is_admin || isPortalSuperUser) && (
+                      <button
+                        className="menu-item"
+                        onClick={() => {
+                          window.location.href = "/settings";
+                        }}
+                      >
+                        Settings
+                      </button>
+                    )}
                     <button
                       className="menu-item danger"
                       onClick={() => {
@@ -402,7 +408,16 @@ function AppContent() {
               <Route path="/inventory" element={<InventoryPage />} />
               <Route path="/expenses" element={<ExpensesPage />} />
               <Route path="/reports" element={<ReportsPage />} />
-              <Route path="/settings" element={<SettingsPage />} />
+              <Route
+                path="/settings"
+                element={
+                  isPortalMode && !isPortalSuperUser ? (
+                    <DashboardPage />
+                  ) : (
+                    <SettingsPage />
+                  )
+                }
+              />
               <Route path="/devices" element={<DevicesPage />} />
               <Route path="/my-devices" element={<PortalDevicesPage />} />
               <Route path="/users-roles" element={<UsersRolesPage />} />

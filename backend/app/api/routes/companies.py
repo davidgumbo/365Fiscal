@@ -410,6 +410,8 @@ def update_portal_user(
             db.add(user)
             db.flush()
             link.user_id = user.id
+        link.is_company_admin = True
+        link.portal_apps = company.portal_apps or ""
     else:
         # Check if user with this email exists
         user = db.query(User).filter(User.email == email).first()
@@ -420,7 +422,16 @@ def update_portal_user(
         elif password:
             user.hashed_password = hash_password(password)
         # Create link
-        db.add(CompanyUser(company_id=company_id, user_id=user.id, role="portal", is_active=True))
+        db.add(
+            CompanyUser(
+                company_id=company_id,
+                user_id=user.id,
+                role="portal",
+                is_active=True,
+                is_company_admin=True,
+                portal_apps=company.portal_apps or "",
+            )
+        )
 
     db.commit()
     return {"user_id": user.id, "email": user.email}

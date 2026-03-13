@@ -142,6 +142,28 @@ type POSTillItem = {
   fiscal_device: DeviceBasic | null;
 };
 
+type PortalManagedUser = {
+  id: number;
+  email: string;
+  is_active: boolean;
+  is_portal_super_user: boolean;
+  portal_apps: string[];
+};
+
+const PORTAL_APP_OPTIONS = [
+  { key: "dashboard", label: "Dashboard" },
+  { key: "invoices", label: "Invoices" },
+  { key: "purchases", label: "Purchases" },
+  { key: "contacts", label: "Contacts" },
+  { key: "quotations", label: "Quotations" },
+  { key: "inventory", label: "Inventory" },
+  { key: "pos", label: "Point of Sale" },
+  { key: "devices", label: "Devices" },
+  { key: "reports", label: "Financial Reports" },
+  { key: "expenses", label: "Expenses" },
+  { key: "settings", label: "Settings" },
+] as const;
+
 // Icon components for professional actions
 const PlusIcon = () => (
   <svg
@@ -227,8 +249,13 @@ export default function SettingsPage() {
   const { me } = useMe();
   const { companies, loading: companiesLoading } = useCompanies();
   const isAdmin = Boolean(me?.is_admin);
+  const primaryPortalCompany = me?.companies?.[0] ?? null;
+  const isPortalSuperUser = Boolean(primaryPortalCompany?.is_portal_super_user);
   const allowedPortalApps = useMemo(() => {
-    const apps = me?.companies?.[0]?.portal_apps ?? [];
+    const apps =
+      me?.companies?.[0]?.user_portal_apps ??
+      me?.companies?.[0]?.portal_apps ??
+      [];
     const normalized = apps
       .map((item) => item.trim().toLowerCase())
       .filter(Boolean);
@@ -333,6 +360,16 @@ export default function SettingsPage() {
   const [showPinField, setShowPinField] = useState<number | null>(null);
   const [posEmpSaving, setPosEmpSaving] = useState(false);
   const [posPmSaving, setPosPmSaving] = useState(false);
+  const [portalManagedUsers, setPortalManagedUsers] = useState<PortalManagedUser[]>([]);
+  const [portalUsersLoading, setPortalUsersLoading] = useState(false);
+  const [portalUserSaving, setPortalUserSaving] = useState(false);
+  const [portalUserEditingId, setPortalUserEditingId] = useState<number | null>(null);
+  const [portalUserForm, setPortalUserForm] = useState({
+    email: "",
+    password: "",
+    portal_apps: (primaryPortalCompany?.portal_apps ?? [])
+      .filter((app) => app !== "settings"),
+  });
 
   // Till state
   const [posTills, setPosTills] = useState<POSTillItem[]>([]);
@@ -358,6 +395,86 @@ export default function SettingsPage() {
     if (appKey === "settings") return true;
     if (!allowedPortalApps) return true;
     return allowedPortalApps.includes(appKey);
+  };
+
+  const resetPortalUserForm = () => {
+    setPortalUserEditingId(null);
+    setPortalUserForm({
+      email: "",
+      password: "",
+      portal_apps: (primaryPortalCompany?.portal_apps ?? []).filter(
+        (app) => app !== "settings",
+      ),
+    });
+  };
+
+  const loadPortalManagedUsers = async (cid: number) => {
+    setPortalUsersLoading(true);
+    try {
+      const data = await apiFetch<PortalManagedUser[]>(
+        `/company-users/portal-users/manage?company_id=${cid}`,
+      );
+      setPortalManagedUsers(data);
+    } catch {
+      setPortalManagedUsers([]);
+    } finally {
+      setPortalUsersLoading(false);
+    }
+  };
+
+  const savePortalManagedUser = async () => {
+    const cid = companyId ?? primaryPortalCompany?.id ?? null;
+    if (!cid || !portalUserForm.email || (!portalUserEditingId && !portalUserForm.password)) {
+      return;
+    }
+    setPortalUserSaving(true);
+    try {
+      if (portalUserEditingId) {
+        await apiFetch(`/company-users/portal-users/manage/${portalUserEditingId}`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            company_id: cid,
+            email: portalUserForm.email,
+            password: portalUserForm.password || undefined,
+            portal_apps: portalUserForm.portal_apps,
+            is_active: true,
+          }),
+        });
+        setStatus("Portal user updated");
+      } else {
+        await apiFetch("/company-users/portal-users/manage", {
+          method: "POST",
+          body: JSON.stringify({
+            company_id: cid,
+            email: portalUserForm.email,
+            password: portalUserForm.password,
+            portal_apps: portalUserForm.portal_apps,
+          }),
+        });
+        setStatus("Portal user added");
+      }
+      resetPortalUserForm();
+      loadPortalManagedUsers(cid);
+    } catch (err: any) {
+      setAdminError(err.message || "Failed to save portal user");
+    } finally {
+      setPortalUserSaving(false);
+    }
+  };
+
+  const deletePortalManagedUser = async (userId: number) => {
+    const cid = companyId ?? primaryPortalCompany?.id ?? null;
+    if (!cid) return;
+    if (!confirm("Are you sure you want to remove this portal user?")) return;
+    try {
+      await apiFetch(`/company-users/portal-users/manage/${userId}?company_id=${cid}`, {
+        method: "DELETE",
+      });
+      setStatus("Portal user removed");
+      loadPortalManagedUsers(cid);
+    } catch (err: any) {
+      setAdminError(err.message || "Failed to remove portal user");
+    }
   };
 
   const showDocumentSettings =
@@ -468,6 +585,15 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
       setCompanyId(me.company_ids[0]);
     }
   }, [isAdmin, me?.company_ids, companyId]);
+
+  useEffect(() => {
+    if (!isAdmin && isPortalSuperUser && activeSection === "users-companies") {
+      const cid = companyId ?? primaryPortalCompany?.id ?? null;
+      if (cid) {
+        loadPortalManagedUsers(cid);
+      }
+    }
+  }, [activeSection, companyId, isAdmin, isPortalSuperUser, primaryPortalCompany?.id]);
 
   const loadTaxes = async (cid: number) => {
     const data = await apiFetch<TaxSetting[]>(
@@ -5710,27 +5836,197 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
             activeSection === "users-companies" && (
               <section id="users-companies" className="settings-section">
                 <div className="settings-section-header">
-                  <h4>Users &amp; Companies</h4>
+                  <h4>{isPortalSuperUser ? "Portal Users" : "Your Account"}</h4>
                 </div>
                 <div className="settings-card-grid">
                   <div className="settings-card">
-                    <div className="settings-card-title">Your Account</div>
+                    <div className="settings-card-title">
+                      {isPortalSuperUser ? "Add Portal User" : "Your Account"}
+                    </div>
                     <div className="settings-card-sub">
-                      Portal user settings
+                      {isPortalSuperUser
+                        ? "Create portal users and assign app access."
+                        : "Portal user settings"}
                     </div>
-                    <div className="input">
-                      <span>Email</span>
-                      <input type="email" value={me.email} readOnly />
-                    </div>
-                    <p className="page-sub">
-                      Contact your administrator to update portal users.
-                    </p>
+                    {isPortalSuperUser ? (
+                      <>
+                        <div className="form-grid">
+                          <label className="input">
+                            Email
+                            <input
+                              type="email"
+                              value={portalUserForm.email}
+                              onChange={(e) =>
+                                setPortalUserForm((prev) => ({
+                                  ...prev,
+                                  email: e.target.value,
+                                }))
+                              }
+                            />
+                          </label>
+                          <label className="input">
+                            {portalUserEditingId ? "New Password" : "Password"}
+                            <input
+                              type="password"
+                              value={portalUserForm.password}
+                              onChange={(e) =>
+                                setPortalUserForm((prev) => ({
+                                  ...prev,
+                                  password: e.target.value,
+                                }))
+                              }
+                            />
+                          </label>
+                        </div>
+                        <div className="portal-app-access" style={{ marginTop: 16 }}>
+                          <div className="portal-app-access-head">
+                            <h5>App Access</h5>
+                            <span>Select the apps this user can access.</span>
+                          </div>
+                          <div className="portal-app-grid">
+                            {PORTAL_APP_OPTIONS.filter((app) => app.key !== "settings").map((app) => {
+                              const selected = portalUserForm.portal_apps.includes(app.key);
+                              return (
+                                <label
+                                  key={app.key}
+                                  className={`portal-app-option ${selected ? "selected" : ""}`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={selected}
+                                    onChange={() =>
+                                      setPortalUserForm((prev) => ({
+                                        ...prev,
+                                        portal_apps: selected
+                                          ? prev.portal_apps.filter((item) => item !== app.key)
+                                          : [...prev.portal_apps, app.key],
+                                      }))
+                                    }
+                                  />
+                                  <span>{app.label}</span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+                          <button
+                            className="primary"
+                            onClick={savePortalManagedUser}
+                            disabled={
+                              portalUserSaving ||
+                              !portalUserForm.email ||
+                              (!portalUserEditingId && !portalUserForm.password)
+                            }
+                          >
+                            {portalUserSaving
+                              ? "Saving..."
+                              : portalUserEditingId
+                                ? "Update User"
+                                : "Add User"}
+                          </button>
+                          {portalUserEditingId && (
+                            <button className="outline" onClick={resetPortalUserForm}>
+                              Cancel
+                            </button>
+                          )}
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="input">
+                          <span>Email</span>
+                          <input type="email" value={me.email} readOnly />
+                        </div>
+                        <p className="page-sub">
+                          This portal user cannot manage settings.
+                        </p>
+                      </>
+                    )}
                   </div>
                   <div className="settings-card">
-                    <div className="settings-card-title">Companies</div>
-                    <div className="settings-card-sub">
-                      You have access to these companies
+                    <div className="settings-card-title">
+                      {isPortalSuperUser ? "Managed Users" : "Companies"}
                     </div>
+                    <div className="settings-card-sub">
+                      {isPortalSuperUser
+                        ? "Users below can access only the apps assigned to them."
+                        : "You have access to these companies"}
+                    </div>
+                    {isPortalSuperUser ? (
+                      portalUsersLoading ? (
+                        <div className="page-sub">Loading portal users...</div>
+                      ) : (
+                        <div style={{ display: "grid", gap: 12 }}>
+                          {portalManagedUsers.map((user) => (
+                            <div
+                              key={user.id}
+                              style={{
+                                border: "1px solid var(--stroke)",
+                                borderRadius: 12,
+                                padding: 14,
+                                display: "grid",
+                                gap: 10,
+                              }}
+                            >
+                              <div
+                                style={{
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "center",
+                                  gap: 12,
+                                }}
+                              >
+                                <div>
+                                  <div style={{ fontWeight: 700 }}>{user.email}</div>
+                                  <div className="page-sub" style={{ marginTop: 2 }}>
+                                    {user.is_portal_super_user ? "Portal Super User" : "Portal User"}
+                                  </div>
+                                </div>
+                                {!user.is_portal_super_user && (
+                                  <div className="action-icons">
+                                    <button
+                                      className="icon-btn"
+                                      onClick={() => {
+                                        setPortalUserEditingId(user.id);
+                                        setPortalUserForm({
+                                          email: user.email,
+                                          password: "",
+                                          portal_apps: user.portal_apps.filter((app) => app !== "settings"),
+                                        });
+                                      }}
+                                      title="Edit user"
+                                    >
+                                      <EditIcon />
+                                    </button>
+                                    <button
+                                      className="icon-btn danger"
+                                      onClick={() => deletePortalManagedUser(user.id)}
+                                      title="Delete user"
+                                    >
+                                      <TrashIcon />
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="portal-app-badges">
+                                {user.portal_apps.map((appKey) => {
+                                  const option = PORTAL_APP_OPTIONS.find((item) => item.key === appKey);
+                                  return (
+                                    <span key={appKey} className="portal-app-badge">
+                                      {option?.label || appKey}
+                                    </span>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          ))}
+                          {!portalManagedUsers.length && (
+                            <div className="page-sub">No portal users found.</div>
+                          )}
+                        </div>
+                      )
+                    ) : (
                     <ul style={{ paddingLeft: 16, margin: 0 }}>
                       {companies.map((c) => (
                         <li key={c.id} style={{ marginBottom: 6 }}>
@@ -5738,6 +6034,7 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
                         </li>
                       ))}
                     </ul>
+                    )}
                   </div>
                 </div>
               </section>
