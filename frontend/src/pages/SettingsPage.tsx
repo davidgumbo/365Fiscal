@@ -355,13 +355,27 @@ export default function SettingsPage() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Subscription status state
-  type SubStatus = {
+type SubStatus = {
     activated: boolean;
     plan: string | null;
     status: string | null;
     expires_at: string | null;
     company_name: string | null;
-  };
+};
+
+function parseApiErrorMessage(err: any, fallback: string) {
+  const raw = err?.message || "";
+  if (!raw) return fallback;
+  try {
+    const parsed = JSON.parse(raw);
+    if (typeof parsed?.detail === "string" && parsed.detail.trim()) {
+      return parsed.detail;
+    }
+  } catch {
+    // ignore JSON parse failures
+  }
+  return raw || fallback;
+}
   const [subStatuses, setSubStatuses] = useState<SubStatus[]>([]);
   const [subLoading, setSubLoading] = useState(false);
 
@@ -389,6 +403,7 @@ export default function SettingsPage() {
   const [portalManagedUsers, setPortalManagedUsers] = useState<PortalManagedUser[]>([]);
   const [portalUsersLoading, setPortalUsersLoading] = useState(false);
   const [portalUserSaving, setPortalUserSaving] = useState(false);
+  const [portalUserError, setPortalUserError] = useState<string | null>(null);
   const [portalUserEditingId, setPortalUserEditingId] = useState<number | null>(null);
   const [portalUsersTab, setPortalUsersTab] = useState<"add" | "manage" | "audit">("add");
   const [portalUserSearch, setPortalUserSearch] = useState("");
@@ -494,6 +509,7 @@ export default function SettingsPage() {
     if (!cid || !portalUserForm.name || !portalUserForm.email || (!portalUserEditingId && !portalUserForm.password)) {
       return;
     }
+    setPortalUserError(null);
     setPortalUserSaving(true);
     try {
       if (portalUserEditingId) {
@@ -525,7 +541,9 @@ export default function SettingsPage() {
       resetPortalUserForm();
       loadPortalManagedUsers(cid);
     } catch (err: any) {
-      setAdminError(err.message || "Failed to save portal user");
+      setPortalUserError(
+        parseApiErrorMessage(err, "Failed to save portal user"),
+      );
     } finally {
       setPortalUserSaving(false);
     }
@@ -563,6 +581,7 @@ export default function SettingsPage() {
   const deletePortalManagedUser = async (userId: number) => {
     const cid = companyId ?? primaryPortalCompany?.id ?? null;
     if (!cid) return;
+    setPortalUserError(null);
     const confirmed = await showConfirm({
       title: "Remove portal user",
       message: "Are you sure you want to remove this portal user?",
@@ -577,7 +596,9 @@ export default function SettingsPage() {
       setStatus("Portal user removed");
       loadPortalManagedUsers(cid);
     } catch (err: any) {
-      setAdminError(err.message || "Failed to remove portal user");
+      setPortalUserError(
+        parseApiErrorMessage(err, "Failed to remove portal user"),
+      );
     }
   };
 
@@ -5988,6 +6009,14 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
                 </div>
                 {isPortalSuperUser ? (
                     <div className="settings-card">
+                    {portalUserError && (
+                      <div
+                        className="alert alert-danger"
+                        style={{ marginBottom: 16 }}
+                      >
+                        {portalUserError}
+                      </div>
+                    )}
                     <InlineTabs
                       value={portalUsersTab}
                       onChange={(value) => setPortalUsersTab(value)}
@@ -6126,7 +6155,10 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
                         {portalUsersLoading ? (
                           <div className="page-sub">Loading portal users...</div>
                         ) : filteredPortalManagedUsers.length ? (
-                          <div className="table-wrap">
+                          <div
+                            className="table-wrap"
+                            style={{ maxHeight: 420, overflowY: "auto" }}
+                          >
                             <table className="table">
                               <thead>
                                 <tr>
