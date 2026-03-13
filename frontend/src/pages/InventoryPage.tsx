@@ -4207,10 +4207,6 @@ export default function InventoryPage() {
                     {mainView === "products" && (
                       <>
                         <div className="inventory-products-toolbar-meta">
-                          <div className="inventory-inline-count">
-                            {filteredProducts.length} Product
-                            {filteredProducts.length === 1 ? "" : "s"}
-                          </div>
                           <div className="inventory-products-pager">
                             <select
                               value={productsPageSize}
