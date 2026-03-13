@@ -6609,53 +6609,7 @@ export default function InventoryPage() {
                   style={{ width: "100%" }}
                 >
                   <div className="o-form-view inventory-form-panel inventory-move-form">
-                    <div className="inventory-move-header">
-                      <button
-                        className="o-btn o-btn-link inventory-move-back-link"
-                        onClick={goBack}
-                      >
-                        ← Back to List
-                      </button>
-                      <h2 className="inventory-move-title">
-                        {isNew
-                          ? "New Stock Move"
-                          : selectedMove?.reference ||
-                            `Move #${selectedMoveId}`}
-                      </h2>
-                      <div className="inventory-move-header-actions">
-                        <button
-                          className="o-btn o-btn-primary"
-                          onClick={saveMove}
-                          disabled={saving}
-                        >
-                          {saving ? "Saving..." : "Save"}
-                        </button>
-                        <button
-                          className="o-btn o-btn-secondary"
-                          onClick={goBack}
-                        >
-                          Discard
-                        </button>
-                        {!isNew && selectedMoveId && (
-                          <button
-                            className="o-btn o-btn-danger"
-                            onClick={() => deleteMove(selectedMoveId)}
-                            disabled={saving}
-                          >
-                            Delete
-                          </button>
-                        )}
-                        <button
-                          className="o-btn o-btn-secondary"
-                          onClick={() => void printMovePdf()}
-                        >
-                          <Printer size={14} />
-                          <span>Print PDF</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="inventory-form-actions">
+                    {/* <div className="inventory-form-actions">
                       {selectedMove && !isNew && (
                         <div className="o-statusbar inventory-statusbar">
                           {STATES.map((s, i) => (
@@ -6676,9 +6630,54 @@ export default function InventoryPage() {
                           ))}
                         </div>
                       )}
-                    </div>
+                    </div> */}
 
                     <div className="o-form-sheet">
+                      <div className="inventory-move-header">
+                        <button
+                          className="o-btn o-btn-link inventory-move-back-link"
+                          onClick={goBack}
+                        >
+                          ← Back to List
+                        </button>
+                        <h2 className="inventory-move-title">
+                          {isNew
+                            ? "New Stock Move"
+                            : selectedMove?.reference ||
+                              `Move #${selectedMoveId}`}
+                        </h2>
+                        <div className="inventory-move-header-actions">
+                          <button
+                            className="o-btn o-btn-primary"
+                            onClick={saveMove}
+                            disabled={saving}
+                          >
+                            {saving ? "Saving..." : "Save"}
+                          </button>
+                          <button
+                            className="o-btn o-btn-secondary"
+                            onClick={goBack}
+                          >
+                            Discard
+                          </button>
+                          {!isNew && selectedMoveId && (
+                            <button
+                              className="o-btn o-btn-danger"
+                              onClick={() => deleteMove(selectedMoveId)}
+                              disabled={saving}
+                            >
+                              Delete
+                            </button>
+                          )}
+                          <button
+                            className="o-btn o-btn-secondary"
+                            onClick={() => void printMovePdf()}
+                          >
+                            <Printer size={14} />
+                            <span>Print PDF</span>
+                          </button>
+                        </div>
+                      </div>
                       <div className="inventory-two-col-grid">
                         <div className="inventory-move-section-head">
                           <span className="inventory-move-section-icon">
