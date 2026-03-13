@@ -1,4 +1,10 @@
-import { CSSProperties, useEffect, useState, useCallback, useMemo } from "react";
+import {
+  CSSProperties,
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../api";
 import { Sidebar } from "../components/Sidebar";
@@ -547,9 +553,11 @@ export default function ReportsPage() {
   const [reportCurrency, setReportCurrency] = useState("");
 
   const [salesReport, setSalesReport] = useState<SalesReport | null>(null);
-  const [salesTrendChart, setSalesTrendChart] = useState<RevenueTrendChart>(() => ({
-    ...EMPTY_REVENUE_TREND_CHART,
-  }));
+  const [salesTrendChart, setSalesTrendChart] = useState<RevenueTrendChart>(
+    () => ({
+      ...EMPTY_REVENUE_TREND_CHART,
+    }),
+  );
   const [stockReport, setStockReport] = useState<StockReport | null>(null);
   const [debtorsReport, setDebtorsReport] = useState<DebtorsReport | null>(
     null,
@@ -1631,22 +1639,18 @@ export default function ReportsPage() {
     const safeInt = (value: number) =>
       Number.isFinite(value) ? Math.round(value).toString() : "0";
 
-    const cellText = (
-      value: string,
-      styleId = "Text",
-      mergeAcross?: number,
-    ) =>
+    const cellText = (value: string, styleId = "Text", mergeAcross?: number) =>
       `<Cell ss:StyleID="${styleId}"${
-        typeof mergeAcross === "number" ? ` ss:MergeAcross="${mergeAcross}"` : ""
+        typeof mergeAcross === "number"
+          ? ` ss:MergeAcross="${mergeAcross}"`
+          : ""
       }><Data ss:Type="String">${escapeXml(value)}</Data></Cell>`;
 
-    const cellNum = (
-      value: number,
-      styleId = "Number",
-      mergeAcross?: number,
-    ) =>
+    const cellNum = (value: number, styleId = "Number", mergeAcross?: number) =>
       `<Cell ss:StyleID="${styleId}"${
-        typeof mergeAcross === "number" ? ` ss:MergeAcross="${mergeAcross}"` : ""
+        typeof mergeAcross === "number"
+          ? ` ss:MergeAcross="${mergeAcross}"`
+          : ""
       }><Data ss:Type="Number">${safeNum(value)}</Data></Cell>`;
 
     const cellInt = (value: number, styleId = "Integer") =>
@@ -1654,7 +1658,9 @@ export default function ReportsPage() {
 
     const rows: string[] = [];
 
-    rows.push(`<Row ss:Height="28">${cellText("VAT RETURN", "Title", 4)}</Row>`);
+    rows.push(
+      `<Row ss:Height="28">${cellText("VAT RETURN", "Title", 4)}</Row>`,
+    );
     rows.push(
       `<Row>${cellText(
         `Reporting Period: ${periodFrom} to ${periodTo}`,
@@ -1669,7 +1675,7 @@ export default function ReportsPage() {
         4,
       )}</Row>`,
     );
-    rows.push("<Row ss:Height=\"10\"/>");
+    rows.push('<Row ss:Height="10"/>');
 
     rows.push(
       `<Row ss:Height="22">${cellText("OUTPUT VAT (SALES)", "Section", 4)}</Row>`,
@@ -1702,7 +1708,7 @@ export default function ReportsPage() {
       )}${cellInt(vatReport.invoices_count, "TotalInteger")}</Row>`,
     );
 
-    rows.push("<Row ss:Height=\"8\"/>");
+    rows.push('<Row ss:Height="8"/>');
     rows.push(
       `<Row ss:Height="22">${cellText("INPUT VAT (PURCHASES)", "Section", 4)}</Row>`,
     );
@@ -1735,7 +1741,7 @@ export default function ReportsPage() {
     );
 
     if (vatReport.credit_notes_count > 0 || vatReport.credit_notes_tax > 0) {
-      rows.push("<Row ss:Height=\"8\"/>");
+      rows.push('<Row ss:Height="8"/>');
       rows.push(
         `<Row ss:Height="22">${cellText("CREDIT NOTES", "Section", 4)}</Row>`,
       );
@@ -1753,7 +1759,7 @@ export default function ReportsPage() {
       );
     }
 
-    rows.push("<Row ss:Height=\"10\"/>");
+    rows.push('<Row ss:Height="10"/>');
     rows.push(
       `<Row ss:Height="22">${cellText("NET VAT SUMMARY", "Section", 4)}</Row>`,
     );
@@ -2007,7 +2013,8 @@ export default function ReportsPage() {
               .join("")}</Row>`,
           );
         });
-        if (sectionIndex < sections.length - 1) rowXml.push('<Row ss:Height="8"/>');
+        if (sectionIndex < sections.length - 1)
+          rowXml.push('<Row ss:Height="8"/>');
       });
 
       return `<?xml version="1.0"?>
@@ -2130,14 +2137,31 @@ export default function ReportsPage() {
           {
             title: "SUMMARY",
             rows: [
-              ["Gross Revenue (VAT excl.)", incomeStatementReport.gross_revenue_ex_vat.toFixed(2)],
-              ["Expenses (VAT excl.)", incomeStatementReport.expenses_ex_vat.toFixed(2)],
-              ["Net Revenue (VAT excl.)", incomeStatementReport.net_revenue_ex_vat.toFixed(2)],
+              [
+                "Gross Revenue (VAT excl.)",
+                incomeStatementReport.gross_revenue_ex_vat.toFixed(2),
+              ],
+              [
+                "Expenses (VAT excl.)",
+                incomeStatementReport.expenses_ex_vat.toFixed(2),
+              ],
+              [
+                "Net Revenue (VAT excl.)",
+                incomeStatementReport.net_revenue_ex_vat.toFixed(2),
+              ],
             ],
           },
           {
             title: "REVENUE - INVOICES",
-            headers: ["Reference", "Customer", "Date", "Subtotal", "Tax", "Total", "Status"],
+            headers: [
+              "Reference",
+              "Customer",
+              "Date",
+              "Subtotal",
+              "Tax",
+              "Total",
+              "Status",
+            ],
             rows: incomeStatementReport.invoices.map((inv) => [
               inv.reference,
               inv.customer,
@@ -2150,7 +2174,16 @@ export default function ReportsPage() {
           },
           {
             title: "EXPENSES",
-            headers: ["Reference", "Supplier", "Category", "Description", "Date", "Subtotal", "Tax", "Total"],
+            headers: [
+              "Reference",
+              "Supplier",
+              "Category",
+              "Description",
+              "Date",
+              "Subtotal",
+              "Tax",
+              "Total",
+            ],
             rows: incomeStatementReport.expenses.map((ex) => [
               ex.reference,
               ex.supplier,
@@ -2191,16 +2224,18 @@ export default function ReportsPage() {
             ]),
           },
           ...(stockReport.low_stock_items.length
-            ? [{
-                title: "LOW STOCK ALERTS",
-                headers: ["Product", "On Hand", "Available", "Reorder Level"],
-                rows: stockReport.low_stock_items.map((s) => [
-                  s.name,
-                  String(s.on_hand),
-                  String(s.available),
-                  String(s.reorder),
-                ]),
-              }]
+            ? [
+                {
+                  title: "LOW STOCK ALERTS",
+                  headers: ["Product", "On Hand", "Available", "Reorder Level"],
+                  rows: stockReport.low_stock_items.map((s) => [
+                    s.name,
+                    String(s.on_hand),
+                    String(s.available),
+                    String(s.reorder),
+                  ]),
+                },
+              ]
             : []),
         ],
         [220, 100, 100, 100, 120],
@@ -2224,7 +2259,15 @@ export default function ReportsPage() {
           },
           {
             title: "UNPAID INVOICES",
-            headers: ["Reference", "Customer", "Total", "Paid", "Due", "Date", "Status"],
+            headers: [
+              "Reference",
+              "Customer",
+              "Total",
+              "Paid",
+              "Due",
+              "Date",
+              "Status",
+            ],
             rows: debtorsReport.recent_unpaid.map((i) => [
               i.reference,
               i.customer,
@@ -2256,16 +2299,31 @@ export default function ReportsPage() {
           {
             title: "BY SUPPLIER",
             headers: ["Supplier", "Orders", "Amount"],
-            rows: creditorsReport.by_supplier.map((v) => [v.name, String(v.count), v.amount.toFixed(2)]),
+            rows: creditorsReport.by_supplier.map((v) => [
+              v.name,
+              String(v.count),
+              v.amount.toFixed(2),
+            ]),
           },
           {
             title: "BY STATUS",
             headers: ["Status", "Count", "Amount"],
-            rows: creditorsReport.by_status.map((s) => [s.status, String(s.count), s.amount.toFixed(2)]),
+            rows: creditorsReport.by_status.map((s) => [
+              s.status,
+              String(s.count),
+              s.amount.toFixed(2),
+            ]),
           },
           {
             title: "RECENT OPEN ORDERS",
-            headers: ["Reference", "Supplier", "Amount", "Date", "Status", "Paid State"],
+            headers: [
+              "Reference",
+              "Supplier",
+              "Amount",
+              "Date",
+              "Status",
+              "Paid State",
+            ],
             rows: creditorsReport.recent_orders.map((o) => [
               o.reference,
               o.supplier,
@@ -2297,17 +2355,29 @@ export default function ReportsPage() {
           {
             title: "BY SUPPLIER",
             headers: ["Supplier", "Orders", "Amount"],
-            rows: purchaseReport.by_supplier.map((v) => [v.name, String(v.count), v.amount.toFixed(2)]),
+            rows: purchaseReport.by_supplier.map((v) => [
+              v.name,
+              String(v.count),
+              v.amount.toFixed(2),
+            ]),
           },
           {
             title: "BY STATUS",
             headers: ["Status", "Count", "Amount"],
-            rows: purchaseReport.by_status.map((s) => [s.status, String(s.count), s.amount.toFixed(2)]),
+            rows: purchaseReport.by_status.map((s) => [
+              s.status,
+              String(s.count),
+              s.amount.toFixed(2),
+            ]),
           },
           {
             title: "MONTHLY TREND",
             headers: ["Month", "Amount", "Orders"],
-            rows: purchaseReport.by_month.map((m) => [m.month, m.amount.toFixed(2), String(m.count)]),
+            rows: purchaseReport.by_month.map((m) => [
+              m.month,
+              m.amount.toFixed(2),
+              String(m.count),
+            ]),
           },
         ],
         [170, 100, 120],
@@ -2330,7 +2400,14 @@ export default function ReportsPage() {
           },
           {
             title: "SALES BY CURRENCY",
-            headers: ["Currency", "Orders", "Total Sales", "Cash Sales", "Card Sales", "Mobile Sales"],
+            headers: [
+              "Currency",
+              "Orders",
+              "Total Sales",
+              "Cash Sales",
+              "Card Sales",
+              "Mobile Sales",
+            ],
             rows: posOrdersReport.by_currency.map((entry) => [
               entry.currency,
               String(entry.count),
@@ -2343,11 +2420,26 @@ export default function ReportsPage() {
           {
             title: "ORDERS BY STATUS",
             headers: ["Status", "Count"],
-            rows: posOrdersReport.by_status.map((entry) => [entry.status, String(entry.count)]),
+            rows: posOrdersReport.by_status.map((entry) => [
+              entry.status,
+              String(entry.count),
+            ]),
           },
           {
             title: "RECENT POS ORDERS",
-            headers: ["Reference", "Date", "Cashier", "Till", "Status", "Currency", "Total", "Cash", "Card", "Mobile", "Fiscalized"],
+            headers: [
+              "Reference",
+              "Date",
+              "Cashier",
+              "Till",
+              "Status",
+              "Currency",
+              "Total",
+              "Cash",
+              "Card",
+              "Mobile",
+              "Fiscalized",
+            ],
             rows: posOrdersReport.recent_orders.map((order) => [
               order.reference,
               order.date,
@@ -2880,93 +2972,97 @@ export default function ReportsPage() {
                 }
               />
             </div>
-            <div className="report-filter-group report-filter-group-actions">
-              <button
-                className={`o-btn ${loading ? "o-btn-primary" : "o-btn-secondary"}`}
-                style={{ display: "flex", alignItems: "center", gap: 6 }}
-                onClick={loadReport}
-                disabled={loading}
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+            <div>
+              <div className="report-filter-group report-filter-group-currency">
+                <label className="report-filter-label">Currency</label>
+                <select
+                  className="report-filter-select"
+                  value={reportCurrency}
+                  onChange={(e) =>
+                    setReportCurrency(normalizeCurrency(e.target.value))
+                  }
+                  aria-label="Filter reports by currency"
                 >
-                  <polyline points="23 4 23 10 17 10" />
-                  <polyline points="1 20 1 14 7 14" />
-                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-                </svg>
-                {loading ? "Loading..." : "Refresh"}
-              </button>
-              <button
-                className="o-btn o-btn-secondary"
-                style={{ display: "flex", alignItems: "center", gap: 6 }}
-                onClick={activeReport === "vat" ? exportVatExcel : exportExcel}
-                disabled={loading}
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+                  <option value="">All currencies</option>
+                  {currencyOptions.map((currency) => (
+                    <option key={currency.code} value={currency.code}>
+                      {currency.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="report-filter-group report-filter-group-actions">
+                <button
+                  className={`o-btn ${loading ? "o-btn-primary" : "o-btn-secondary"}`}
+                  style={{ display: "flex", alignItems: "center", gap: 6 }}
+                  onClick={loadReport}
+                  disabled={loading}
                 >
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="7 10 12 15 17 10" />
-                  <line x1="12" y1="15" x2="12" y2="3" />
-                </svg>
-                Export Excel
-              </button>
-              <button
-                className="o-btn o-btn-secondary"
-                style={{ display: "flex", alignItems: "center", gap: 6 }}
-                onClick={exportPDF}
-                disabled={loading}
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polyline points="23 4 23 10 17 10" />
+                    <polyline points="1 20 1 14 7 14" />
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                  </svg>
+                  {loading ? "Loading..." : "Refresh"}
+                </button>
+                <button
+                  className="o-btn o-btn-secondary"
+                  style={{ display: "flex", alignItems: "center", gap: 6 }}
+                  onClick={
+                    activeReport === "vat" ? exportVatExcel : exportExcel
+                  }
+                  disabled={loading}
                 >
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                  <polyline points="14 2 14 8 20 8" />
-                  <line x1="16" y1="13" x2="8" y2="13" />
-                  <line x1="16" y1="17" x2="8" y2="17" />
-                  <polyline points="10 9 9 9 8 9" />
-                </svg>
-                Export PDF
-              </button>
-            </div>
-            <div className="report-filter-group report-filter-group-currency">
-              <label className="report-filter-label">Currency</label>
-              <select
-                className="report-filter-select"
-                value={reportCurrency}
-                onChange={(e) =>
-                  setReportCurrency(normalizeCurrency(e.target.value))
-                }
-                aria-label="Filter reports by currency"
-              >
-                <option value="">All currencies</option>
-                {currencyOptions.map((currency) => (
-                  <option key={currency.code} value={currency.code}>
-                    {currency.label}
-                  </option>
-                ))}
-              </select>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                  Export Excel
+                </button>
+                <button
+                  className="o-btn o-btn-secondary"
+                  style={{ display: "flex", alignItems: "center", gap: 6 }}
+                  onClick={exportPDF}
+                  disabled={loading}
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="16" y1="13" x2="8" y2="13" />
+                    <line x1="16" y1="17" x2="8" y2="17" />
+                    <polyline points="10 9 9 9 8 9" />
+                  </svg>
+                  Export PDF
+                </button>
+              </div>
             </div>
           </div>
 
@@ -3101,9 +3197,7 @@ export default function ReportsPage() {
                     <div className="trend-chart-grid">
                       <div className="axis-labels" aria-hidden="true">
                         {salesTrendChart.axisTicks.map((value, index) => (
-                          <span key={index}>
-                            {formatCurrency(value)}
-                          </span>
+                          <span key={index}>{formatCurrency(value)}</span>
                         ))}
                       </div>
                       <div className="bar-axis">
@@ -3135,7 +3229,10 @@ export default function ReportsPage() {
                               </div>
                             ))}
                           </div>
-                          <div className="trend-bar-label-row" aria-hidden="true">
+                          <div
+                            className="trend-bar-label-row"
+                            aria-hidden="true"
+                          >
                             {salesTrendChart.bars.map((bar) => (
                               <span
                                 key={`label-${bar.key}`}
