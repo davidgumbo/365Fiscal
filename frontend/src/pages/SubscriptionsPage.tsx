@@ -1076,6 +1076,7 @@ export default function SubscriptionsPage() {
                   maxHeight: "90vh",
                   overflowY: "auto",
                   background: "var(--bg-card)",
+                  opacity: 1,
                   borderRadius: 18,
                   border: "1px solid var(--border)",
                   boxShadow: "0 24px 60px rgba(15, 23, 42, 0.22)",
