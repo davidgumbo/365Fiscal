@@ -2347,7 +2347,10 @@ export default function ExpensesPage() {
                         <Download size={16} />
                         Export
                       </button>
-                      <button className="btn-create" onClick={startNew}>
+                      <button
+                        className="o-btn o-btn-primary"
+                        onClick={startNew}
+                      >
                         <Plus size={16} />
                         New Expense
                       </button>
