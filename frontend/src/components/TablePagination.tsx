@@ -60,7 +60,7 @@ export function TablePagination({
     <div className={`table-pagination ${className}`.trim()}>
       <div className="pager-left">
         <label className="pager-size-label">Rows:</label>
-        <select
+        {/* <select
           className="pager-size-select"
           value={pageSize}
           onChange={(e) => onPageSizeChange(Number(e.target.value))}
@@ -70,7 +70,7 @@ export function TablePagination({
               {size}
             </option>
           ))}
-        </select>
+        </select> */}
       </div>
 
       <span className="pager-info">
