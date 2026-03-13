@@ -771,7 +771,6 @@
 }
 
 .inventory-move-lines-header span {
-  color: #263445;
   font-size: 15px;
   font-weight: 500;
 }
@@ -1191,9 +1190,6 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  font-size: 19px;
-  font-weight: 800;
-  color: #0f172a;
 }
 
 .inventory-move-lines-header .inventory-inline-action-btn {

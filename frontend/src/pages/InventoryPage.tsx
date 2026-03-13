@@ -6857,7 +6857,7 @@ export default function InventoryPage() {
                               onClick={addMoveLine}
                             >
                               <Plus size={14} />
-                              <span>Add Product</span>
+                              <span>Add Line</span>
                             </button>
                           )}
                         </div>
