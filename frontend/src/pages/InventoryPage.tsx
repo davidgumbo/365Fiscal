@@ -9,6 +9,8 @@ import {
   ArrowUpRight,
   Boxes,
   Check,
+  ChevronLeft,
+  ChevronRight,
   Clock3,
   DollarSign,
   Package,
@@ -37,7 +39,6 @@ import {
   getRequiredFieldError,
 } from "../utils/formValidation";
 import { Sidebar } from "../components/Sidebar";
-import { TablePagination } from "../components/TablePagination";
 import type { SidebarSection } from "../types/sidebar";
 import type { CurrencyItem } from "../types/currency";
 import "./InventoryPage.css";
@@ -3156,6 +3157,14 @@ export default function InventoryPage() {
     1,
     Math.ceil(filteredProducts.length / productsPageSize),
   );
+  const productFromItem =
+    filteredProducts.length === 0
+      ? 0
+      : (productsPage - 1) * productsPageSize + 1;
+  const productToItem = Math.min(
+    filteredProducts.length,
+    productsPage * productsPageSize,
+  );
   const pagedProducts = useMemo(() => {
     const start = (productsPage - 1) * productsPageSize;
     return filteredProducts.slice(start, start + productsPageSize);
@@ -4197,9 +4206,55 @@ export default function InventoryPage() {
 
                     {mainView === "products" && (
                       <>
-                        <div className="inventory-inline-count">
-                          {filteredProducts.length} Product
-                          {filteredProducts.length === 1 ? "" : "s"}
+                        <div className="inventory-products-toolbar-meta">
+                          <div className="inventory-inline-count">
+                            {filteredProducts.length} Product
+                            {filteredProducts.length === 1 ? "" : "s"}
+                          </div>
+                          <div className="inventory-products-pager">
+                            <select
+                              value={productsPageSize}
+                              onChange={(event) =>
+                                setProductsPageSize(Number(event.target.value))
+                              }
+                              className="inventory-products-page-size"
+                              aria-label="Products per page"
+                            >
+                              <option value={20}>20</option>
+                              <option value={50}>50</option>
+                              <option value={100}>100</option>
+                            </select>
+                            <span className="inventory-products-pager-range">
+                              {productFromItem}-{productToItem} /{" "}
+                              {filteredProducts.length}
+                            </span>
+                            <button
+                              type="button"
+                              className="inventory-products-pager-btn"
+                              onClick={() =>
+                                setProductsPage((current) =>
+                                  Math.max(1, current - 1),
+                                )
+                              }
+                              disabled={productsPage <= 1}
+                              aria-label="Previous page"
+                            >
+                              <ChevronLeft size={16} />
+                            </button>
+                            <button
+                              type="button"
+                              className="inventory-products-pager-btn"
+                              onClick={() =>
+                                setProductsPage((current) =>
+                                  Math.min(productTotalPages, current + 1),
+                                )
+                              }
+                              disabled={productsPage >= productTotalPages}
+                              aria-label="Next page"
+                            >
+                              <ChevronRight size={16} />
+                            </button>
+                          </div>
                         </div>
                         <input
                           ref={productImportInputRef}
@@ -4746,14 +4801,6 @@ export default function InventoryPage() {
                         </tr>
                       </tfoot>
                     </table>
-                    <TablePagination
-                      page={productsPage}
-                      pageSize={productsPageSize}
-                      totalItems={filteredProducts.length}
-                      onPageChange={setProductsPage}
-                      onPageSizeChange={setProductsPageSize}
-                      pageSizeOptions={[20, 50, 100]}
-                    />
                   </div>
                 </div>
               )}
@@ -4915,18 +4962,6 @@ export default function InventoryPage() {
                         </div>
                       );
                     })}
-                    {filteredProducts.length > 0 && (
-                      <div style={{ gridColumn: "1 / -1" }}>
-                        <TablePagination
-                          page={productsPage}
-                          pageSize={productsPageSize}
-                          totalItems={filteredProducts.length}
-                          onPageChange={setProductsPage}
-                          onPageSizeChange={setProductsPageSize}
-                          pageSizeOptions={[20, 50, 100]}
-                        />
-                      </div>
-                    )}
                   </div>
                 </div>
               )}

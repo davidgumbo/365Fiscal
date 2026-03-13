@@ -2008,3 +2008,67 @@
   font-size: 13px;
   font-weight: 700;
 }
+
+.inventory-products-toolbar-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.inventory-products-pager {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 8px 0 10px;
+  border: 1px solid var(--slate-200);
+  border-radius: 10px;
+  background: var(--white-500);
+}
+
+.inventory-products-page-size {
+  min-width: 66px;
+  height: 30px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0 24px 0 8px;
+  outline: none;
+}
+
+.inventory-products-pager-range {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--slate-600);
+  white-space: nowrap;
+}
+
+.inventory-products-pager-btn {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--slate-200);
+  border-radius: 8px;
+  background: var(--white-500);
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    color 0.18s ease;
+}
+
+.inventory-products-pager-btn:hover:not(:disabled) {
+  border-color: var(--blue-500);
+  background: var(--blue-50);
+  color: var(--blue-700);
+}
+
+.inventory-products-pager-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
