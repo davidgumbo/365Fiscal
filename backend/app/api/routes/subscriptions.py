@@ -12,6 +12,7 @@ from app.models.company import Company
 from app.models.company_user import CompanyUser
 from app.models.subscription import Subscription, ActivationCode
 from app.models.user import User
+from app.services.email import send_plain_email
 
 router = APIRouter(prefix="/subscriptions", tags=["subscriptions"])
 
@@ -94,6 +95,11 @@ class ActivationStatusRead(BaseModel):
     status: Optional[str] = None
     expires_at: Optional[datetime] = None
     company_name: Optional[str] = None
+
+
+class SubscriptionNotificationResult(BaseModel):
+    status: str
+    detail: str
 
 
 # ── Helpers ──────────────────────────────────────────
@@ -181,6 +187,77 @@ def delete_subscription(
     db.delete(sub)
     db.commit()
     return {"status": "deleted"}
+
+
+@router.post(
+    "/{subscription_id}/notify-portal-user",
+    response_model=SubscriptionNotificationResult,
+)
+def notify_portal_user(
+    subscription_id: int,
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    sub = db.query(Subscription).filter(Subscription.id == subscription_id).first()
+    if not sub:
+        raise HTTPException(status_code=404, detail="Subscription not found")
+
+    company = db.query(Company).filter(Company.id == sub.company_id).first()
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+
+    portal_link = (
+        db.query(CompanyUser)
+        .filter(
+            CompanyUser.company_id == company.id,
+            CompanyUser.role == "portal",
+            CompanyUser.is_active == True,
+            CompanyUser.is_company_admin == True,
+        )
+        .first()
+    )
+    if not portal_link:
+        raise HTTPException(
+            status_code=400,
+            detail="This company does not have an active portal super user.",
+        )
+
+    portal_user = db.query(User).filter(User.id == portal_link.user_id).first()
+    if not portal_user or not portal_user.email:
+        raise HTTPException(
+            status_code=400,
+            detail="The portal super user does not have a valid email address.",
+        )
+
+    expires = sub.expires_at.strftime("%b %d, %Y") if sub.expires_at else "No expiry date"
+    subject = f"365Fiscal Subscription Update for {company.name}"
+    body = (
+        f"Hello {portal_user.name or portal_user.email},\n\n"
+        f"This is an update for your 365Fiscal subscription.\n\n"
+        f"Company: {company.name}\n"
+        f"Plan: {sub.plan.title()}\n"
+        f"Status: {sub.status.title()}\n"
+        f"Max Users: {sub.max_users}\n"
+        f"Expiry Date: {expires}\n\n"
+        f"Notes: {sub.notes or 'No notes'}\n\n"
+        f"Sent by: {admin.email}\n"
+    )
+
+    try:
+        send_plain_email(portal_user.email, subject, body)
+    except NotImplementedError:
+        return {
+            "status": "queued",
+            "detail": (
+                f"Notification prepared for {portal_user.email}. "
+                "Configure an email provider to send it automatically."
+            ),
+        }
+
+    return {
+        "status": "sent",
+        "detail": f"Subscription notice sent to {portal_user.email}.",
+    }
 
 
 # ── Activation codes ─────────────────────────────────

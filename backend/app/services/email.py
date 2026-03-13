@@ -8,3 +8,13 @@ def send_otp_email(to_email: str, otp_code: str) -> None:
         return
     # TODO: Integrate real email provider (SMTP, SendGrid, etc.)
     raise NotImplementedError("Email provider not configured")
+
+
+def send_plain_email(to_email: str, subject: str, body: str) -> None:
+    if settings.otp_dev_mode:
+        print(f"[DEV EMAIL] To: {to_email}")
+        print(f"[DEV EMAIL] Subject: {subject}")
+        print(body)
+        return
+    # TODO: Integrate real email provider (SMTP, SendGrid, etc.)
+    raise NotImplementedError("Email provider not configured")

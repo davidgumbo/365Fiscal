@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { CalendarDays, CreditCard, ShieldCheck, Users } from "lucide-react";
+import { Bell, CalendarDays, Pencil, Users } from "lucide-react";
 import { apiFetch, apiRequest } from "../api";
 import { useMe } from "../hooks/useMe";
 import { useCompanies, Company } from "../hooks/useCompanies";
@@ -106,13 +106,17 @@ export default function SubscriptionsPage() {
   const [codes, setCodes] = useState<ActivationCode[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [tab, setTab] = useState<"subscription" | "codes">("subscription");
 
   // Create/Edit subscription form
   const [showSubForm, setShowSubForm] = useState(false);
+  const [showEditSubForm, setShowEditSubForm] = useState(false);
   const [subForm, setSubForm] = useState({
     plan: "starter",
+    status: "active",
     duration_days: 365,
+    expires_at: "",
     max_users: 5,
     max_devices: SUBSCRIPTION_DEFAULTS.max_devices,
     max_invoices_per_month: SUBSCRIPTION_DEFAULTS.max_invoices_per_month,
@@ -165,6 +169,7 @@ export default function SubscriptionsPage() {
   const handleCreateSubscription = async () => {
     if (!selectedCompanyId) return;
     setError("");
+    setSuccess("");
     try {
       await apiFetch("/subscriptions", {
         method: "POST",
@@ -174,6 +179,7 @@ export default function SubscriptionsPage() {
         }),
       });
       setShowSubForm(false);
+      setSuccess("Subscription created.");
       loadData();
     } catch (err: any) {
       setError(err.message || "Failed to create subscription");
@@ -183,11 +189,14 @@ export default function SubscriptionsPage() {
   const handleUpdateSubscription = async (updates: Record<string, any>) => {
     if (!currentSub) return;
     setError("");
+    setSuccess("");
     try {
       await apiFetch(`/subscriptions/${currentSub.id}`, {
         method: "PATCH",
         body: JSON.stringify(updates),
       });
+      setShowEditSubForm(false);
+      setSuccess("Subscription updated.");
       loadData();
     } catch (err: any) {
       setError(err.message || "Failed to update subscription");
@@ -202,6 +211,7 @@ export default function SubscriptionsPage() {
       return;
     try {
       await apiRequest(`/subscriptions/${currentSub.id}`, { method: "DELETE" });
+      setSuccess("Subscription deleted.");
       loadData();
     } catch (err: any) {
       setError(err.message || "Failed to delete");
@@ -211,6 +221,7 @@ export default function SubscriptionsPage() {
   const handleGenerateCode = async () => {
     if (!selectedCompanyId) return;
     setError("");
+    setSuccess("");
     try {
       const result = await apiFetch<ActivationCode>(
         "/subscriptions/generate-code",
@@ -235,9 +246,54 @@ export default function SubscriptionsPage() {
     if (!confirm("Delete this activation code?")) return;
     try {
       await apiRequest(`/subscriptions/codes/${codeId}`, { method: "DELETE" });
+      setSuccess("Activation code deleted.");
       loadData();
     } catch (err: any) {
       setError(err.message || "Failed to delete code");
+    }
+  };
+
+  const openEditSubscription = () => {
+    if (!currentSub) return;
+    setError("");
+    setSuccess("");
+    setShowEditSubForm(true);
+      setSubForm({
+        plan: currentSub.plan,
+        status: currentSub.status,
+        duration_days:
+          currentSub.starts_at && currentSub.expires_at
+          ? Math.max(
+              1,
+              Math.round(
+                (new Date(currentSub.expires_at).getTime() -
+                  new Date(currentSub.starts_at).getTime()) /
+                  86400000,
+              ),
+            )
+          : 365,
+        expires_at: currentSub.expires_at
+          ? new Date(currentSub.expires_at).toISOString().slice(0, 10)
+          : "",
+        max_users: currentSub.max_users,
+        max_devices: currentSub.max_devices,
+        max_invoices_per_month: currentSub.max_invoices_per_month,
+      notes: currentSub.notes || "",
+    });
+  };
+
+  const handleNotifyPortalUser = async () => {
+    if (!currentSub) return;
+    setError("");
+    setSuccess("");
+    try {
+      const result = await apiFetch<{ status: string; detail: string }>(
+        `/subscriptions/${currentSub.id}/notify-portal-user`,
+        { method: "POST" },
+      );
+      setSuccess(result.detail || "Portal user notified.");
+    } catch (err: any) {
+      setError(err.message || "Failed to notify portal user");
     }
   };
 
@@ -437,6 +493,34 @@ export default function SubscriptionsPage() {
         </div>
       )}
 
+      {success && (
+        <div
+          className="alert alert-success"
+          style={{
+            marginBottom: 16,
+            padding: "10px 16px",
+            borderRadius: 8,
+            background: "var(--emerald-50)",
+            color: "var(--emerald-700)",
+            border: "1px solid var(--emerald-200)",
+          }}
+        >
+          {success}
+          <button
+            onClick={() => setSuccess("")}
+            style={{
+              float: "right",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              fontWeight: 700,
+            }}
+          >
+            ×
+          </button>
+        </div>
+      )}
+
       {/* Generated code modal */}
       {generatedCode && (
         <div
@@ -602,18 +686,6 @@ export default function SubscriptionsPage() {
                     {currentSub.status}
                   </span>
                   </div>
-                  <div
-                    style={{
-                      marginTop: 10,
-                      fontSize: 13,
-                      color: "var(--muted)",
-                      maxWidth: 540,
-                    }}
-                  >
-                    Portal user limits use this subscription. The maximum users
-                    count includes the portal super user and all general portal
-                    users.
-                  </div>
                 </div>
                 <div style={{ textAlign: "right" }}>
                   {days !== null && (
@@ -662,16 +734,6 @@ export default function SubscriptionsPage() {
                     label: "Max Users",
                     value: String(currentSub.max_users),
                     icon: Users,
-                  },
-                  {
-                    label: "Max Devices",
-                    value: String(currentSub.max_devices),
-                    icon: ShieldCheck,
-                  },
-                  {
-                    label: "Invoices / Month",
-                    value: String(currentSub.max_invoices_per_month),
-                    icon: CreditCard,
                   },
                 ].map((item) => {
                   const Icon = item.icon;
@@ -741,6 +803,20 @@ export default function SubscriptionsPage() {
                   background: "var(--slate-50, #f8fafc)",
                 }}
               >
+                <button
+                  className="o-btn o-btn-secondary"
+                  onClick={openEditSubscription}
+                >
+                  <Pencil size={14} style={{ marginRight: 6 }} />
+                  Edit Subscription
+                </button>
+                <button
+                  className="o-btn o-btn-secondary"
+                  onClick={handleNotifyPortalUser}
+                >
+                  <Bell size={14} style={{ marginRight: 6 }} />
+                  Notify Portal User
+                </button>
                 {currentSub.status === "active" && (
                   <button
                     className="o-btn o-btn-secondary"
@@ -952,15 +1028,6 @@ export default function SubscriptionsPage() {
                     }
                   />
                 </div>
-                <div
-                  style={{
-                    gridColumn: "1 / -1",
-                    fontSize: 12,
-                    color: "var(--muted)",
-                  }}
-                >
-                  Max devices and invoices per month use the plan defaults.
-                </div>
               </div>
               <div style={{ display: "flex", gap: 8, marginTop: 20 }}>
                 <button
@@ -972,6 +1039,163 @@ export default function SubscriptionsPage() {
                 <button
                   className="o-btn o-btn-secondary"
                   onClick={() => setShowSubForm(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          {showEditSubForm && currentSub && (
+            <div
+              style={{
+                marginTop: 24,
+                background: "var(--bg-card)",
+                borderRadius: 12,
+                border: "1px solid var(--border)",
+                padding: 28,
+              }}
+            >
+              <h4 style={{ margin: "0 0 20px", fontWeight: 700 }}>
+                Edit Subscription
+              </h4>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 16,
+                }}
+              >
+                <div>
+                  <label
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      display: "block",
+                      marginBottom: 4,
+                    }}
+                  >
+                    Plan
+                  </label>
+                  <select
+                    className="form-control"
+                    value={subForm.plan}
+                    onChange={(e) =>
+                      setSubForm({ ...subForm, plan: e.target.value })
+                    }
+                  >
+                    {PLANS.filter((p) => p.value !== "trial").map((p) => (
+                      <option key={p.value} value={p.value}>
+                        {p.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      display: "block",
+                      marginBottom: 4,
+                    }}
+                  >
+                    Status
+                  </label>
+                  <select
+                    className="form-control"
+                    value={subForm.status}
+                    onChange={(e) =>
+                      setSubForm({ ...subForm, status: e.target.value })
+                    }
+                  >
+                    <option value="active">Active</option>
+                    <option value="suspended">Suspended</option>
+                    <option value="expired">Expired</option>
+                  </select>
+                </div>
+                <div>
+                  <label
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      display: "block",
+                      marginBottom: 4,
+                    }}
+                  >
+                    Expiry Date
+                  </label>
+                  <input
+                    className="form-control"
+                    type="date"
+                    value={subForm.expires_at}
+                    onChange={(e) =>
+                      setSubForm({ ...subForm, expires_at: e.target.value })
+                    }
+                  />
+                </div>
+                <div>
+                  <label
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      display: "block",
+                      marginBottom: 4,
+                    }}
+                  >
+                    Max Users
+                  </label>
+                  <input
+                    className="form-control"
+                    type="number"
+                    min={1}
+                    value={subForm.max_users}
+                    onChange={(e) =>
+                      setSubForm({ ...subForm, max_users: +e.target.value })
+                    }
+                  />
+                </div>
+                <div style={{ gridColumn: "1 / -1" }}>
+                  <label
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      display: "block",
+                      marginBottom: 4,
+                    }}
+                  >
+                    Notes
+                  </label>
+                  <textarea
+                    className="form-control"
+                    rows={3}
+                    value={subForm.notes}
+                    onChange={(e) =>
+                      setSubForm({ ...subForm, notes: e.target.value })
+                    }
+                  />
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 8, marginTop: 20 }}>
+                <button
+                  className="o-btn o-btn-primary"
+                  onClick={() => {
+                    handleUpdateSubscription({
+                      plan: subForm.plan,
+                      status: subForm.status,
+                      max_users: subForm.max_users,
+                      notes: subForm.notes,
+                      expires_at: subForm.expires_at
+                        ? new Date(`${subForm.expires_at}T23:59:59`).toISOString()
+                        : currentSub.expires_at,
+                    });
+                  }}
+                >
+                  Save Changes
+                </button>
+                <button
+                  className="o-btn o-btn-secondary"
+                  onClick={() => setShowEditSubForm(false)}
                 >
                   Cancel
                 </button>
@@ -1105,15 +1329,6 @@ export default function SubscriptionsPage() {
                       setCodeForm({ ...codeForm, max_users: +e.target.value })
                     }
                   />
-                </div>
-                <div
-                  style={{
-                    gridColumn: "1 / -1",
-                    fontSize: 12,
-                    color: "var(--muted)",
-                  }}
-                >
-                  Max devices and invoices per month use the plan defaults.
                 </div>
               </div>
               <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
