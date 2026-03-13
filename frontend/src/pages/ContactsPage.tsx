@@ -10,6 +10,7 @@ import {
   LayoutKanban,
   List,
   User,
+  LayoutGrid,
   Users,
 } from "lucide-react";
 
@@ -234,12 +235,7 @@ export default function ContactsPage() {
         }),
       },
     ];
-  }, [
-    contacts.length,
-    companyCount,
-    contactTypeFilter,
-    personalCount,
-  ]);
+  }, [contacts.length, companyCount, contactTypeFilter, personalCount]);
 
   if (companiesLoading && !companyId) {
     return <div className="loading-indicator">Loading companies...</div>;
@@ -376,7 +372,7 @@ export default function ContactsPage() {
                 title="Kanban view"
                 aria-label="Kanban view"
               >
-                <LayoutKanban size={16} aria-hidden="true" />
+                <LayoutGrid size={16} aria-hidden="true" />
               </button>
               <button className="primary" onClick={startNew}>
                 New
