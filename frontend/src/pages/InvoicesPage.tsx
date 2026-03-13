@@ -2364,7 +2364,7 @@ export default function InvoicesPage({
                     onClick={createInvoice}
                     disabled={loading}
                   >
-                    {loading ? "Saving…" : "Create Invoice"}
+                    {loading ? "Saving…" : "Save Draft"}
                   </button>
                   <button
                     className="btn btn-sm btn-light border"
