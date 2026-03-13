@@ -12017,6 +12017,7 @@ button.danger:not(.icon-btn):not(.device-icon-btn):disabled {
   border: 1px solid var(--slate-200);
   border-radius: 14px;
   background: #f8fafc;
+  width: fit-content;
 }
 
 .settings-inline-tab {
