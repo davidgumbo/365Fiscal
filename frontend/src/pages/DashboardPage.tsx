@@ -141,7 +141,10 @@ const formatStatusLabel = (value?: string) => {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
-const APP_ICON_STYLE: Record<DashboardAppKey, { color: string; background: string }> = {
+const APP_ICON_STYLE: Record<
+  DashboardAppKey,
+  { color: string; background: string }
+> = {
   overview: {
     color: "var(--blue-600)",
     background: "rgba(59, 130, 246, 0.12)",
@@ -767,7 +770,7 @@ export default function DashboardPage() {
             id: "invoices",
             label: "Invoices",
             icon: <FileText size={18} />,
-            badge: formatBadge(invoiceStats.count),
+            // badge: formatBadge(invoiceStats.count),
             isActive: activeApp === "invoices",
             onClick: () => setActiveApp("invoices"),
             iconColor: APP_ICON_STYLE.invoices.color,
@@ -777,7 +780,7 @@ export default function DashboardPage() {
             id: "quotations",
             label: "Quotations",
             icon: <ReceiptText size={18} />,
-            badge: formatBadge(quotationStats.count),
+            // badge: formatBadge(quotationStats.count),
             isActive: activeApp === "quotations",
             onClick: () => setActiveApp("quotations"),
             iconColor: APP_ICON_STYLE.quotations.color,
@@ -787,7 +790,7 @@ export default function DashboardPage() {
             id: "purchases",
             label: "Purchases",
             icon: <ShoppingCart size={18} />,
-            badge: formatBadge(purchaseStats.count),
+            // badge: formatBadge(purchaseStats.count),
             isActive: activeApp === "purchases",
             onClick: () => setActiveApp("purchases"),
             iconColor: APP_ICON_STYLE.purchases.color,
@@ -797,7 +800,7 @@ export default function DashboardPage() {
             id: "payments",
             label: "Payments",
             icon: <CreditCard size={18} />,
-            badge: formatBadge(paymentSummary.totalPayments),
+            // badge: formatBadge(paymentSummary.totalPayments),
             isActive: activeApp === "payments",
             onClick: () => setActiveApp("payments"),
             iconColor: APP_ICON_STYLE.payments.color,
@@ -807,7 +810,7 @@ export default function DashboardPage() {
             id: "inventory",
             label: "Inventory",
             icon: <Box size={18} />,
-            badge: formatBadge(inventorySummary.count),
+            // badge: formatBadge(inventorySummary.count),
             isActive: activeApp === "inventory",
             onClick: () => setActiveApp("inventory"),
             iconColor: APP_ICON_STYLE.inventory.color,
