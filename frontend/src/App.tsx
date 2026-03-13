@@ -307,9 +307,41 @@ function AppContent() {
       .filter(Boolean);
     return Array.from(new Set(apps));
   }, [isPortalMode, navItems]);
+  const portalLandingRoute = useMemo(() => {
+    if (!isPortalMode || !launcherApps?.length) return "/";
+    if (launcherApps.length === 1) {
+      return PORTAL_APP_ROUTES[launcherApps[0]] ?? "/";
+    }
+    return "/";
+  }, [isPortalMode, launcherApps]);
+  const requestedPortalApp = useMemo(
+    () => getPortalAppKeyForPath(currentPath),
+    [currentPath],
+  );
+  const isAllowedPortalRoute = useMemo(() => {
+    if (!isPortalMode) return true;
+    if (currentPath === "/") return true;
+    if (!requestedPortalApp) return false;
+    if (requestedPortalApp === "settings") return isPortalSuperUser;
+    if (!allowedPortalApps) return true;
+    return allowedPortalApps.includes(requestedPortalApp);
+  }, [
+    allowedPortalApps,
+    currentPath,
+    isPortalMode,
+    isPortalSuperUser,
+    requestedPortalApp,
+  ]);
+
+  if (isPortalMode && !isAllowedPortalRoute) {
+    return <Navigate to={portalLandingRoute} replace />;
+  }
 
   // If on home page, render the app launcher without sidebar
   if (isHomePage) {
+    if (isPortalMode && portalLandingRoute !== "/") {
+      return <Navigate to={portalLandingRoute} replace />;
+    }
     if (isPortalMode && launcherApps && launcherApps.length === 1) {
       const onlyAppRoute = PORTAL_APP_ROUTES[launcherApps[0]];
       if (onlyAppRoute) {
@@ -542,6 +574,17 @@ function getAppTitle(path: string, navItems: { to: string; label: string }[]) {
   if (baseMatch) return baseMatch.label;
 
   return "Dashboard";
+}
+
+function getPortalAppKeyForPath(path: string) {
+  const exactMatch = PORTAL_NAV_APP_KEYS[path];
+  if (exactMatch) return exactMatch;
+
+  const baseMatch = Object.entries(PORTAL_NAV_APP_KEYS)
+    .filter(([route]) => route !== "/" && path.startsWith(`${route}/`))
+    .sort((a, b) => b[0].length - a[0].length)[0];
+
+  return baseMatch?.[1] ?? null;
 }
 
 function getCustomFields(path: string): CustomField[] {
