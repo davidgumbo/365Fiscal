@@ -3,6 +3,7 @@ import {
   Routes,
   Route,
   NavLink,
+  Navigate,
   useLocation,
   useNavigate,
 } from "react-router-dom";
@@ -108,6 +109,20 @@ const PORTAL_NAV_APP_KEYS: Record<string, string> = {
   "/expenses": "expenses",
   "/reports": "reports",
   "/settings": "settings",
+};
+
+const PORTAL_APP_ROUTES: Record<string, string> = {
+  dashboard: "/dashboard",
+  invoices: "/invoices",
+  purchases: "/purchases",
+  contacts: "/contacts",
+  quotations: "/quotations",
+  pos: "/pos",
+  inventory: "/inventory",
+  devices: "/my-devices",
+  expenses: "/expenses",
+  reports: "/reports",
+  settings: "/settings",
 };
 
 type FilterCondition = {
@@ -285,9 +300,22 @@ function AppContent() {
   }, []);
 
   const isHomePage = currentPath === "/";
+  const launcherApps = useMemo(() => {
+    if (!isPortalMode) return null;
+    const apps = navItems
+      .map((item) => PORTAL_NAV_APP_KEYS[item.to])
+      .filter(Boolean);
+    return Array.from(new Set(apps));
+  }, [isPortalMode, navItems]);
 
   // If on home page, render the app launcher without sidebar
   if (isHomePage) {
+    if (isPortalMode && launcherApps && launcherApps.length === 1) {
+      const onlyAppRoute = PORTAL_APP_ROUTES[launcherApps[0]];
+      if (onlyAppRoute) {
+        return <Navigate to={onlyAppRoute} replace />;
+      }
+    }
     return (
       <ListViewContext.Provider value={listViewContextValue}>
         <AppLauncherPage />
