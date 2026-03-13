@@ -2972,7 +2972,7 @@ export default function ReportsPage() {
                 }
               />
             </div>
-            <div>
+            <div className="flex justify-end gap-x-1">
               <div className="report-filter-group report-filter-group-currency">
                 <label className="report-filter-label">Currency</label>
                 <select
