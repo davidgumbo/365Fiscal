@@ -1582,8 +1582,9 @@ export default function InvoicesPage({
       ? normalizeZimraVerifyUrl(selectedInvoice.zimra_verification_url)
       : "";
     const isFiscalizedDocument = Boolean(
-      selectedInvoice.zimra_verification_code ||
-        selectedInvoice.zimra_receipt_id,
+      selectedInvoice.status === "fiscalized" ||
+        (selectedInvoice.zimra_status || "").toLowerCase().trim() ===
+          "submitted",
     );
     const rows = lines
       .map((line) => {
