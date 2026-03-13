@@ -6609,6 +6609,51 @@ export default function InventoryPage() {
                   style={{ width: "100%" }}
                 >
                   <div className="o-form-view inventory-form-panel inventory-move-form">
+                    <button
+                      className="o-btn o-btn-link inventory-move-back-link"
+                      onClick={goBack}
+                    >
+                      ← Back to List
+                    </button>
+                    <div className="inventory-move-header">
+                      <h2 className="inventory-move-title">
+                        {isNew
+                          ? "New Stock Move"
+                          : selectedMove?.reference ||
+                            `Move #${selectedMoveId}`}
+                      </h2>
+                      <div className="inventory-move-header-actions">
+                        <button
+                          className="o-btn o-btn-primary"
+                          onClick={saveMove}
+                          disabled={saving}
+                        >
+                          {saving ? "Saving..." : "Save"}
+                        </button>
+                        <button
+                          className="o-btn o-btn-secondary"
+                          onClick={goBack}
+                        >
+                          Discard
+                        </button>
+                        {!isNew && selectedMoveId && (
+                          <button
+                            className="o-btn o-btn-danger"
+                            onClick={() => deleteMove(selectedMoveId)}
+                            disabled={saving}
+                          >
+                            Delete
+                          </button>
+                        )}
+                        <button
+                          className="o-btn o-btn-secondary"
+                          onClick={() => void printMovePdf()}
+                        >
+                          <Printer size={14} />
+                          <span>Print PDF</span>
+                        </button>
+                      </div>
+                    </div>
                     {/* <div className="inventory-form-actions">
                       {selectedMove && !isNew && (
                         <div className="o-statusbar inventory-statusbar">
@@ -6631,42 +6676,7 @@ export default function InventoryPage() {
                         </div>
                       )}
                     </div> */}
-                    <button class="o-btn o-btn-link inventory-move-back-link">
-                      ← Back to List
-                    </button>
-                    <div class="inventory-move-header">
-                      <h2 class="inventory-move-title">New Stock Move</h2>
-                      <div class="inventory-move-header-actions">
-                        <button class="o-btn o-btn-primary">Save</button>
-                        <button class="o-btn o-btn-secondary">Discard</button>
-                        <button class="o-btn o-btn-secondary">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="14"
-                            height="14"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            class="lucide lucide-printer"
-                            aria-hidden="true"
-                          >
-                            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-                            <path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"></path>
-                            <rect
-                              x="6"
-                              y="14"
-                              width="12"
-                              height="8"
-                              rx="1"
-                            ></rect>
-                          </svg>
-                          <span>Print PDF</span>
-                        </button>
-                      </div>
-                    </div>
+
                     <div className="o-form-sheet">
                       <div className="inventory-two-col-grid">
                         <div className="inventory-move-section-head">
