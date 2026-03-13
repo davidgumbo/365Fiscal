@@ -59,6 +59,7 @@ import ListViewContext, {
   SavedFilter,
 } from "./context/ListViewContext";
 import AuthGuard from "./components/AuthGuard";
+import { initBulkTableEnhancer } from "./utils/bulkTableEnhancer";
 
 const adminNav = [
   { to: "/", label: "Home", icon: HomeIcon },
@@ -298,6 +299,8 @@ function AppContent() {
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
+
+  useEffect(() => initBulkTableEnhancer(), [currentPath]);
 
   const isHomePage = currentPath === "/";
   const launcherApps = useMemo(() => {
