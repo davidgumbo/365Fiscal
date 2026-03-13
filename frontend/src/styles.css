@@ -11918,3 +11918,88 @@ button.danger:not(.icon-btn):not(.device-icon-btn):disabled {
   border-color: var(--amber-200, #fde68a);
   color: var(--amber-700, #b45309);
 }
+
+.settings-inline-tabs {
+  display: inline-flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  padding: 4px;
+  border: 1px solid var(--slate-200);
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.settings-inline-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--slate-600);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.settings-inline-tab.active {
+  background: #fff;
+  color: var(--blue-700);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+}
+
+.settings-search-input {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--slate-200);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--slate-500);
+}
+
+.settings-search-input input {
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--slate-900);
+  font-size: 14px;
+}
+
+.settings-audit-table-wrap {
+  max-height: 520px;
+  overflow: auto;
+}
+
+.settings-audit-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.settings-audit-rows {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--slate-600);
+}
+
+.settings-audit-rows select {
+  min-width: 72px;
+}
+
+.settings-audit-pager {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}

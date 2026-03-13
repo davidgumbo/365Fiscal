@@ -403,6 +403,8 @@ export default function SettingsPage() {
   const [portalAuditStatus, setPortalAuditStatus] = useState("");
   const [portalAuditUserId, setPortalAuditUserId] = useState<number | "">("");
   const [portalAuditActions, setPortalAuditActions] = useState<string[]>([]);
+  const [portalAuditPage, setPortalAuditPage] = useState(1);
+  const [portalAuditPageSize, setPortalAuditPageSize] = useState(20);
   const filteredPortalManagedUsers = useMemo(() => {
     const query = portalUserSearch.trim().toLowerCase();
     if (!query) return portalManagedUsers;
@@ -411,6 +413,26 @@ export default function SettingsPage() {
       user.name.toLowerCase().includes(query),
     );
   }, [portalManagedUsers, portalUserSearch]);
+  const portalAuditUsers = useMemo(() => {
+    const map = new Map<number, { id: number; label: string }>();
+    portalAuditLogs.forEach((log) => {
+      if (log.user_id) {
+        map.set(log.user_id, {
+          id: log.user_id,
+          label: log.user_name || log.user_email || `User ${log.user_id}`,
+        });
+      }
+    });
+    return Array.from(map.values()).sort((a, b) => a.label.localeCompare(b.label));
+  }, [portalAuditLogs]);
+  const pagedPortalAuditLogs = useMemo(() => {
+    const start = (portalAuditPage - 1) * portalAuditPageSize;
+    return portalAuditLogs.slice(start, start + portalAuditPageSize);
+  }, [portalAuditLogs, portalAuditPage, portalAuditPageSize]);
+  const portalAuditTotalPages = Math.max(
+    1,
+    Math.ceil(portalAuditLogs.length / portalAuditPageSize),
+  );
 
   // Till state
   const [posTills, setPosTills] = useState<POSTillItem[]>([]);
@@ -511,7 +533,7 @@ export default function SettingsPage() {
     try {
       const params = new URLSearchParams();
       params.set("company_id", String(cid));
-      params.set("limit", "200");
+      params.set("limit", "500");
       if (portalAuditSearch.trim()) params.set("search", portalAuditSearch.trim());
       if (portalAuditAction) params.set("action", portalAuditAction);
       if (portalAuditStatus) params.set("status", portalAuditStatus);
@@ -524,6 +546,16 @@ export default function SettingsPage() {
       setPortalAuditLoading(false);
     }
   };
+
+  useEffect(() => {
+    setPortalAuditPage(1);
+  }, [
+    portalAuditSearch,
+    portalAuditAction,
+    portalAuditStatus,
+    portalAuditUserId,
+    portalAuditPageSize,
+  ]);
 
   const deletePortalManagedUser = async (userId: number) => {
     const cid = companyId ?? primaryPortalCompany?.id ?? null;
@@ -6174,9 +6206,9 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
                               }
                             >
                               <option value="">All users</option>
-                              {portalManagedUsers.map((user) => (
+                              {portalAuditUsers.map((user) => (
                                 <option key={user.id} value={user.id}>
-                                  {user.name || user.email}
+                                  {user.label}
                                 </option>
                               ))}
                             </select>
@@ -6210,7 +6242,8 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
                         {portalAuditLoading ? (
                           <div className="page-sub">Loading audit trail...</div>
                         ) : portalAuditLogs.length ? (
-                          <div className="table-wrap">
+                          <>
+                          <div className="table-wrap settings-audit-table-wrap">
                             <table className="table">
                               <thead>
                                 <tr>
@@ -6223,7 +6256,7 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
                                 </tr>
                               </thead>
                               <tbody>
-                                {portalAuditLogs.map((log) => (
+                                {pagedPortalAuditLogs.map((log) => (
                                   <tr key={log.id}>
                                     <td>{new Date(log.action_at).toLocaleString()}</td>
                                     <td>
@@ -6243,6 +6276,45 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
                               </tbody>
                             </table>
                           </div>
+                          <div className="settings-audit-footer">
+                            <label className="settings-audit-rows">
+                              <span>Rows:</span>
+                              <select
+                                value={portalAuditPageSize}
+                                onChange={(e) => setPortalAuditPageSize(Number(e.target.value))}
+                              >
+                                <option value={20}>20</option>
+                                <option value={50}>50</option>
+                                <option value={100}>100</option>
+                              </select>
+                            </label>
+                            <div className="page-sub">
+                              Showing {(portalAuditPage - 1) * portalAuditPageSize + 1}-
+                              {Math.min(portalAuditPage * portalAuditPageSize, portalAuditLogs.length)} of {portalAuditLogs.length}
+                            </div>
+                            <div className="settings-audit-pager">
+                              <button
+                                className="outline"
+                                onClick={() => setPortalAuditPage((prev) => Math.max(1, prev - 1))}
+                                disabled={portalAuditPage === 1}
+                              >
+                                Prev
+                              </button>
+                              <span className="page-sub">
+                                Page {portalAuditPage} / {portalAuditTotalPages}
+                              </span>
+                              <button
+                                className="outline"
+                                onClick={() =>
+                                  setPortalAuditPage((prev) => Math.min(portalAuditTotalPages, prev + 1))
+                                }
+                                disabled={portalAuditPage >= portalAuditTotalPages}
+                              >
+                                Next
+                              </button>
+                            </div>
+                          </div>
+                          </>
                         ) : (
                           <div className="page-sub">No audit entries found.</div>
                         )}
