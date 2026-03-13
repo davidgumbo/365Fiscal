@@ -79,7 +79,7 @@
 }
 
 .invoice-page-shell .o-sidebar-item.active {
-  background: #3166e3;
+  background: var(--blue-600-t);
   box-shadow: 0 8px 18px rgba(49, 102, 227, 0.18);
 }
 

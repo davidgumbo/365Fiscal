@@ -19,6 +19,7 @@
   --blue-50: #eff6ff;
   --blue-500: #3b82f6;
   --blue-600: #2563eb;
+  --blue-600-t: #2564eb88;
   --blue-700: #1d4ed8;
   --blue-800: #1e40af;
   --blue-900: #1e3a8a;
@@ -5843,7 +5844,7 @@ button.danger:hover {
 }
 
 .o-sidebar-item.active {
-  background: var(--blue-600);
+  background: var(--blue-600-t);
   color: var(--white-500);
 }
 
