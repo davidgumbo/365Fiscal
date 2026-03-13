@@ -30,6 +30,30 @@ def parse_portal_apps(value: str | None) -> list[str]:
     return apps or DEFAULT_PORTAL_APPS.copy()
 
 
+def is_portal_super_user_link(
+    db: Session,
+    company_id: int,
+    link: CompanyUser | None,
+) -> bool:
+    if not link:
+        return False
+    if link.is_company_admin:
+        return True
+    explicit_super = (
+        db.query(CompanyUser)
+        .filter(
+            CompanyUser.company_id == company_id,
+            CompanyUser.role == "portal",
+            CompanyUser.is_active == True,
+            CompanyUser.is_company_admin == True,
+        )
+        .first()
+    )
+    if explicit_super:
+        return explicit_super.user_id == link.user_id
+    return link.role == "portal"
+
+
 @router.get("/me")
 def read_me(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     from app.models.company import Company
@@ -59,12 +83,12 @@ def read_me(user: User = Depends(get_current_user), db: Session = Depends(get_db
                         app
                         for app in parse_portal_apps(c.portal_apps)
                         if link_by_company.get(c.id) is None
-                        or link_by_company[c.id].is_company_admin
+                        or is_portal_super_user_link(db, c.id, link_by_company.get(c.id))
                         or app != "settings"
                     ]
                 ),
-                "is_portal_super_user": bool(
-                    link_by_company.get(c.id) and link_by_company[c.id].is_company_admin
+                "is_portal_super_user": is_portal_super_user_link(
+                    db, c.id, link_by_company.get(c.id)
                 ),
             }
             for c in companies

@@ -43,6 +43,24 @@ def parse_portal_apps(value: str | None) -> list[str]:
     return parsed or DEFAULT_PORTAL_APPS.copy()
 
 
+def is_portal_super_link(db: Session, company_id: int, link: CompanyUser) -> bool:
+    if link.is_company_admin:
+        return True
+    explicit_super = (
+        db.query(CompanyUser)
+        .filter(
+            CompanyUser.company_id == company_id,
+            CompanyUser.role == "portal",
+            CompanyUser.is_active == True,
+            CompanyUser.is_company_admin == True,
+        )
+        .first()
+    )
+    if explicit_super:
+        return explicit_super.user_id == link.user_id
+    return link.role == "portal"
+
+
 def ensure_portal_user_manager(
     company_id: int,
     db: Session,
@@ -53,14 +71,14 @@ def ensure_portal_user_manager(
     link = get_user_company_link(db, current_user, company_id)
     if not link:
         raise HTTPException(status_code=403, detail="Company access denied")
-    if not link.is_company_admin:
+    if not is_portal_super_link(db, company_id, link):
         raise HTTPException(status_code=403, detail="Portal super user access required")
     return link
 
 
-def build_effective_apps(company: Company, link: CompanyUser) -> list[str]:
+def build_effective_apps(db: Session, company: Company, link: CompanyUser) -> list[str]:
     apps = parse_portal_apps(link.portal_apps or company.portal_apps)
-    if not link.is_company_admin:
+    if not is_portal_super_link(db, company.id, link):
         apps = [app for app in apps if app != "settings"]
     elif "settings" not in apps:
         apps.append("settings")
@@ -102,8 +120,8 @@ def get_portal_users(company_id: int, db: Session = Depends(get_db)):
             "id": link.user_id,
             "email": users[link.user_id].email,
             "is_active": users[link.user_id].is_active,
-            "is_portal_super_user": link.is_company_admin,
-            "portal_apps": build_effective_apps(company, link) if company else [],
+            "is_portal_super_user": is_portal_super_link(db, company_id, link),
+            "portal_apps": build_effective_apps(db, company, link) if company else [],
         }
         for link in links
         if link.user_id in users
@@ -132,8 +150,8 @@ def get_manageable_portal_users(
             "id": link.user_id,
             "email": users[link.user_id].email,
             "is_active": users[link.user_id].is_active,
-            "is_portal_super_user": link.is_company_admin,
-            "portal_apps": build_effective_apps(company, link),
+            "is_portal_super_user": is_portal_super_link(db, company_id, link),
+            "portal_apps": build_effective_apps(db, company, link),
         }
         for link in links
         if link.user_id in users
