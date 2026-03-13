@@ -7,6 +7,11 @@ from app.api.deps import get_db, ensure_company_access, require_company_access, 
 from app.models.audit_log import AuditAction, ResourceType
 from app.models.company import Company
 from app.models.product import Product
+from app.models.invoice_line import InvoiceLine
+from app.models.purchase_order_line import PurchaseOrderLine
+from app.models.quotation_line import QuotationLine
+from app.models.pos_session import POSOrderLine
+from app.models.stock_move import StockMove
 from app.models.stock_quant import StockQuant
 from app.schemas.product import ProductCreate, ProductRead, ProductUpdate, ProductWithStock
 
@@ -179,6 +184,21 @@ def delete_product(
     ).first()
     if has_stock:
         raise HTTPException(status_code=400, detail="Cannot delete product with stock on hand")
+    usage_checks = [
+        (InvoiceLine, "invoice lines"),
+        (PurchaseOrderLine, "purchase orders"),
+        (QuotationLine, "quotations"),
+        (POSOrderLine, "POS orders"),
+        (StockMove, "stock moves"),
+        (StockQuant, "inventory records"),
+    ]
+    for model, label in usage_checks:
+        exists = db.query(model.id).filter(model.product_id == product_id).first()
+        if exists:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Cannot delete product because it is already used in {label}",
+            )
     company = db.query(Company).filter(Company.id == product.company_id).first()
     product_reference = product.reference or product.name
     product_name = product.name

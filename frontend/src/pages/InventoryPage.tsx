@@ -376,6 +376,11 @@ export default function InventoryPage() {
   const [error, setError] = useState<string | null>(null);
   const [filterMenuOpen, setFilterMenuOpen] = useState(false);
   const [productFilterMenuOpen, setProductFilterMenuOpen] = useState(false);
+  const [selectedProductIds, setSelectedProductIds] = useState<Set<number>>(
+    new Set(),
+  );
+  const [exportingSelectedProducts, setExportingSelectedProducts] =
+    useState(false);
 
   const [showImportExportModal, setShowImportExportModal] = useState(false);
   const [importExportTarget, setImportExportTarget] = useState<
@@ -1038,6 +1043,38 @@ export default function InventoryPage() {
       await apiFetch(`/products/${productId}`, { method: "DELETE" });
       await loadAllData();
       setSubView("list");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteSelectedProducts = async () => {
+    if (!selectedProductIds.size) return;
+    if (
+      !confirm(
+        `Are you sure you want to delete ${selectedProductIds.size} selected product${selectedProductIds.size === 1 ? "" : "s"}?`,
+      )
+    ) {
+      return;
+    }
+    setSaving(true);
+    try {
+      const failures: string[] = [];
+      for (const product of filteredProducts.filter((item) =>
+        selectedProductIds.has(item.id),
+      )) {
+        try {
+          await apiFetch(`/products/${product.id}`, { method: "DELETE" });
+        } catch (err: any) {
+          failures.push(`${product.name}: ${err?.message || "Delete failed"}`);
+        }
+      }
+      await loadAllData();
+      setSelectedProductIds(new Set());
+      setSubView("list");
+      if (failures.length) {
+        alert(failures.join("\n"));
+      }
     } finally {
       setSaving(false);
     }
@@ -3112,6 +3149,64 @@ export default function InventoryPage() {
       p.barcode?.toLowerCase().includes(q)
     );
   });
+  const allFilteredProductsSelected =
+    filteredProducts.length > 0 &&
+    filteredProducts.every((product) => selectedProductIds.has(product.id));
+  const selectedProducts = filteredProducts.filter((product) =>
+    selectedProductIds.has(product.id),
+  );
+
+  const toggleSelectProduct = (productId: number) => {
+    setSelectedProductIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(productId)) next.delete(productId);
+      else next.add(productId);
+      return next;
+    });
+  };
+
+  const toggleSelectAllProducts = () => {
+    setSelectedProductIds((prev) => {
+      const next = new Set(prev);
+      if (allFilteredProductsSelected) {
+        filteredProducts.forEach((product) => next.delete(product.id));
+      } else {
+        filteredProducts.forEach((product) => next.add(product.id));
+      }
+      return next;
+    });
+  };
+
+  const exportSelectedProducts = () => {
+    if (!selectedProducts.length) return;
+    setExportingSelectedProducts(true);
+    try {
+      const rows = selectedProducts.map((product) => {
+        const category = categories.find((c) => c.id === product.category_id);
+        return {
+          Product: product.name,
+          Reference: product.reference || "",
+          Location: productLocationById.get(product.id) || "",
+          Category: category?.name || "",
+          Type:
+            PRODUCT_TYPES.find((type) => type.value === product.product_type)
+              ?.label || product.product_type,
+          "On Hand": `${Number.isFinite(product.quantity_on_hand) ? product.quantity_on_hand : 0} ${product.uom}`,
+          Available: `${product.quantity_available} ${product.uom}`,
+          "Sale Price": product.sale_price.toFixed(2),
+          "Sale Cost": product.sales_cost.toFixed(2),
+          Cost: product.purchase_cost.toFixed(2),
+          "Stock Value": product.stock_value.toFixed(2),
+        };
+      });
+      const worksheet = XLSX.utils.json_to_sheet(rows);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Products");
+      XLSX.writeFile(workbook, "products-selected.xlsx");
+    } finally {
+      setExportingSelectedProducts(false);
+    }
+  };
 
   const activeProductWarehouse = warehouses.find(
     (warehouse) => warehouse.id === filterWarehouseId,
@@ -4432,9 +4527,55 @@ export default function InventoryPage() {
               {mainView === "products" && subView === "list" && (
                 <div className="o-main inventory-view-main">
                   <div className="o-list-view inventory-table-panel">
+                    {selectedProductIds.size > 0 && (
+                      <div className="batch-action-bar">
+                        <label className="batch-master-toggle">
+                          <input
+                            type="checkbox"
+                            checked={allFilteredProductsSelected}
+                            onChange={toggleSelectAllProducts}
+                            className="batch-checkbox"
+                          />
+                          <span>Select all</span>
+                        </label>
+                        <span className="batch-count">
+                          {selectedProductIds.size} selected
+                        </span>
+                        <button
+                          className="batch-btn export-btn"
+                          onClick={exportSelectedProducts}
+                          disabled={exportingSelectedProducts}
+                        >
+                          {exportingSelectedProducts
+                            ? "Exporting..."
+                            : "Export Selected"}
+                        </button>
+                        <button
+                          className="batch-btn delete-btn"
+                          onClick={deleteSelectedProducts}
+                          disabled={saving}
+                        >
+                          {saving ? "Deleting..." : `Delete (${selectedProductIds.size})`}
+                        </button>
+                        <button
+                          className="batch-btn clear-btn"
+                          onClick={() => setSelectedProductIds(new Set())}
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    )}
                     <table className="o-list-table">
                       <thead>
                         <tr>
+                          <th style={{ width: 40 }}>
+                            <input
+                              type="checkbox"
+                              checked={allFilteredProductsSelected}
+                              onChange={toggleSelectAllProducts}
+                              className="batch-checkbox"
+                            />
+                          </th>
                           <th className="inventory-col-icon"></th>
                           <th>Product</th>
                           <th>Reference</th>
@@ -4457,9 +4598,22 @@ export default function InventoryPage() {
                           return (
                             <tr
                               key={p.id}
+                              className={
+                                selectedProductIds.has(p.id)
+                                  ? "row-selected inventory-table-clickable"
+                                  : "inventory-table-clickable"
+                              }
                               onDoubleClick={() => openProduct(p)}
-                              className="inventory-table-clickable"
                             >
+                              <td onClick={(event) => event.stopPropagation()}>
+                                <input
+                                  type="checkbox"
+                                  checked={selectedProductIds.has(p.id)}
+                                  onChange={() => toggleSelectProduct(p.id)}
+                                  className="batch-checkbox"
+                                  aria-label={`Select ${p.name}`}
+                                />
+                              </td>
                               <td>
                                 <span className="inventory-inline-icon">
                                   <Package size={14} />
@@ -4530,7 +4684,7 @@ export default function InventoryPage() {
                         })}
                         {filteredProducts.length === 0 && (
                           <tr>
-                            <td colSpan={12} className="inventory-empty-row">
+                            <td colSpan={13} className="inventory-empty-row">
                               <button
                                 className="o-btn o-btn-primary"
                                 onClick={startNewProduct}
@@ -4543,7 +4697,7 @@ export default function InventoryPage() {
                       </tbody>
                       <tfoot>
                         <tr>
-                          <td colSpan={8} className="inventory-totals-label">
+                          <td colSpan={9} className="inventory-totals-label">
                             Totals:
                           </td>
                           <td className="o-monetary inventory-totals-value">
