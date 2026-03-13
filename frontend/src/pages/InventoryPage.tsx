@@ -295,6 +295,7 @@ type MenuTab = {
   key: Exclude<MainView, "operations" | "reporting">;
   label: string;
   color: string;
+  background: string;
   icon: (props: InventoryIconProps) => JSX.Element;
 };
 
@@ -303,24 +304,28 @@ const BASE_MENU_TABS: MenuTab[] = [
     key: "overview",
     label: "OVERVIEW",
     color: "var(--blue-600)",
+    background: "rgba(59, 130, 246, 0.12)",
     icon: OverviewIcon,
   },
   {
     key: "products",
     label: "PRODUCTS",
     color: "var(--amber-500)",
+    background: "rgba(251, 191, 36, 0.15)",
     icon: ProductsIcon,
   },
   {
     key: "categories",
     label: "PRODUCT CATEGORIES",
     color: "var(--indigo-500)",
+    background: "rgba(99, 102, 241, 0.15)",
     icon: CategoriesIcon,
   },
   {
     key: "warehouses",
     label: "WAREHOUSES",
     color: "var(--emerald-500)",
+    background: "rgba(16, 185, 129, 0.15)",
     icon: WarehousesIcon,
   },
 ];
@@ -470,6 +475,8 @@ export default function InventoryPage() {
       id: `menu-${tab.key}`,
       label: tab.label,
       icon: <tab.icon color={tab.color} />,
+      iconColor: tab.color,
+      iconBackground: tab.background,
       isActive: mainView === tab.key,
       onClick: () => {
         setMainView(tab.key);
@@ -478,16 +485,29 @@ export default function InventoryPage() {
       },
     }));
 
+    const operationsIconStyle = {
+      color: "var(--teal-600)",
+      background: "rgba(20, 184, 166, 0.15)",
+    };
     const operationsItem = {
       id: "menu-operations",
       label: "OPERATIONS",
-      icon: <ArrowRightLeft strokeWidth={1} size={24} aria-hidden />,
+      icon: (
+        <ArrowRightLeft
+          strokeWidth={1}
+          size={24}
+          aria-hidden
+          color={operationsIconStyle.color}
+        />
+      ),
       isActive: mainView === "operations",
       onClick: () => {
         setMainView("operations");
         setSubView("list");
         setSearchQuery("");
       },
+      iconColor: operationsIconStyle.color,
+      iconBackground: operationsIconStyle.background,
       dropdownItems: [
         {
           id: "operations-moves",

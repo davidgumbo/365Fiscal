@@ -246,6 +246,44 @@ const TYPE_FILTERS: FilterDefinition[] = [
   },
 ];
 
+const STATUS_ICON_STYLES: Record<string, { color: string; background: string }> = {
+  "": {
+    color: "var(--indigo-500)",
+    background: "rgba(99, 102, 241, 0.15)",
+  },
+  draft: {
+    color: "var(--amber-500)",
+    background: "rgba(251, 191, 36, 0.15)",
+  },
+  posted: {
+    color: "var(--blue-500)",
+    background: "rgba(59, 130, 246, 0.12)",
+  },
+  paid: {
+    color: "var(--emerald-500)",
+    background: "rgba(16, 185, 129, 0.15)",
+  },
+  fiscalized: {
+    color: "var(--violet-500)",
+    background: "rgba(139, 92, 246, 0.15)",
+  },
+};
+
+const TYPE_ICON_STYLES: Record<string, { color: string; background: string }> = {
+  "": {
+    color: "var(--muted)",
+    background: "rgba(148, 163, 184, 0.12)",
+  },
+  invoice: {
+    color: "var(--blue-500)",
+    background: "rgba(59, 130, 246, 0.12)",
+  },
+  credit_note: {
+    color: "var(--violet-500)",
+    background: "rgba(139, 92, 246, 0.15)",
+  },
+};
+
 type Rgb = { r: number; g: number; b: number };
 
 type InvoiceTheme = {
@@ -517,6 +555,11 @@ export default function InvoicesPage({
         filter.key === ""
           ? invoices.length
           : invoices.filter((inv) => inv.status === filter.key).length;
+      const iconStyle =
+        STATUS_ICON_STYLES[filter.key] || {
+          color: filter.color,
+          background: "transparent",
+        };
       return {
         id: `status-${filter.key || "all"}`,
         label: filter.label,
@@ -525,12 +568,14 @@ export default function InvoicesPage({
             size={18}
             strokeWidth={1.5}
             aria-hidden="true"
-            color={filter.color}
+            color={iconStyle.color}
           />
         ),
         badge: count,
         isActive: listStatus === filter.key,
         onClick: () => setListStatus(filter.key),
+        iconColor: iconStyle.color,
+        iconBackground: iconStyle.background,
       };
     });
 
@@ -540,6 +585,11 @@ export default function InvoicesPage({
         filter.key === ""
           ? invoices.length
           : invoices.filter((inv) => inv.invoice_type === filter.key).length;
+      const iconStyle =
+        TYPE_ICON_STYLES[filter.key] || {
+          color: filter.color,
+          background: "transparent",
+        };
       return {
         id: `type-${filter.key || "all"}`,
         label: filter.label,
@@ -548,12 +598,14 @@ export default function InvoicesPage({
             size={18}
             strokeWidth={1.5}
             aria-hidden="true"
-            color={filter.color}
+            color={iconStyle.color}
           />
         ),
         badge: count,
         isActive: listType === filter.key,
         onClick: () => setListType(filter.key),
+        iconColor: iconStyle.color,
+        iconBackground: iconStyle.background,
       };
     });
 
