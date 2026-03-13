@@ -4121,20 +4121,26 @@ export default function InventoryPage() {
                     )}
 
                     {mainView === "operations" && operationsTab === "moves" && (
-                      <div className="inventory-op-actions">
-                        {MOVE_TYPES.filter((t) => t.value !== "adjustment").map(
-                          (t) => (
-                            <button
-                              key={t.value}
-                              className="o-btn o-btn-secondary"
-                              onClick={() => startNewMove(t.value)}
-                              title={t.label}
-                            >
-                              {t.label}
-                            </button>
-                          ),
-                        )}
-                      </div>
+                      <button
+                        className="o-btn o-btn-primary"
+                        onClick={() => startNewMove()}
+                      >
+                        <CirclePlus />
+                      </button>
+                      // <div className="inventory-op-actions">
+                      //   {MOVE_TYPES.filter((t) => t.value !== "adjustment").map(
+                      //     (t) => (
+                      //       <button
+                      //         key={t.value}
+                      //         className="o-btn o-btn-secondary"
+                      //         onClick={() => startNewMove(t.value)}
+                      //         title={t.label}
+                      //       >
+                      //         {t.label}
+                      //       </button>
+                      //     ),
+                      //   )}
+                      // </div>
                     )}
                     {mainView === "operations" &&
                       operationsTab === "adjustments" && (
