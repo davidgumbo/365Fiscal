@@ -18,6 +18,7 @@ export type MeCompany = {
 
 export type Me = {
   id: number;
+  name?: string;
   email: string;
   is_admin: boolean;
   company_ids: number[];

@@ -10,9 +10,36 @@ from app.api.deps import (
     can_view_audit_logs, require_admin
 )
 from app.models.audit_log import AuditLog
+from app.models.company_user import CompanyUser
+from app.models.user import User
 from app.schemas.audit_log import AuditLogRead, AuditLogSummary
 
 router = APIRouter(prefix="/audit-logs", tags=["audit-logs"])
+
+
+def can_portal_super_view_audit_logs(db: Session, user: User, company_id: int) -> bool:
+    link = db.query(CompanyUser).filter(
+        CompanyUser.company_id == company_id,
+        CompanyUser.user_id == user.id,
+        CompanyUser.is_active == True,
+    ).first()
+    if not link:
+        return False
+    if link.is_company_admin:
+        return True
+    explicit_super = (
+        db.query(CompanyUser)
+        .filter(
+            CompanyUser.company_id == company_id,
+            CompanyUser.role == "portal",
+            CompanyUser.is_active == True,
+            CompanyUser.is_company_admin == True,
+        )
+        .first()
+    )
+    if explicit_super:
+        return explicit_super.user_id == user.id
+    return link.role == "portal"
 
 
 @router.get("", response_model=List[AuditLogRead])
@@ -43,7 +70,7 @@ def list_audit_logs(
     if not user.is_admin:
         if company_id:
             ensure_company_access(db, user, company_id)
-            if not can_view_audit_logs(db, user, company_id):
+            if not can_view_audit_logs(db, user, company_id) and not can_portal_super_view_audit_logs(db, user, company_id):
                 raise HTTPException(status_code=403, detail="Permission denied to view audit logs")
         else:
             # Get user's company IDs
@@ -79,6 +106,7 @@ def list_audit_logs(
         query = query.filter(
             (AuditLog.resource_reference.ilike(search_term)) |
             (AuditLog.user_email.ilike(search_term)) |
+            (AuditLog.user.has(User.name.ilike(search_term))) |
             (AuditLog.changes_summary.ilike(search_term))
         )
     
@@ -124,6 +152,8 @@ def get_audit_summary(
     if company_id:
         if not user.is_admin:
             ensure_company_access(db, user, company_id)
+            if not can_view_audit_logs(db, user, company_id) and not can_portal_super_view_audit_logs(db, user, company_id):
+                raise HTTPException(status_code=403, detail="Permission denied to view audit logs")
         query = query.filter(AuditLog.company_id == company_id)
     
     # Total actions
@@ -187,7 +217,7 @@ def get_audit_log(
     # Check access
     if not user.is_admin and log.company_id:
         ensure_company_access(db, user, log.company_id)
-        if not can_view_audit_logs(db, user, log.company_id):
+        if not can_view_audit_logs(db, user, log.company_id) and not can_portal_super_view_audit_logs(db, user, log.company_id):
             raise HTTPException(status_code=403, detail="Permission denied")
     
     return log

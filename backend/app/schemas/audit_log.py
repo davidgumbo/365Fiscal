@@ -7,6 +7,7 @@ from typing import Optional, List, Any
 class AuditLogRead(BaseModel):
     id: int
     user_id: Optional[int] = None
+    user_name: str = ""
     user_email: str = ""
     company_id: Optional[int] = None
     company_name: str = ""

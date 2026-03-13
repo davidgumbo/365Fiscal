@@ -63,6 +63,7 @@ def read_me(user: User = Depends(get_current_user), db: Session = Depends(get_db
     link_by_company = {link.company_id: link for link in links}
     return {
         "id": user.id,
+        "name": user.name,
         "email": user.email,
         "is_admin": user.is_admin,
         "company_ids": company_ids,
@@ -102,6 +103,7 @@ def create_user(payload: UserCreate, db: Session = Depends(get_db)):
     if existing:
         raise HTTPException(status_code=400, detail="User with this email already exists")
     user = User(
+        name=payload.name,
         email=payload.email,
         hashed_password=hash_password(payload.password),
         is_admin=payload.is_admin,
@@ -124,6 +126,8 @@ def update_user(user_id: int, payload: UserUpdate, db: Session = Depends(get_db)
         raise HTTPException(status_code=404, detail="User not found")
     if payload.email is not None:
         user.email = payload.email
+    if payload.name is not None:
+        user.name = payload.name
     if payload.password is not None:
         user.hashed_password = hash_password(payload.password)
     if payload.is_admin is not None:

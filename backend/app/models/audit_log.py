@@ -45,6 +45,12 @@ class AuditLog(Base, TimestampMixin):
     user = relationship("User", foreign_keys=[user_id])
     company = relationship("Company", foreign_keys=[company_id])
 
+    @property
+    def user_name(self) -> str:
+        if self.user and getattr(self.user, "name", ""):
+            return self.user.name
+        return ""
+
 
 # Action constants
 class AuditAction:

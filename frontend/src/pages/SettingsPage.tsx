@@ -153,10 +153,24 @@ type POSTillItem = {
 
 type PortalManagedUser = {
   id: number;
+  name: string;
   email: string;
   is_active: boolean;
   is_portal_super_user: boolean;
   portal_apps: string[];
+};
+
+type PortalAuditLog = {
+  id: number;
+  user_id: number | null;
+  user_name: string;
+  user_email: string;
+  action: string;
+  resource_type: string;
+  resource_reference: string;
+  changes_summary: string;
+  status: string;
+  action_at: string;
 };
 
 const PORTAL_APP_OPTIONS = [
@@ -373,19 +387,28 @@ export default function SettingsPage() {
   const [portalUsersLoading, setPortalUsersLoading] = useState(false);
   const [portalUserSaving, setPortalUserSaving] = useState(false);
   const [portalUserEditingId, setPortalUserEditingId] = useState<number | null>(null);
-  const [portalUsersTab, setPortalUsersTab] = useState<"add" | "manage">("add");
+  const [portalUsersTab, setPortalUsersTab] = useState<"add" | "manage" | "audit">("add");
   const [portalUserSearch, setPortalUserSearch] = useState("");
   const [portalUserForm, setPortalUserForm] = useState({
+    name: "",
     email: "",
     password: "",
     portal_apps: (primaryPortalCompany?.portal_apps ?? [])
       .filter((app) => app !== "settings"),
   });
+  const [portalAuditLogs, setPortalAuditLogs] = useState<PortalAuditLog[]>([]);
+  const [portalAuditLoading, setPortalAuditLoading] = useState(false);
+  const [portalAuditSearch, setPortalAuditSearch] = useState("");
+  const [portalAuditAction, setPortalAuditAction] = useState("");
+  const [portalAuditStatus, setPortalAuditStatus] = useState("");
+  const [portalAuditUserId, setPortalAuditUserId] = useState<number | "">("");
+  const [portalAuditActions, setPortalAuditActions] = useState<string[]>([]);
   const filteredPortalManagedUsers = useMemo(() => {
     const query = portalUserSearch.trim().toLowerCase();
     if (!query) return portalManagedUsers;
     return portalManagedUsers.filter((user) =>
-      user.email.toLowerCase().includes(query),
+      user.email.toLowerCase().includes(query) ||
+      user.name.toLowerCase().includes(query),
     );
   }, [portalManagedUsers, portalUserSearch]);
 
@@ -418,6 +441,7 @@ export default function SettingsPage() {
   const resetPortalUserForm = () => {
     setPortalUserEditingId(null);
     setPortalUserForm({
+      name: "",
       email: "",
       password: "",
       portal_apps: (primaryPortalCompany?.portal_apps ?? []).filter(
@@ -442,7 +466,7 @@ export default function SettingsPage() {
 
   const savePortalManagedUser = async () => {
     const cid = companyId ?? primaryPortalCompany?.id ?? null;
-    if (!cid || !portalUserForm.email || (!portalUserEditingId && !portalUserForm.password)) {
+    if (!cid || !portalUserForm.name || !portalUserForm.email || (!portalUserEditingId && !portalUserForm.password)) {
       return;
     }
     setPortalUserSaving(true);
@@ -452,6 +476,7 @@ export default function SettingsPage() {
           method: "PATCH",
           body: JSON.stringify({
             company_id: cid,
+            name: portalUserForm.name,
             email: portalUserForm.email,
             password: portalUserForm.password || undefined,
             portal_apps: portalUserForm.portal_apps,
@@ -464,6 +489,7 @@ export default function SettingsPage() {
           method: "POST",
           body: JSON.stringify({
             company_id: cid,
+            name: portalUserForm.name,
             email: portalUserForm.email,
             password: portalUserForm.password,
             portal_apps: portalUserForm.portal_apps,
@@ -477,6 +503,25 @@ export default function SettingsPage() {
       setAdminError(err.message || "Failed to save portal user");
     } finally {
       setPortalUserSaving(false);
+    }
+  };
+
+  const loadPortalAuditTrail = async (cid: number) => {
+    setPortalAuditLoading(true);
+    try {
+      const params = new URLSearchParams();
+      params.set("company_id", String(cid));
+      params.set("limit", "200");
+      if (portalAuditSearch.trim()) params.set("search", portalAuditSearch.trim());
+      if (portalAuditAction) params.set("action", portalAuditAction);
+      if (portalAuditStatus) params.set("status", portalAuditStatus);
+      if (portalAuditUserId !== "") params.set("user_id", String(portalAuditUserId));
+      const data = await apiFetch<PortalAuditLog[]>(`/audit-logs?${params.toString()}`);
+      setPortalAuditLogs(data);
+    } catch {
+      setPortalAuditLogs([]);
+    } finally {
+      setPortalAuditLoading(false);
     }
   };
 
@@ -612,6 +657,34 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
       }
     }
   }, [activeSection, companyId, isAdmin, isPortalSuperUser, primaryPortalCompany?.id]);
+
+  useEffect(() => {
+    if (!isAdmin && isPortalSuperUser && activeSection === "users-companies" && portalUsersTab === "audit") {
+      const cid = companyId ?? primaryPortalCompany?.id ?? null;
+      if (cid) {
+        loadPortalAuditTrail(cid);
+      }
+    }
+  }, [
+    activeSection,
+    companyId,
+    isAdmin,
+    isPortalSuperUser,
+    portalUsersTab,
+    primaryPortalCompany?.id,
+    portalAuditSearch,
+    portalAuditAction,
+    portalAuditStatus,
+    portalAuditUserId,
+  ]);
+
+  useEffect(() => {
+    if (!isAdmin && isPortalSuperUser && activeSection === "users-companies" && !portalAuditActions.length) {
+      apiFetch<string[]>("/audit-logs/actions")
+        .then(setPortalAuditActions)
+        .catch(() => setPortalAuditActions([]));
+    }
+  }, [activeSection, isAdmin, isPortalSuperUser, portalAuditActions.length]);
 
   const loadTaxes = async (cid: number) => {
     const data = await apiFetch<TaxSetting[]>(
@@ -5875,10 +5948,31 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
                         <Users size={16} />
                         <span>Manage Users</span>
                       </button>
+                      <button
+                        type="button"
+                        className={`settings-inline-tab ${portalUsersTab === "audit" ? "active" : ""}`}
+                        onClick={() => setPortalUsersTab("audit")}
+                      >
+                        <Monitor size={16} />
+                        <span>Audit Trail</span>
+                      </button>
                     </div>
                     {portalUsersTab === "add" ? (
                       <>
                         <div className="form-grid">
+                          <label className="input">
+                            Name
+                            <input
+                              type="text"
+                              value={portalUserForm.name}
+                              onChange={(e) =>
+                                setPortalUserForm((prev) => ({
+                                  ...prev,
+                                  name: e.target.value,
+                                }))
+                              }
+                            />
+                          </label>
                           <label className="input">
                             Email
                             <input
@@ -5942,6 +6036,7 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
                             onClick={savePortalManagedUser}
                             disabled={
                               portalUserSaving ||
+                              !portalUserForm.name ||
                               !portalUserForm.email ||
                               (!portalUserEditingId && !portalUserForm.password)
                             }
@@ -5965,13 +6060,13 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
                           )}
                         </div>
                       </>
-                    ) : (
+                    ) : portalUsersTab === "manage" ? (
                       <>
                         <div className="settings-search-input" style={{ marginBottom: 16 }}>
                           <Search size={16} />
                           <input
                             type="text"
-                            placeholder="Search users..."
+                            placeholder="Search users by name or email..."
                             value={portalUserSearch}
                             onChange={(e) => setPortalUserSearch(e.target.value)}
                           />
@@ -5993,7 +6088,10 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
                               <tbody>
                                 {filteredPortalManagedUsers.map((user) => (
                                   <tr key={user.id}>
-                                    <td>{user.email}</td>
+                                    <td>
+                                      <div style={{ fontWeight: 700 }}>{user.name || "-"}</div>
+                                      <div className="page-sub" style={{ marginTop: 2 }}>{user.email}</div>
+                                    </td>
                                     <td>
                                       {user.is_portal_super_user ? "Portal Super User" : "Portal User"}
                                     </td>
@@ -6018,6 +6116,7 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
                                             onClick={() => {
                                               setPortalUserEditingId(user.id);
                                               setPortalUserForm({
+                                                name: user.name,
                                                 email: user.email,
                                                 password: "",
                                                 portal_apps: user.portal_apps.filter((app) => app !== "settings"),
@@ -6045,6 +6144,107 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
                           </div>
                         ) : (
                           <div className="page-sub">No portal users found.</div>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+                            gap: 12,
+                            marginBottom: 16,
+                          }}
+                        >
+                          <label className="input">
+                            Search
+                            <input
+                              type="text"
+                              placeholder="Search by user, reference or summary..."
+                              value={portalAuditSearch}
+                              onChange={(e) => setPortalAuditSearch(e.target.value)}
+                            />
+                          </label>
+                          <label className="input">
+                            User
+                            <select
+                              value={portalAuditUserId === "" ? "" : String(portalAuditUserId)}
+                              onChange={(e) =>
+                                setPortalAuditUserId(e.target.value ? Number(e.target.value) : "")
+                              }
+                            >
+                              <option value="">All users</option>
+                              {portalManagedUsers.map((user) => (
+                                <option key={user.id} value={user.id}>
+                                  {user.name || user.email}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <label className="input">
+                            Action
+                            <select
+                              value={portalAuditAction}
+                              onChange={(e) => setPortalAuditAction(e.target.value)}
+                            >
+                              <option value="">All actions</option>
+                              {portalAuditActions.map((action) => (
+                                <option key={action} value={action}>
+                                  {action.replace(/_/g, " ")}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <label className="input">
+                            Status
+                            <select
+                              value={portalAuditStatus}
+                              onChange={(e) => setPortalAuditStatus(e.target.value)}
+                            >
+                              <option value="">All statuses</option>
+                              <option value="success">Success</option>
+                              <option value="error">Error</option>
+                            </select>
+                          </label>
+                        </div>
+                        {portalAuditLoading ? (
+                          <div className="page-sub">Loading audit trail...</div>
+                        ) : portalAuditLogs.length ? (
+                          <div className="table-wrap">
+                            <table className="table">
+                              <thead>
+                                <tr>
+                                  <th>Date</th>
+                                  <th>User</th>
+                                  <th>Action</th>
+                                  <th>Resource</th>
+                                  <th>Summary</th>
+                                  <th>Status</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {portalAuditLogs.map((log) => (
+                                  <tr key={log.id}>
+                                    <td>{new Date(log.action_at).toLocaleString()}</td>
+                                    <td>
+                                      <div style={{ fontWeight: 700 }}>{log.user_name || "-"}</div>
+                                      <div className="page-sub" style={{ marginTop: 2 }}>{log.user_email || "-"}</div>
+                                    </td>
+                                    <td>{log.action.replace(/_/g, " ")}</td>
+                                    <td>{log.resource_reference || log.resource_type}</td>
+                                    <td>{log.changes_summary || "-"}</td>
+                                    <td>
+                                      <span className={`status-badge status-${log.status === "error" ? "cancelled" : "done"}`}>
+                                        {log.status}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        ) : (
+                          <div className="page-sub">No audit entries found.</div>
                         )}
                       </>
                     )}

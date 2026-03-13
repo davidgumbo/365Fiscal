@@ -118,6 +118,7 @@ def get_portal_users(company_id: int, db: Session = Depends(get_db)):
     return [
         {
             "id": link.user_id,
+            "name": users[link.user_id].name,
             "email": users[link.user_id].email,
             "is_active": users[link.user_id].is_active,
             "is_portal_super_user": is_portal_super_link(db, company_id, link),
@@ -148,6 +149,7 @@ def get_manageable_portal_users(
     return [
         {
             "id": link.user_id,
+            "name": users[link.user_id].name,
             "email": users[link.user_id].email,
             "is_active": users[link.user_id].is_active,
             "is_portal_super_user": is_portal_super_link(db, company_id, link),
@@ -165,6 +167,7 @@ def create_manageable_portal_user(
     current_user: User = Depends(get_current_user),
 ):
     company_id = int(payload.get("company_id") or 0)
+    name = str(payload.get("name") or "").strip()
     email = (payload.get("email") or "").strip().lower()
     password = payload.get("password") or ""
     portal_apps = normalize_portal_apps(payload.get("portal_apps"))
@@ -172,8 +175,8 @@ def create_manageable_portal_user(
     company = db.query(Company).filter(Company.id == company_id).first()
     if not company:
         raise HTTPException(status_code=404, detail="Company not found")
-    if not email or not password:
-        raise HTTPException(status_code=400, detail="Email and password are required")
+    if not name or not email or not password:
+        raise HTTPException(status_code=400, detail="Name, email and password are required")
 
     existing_user = db.query(User).filter(User.email == email).first()
     if existing_user:
@@ -184,10 +187,11 @@ def create_manageable_portal_user(
         if existing_link:
             raise HTTPException(status_code=400, detail="Portal user already exists for this company")
         user = existing_user
+        user.name = name or user.name
         user.hashed_password = hash_password(password)
         user.is_active = True
     else:
-        user = User(email=email, hashed_password=hash_password(password), is_admin=False, is_active=True)
+        user = User(name=name, email=email, hashed_password=hash_password(password), is_admin=False, is_active=True)
         db.add(user)
         db.flush()
 
@@ -202,7 +206,7 @@ def create_manageable_portal_user(
         )
     )
     db.commit()
-    return {"status": "created", "user_id": user.id, "email": user.email}
+    return {"status": "created", "user_id": user.id, "name": user.name, "email": user.email}
 
 
 @router.patch("/portal-users/manage/{user_id}")
@@ -229,10 +233,13 @@ def update_manageable_portal_user(
         raise HTTPException(status_code=404, detail="User not found")
 
     new_email = payload.get("email")
+    new_name = payload.get("name")
     new_password = payload.get("password")
     is_active = payload.get("is_active")
     portal_apps = payload.get("portal_apps")
 
+    if new_name is not None:
+        user.name = str(new_name).strip()
     if new_email is not None:
         email = str(new_email).strip().lower()
         if not email:
