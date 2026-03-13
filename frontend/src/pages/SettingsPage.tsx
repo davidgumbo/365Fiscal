@@ -1,6 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronDown, Monitor, PencilLine, Store, Trash2 } from "lucide-react";
+import {
+  ChevronDown,
+  Monitor,
+  PencilLine,
+  Search,
+  Store,
+  Trash2,
+  UserPlus,
+  Users,
+} from "lucide-react";
 import { apiFetch } from "../api";
 import { useCompanies, Company } from "../hooks/useCompanies";
 import { useMe } from "../hooks/useMe";
@@ -364,12 +373,21 @@ export default function SettingsPage() {
   const [portalUsersLoading, setPortalUsersLoading] = useState(false);
   const [portalUserSaving, setPortalUserSaving] = useState(false);
   const [portalUserEditingId, setPortalUserEditingId] = useState<number | null>(null);
+  const [portalUsersTab, setPortalUsersTab] = useState<"add" | "manage">("add");
+  const [portalUserSearch, setPortalUserSearch] = useState("");
   const [portalUserForm, setPortalUserForm] = useState({
     email: "",
     password: "",
     portal_apps: (primaryPortalCompany?.portal_apps ?? [])
       .filter((app) => app !== "settings"),
   });
+  const filteredPortalManagedUsers = useMemo(() => {
+    const query = portalUserSearch.trim().toLowerCase();
+    if (!query) return portalManagedUsers;
+    return portalManagedUsers.filter((user) =>
+      user.email.toLowerCase().includes(query),
+    );
+  }, [portalManagedUsers, portalUserSearch]);
 
   // Till state
   const [posTills, setPosTills] = useState<POSTillItem[]>([]);
@@ -5838,17 +5856,27 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
                 <div className="settings-section-header">
                   <h4>{isPortalSuperUser ? "Portal Users" : "Your Account"}</h4>
                 </div>
-                <div className="settings-card-grid">
+                {isPortalSuperUser ? (
                   <div className="settings-card">
-                    <div className="settings-card-title">
-                      {isPortalSuperUser ? "Add Portal User" : "Your Account"}
+                    <div className="settings-inline-tabs">
+                      <button
+                        type="button"
+                        className={`settings-inline-tab ${portalUsersTab === "add" ? "active" : ""}`}
+                        onClick={() => setPortalUsersTab("add")}
+                      >
+                        <UserPlus size={16} />
+                        <span>{portalUserEditingId ? "Edit User" : "Add User"}</span>
+                      </button>
+                      <button
+                        type="button"
+                        className={`settings-inline-tab ${portalUsersTab === "manage" ? "active" : ""}`}
+                        onClick={() => setPortalUsersTab("manage")}
+                      >
+                        <Users size={16} />
+                        <span>Manage Users</span>
+                      </button>
                     </div>
-                    <div className="settings-card-sub">
-                      {isPortalSuperUser
-                        ? "Create portal users and assign app access."
-                        : "Portal user settings"}
-                    </div>
-                    {isPortalSuperUser ? (
+                    {portalUsersTab === "add" ? (
                       <>
                         <div className="form-grid">
                           <label className="input">
@@ -5881,7 +5909,6 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
                         <div className="portal-app-access" style={{ marginTop: 16 }}>
                           <div className="portal-app-access-head">
                             <h5>App Access</h5>
-                            <span>Select the apps this user can access.</span>
                           </div>
                           <div className="portal-app-grid">
                             {PORTAL_APP_OPTIONS.filter((app) => app.key !== "settings").map((app) => {
@@ -5926,7 +5953,13 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
                                 : "Add User"}
                           </button>
                           {portalUserEditingId && (
-                            <button className="outline" onClick={resetPortalUserForm}>
+                            <button
+                              className="outline"
+                              onClick={() => {
+                                resetPortalUserForm();
+                                setPortalUsersTab("add");
+                              }}
+                            >
                               Cancel
                             </button>
                           )}
@@ -5934,109 +5967,114 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
                       </>
                     ) : (
                       <>
-                        <div className="input">
-                          <span>Email</span>
-                          <input type="email" value={me.email} readOnly />
+                        <div className="settings-search-input" style={{ marginBottom: 16 }}>
+                          <Search size={16} />
+                          <input
+                            type="text"
+                            placeholder="Search users..."
+                            value={portalUserSearch}
+                            onChange={(e) => setPortalUserSearch(e.target.value)}
+                          />
                         </div>
-                        <p className="page-sub">
-                          This portal user cannot manage settings.
-                        </p>
+                        {portalUsersLoading ? (
+                          <div className="page-sub">Loading portal users...</div>
+                        ) : filteredPortalManagedUsers.length ? (
+                          <div className="table-wrap">
+                            <table className="table">
+                              <thead>
+                                <tr>
+                                  <th>User</th>
+                                  <th>Role</th>
+                                  <th>Apps</th>
+                                  <th>Status</th>
+                                  <th style={{ textAlign: "right" }}>Actions</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {filteredPortalManagedUsers.map((user) => (
+                                  <tr key={user.id}>
+                                    <td>{user.email}</td>
+                                    <td>
+                                      {user.is_portal_super_user ? "Portal Super User" : "Portal User"}
+                                    </td>
+                                    <td>
+                                      <div className="portal-app-badges" style={{ marginTop: 0 }}>
+                                        {user.portal_apps.map((appKey) => {
+                                          const option = PORTAL_APP_OPTIONS.find((item) => item.key === appKey);
+                                          return (
+                                            <span key={appKey} className="portal-app-badge">
+                                              {option?.label || appKey}
+                                            </span>
+                                          );
+                                        })}
+                                      </div>
+                                    </td>
+                                    <td>{user.is_active ? "Active" : "Inactive"}</td>
+                                    <td>
+                                      {!user.is_portal_super_user && (
+                                        <div className="action-icons" style={{ justifyContent: "flex-end" }}>
+                                          <button
+                                            className="icon-btn"
+                                            onClick={() => {
+                                              setPortalUserEditingId(user.id);
+                                              setPortalUserForm({
+                                                email: user.email,
+                                                password: "",
+                                                portal_apps: user.portal_apps.filter((app) => app !== "settings"),
+                                              });
+                                              setPortalUsersTab("add");
+                                            }}
+                                            title="Edit user"
+                                          >
+                                            <EditIcon />
+                                          </button>
+                                          <button
+                                            className="icon-btn danger"
+                                            onClick={() => deletePortalManagedUser(user.id)}
+                                            title="Delete user"
+                                          >
+                                            <TrashIcon />
+                                          </button>
+                                        </div>
+                                      )}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        ) : (
+                          <div className="page-sub">No portal users found.</div>
+                        )}
                       </>
                     )}
                   </div>
-                  <div className="settings-card">
-                    <div className="settings-card-title">
-                      {isPortalSuperUser ? "Managed Users" : "Companies"}
+                ) : (
+                  <div className="settings-card-grid">
+                    <div className="settings-card">
+                      <div className="settings-card-title">Your Account</div>
+                      <div className="settings-card-sub">Portal user settings</div>
+                      <div className="input">
+                        <span>Email</span>
+                        <input type="email" value={me.email} readOnly />
+                      </div>
+                      <p className="page-sub">
+                        This portal user cannot manage settings.
+                      </p>
                     </div>
-                    <div className="settings-card-sub">
-                      {isPortalSuperUser
-                        ? "Users below can access only the apps assigned to them."
-                        : "You have access to these companies"}
+                    <div className="settings-card">
+                      <div className="settings-card-title">Companies</div>
+                      <div className="settings-card-sub">You have access to these companies</div>
+                      <ul style={{ paddingLeft: 16, margin: 0 }}>
+                        {companies.map((c) => (
+                          <li key={c.id} style={{ marginBottom: 6 }}>
+                            <strong>{c.name}</strong> - {c.email || ""}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                    {isPortalSuperUser ? (
-                      portalUsersLoading ? (
-                        <div className="page-sub">Loading portal users...</div>
-                      ) : (
-                        <div style={{ display: "grid", gap: 12 }}>
-                          {portalManagedUsers.map((user) => (
-                            <div
-                              key={user.id}
-                              style={{
-                                border: "1px solid var(--stroke)",
-                                borderRadius: 12,
-                                padding: 14,
-                                display: "grid",
-                                gap: 10,
-                              }}
-                            >
-                              <div
-                                style={{
-                                  display: "flex",
-                                  justifyContent: "space-between",
-                                  alignItems: "center",
-                                  gap: 12,
-                                }}
-                              >
-                                <div>
-                                  <div style={{ fontWeight: 700 }}>{user.email}</div>
-                                  <div className="page-sub" style={{ marginTop: 2 }}>
-                                    {user.is_portal_super_user ? "Portal Super User" : "Portal User"}
-                                  </div>
-                                </div>
-                                {!user.is_portal_super_user && (
-                                  <div className="action-icons">
-                                    <button
-                                      className="icon-btn"
-                                      onClick={() => {
-                                        setPortalUserEditingId(user.id);
-                                        setPortalUserForm({
-                                          email: user.email,
-                                          password: "",
-                                          portal_apps: user.portal_apps.filter((app) => app !== "settings"),
-                                        });
-                                      }}
-                                      title="Edit user"
-                                    >
-                                      <EditIcon />
-                                    </button>
-                                    <button
-                                      className="icon-btn danger"
-                                      onClick={() => deletePortalManagedUser(user.id)}
-                                      title="Delete user"
-                                    >
-                                      <TrashIcon />
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                              <div className="portal-app-badges">
-                                {user.portal_apps.map((appKey) => {
-                                  const option = PORTAL_APP_OPTIONS.find((item) => item.key === appKey);
-                                  return (
-                                    <span key={appKey} className="portal-app-badge">
-                                      {option?.label || appKey}
-                                    </span>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          ))}
-                          {!portalManagedUsers.length && (
-                            <div className="page-sub">No portal users found.</div>
-                          )}
-                        </div>
-                      )
-                    ) : (
-                    <ul style={{ paddingLeft: 16, margin: 0 }}>
-                      {companies.map((c) => (
-                        <li key={c.id} style={{ marginBottom: 6 }}>
-                          <strong>{c.name}</strong> — {c.email || ""}
-                        </li>
-                      ))}
-                    </ul>
-                    )}
                   </div>
-                </div>
+                )}
               </section>
             )}
 
