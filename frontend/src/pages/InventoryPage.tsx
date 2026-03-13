@@ -4225,6 +4225,7 @@ export default function InventoryPage() {
                               <input
                                 type="number"
                                 value={productsPageSize}
+                                size={3}
                                 onChange={(event) =>
                                   setProductsPageSize(
                                     Number(event.target.value),
