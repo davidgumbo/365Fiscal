@@ -731,6 +731,7 @@ export default function DashboardPage() {
             id: "overview",
             label: "Overview",
             icon: <LayoutDashboard size={18} />,
+            color: "var(--amber-600)",
             isActive: activeApp === "overview",
             onClick: () => setActiveApp("overview"),
           },
