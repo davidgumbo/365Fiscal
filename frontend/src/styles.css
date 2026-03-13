@@ -7805,7 +7805,7 @@ button.danger:hover {
   align-items: flex-start;
 }
 
-.dashboard-sidebar {
+/* .dashboard-sidebar {
   position: sticky;
   top: 24px;
   align-self: flex-start;
@@ -7813,7 +7813,7 @@ button.danger:hover {
   border-radius: 16px;
   background: white;
   border: 1px solid var(--stroke);
-}
+} */
 
 .dashboard-main {
   display: flex;
@@ -8500,10 +8500,10 @@ button.danger:hover {
     grid-template-columns: 1fr;
   }
 
-  .dashboard-sidebar {
+  /* .dashboard-sidebar {
     position: static;
     width: 100%;
-  }
+  } */
 
   .dashboard-kpis {
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
