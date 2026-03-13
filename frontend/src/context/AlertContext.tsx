@@ -1,18 +1,33 @@
-import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { ReactNode } from "react";
 import { AlertModal, type AlertModalProps } from "../components/AlertModal";
 
 type AlertConfig = Omit<AlertModalProps, "onClose">;
 
+type ConfirmConfig = Omit<AlertModalProps, "actions" | "onClose"> & {
+  confirmLabel?: string;
+  cancelLabel?: string;
+};
+
 type AlertContextValue = {
   showAlert: (config: AlertConfig) => void;
   hideAlert: () => void;
+  showConfirm: (config: ConfirmConfig) => Promise<boolean>;
 };
 
 const AlertContext = createContext<AlertContextValue | null>(null);
 
 export function AlertProvider({ children }: { children: ReactNode }) {
   const [alertConfig, setAlertConfig] = useState<AlertConfig | null>(null);
+  const [confirmConfig, setConfirmConfig] = useState<ConfirmConfig | null>(null);
+  const confirmResolverRef = useRef<((value: boolean) => void) | null>(null);
 
   const showAlert = useCallback((config: AlertConfig) => {
     setAlertConfig(config);
@@ -22,9 +37,27 @@ export function AlertProvider({ children }: { children: ReactNode }) {
     setAlertConfig(null);
   }, []);
 
+  const resolveConfirmation = useCallback((result: boolean) => {
+    if (confirmResolverRef.current) {
+      confirmResolverRef.current(result);
+      confirmResolverRef.current = null;
+    }
+    setConfirmConfig(null);
+  }, []);
+
+  const showConfirm = useCallback((config: ConfirmConfig) => {
+    return new Promise<boolean>((resolve) => {
+      if (confirmResolverRef.current) {
+        confirmResolverRef.current(false);
+      }
+      confirmResolverRef.current = resolve;
+      setConfirmConfig(config);
+    });
+  }, []);
+
   const value = useMemo(
-    () => ({ showAlert, hideAlert }),
-    [showAlert, hideAlert],
+    () => ({ showAlert, hideAlert, showConfirm }),
+    [showAlert, hideAlert, showConfirm],
   );
 
   return (
@@ -32,6 +65,31 @@ export function AlertProvider({ children }: { children: ReactNode }) {
       {children}
       {alertConfig && (
         <AlertModal {...alertConfig} onClose={hideAlert} />
+      )}
+      {confirmConfig && (
+        <AlertModal
+          {...confirmConfig}
+          variant={confirmConfig.variant ?? "warning"}
+          actions={
+            <>
+              <button
+                type="button"
+                className="alert-modal-btn"
+                onClick={() => resolveConfirmation(false)}
+              >
+                {confirmConfig.cancelLabel ?? "Cancel"}
+              </button>
+              <button
+                type="button"
+                className="alert-modal-btn alert-modal-btn--primary"
+                onClick={() => resolveConfirmation(true)}
+              >
+                {confirmConfig.confirmLabel ?? "Confirm"}
+              </button>
+            </>
+          }
+          onClose={() => resolveConfirmation(false)}
+        />
       )}
     </AlertContext.Provider>
   );

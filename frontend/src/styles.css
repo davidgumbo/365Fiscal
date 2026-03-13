@@ -4881,6 +4881,14 @@ button.danger:hover {
   cursor: pointer;
   font-weight: 600;
 }
+.alert-modal-btn--primary {
+  background: var(--blue-600);
+  border-color: transparent;
+  color: #fff;
+}
+.alert-modal-btn--primary:hover {
+  background: var(--blue-700);
+}
 
 .alert-modal-success {
   border-top: 4px solid rgba(16, 185, 129, 0.6);

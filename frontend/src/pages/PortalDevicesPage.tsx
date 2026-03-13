@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "../api";
 import { useCompanies } from "../hooks/useCompanies";
+import { useAlert } from "../context/AlertContext";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -109,6 +110,7 @@ function parseFdmsError(raw: string): { message: string; code: string } {
 /* ------------------------------------------------------------------ */
 export default function PortalDevicesPage() {
   const { companies, loading: companiesLoading } = useCompanies();
+  const { showConfirm } = useAlert();
   const [devices, setDevices] = useState<Device[]>([]);
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
   const [tab, setTab] = useState<"days" | "logs">("days");
@@ -248,7 +250,13 @@ export default function PortalDevicesPage() {
 
   const handleCloseDay = async () => {
     if (!selectedDevice) return;
-    if (!window.confirm("Are you sure you want to close the fiscal day?")) return;
+    const confirmed = await showConfirm({
+      title: "Close fiscal day",
+      message: "Are you sure you want to close the fiscal day?",
+      variant: "warning",
+      confirmLabel: "Close day",
+    });
+    if (!confirmed) return;
     setActionLoading("close");
     setMessage(null);
     try {

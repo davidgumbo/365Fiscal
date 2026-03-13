@@ -1,4 +1,11 @@
-import { useEffect, useState, useMemo, useRef, type ChangeEvent } from "react";
+import {
+  useEffect,
+  useState,
+  useMemo,
+  useRef,
+  type ChangeEvent,
+  type ReactNode,
+} from "react";
 import html2pdf from "html2pdf.js";
 import * as XLSX from "xlsx";
 import { useNavigate } from "react-router-dom";
@@ -41,6 +48,8 @@ import {
 import { Sidebar } from "../components/Sidebar";
 import type { SidebarSection } from "../types/sidebar";
 import type { CurrencyItem } from "../types/currency";
+import { useAlert } from "../context/AlertContext";
+import type { AlertModalVariant } from "../components/AlertModal";
 import "./InventoryPage.css";
 
 // ============= TYPES =============
@@ -356,6 +365,24 @@ export default function InventoryPage() {
   }, [companies, companyQuery]);
 
   const selectedCompany = companies.find((c) => c.id === companyId) ?? null;
+  const { showAlert, showConfirm } = useAlert();
+
+  const showAlertMessage = (
+    message: ReactNode,
+    variant: AlertModalVariant = "danger",
+  ) => showAlert({ message, variant });
+
+  const showInfoAlert = (message: ReactNode) =>
+    showAlertMessage(message, "success");
+  const showWarningAlert = (message: ReactNode) =>
+    showAlertMessage(message, "warning");
+  const showDangerAlert = (message: ReactNode) =>
+    showAlertMessage(message, "danger");
+
+  const showMultilineAlert = (text: string) =>
+    showDangerAlert(
+      <pre style={{ margin: 0, whiteSpace: "pre-wrap" }}>{text}</pre>,
+    );
 
   const [mainView, setMainView] = useState<MainView>("overview");
   const [subView, setSubView] = useState<SubView>("list");
@@ -929,16 +956,16 @@ export default function InventoryPage() {
 
   const saveProduct = async () => {
     if (!companyId) {
-      alert("Please select a company first.");
+      showWarningAlert("Please select a company first.");
       return;
     }
     if (!validateInventoryProductFields()) return;
     if (Number(productForm.sale_price) < 0) {
-      alert("Sale price cannot be negative.");
+      showWarningAlert("Sale price cannot be negative.");
       return;
     }
     if (Number(productForm.tax_rate) < 0) {
-      alert("Tax rate cannot be negative.");
+      showWarningAlert("Tax rate cannot be negative.");
       return;
     }
     setSaving(true);
@@ -963,12 +990,12 @@ export default function InventoryPage() {
               method: "POST",
               body: fd,
             });
-          } catch (err: any) {
-            alert(
-              err?.message ||
-                "Product was created, but image upload failed. You can upload it from the product form.",
-            );
-          } finally {
+            } catch (err: any) {
+              showDangerAlert(
+                err?.message ||
+                  "Product was created, but image upload failed. You can upload it from the product form.",
+              );
+            } finally {
             setUploadingImage(false);
             clearPendingProductImage();
           }
@@ -1011,7 +1038,7 @@ export default function InventoryPage() {
       );
       setProductImageUrl(updated.image_url || "");
     } catch (err: any) {
-      alert(err.message || "Failed to upload image");
+      showDangerAlert(err.message || "Failed to upload image");
     } finally {
       setUploadingImage(false);
       if (imageInputRef.current) imageInputRef.current.value = "";
@@ -1034,14 +1061,20 @@ export default function InventoryPage() {
       );
       setProductImageUrl(updated.image_url || "");
     } catch {
-      alert("Failed to remove image");
+      showDangerAlert("Failed to remove image");
     } finally {
       setUploadingImage(false);
     }
   };
 
   const deleteProduct = async (productId: number) => {
-    if (!confirm("Are you sure you want to delete this product?")) return;
+    const confirmed = await showConfirm({
+      title: "Delete product",
+      message: "Are you sure you want to delete this product?",
+      variant: "warning",
+      confirmLabel: "Delete",
+    });
+    if (!confirmed) return;
     setSaving(true);
     try {
       await apiFetch(`/products/${productId}`, { method: "DELETE" });
@@ -1053,14 +1086,16 @@ export default function InventoryPage() {
   };
 
   const deleteSelectedProducts = async () => {
-    if (!selectedProductIds.size) return;
-    if (
-      !confirm(
-        `Are you sure you want to delete ${selectedProductIds.size} selected product${selectedProductIds.size === 1 ? "" : "s"}?`,
-      )
-    ) {
-      return;
-    }
+  if (!selectedProductIds.size) return;
+  const confirmedDeleted = await showConfirm({
+    title: "Delete selected products",
+    message: `Are you sure you want to delete ${selectedProductIds.size} selected product${selectedProductIds.size === 1 ? "" : "s"}?`,
+    variant: "warning",
+    confirmLabel: "Delete",
+  });
+  if (!confirmedDeleted) {
+    return;
+  }
     setSaving(true);
     try {
       const failures: string[] = [];
@@ -1077,7 +1112,7 @@ export default function InventoryPage() {
       setSelectedProductIds(new Set());
       setSubView("list");
       if (failures.length) {
-        alert(failures.join("\n"));
+        showMultilineAlert(failures.join("\n"));
       }
     } finally {
       setSaving(false);
@@ -1171,7 +1206,7 @@ export default function InventoryPage() {
     event.target.value = "";
     if (!file) return;
     if (!companyId) {
-      alert("Please select a company first.");
+      showWarningAlert("Please select a company first.");
       return;
     }
 
@@ -1493,7 +1528,7 @@ export default function InventoryPage() {
       if (rowErrors.length) {
         setError(rowErrors.slice(0, 5).join(" "));
       }
-      alert(
+      showInfoAlert(
         `Imported ${importedCount} product${importedCount === 1 ? "" : "s"}${
           adjustedCount
             ? ` and applied stock to ${adjustedCount} item${
@@ -1543,7 +1578,7 @@ export default function InventoryPage() {
       };
     });
     if (!rows.length) {
-      alert("There are no products to export.");
+      showWarningAlert("There are no products to export.");
       return;
     }
 
@@ -1591,7 +1626,7 @@ export default function InventoryPage() {
       };
     });
     if (!rows.length) {
-      alert("There are no stock moves to export.");
+      showWarningAlert("There are no stock moves to export.");
       return;
     }
 
@@ -1656,11 +1691,11 @@ export default function InventoryPage() {
       isNew,
     });
     if (!companyId) {
-      alert("Please select a company first");
+      showWarningAlert("Please select a company first");
       return;
     }
     if (!warehouseForm.name) {
-      alert("Please enter a warehouse name");
+      showWarningAlert("Please enter a warehouse name");
       return;
     }
     setSaving(true);
@@ -1686,7 +1721,7 @@ export default function InventoryPage() {
       setIsNew(false);
     } catch (err) {
       console.error("Error saving warehouse:", err);
-      alert(
+      showDangerAlert(
         "Error saving warehouse: " +
           (err instanceof Error ? err.message : String(err)),
       );
@@ -1696,12 +1731,14 @@ export default function InventoryPage() {
   };
 
   const deleteWarehouse = async (warehouseId: number) => {
-    if (
-      !confirm(
+    const confirmed = await showConfirm({
+      title: "Delete warehouse",
+      message:
         "Are you sure you want to delete this warehouse? This will also delete all its locations.",
-      )
-    )
-      return;
+      variant: "warning",
+      confirmLabel: "Delete",
+    });
+    if (!confirmed) return;
     setSaving(true);
     try {
       await apiFetch(`/warehouses/${warehouseId}`, { method: "DELETE" });
@@ -1798,7 +1835,7 @@ export default function InventoryPage() {
       });
       setInvalidLocationFields([]);
     } catch (err) {
-      alert(
+      showDangerAlert(
         "Error saving location: " +
           (err instanceof Error ? err.message : String(err)),
       );
@@ -1808,13 +1845,19 @@ export default function InventoryPage() {
   };
 
   const deleteLocation = async (locationId: number) => {
-    if (!confirm("Are you sure you want to delete this location?")) return;
+    const confirmed = await showConfirm({
+      title: "Delete location",
+      message: "Are you sure you want to delete this location?",
+      variant: "warning",
+      confirmLabel: "Delete",
+    });
+    if (!confirmed) return;
     setSaving(true);
     try {
       await apiFetch(`/locations/${locationId}`, { method: "DELETE" });
       await loadAllData();
     } catch (err) {
-      alert(
+      showDangerAlert(
         "Error deleting location: " +
           (err instanceof Error ? err.message : String(err)),
       );
@@ -1965,11 +2008,11 @@ export default function InventoryPage() {
 
   const applyQuickStockAdjustment = async () => {
     if (!companyId || !selectedProductId) {
-      alert("Please select a company and product first.");
+      showWarningAlert("Please select a company and product first.");
       return;
     }
     if (!quickStockWarehouseId || !quickStockLocationId) {
-      alert("Please select both warehouse and location.");
+      showWarningAlert("Please select both warehouse and location.");
       return;
     }
 
@@ -1980,13 +2023,13 @@ export default function InventoryPage() {
       !selectedLocation ||
       selectedLocation.warehouse_id !== quickStockWarehouseId
     ) {
-      alert("Selected location must belong to selected warehouse.");
+      showWarningAlert("Selected location must belong to selected warehouse.");
       return;
     }
 
     const quantity = Number(quickStockQuantity);
     if (!Number.isFinite(quantity) || quantity < 0) {
-      alert("Quantity must be 0 or more.");
+      showWarningAlert("Quantity must be 0 or more.");
       return;
     }
 
@@ -2264,7 +2307,7 @@ export default function InventoryPage() {
 
   const saveMove = async () => {
     if (!companyId) {
-      alert("Please select a company first.");
+      showWarningAlert("Please select a company first.");
       return;
     }
     if (!validateMoveRequiredFields()) return;
@@ -2973,7 +3016,7 @@ export default function InventoryPage() {
 
   const saveCategory = async () => {
     if (!companyId) {
-      alert("Please select a company first.");
+      showWarningAlert("Please select a company first.");
       return;
     }
     if (!validateCategoryRequiredFields()) return;
@@ -3001,7 +3044,13 @@ export default function InventoryPage() {
   };
 
   const deleteCategory = async (categoryId: number) => {
-    if (!confirm("Are you sure you want to delete this category?")) return;
+    const confirmed = await showConfirm({
+      title: "Delete category",
+      message: "Are you sure you want to delete this category?",
+      variant: "warning",
+      confirmLabel: "Delete",
+    });
+    if (!confirmed) return;
     setSaving(true);
     try {
       await apiFetch(`/categories/${categoryId}`, { method: "DELETE" });

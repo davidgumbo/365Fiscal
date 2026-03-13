@@ -13,6 +13,7 @@ import {
 import { apiFetch } from "../api";
 import { useCompanies, Company } from "../hooks/useCompanies";
 import { useMe } from "../hooks/useMe";
+import { useAlert } from "../context/AlertContext";
 import type { CurrencyItem, CurrencyRateRead } from "../types/currency";
 import { InlineTabs } from "../components/InlineTabs";
 
@@ -285,6 +286,7 @@ export default function SettingsPage() {
       .filter(Boolean);
     return normalized.length ? normalized : null;
   }, [me?.companies]);
+  const { showConfirm } = useAlert();
   const [companyId, setCompanyId] = useState<number | null>(null);
   const [companyQuery, setCompanyQuery] = useState("");
   const [taxes, setTaxes] = useState<TaxSetting[]>([]);
@@ -561,7 +563,13 @@ export default function SettingsPage() {
   const deletePortalManagedUser = async (userId: number) => {
     const cid = companyId ?? primaryPortalCompany?.id ?? null;
     if (!cid) return;
-    if (!confirm("Are you sure you want to remove this portal user?")) return;
+    const confirmed = await showConfirm({
+      title: "Remove portal user",
+      message: "Are you sure you want to remove this portal user?",
+      variant: "warning",
+      confirmLabel: "Remove",
+    });
+    if (!confirmed) return;
     try {
       await apiFetch(`/company-users/portal-users/manage/${userId}?company_id=${cid}`, {
         method: "DELETE",
@@ -860,8 +868,13 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
 
   const deletePosTill = async (id: number) => {
     if (!companyId) return;
-    if (!confirm("Are you sure you want to remove this Point Of Sales?"))
-      return;
+    const confirmed = await showConfirm({
+      title: "Remove Point Of Sales",
+      message: "Are you sure you want to remove this Point Of Sales?",
+      variant: "warning",
+      confirmLabel: "Remove",
+    });
+    if (!confirmed) return;
     try {
       await apiFetch(`/pos/tills/${id}`, { method: "DELETE" });
       setStatus("Point Of Sales deleted");
@@ -901,7 +914,13 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
 
   const deletePosEmployee = async (id: number) => {
     if (!companyId) return;
-    if (!confirm("Are you sure you want to remove this employee?")) return;
+    const confirmed = await showConfirm({
+      title: "Remove employee",
+      message: "Are you sure you want to remove this employee?",
+      variant: "warning",
+      confirmLabel: "Remove",
+    });
+    if (!confirmed) return;
     try {
       await apiFetch(`/pos/employees/${id}`, { method: "DELETE" });
       setStatus("Employee deleted");
@@ -1004,12 +1023,13 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
 
   const deleteCurrency = async (id: number) => {
     if (!companyId) return;
-    if (
-      !confirm(
-        "Are you sure you want to delete this currency and all its rates?",
-      )
-    )
-      return;
+    const confirmed = await showConfirm({
+      title: "Delete currency",
+      message: "Are you sure you want to delete this currency and all its rates?",
+      variant: "warning",
+      confirmLabel: "Delete",
+    });
+    if (!confirmed) return;
     try {
       await apiFetch(`/currencies/${id}`, { method: "DELETE" });
       setStatus("Currency deleted");
@@ -1074,7 +1094,13 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
 
   const deleteCurrencyRate = async (rateId: number) => {
     if (!selectedCurrency) return;
-    if (!confirm("Delete this rate?")) return;
+    const confirmed = await showConfirm({
+      title: "Delete rate",
+      message: "Delete this rate?",
+      variant: "warning",
+      confirmLabel: "Delete",
+    });
+    if (!confirmed) return;
     try {
       await apiFetch(`/currencies/rates/${rateId}`, { method: "DELETE" });
       setStatus("Rate deleted");

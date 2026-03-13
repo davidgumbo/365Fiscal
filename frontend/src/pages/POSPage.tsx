@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../api";
 import { useMe } from "../hooks/useMe";
+import { useAlert } from "../context/AlertContext";
 import BackIcon from "../assets/back.svg?react";
 import type { CurrencyItem, CurrencyRateRead } from "../types/currency";
 
@@ -412,6 +413,7 @@ function printReceipt(
 export default function POSPage() {
   const navigate = useNavigate();
   const { me } = useMe();
+  const { showConfirm } = useAlert();
   const companyId = me?.company_ids?.[0];
   const barcodeRef = useRef<HTMLInputElement>(null);
   const faviconLinkRef = useRef<HTMLLinkElement | null>(null);
@@ -1576,7 +1578,16 @@ export default function POSPage() {
         "",
         "Do you want to close the session anyway?",
       ].join("\n");
-      const proceed = window.confirm(warningMessage);
+      const proceed = await showConfirm({
+        title: "Close session",
+        message: (
+          <pre style={{ margin: 0, whiteSpace: "pre-wrap" }}>
+            {warningMessage}
+          </pre>
+        ),
+        variant: "warning",
+        confirmLabel: "Close session",
+      });
       if (!proceed) return;
     }
     try {

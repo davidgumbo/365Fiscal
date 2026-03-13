@@ -41,7 +41,7 @@ export default function ContactsPage() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [deleting, setDeleting] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const { showAlert } = useAlert();
+  const { showAlert, showConfirm } = useAlert();
   const showAlertMessage = (message: string, variant: AlertModalVariant = "danger") => {
     showAlert({ message, variant });
   };
@@ -127,7 +127,13 @@ export default function ContactsPage() {
   const handleBatchDelete = async () => {
     if (selectedIds.size === 0) return;
     const confirmMsg = `Are you sure you want to delete ${selectedIds.size} contact${selectedIds.size > 1 ? "s" : ""}? This action cannot be undone.`;
-    if (!window.confirm(confirmMsg)) return;
+    const confirmed = await showConfirm({
+      title: "Delete contacts",
+      message: confirmMsg,
+      variant: "warning",
+      confirmLabel: "Delete",
+    });
+    if (!confirmed) return;
     setDeleting(true);
     try {
       await apiFetch("/contacts/batch-delete", {

@@ -1,6 +1,7 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../api";
 import { TablePagination } from "../components/TablePagination";
+import { useAlert } from "../context/AlertContext";
 
 type User = {
   id: number;
@@ -69,6 +70,7 @@ export default function AdminUsersPage() {
   const [editForm, setEditForm] = useState({ email: "", password: "" });
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const { showConfirm } = useAlert();
 
   const loadUsers = async () => {
     try {
@@ -154,7 +156,14 @@ export default function AdminUsersPage() {
   };
 
   const deleteUser = async (userId: number) => {
-    if (!confirm("Are you sure you want to delete this admin user? This action cannot be undone.")) return;
+    const confirmed = await showConfirm({
+      title: "Delete admin user",
+      message:
+        "Are you sure you want to delete this admin user? This action cannot be undone.",
+      variant: "warning",
+      confirmLabel: "Delete",
+    });
+    if (!confirmed) return;
     try {
       setError(null);
       await apiFetch(`/users/${userId}`, { method: "DELETE" });

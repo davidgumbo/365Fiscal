@@ -18,6 +18,7 @@ import type { LucideIcon } from "lucide-react";
 import { apiFetch } from "../api";
 import { useMe } from "../hooks/useMe";
 import { useCompanies, Company } from "../hooks/useCompanies";
+import { useAlert } from "../context/AlertContext";
 import ValidationAlert from "../components/ValidationAlert";
 import ValidatedField from "../components/ValidatedField";
 import { Sidebar } from "../components/Sidebar";
@@ -457,6 +458,11 @@ export default function InvoicesPage({
     null,
   );
   const [companyQuery, setCompanyQuery] = useState("");
+  const { showAlert } = useAlert();
+  const showWarningAlert = (message: string) =>
+    showAlert({ message, variant: "warning" });
+  const showDangerAlert = (message: string) =>
+    showAlert({ message, variant: "danger" });
 
   // Portal users auto-select their first company
   useEffect(() => {
@@ -1328,7 +1334,7 @@ export default function InvoicesPage({
       const message =
         "No fiscal device available. Create a device on the Devices page first.";
       setError(message);
-      window.alert(message);
+      showWarningAlert(message);
       return;
     }
 
@@ -1340,7 +1346,7 @@ export default function InvoicesPage({
       const message =
         "No fiscal day is open for the selected fiscal device. Open the fiscal day first.";
       setError(message);
-      window.alert(message);
+      showWarningAlert(message);
       return;
     }
 
@@ -1360,7 +1366,7 @@ export default function InvoicesPage({
       const message = err.message || "Failed to fiscalize invoice";
       setError(message);
       if (String(message).toLowerCase().includes("fiscal day")) {
-        window.alert(message);
+        showDangerAlert(message);
       }
       await loadAll(); // Reload to show stored zimra_errors
     }

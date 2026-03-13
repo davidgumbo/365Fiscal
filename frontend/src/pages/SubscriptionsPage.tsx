@@ -4,6 +4,7 @@ import { Bell, CalendarDays, Pencil, Users } from "lucide-react";
 import { apiFetch, apiRequest } from "../api";
 import { useMe } from "../hooks/useMe";
 import { useCompanies, Company } from "../hooks/useCompanies";
+import { useAlert } from "../context/AlertContext";
 
 type Subscription = {
   id: number;
@@ -73,6 +74,7 @@ export default function SubscriptionsPage() {
   const { me } = useMe();
   const { companies: allCompanies, loading: companiesLoading } = useCompanies();
   const isAdmin = Boolean(me?.is_admin);
+  const { showConfirm } = useAlert();
 
   // Company selection (admin-first flow)
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(
@@ -204,11 +206,14 @@ export default function SubscriptionsPage() {
   };
 
   const handleDeleteSubscription = async () => {
-    if (
-      !currentSub ||
-      !confirm("Delete this subscription? This cannot be undone.")
-    )
-      return;
+    if (!currentSub) return;
+    const confirmed = await showConfirm({
+      title: "Delete subscription",
+      message: "Delete this subscription? This cannot be undone.",
+      variant: "warning",
+      confirmLabel: "Delete",
+    });
+    if (!confirmed) return;
     try {
       await apiRequest(`/subscriptions/${currentSub.id}`, { method: "DELETE" });
       setSuccess("Subscription deleted.");
@@ -243,7 +248,13 @@ export default function SubscriptionsPage() {
   };
 
   const handleDeleteCode = async (codeId: number) => {
-    if (!confirm("Delete this activation code?")) return;
+    const confirmed = await showConfirm({
+      title: "Delete activation code",
+      message: "Delete this activation code?",
+      variant: "warning",
+      confirmLabel: "Delete",
+    });
+    if (!confirmed) return;
     try {
       await apiRequest(`/subscriptions/codes/${codeId}`, { method: "DELETE" });
       setSuccess("Activation code deleted.");

@@ -4,6 +4,7 @@ import { apiFetch } from "../api";
 import { TablePagination } from "../components/TablePagination";
 import { useMe } from "../hooks/useMe";
 import { useListView } from "../context/ListViewContext";
+import { useAlert } from "../context/AlertContext";
 
 // Icon components
 const EditIcon = () => (
@@ -257,6 +258,7 @@ export default function CompaniesPage() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [batchDeleting, setBatchDeleting] = useState(false);
   const [batchExporting, setBatchExporting] = useState(false);
+  const { showConfirm } = useAlert();
 
   const loadCompanies = async () => {
     const params = new URLSearchParams();
@@ -465,12 +467,14 @@ export default function CompaniesPage() {
   };
 
   const deleteCompany = async (companyId: number) => {
-    if (
-      !confirm(
+    const confirmed = await showConfirm({
+      title: "Delete company",
+      message:
         "Are you sure you want to delete this company? This action cannot be undone.",
-      )
-    )
-      return;
+      variant: "warning",
+      confirmLabel: "Delete",
+    });
+    if (!confirmed) return;
     try {
       setError(null);
       await apiFetch(`/companies/${companyId}`, { method: "DELETE" });
@@ -654,11 +658,13 @@ export default function CompaniesPage() {
 
   const handleBatchDelete = async () => {
     if (!me?.is_admin || !selectedIds.size) return;
-    if (
-      !window.confirm(
-        `Delete ${selectedIds.size} selected compan${selectedIds.size === 1 ? "y" : "ies"}? This action cannot be undone.`,
-      )
-    ) {
+    const confirmed = await showConfirm({
+      title: "Delete selected companies",
+      message: `Delete ${selectedIds.size} selected compan${selectedIds.size === 1 ? "y" : "ies"}? This action cannot be undone.`,
+      variant: "warning",
+      confirmLabel: "Delete",
+    });
+    if (!confirmed) {
       return;
     }
 

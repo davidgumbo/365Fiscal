@@ -30,6 +30,7 @@ import { Sidebar } from "../components/Sidebar";
 import type { SidebarSection } from "../types/sidebar";
 import { useMe } from "../hooks/useMe";
 import { useCompanies, Company } from "../hooks/useCompanies";
+import { useAlert } from "../context/AlertContext";
 import ValidationAlert from "../components/ValidationAlert";
 import ValidatedField from "../components/ValidatedField";
 import "./ExpensesPage.css";
@@ -209,6 +210,7 @@ export default function ExpensesPage() {
   const { me } = useMe();
   const { companies: allCompanies, loading: companiesLoading } = useCompanies();
   const isAdmin = Boolean(me?.is_admin);
+  const { showConfirm } = useAlert();
 
   /* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Company selection (admin) ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(
@@ -995,7 +997,13 @@ export default function ExpensesPage() {
   };
 
   const deleteExpense = async (id: number) => {
-    if (!confirm("Delete this expense? This cannot be undone.")) return;
+    const confirmed = await showConfirm({
+      title: "Delete expense",
+      message: "Delete this expense? This cannot be undone.",
+      variant: "warning",
+      confirmLabel: "Delete",
+    });
+    if (!confirmed) return;
     try {
       await apiRequest(`/expenses/${id}`, { method: "DELETE" });
       await loadData();
@@ -1153,7 +1161,13 @@ export default function ExpensesPage() {
   };
 
   const deleteCategory = async (categoryId: number) => {
-    if (!confirm("Delete this expense category?")) return;
+    const confirmed = await showConfirm({
+      title: "Delete expense category",
+      message: "Delete this expense category?",
+      variant: "warning",
+      confirmLabel: "Delete",
+    });
+    if (!confirmed) return;
     setSaving(true);
     try {
       await apiFetch(`/expense-categories/${categoryId}`, { method: "DELETE" });
