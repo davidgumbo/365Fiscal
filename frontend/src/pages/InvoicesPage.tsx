@@ -1581,6 +1581,10 @@ export default function InvoicesPage({
     const zimraVerifyUrl = selectedInvoice.zimra_verification_url
       ? normalizeZimraVerifyUrl(selectedInvoice.zimra_verification_url)
       : "";
+    const isFiscalizedDocument = Boolean(
+      selectedInvoice.zimra_verification_code ||
+        selectedInvoice.zimra_receipt_id,
+    );
     const rows = lines
       .map((line) => {
         const subtotal =
@@ -1609,8 +1613,12 @@ export default function InvoicesPage({
 
     const titleUpper =
       selectedInvoice.invoice_type === "credit_note"
-        ? "FISCAL TAX CREDIT NOTE"
-        : "FISCAL TAX INVOICE";
+        ? isFiscalizedDocument
+          ? "FISCAL TAX CREDIT NOTE"
+          : "CREDIT NOTE"
+        : isFiscalizedDocument
+          ? "FISCAL TAX INVOICE"
+          : "INVOICE";
 
     const html = `
       <html>
@@ -1674,14 +1682,20 @@ export default function InvoicesPage({
             <div class="title">${titleUpper}</div>
 
             <div class="meta">
-              <div class="row"><div>Receipt No:</div><div>${selectedInvoice.zimra_receipt_id || "-"}</div></div>
               <div class="row"><div>Customer reference No:</div><div>${selectedInvoice.payment_reference || selectedInvoice.notes || "-"}</div></div>
               <div class="row"><div>Invoice No:</div><div>${selectedInvoice.reference}</div></div>
               <div class="row"><div>Order No:</div><div>${linkedQuotation?.reference || "-"}</div></div>
+              <div class="row"><div>Date:</div><div>${invoiceDateLabel}</div></div>
+              ${
+                isFiscalizedDocument
+                  ? `
+              <div class="row"><div>Receipt No:</div><div>${selectedInvoice.zimra_receipt_id || "-"}</div></div>
               <div class="row"><div>Device Serial No:</div><div>${devices.find((d) => d.id === selectedInvoice.device_id)?.serial_number || "-"}</div></div>
               <div class="row"><div>Device ID:</div><div>${devices.find((d) => d.id === selectedInvoice.device_id)?.device_id || "-"}</div></div>
-              <div class="row"><div>Date:</div><div>${invoiceDateLabel}</div></div>
               <div class="row"><div>Fiscal day No:</div><div>${selectedInvoice.zimra_receipt_counter || "-"}</div></div>
+              `
+                  : ""
+              }
             </div>
 
             <table>
@@ -1728,7 +1742,7 @@ export default function InvoicesPage({
             </div>
 
             ${
-              selectedInvoice.zimra_verification_url
+              isFiscalizedDocument && selectedInvoice.zimra_verification_url
                 ? `
             <div class="qr d-flex">
               <img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(zimraVerifyUrl)}" width="100" height="100" alt="QR" />
