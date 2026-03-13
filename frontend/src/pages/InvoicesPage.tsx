@@ -11,6 +11,7 @@ import {
   FunnelPlus,
   PenLine,
   Plus,
+  ReceiptText,
   Search,
   ShieldCheck,
 } from "lucide-react";
@@ -210,6 +211,9 @@ type FilterDefinition = {
   color: string;
 };
 
+const isPOSReceiptInvoice = (invoice: Invoice) =>
+  invoice.reference.startsWith("POS-") || invoice.reference.startsWith("CN-POS-");
+
 const STATUS_FILTERS: FilterDefinition[] = [
   {
     key: "",
@@ -252,6 +256,12 @@ const TYPE_FILTERS: FilterDefinition[] = [
     icon: FileMinus,
     color: "var(--violet-500)",
   },
+  {
+    key: "pos_receipt",
+    label: "POS RECEIPTS",
+    icon: ReceiptText,
+    color: "var(--emerald-500)",
+  },
 ];
 
 const STATUS_ICON_STYLES: Record<string, { color: string; background: string }> = {
@@ -289,6 +299,10 @@ const TYPE_ICON_STYLES: Record<string, { color: string; background: string }> = 
   credit_note: {
     color: "var(--violet-500)",
     background: "rgba(139, 92, 246, 0.15)",
+  },
+  pos_receipt: {
+    color: "var(--emerald-500)",
+    background: "rgba(16, 185, 129, 0.15)",
   },
 };
 
@@ -601,7 +615,9 @@ export default function InvoicesPage({
       const count =
         filter.key === ""
           ? invoices.length
-          : invoices.filter((inv) => inv.invoice_type === filter.key).length;
+          : filter.key === "pos_receipt"
+            ? invoices.filter((inv) => isPOSReceiptInvoice(inv)).length
+            : invoices.filter((inv) => inv.invoice_type === filter.key).length;
       const iconStyle =
         TYPE_ICON_STYLES[filter.key] || {
           color: filter.color,
@@ -631,6 +647,15 @@ export default function InvoicesPage({
       { id: "invoice-type", title: "TYPE", items: typeItems },
     ];
   }, [invoices, listStatus, listType]);
+  const visibleInvoices = useMemo(() => {
+    if (listType === "pos_receipt") {
+      return invoices.filter((inv) => isPOSReceiptInvoice(inv));
+    }
+    if (listType) {
+      return invoices.filter((inv) => inv.invoice_type === listType);
+    }
+    return invoices;
+  }, [invoices, listType]);
   const [linesPage, setLinesPage] = useState(1);
   const [linesPerPage, setLinesPerPage] = useState(10);
   const [paymentOpen, setPaymentOpen] = useState(false);
@@ -829,7 +854,9 @@ export default function InvoicesPage({
         company_id: String(companyId),
         ...(listSearch ? { search: listSearch } : {}),
         ...(listStatus ? { status: listStatus } : {}),
-        ...(listType ? { invoice_type: listType } : {}),
+        ...(listType && listType !== "pos_receipt"
+          ? { invoice_type: listType }
+          : {}),
         ...(listCurrency ? { currency: listCurrency } : {}),
       }).toString();
       const [
@@ -889,8 +916,9 @@ export default function InvoicesPage({
   }, [companyId, listSearch, listStatus, listType, listCurrency]);
 
   const allInvoicesSelected =
-    invoices.length > 0 && invoices.every((inv) => selectedInvoiceIds.has(inv.id));
-  const selectedInvoices = invoices.filter((inv) =>
+    visibleInvoices.length > 0 &&
+    visibleInvoices.every((inv) => selectedInvoiceIds.has(inv.id));
+  const selectedInvoices = visibleInvoices.filter((inv) =>
     selectedInvoiceIds.has(inv.id),
   );
 
@@ -907,9 +935,9 @@ export default function InvoicesPage({
     setSelectedInvoiceIds((prev) => {
       const next = new Set(prev);
       if (allInvoicesSelected) {
-        invoices.forEach((inv) => next.delete(inv.id));
+        visibleInvoices.forEach((inv) => next.delete(inv.id));
       } else {
-        invoices.forEach((inv) => next.add(inv.id));
+        visibleInvoices.forEach((inv) => next.add(inv.id));
       }
       return next;
     });
@@ -936,7 +964,11 @@ export default function InvoicesPage({
         const cust = contactById.get(inv.customer_id ?? 0);
         return [
           inv.reference,
-          inv.invoice_type === "credit_note" ? "Credit Note" : "Invoice",
+          isPOSReceiptInvoice(inv)
+            ? "POS Receipt"
+            : inv.invoice_type === "credit_note"
+              ? "Credit Note"
+              : "Invoice",
           cust?.name || "",
           formatDateTime(inv.invoice_date),
           inv.status,
@@ -2012,13 +2044,15 @@ export default function InvoicesPage({
                               "Paid",
                               "Due",
                             ];
-                            const rows = invoices.map((inv) => {
+                            const rows = visibleInvoices.map((inv) => {
                               const cust = contactById.get(inv.customer_id ?? 0);
                               return [
                                 inv.reference,
-                                inv.invoice_type === "credit_note"
-                                  ? "Credit Note"
-                                  : "Invoice",
+                                isPOSReceiptInvoice(inv)
+                                  ? "POS Receipt"
+                                  : inv.invoice_type === "credit_note"
+                                    ? "Credit Note"
+                                    : "Invoice",
                                 cust?.name || "",
                                 formatDateTime(inv.invoice_date),
                                 inv.status,
@@ -2127,18 +2161,18 @@ export default function InvoicesPage({
                             </td>
                           </tr>
                         )}
-                        {!loading && invoices.length === 0 && (
+                        {!loading && visibleInvoices.length === 0 && (
                           <tr>
                             <td
                               colSpan={7}
                               className="text-center py-5 text-muted"
                             >
-                              No invoices yet. Click{" "}
+                              No records found. Click{" "}
                               <strong>+ New Invoice</strong> to create one.
                             </td>
                           </tr>
                         )}
-                        {invoices.map((inv) => {
+                        {visibleInvoices.map((inv) => {
                           const cust = contactById.get(inv.customer_id ?? 0);
                           return (
                             <tr
@@ -2165,9 +2199,11 @@ export default function InvoicesPage({
                                   {inv.reference}
                                 </div>
                                 <small className="text-muted">
-                                  {inv.invoice_type === "credit_note"
-                                    ? "Credit Note"
-                                    : "Invoice"}
+                                  {isPOSReceiptInvoice(inv)
+                                    ? "POS Receipt"
+                                    : inv.invoice_type === "credit_note"
+                                      ? "Credit Note"
+                                      : "Invoice"}
                                 </small>
                               </td>
                               <td>{cust?.name || "—"}</td>

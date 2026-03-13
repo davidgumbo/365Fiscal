@@ -9,6 +9,11 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_db, get_current_user, ensure_company_access, require_company_access, require_portal_user
 from app.models.contact import Contact
+from app.models.invoice import Invoice
+from app.models.payment import Payment
+from app.models.pos_session import POSOrder
+from app.models.purchase_order import PurchaseOrder
+from app.models.quotation import Quotation
 from app.schemas.contact import ContactCreate, ContactRead, ContactUpdate
 
 router = APIRouter(prefix="/contacts", tags=["contacts"])
@@ -16,6 +21,50 @@ router = APIRouter(prefix="/contacts", tags=["contacts"])
 
 class BatchContactIds(BaseModel):
     ids: List[int]
+
+
+def get_contact_usage_reason(db: Session, contact_id: int) -> str | None:
+    purchase = (
+        db.query(PurchaseOrder.reference)
+        .filter(PurchaseOrder.supplier_id == contact_id)
+        .first()
+    )
+    if purchase:
+        return f"it is used on purchase order {purchase.reference}"
+
+    invoice = (
+        db.query(Invoice.reference)
+        .filter(Invoice.customer_id == contact_id)
+        .first()
+    )
+    if invoice:
+        return f"it is used on invoice {invoice.reference}"
+
+    quotation = (
+        db.query(Quotation.reference)
+        .filter(Quotation.customer_id == contact_id)
+        .first()
+    )
+    if quotation:
+        return f"it is used on quotation {quotation.reference}"
+
+    pos_order = (
+        db.query(POSOrder.reference)
+        .filter(POSOrder.customer_id == contact_id)
+        .first()
+    )
+    if pos_order:
+        return f"it is used on POS order {pos_order.reference}"
+
+    payment = (
+        db.query(Payment.reference)
+        .filter(Payment.contact_id == contact_id)
+        .first()
+    )
+    if payment:
+        return f"it is used on payment {payment.reference}"
+
+    return None
 
 
 @router.post("", response_model=ContactRead)
@@ -54,6 +103,12 @@ def batch_delete_contacts(
         raise HTTPException(status_code=404, detail="No contacts found")
     for contact in contacts:
         ensure_company_access(db, user, contact.company_id)
+        reason = get_contact_usage_reason(db, contact.id)
+        if reason:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Cannot delete contact '{contact.name}' because {reason}.",
+            )
     for contact in contacts:
         db.delete(contact)
     db.commit()
@@ -140,6 +195,12 @@ def delete_contact(
     if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
     ensure_company_access(db, user, contact.company_id)
+    reason = get_contact_usage_reason(db, contact.id)
+    if reason:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot delete contact '{contact.name}' because {reason}.",
+        )
     db.delete(contact)
     db.commit()
     return None
