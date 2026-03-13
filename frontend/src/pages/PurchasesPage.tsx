@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import html2pdf from "html2pdf.js";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiFetch } from "../api";
+import { Sidebar } from "../components/Sidebar";
+import type { SidebarSection } from "../types/sidebar";
 import { useMe } from "../hooks/useMe";
 import { useCompanies, Company } from "../hooks/useCompanies";
 import ValidationAlert from "../components/ValidationAlert";
@@ -11,6 +13,14 @@ import {
   getMissingRequiredFields,
   getRequiredFieldError,
 } from "../utils/formValidation";
+import {
+  CheckCircle2,
+  Inbox,
+  Package,
+  Pencil,
+  XCircle,
+  type LucideIcon,
+} from "lucide-react";
 
 type Contact = {
   id: number;
@@ -118,6 +128,52 @@ const lineTotals = (line: PurchaseOrderLine) => {
   const tax = subtotal * (vat / 100);
   return { subtotal, tax, total: subtotal + tax };
 };
+
+type PurchaseStatusFilter = {
+  key: "" | "draft" | "confirmed" | "received" | "cancelled";
+  label: string;
+  icon: LucideIcon;
+  color: string;
+  background: string;
+};
+
+const PURCHASE_STATUS_FILTERS: PurchaseStatusFilter[] = [
+  {
+    key: "",
+    label: "ALL PURCHASES",
+    icon: Package,
+    color: "var(--indigo-500)",
+    background: "rgba(79, 70, 229, 0.12)",
+  },
+  {
+    key: "draft",
+    label: "DRAFT",
+    icon: Pencil,
+    color: "var(--amber-500)",
+    background: "rgba(245, 158, 11, 0.15)",
+  },
+  {
+    key: "confirmed",
+    label: "CONFIRMED",
+    icon: CheckCircle2,
+    color: "var(--blue-500)",
+    background: "rgba(59, 130, 246, 0.12)",
+  },
+  {
+    key: "received",
+    label: "RECEIVED",
+    icon: Inbox,
+    color: "var(--emerald-500)",
+    background: "rgba(16, 185, 129, 0.15)",
+  },
+  {
+    key: "cancelled",
+    label: "CANCELLED",
+    icon: XCircle,
+    color: "var(--red-500)",
+    background: "rgba(239, 68, 68, 0.12)",
+  },
+];
 
 export default function PurchasesPage({
   mode = "list",
@@ -705,6 +761,41 @@ export default function PurchasesPage({
   const currentStatus = selectedOrder?.status || "draft";
   const canEdit = isEditing || mode === "new" || currentStatus === "draft";
 
+  const purchaseSidebarSections = useMemo<SidebarSection[]>(() => {
+    const items = PURCHASE_STATUS_FILTERS.map((filter) => {
+      const Icon = filter.icon;
+      const count =
+        filter.key === ""
+          ? orders.length
+          : orders.filter((order) => order.status === filter.key).length;
+      return {
+        id: `purchase-status-${filter.key || "all"}`,
+        label: filter.label,
+        icon: (
+          <Icon
+            size={18}
+            strokeWidth={1.5}
+            aria-hidden="true"
+            color={filter.color}
+          />
+        ),
+        badge: count,
+        isActive: listStatus === filter.key,
+        onClick: () => setListStatus(filter.key),
+        iconColor: filter.color,
+        iconBackground: filter.background,
+      };
+    });
+
+    return [
+      {
+        id: "purchase-status",
+        title: "STATUS",
+        items,
+      },
+    ];
+  }, [listStatus, orders]);
+
   const goBackToCompanies = () => {
     setSelectedCompanyId(null);
     setOrders([]);
@@ -881,143 +972,7 @@ export default function PurchasesPage({
             </div>
           )}
           <div className="two-panel two-panel-left">
-            {/* Sidebar */}
-            <div className="o-sidebar">
-              <div className="o-sidebar-section">
-                <div className="o-sidebar-title">STATUS</div>
-                {[
-                  {
-                    key: "",
-                    label: "ALL PURCHASES",
-                    icon: (
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="var(--indigo-500)"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
-                        <path d="M3 6h18" />
-                        <path d="M16 10a4 4 0 0 1-8 0" />
-                      </svg>
-                    ),
-                  },
-                  {
-                    key: "draft",
-                    label: "DRAFT",
-                    icon: (
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="var(--amber-500)"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M12 20h9" />
-                        <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                      </svg>
-                    ),
-                  },
-                  {
-                    key: "confirmed",
-                    label: "CONFIRMED",
-                    icon: (
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="var(--blue-500)"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                        <path d="m9 11 3 3L22 4" />
-                      </svg>
-                    ),
-                  },
-                  {
-                    key: "received",
-                    label: "RECEIVED",
-                    icon: (
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="var(--emerald-500)"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <rect x="3" y="3" width="18" height="18" rx="2" />
-                        <path d="m9 12 2 2 4-4" />
-                      </svg>
-                    ),
-                  },
-                  {
-                    key: "cancelled",
-                    label: "CANCELLED",
-                    icon: (
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="var(--red-500)"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <circle cx="12" cy="12" r="10" />
-                        <path d="m15 9-6 6" />
-                        <path d="m9 9 6 6" />
-                      </svg>
-                    ),
-                  },
-                ].map((item) => (
-                  <div
-                    key={item.key || "all"}
-                    className={`o-sidebar-item ${listStatus === item.key ? "active" : ""}`}
-                    onClick={() => setListStatus(item.key)}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <span
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 10,
-                        opacity: 0.85,
-                      }}
-                    >
-                      {item.icon}
-                      <span
-                        style={{
-                          letterSpacing: "0.5px",
-                          fontSize: 12,
-                          fontWeight: 500,
-                        }}
-                      >
-                        {item.label}
-                      </span>
-                    </span>
-                    <span className="o-sidebar-count">
-                      {item.key === ""
-                        ? orders.length
-                        : orders.filter((p) => p.status === item.key).length}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <Sidebar sections={purchaseSidebarSections} />
 
             <div>
               <div className="content-top-bar purchases-top-bar">

@@ -1,6 +1,8 @@
 import { CSSProperties, useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../api";
+import { Sidebar } from "../components/Sidebar";
+import type { SidebarSection } from "../types/sidebar";
 import { TablePagination } from "../components/TablePagination";
 import { useMe } from "../hooks/useMe";
 import { useCompanies, Company } from "../hooks/useCompanies";
@@ -8,6 +10,18 @@ import {
   buildRevenueTrendChart,
   RevenueTrendChart,
 } from "../utils/revenueTrend";
+import {
+  BarChart,
+  CreditCard,
+  FileText,
+  Layers,
+  Monitor,
+  Percent,
+  ShoppingBag,
+  ShoppingCart,
+  TrendingUp,
+  type LucideIcon,
+} from "lucide-react";
 import type { CurrencyItem } from "../types/currency";
 
 /* ── Interfaces ──────────────────────────────────────── */
@@ -363,6 +377,73 @@ type ReportType =
   | "purchases"
   | "pos_orders";
 
+type ReportMenuItem = {
+  key: ReportType;
+  label: string;
+  icon: LucideIcon;
+  color: string;
+  background: string;
+};
+
+const REPORT_MENU_ITEMS: ReportMenuItem[] = [
+  {
+    key: "sales",
+    label: "REVENUE",
+    icon: TrendingUp,
+    color: "var(--emerald-500)",
+    background: "rgba(16, 185, 129, 0.15)",
+  },
+  {
+    key: "stock",
+    label: "STOCK VALUATION",
+    icon: Layers,
+    color: "var(--amber-500)",
+    background: "rgba(234, 179, 8, 0.15)",
+  },
+  {
+    key: "debtors",
+    label: "DEBTORS",
+    icon: FileText,
+    color: "var(--blue-500)",
+    background: "rgba(37, 99, 235, 0.15)",
+  },
+  {
+    key: "creditors",
+    label: "CREDITORS",
+    icon: CreditCard,
+    color: "var(--rose-500)",
+    background: "rgba(244, 63, 94, 0.12)",
+  },
+  {
+    key: "income_statement",
+    label: "INCOME STATEMENT",
+    icon: BarChart,
+    color: "var(--indigo-500)",
+    background: "rgba(79, 70, 229, 0.15)",
+  },
+  {
+    key: "vat",
+    label: "VAT RETURN",
+    icon: Percent,
+    color: "var(--violet-500)",
+    background: "rgba(168, 85, 247, 0.12)",
+  },
+  {
+    key: "purchases",
+    label: "PURCHASE REPORT",
+    icon: ShoppingCart,
+    color: "var(--orange-500)",
+    background: "rgba(249, 115, 22, 0.15)",
+  },
+  {
+    key: "pos_orders",
+    label: "POS ORDERS REPORT",
+    icon: Monitor,
+    color: "var(--teal-500)",
+    background: "rgba(45, 212, 191, 0.15)",
+  },
+];
+
 type VatSectionTab =
   | "sales_vat"
   | "purchases_vat"
@@ -424,6 +505,35 @@ export default function ReportsPage() {
   }, [allCompanies, companyQuery]);
 
   const [activeReport, setActiveReport] = useState<ReportType>("sales");
+  const reportsSidebarSections = useMemo<SidebarSection[]>(() => {
+    const items = REPORT_MENU_ITEMS.map((item) => {
+      const Icon = item.icon;
+      return {
+        id: `report-menu-${item.key}`,
+        label: item.label,
+        icon: (
+          <Icon
+            size={18}
+            strokeWidth={1.5}
+            aria-hidden="true"
+            color={item.color}
+          />
+        ),
+        isActive: activeReport === item.key,
+        onClick: () => setActiveReport(item.key),
+        iconColor: item.color,
+        iconBackground: item.background,
+      };
+    });
+
+    return [
+      {
+        id: "reports-menu",
+        title: "FINANCIAL REPORTS",
+        items,
+      },
+    ];
+  }, [activeReport]);
   const [activeIncomeTab, setActiveIncomeTab] =
     useState<IncomeSectionTab>("summary");
   const [activeVatTab, setActiveVatTab] = useState<VatSectionTab>("sales_vat");
@@ -2745,205 +2855,7 @@ export default function ReportsPage() {
         </div>
       )} */}
       <div className="two-panel two-panel-left">
-        {/* Sidebar */}
-        <div className="o-sidebar">
-          <div className="o-sidebar-section">
-            <div className="o-sidebar-title">FINANCIAL REPORTS</div>
-            {[
-              {
-                key: "sales",
-                label: "REVENUE",
-                icon: (
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="var(--emerald-500)"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M3 3v18h18" />
-                    <path d="m19 9-5 5-4-4-3 3" />
-                  </svg>
-                ),
-              },
-              {
-                key: "stock",
-                label: "STOCK VALUATION",
-                icon: (
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="var(--amber-500)"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="m7.5 4.27 9 5.15" />
-                    <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
-                    <path d="m3.3 7 8.7 5 8.7-5" />
-                    <path d="M12 22V12" />
-                  </svg>
-                ),
-              },
-              {
-                key: "debtors",
-                label: "DEBTORS",
-                icon: (
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="var(--blue-500)"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                    <polyline points="14 2 14 8 20 8" />
-                    <path d="M8 13h8" />
-                    <path d="M8 17h8" />
-                  </svg>
-                ),
-              },
-              {
-                key: "creditors",
-                label: "CREDITORS",
-                icon: (
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="var(--rose-500)"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <circle cx="9" cy="21" r="1" />
-                    <circle cx="20" cy="21" r="1" />
-                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-                    <path d="M8 10h10" />
-                  </svg>
-                ),
-              },
-              {
-                key: "vat",
-                label: "VAT RETURN",
-                icon: (
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="var(--violet-500)"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />
-                    <path d="M13 5v2" />
-                    <path d="M13 17v2" />
-                    <path d="M13 11v2" />
-                  </svg>
-                ),
-              },
-              {
-                key: "purchases",
-                label: "PURCHASE REPORT",
-                icon: (
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="var(--rose-500)"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <circle cx="9" cy="21" r="1" />
-                    <circle cx="20" cy="21" r="1" />
-                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-                  </svg>
-                ),
-              },
-              {
-                key: "pos_orders",
-                label: "POS ORDERS REPORT",
-                icon: (
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="var(--emerald-600)"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <rect x="3" y="4" width="18" height="14" rx="2" />
-                    <path d="M7 20h10" />
-                    <path d="M9 8h6" />
-                    <path d="M9 12h6" />
-                  </svg>
-                ),
-              },
-              {
-                key: "income_statement",
-                label: "INCOME STATEMENT",
-                icon: (
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="var(--violet-500)"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M4 19V5" />
-                    <path d="M4 19h16" />
-                    <path d="M7 15l3-3 3 2 4-6" />
-                  </svg>
-                ),
-              },
-            ].map((item) => (
-              <div
-                key={item.key}
-                className={`o-sidebar-item ${activeReport === item.key ? "active" : ""}`}
-                onClick={() => setActiveReport(item.key as ReportType)}
-                style={{ cursor: "pointer" }}
-              >
-                <span
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
-                    opacity: 0.85,
-                  }}
-                >
-                  {item.icon}
-                  <span
-                    style={{
-                      letterSpacing: "0.5px",
-                      fontSize: 12,
-                      fontWeight: 500,
-                    }}
-                  >
-                    {item.label}
-                  </span>
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
+        <Sidebar sections={reportsSidebarSections} />
 
         <div>
           {/* Top bar with date range and actions */}

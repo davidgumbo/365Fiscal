@@ -1,8 +1,17 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch, apiRequest } from "../api";
+import { Sidebar } from "../components/Sidebar";
+import type { SidebarSection } from "../types/sidebar";
 import { useCompanies } from "../hooks/useCompanies";
 import { useMe } from "../hooks/useMe";
+import {
+  Briefcase,
+  LayoutKanban,
+  List,
+  User,
+  Users,
+} from "lucide-react";
 
 type Contact = {
   id: number;
@@ -15,6 +24,8 @@ type Contact = {
   email?: string;
   reference?: string;
 };
+
+type ContactTypeFilter = "all" | "personal" | "company";
 
 export default function ContactsPage() {
   const navigate = useNavigate();
@@ -169,6 +180,67 @@ export default function ContactsPage() {
   const companyCount = contacts.filter((c) => isCompanyContact(c)).length;
   const personalCount = contacts.length - companyCount;
 
+  const contactSidebarSections = useMemo<SidebarSection[]>(() => {
+    const typeFilters = [
+      {
+        key: "all" as ContactTypeFilter,
+        label: "ALL CONTACTS",
+        icon: Users,
+        color: "var(--blue-600)",
+        background: "rgba(37, 99, 235, 0.12)",
+        count: contacts.length,
+      },
+      {
+        key: "personal" as ContactTypeFilter,
+        label: "PERSONAL",
+        icon: User,
+        color: "var(--teal-600)",
+        background: "rgba(5, 150, 105, 0.15)",
+        count: personalCount,
+      },
+      {
+        key: "company" as ContactTypeFilter,
+        label: "COMPANY",
+        icon: Briefcase,
+        color: "var(--violet-600)",
+        background: "rgba(139, 92, 246, 0.15)",
+        count: companyCount,
+      },
+    ];
+
+    return [
+      {
+        id: "contact-types",
+        title: "CONTACT TYPE",
+        items: typeFilters.map((filter) => {
+          const Icon = filter.icon;
+          return {
+            id: `contact-type-${filter.key}`,
+            label: filter.label,
+            icon: (
+              <Icon
+                size={18}
+                strokeWidth={1.5}
+                aria-hidden="true"
+                color={filter.color}
+              />
+            ),
+            badge: filter.count,
+            isActive: contactTypeFilter === filter.key,
+            onClick: () => setContactTypeFilter(filter.key),
+            iconColor: filter.color,
+            iconBackground: filter.background,
+          };
+        }),
+      },
+    ];
+  }, [
+    contacts.length,
+    companyCount,
+    contactTypeFilter,
+    personalCount,
+  ]);
+
   if (companiesLoading && !companyId) {
     return <div className="loading-indicator">Loading companies...</div>;
   }
@@ -280,38 +352,7 @@ export default function ContactsPage() {
   return (
     <div className="content">
       <div className="two-panel two-panel-left">
-        <div className="o-sidebar">
-          <div className="o-sidebar-section">
-            <div className="o-sidebar-title">CONTACT TYPE</div>
-            {[
-              { key: "all", label: "ALL CONTACTS", count: contacts.length },
-              { key: "personal", label: "PERSONAL", count: personalCount },
-              { key: "company", label: "COMPANY", count: companyCount },
-            ].map((item) => (
-              <div
-                key={item.key}
-                className={`o-sidebar-item ${contactTypeFilter === item.key ? "active" : ""}`}
-                onClick={() =>
-                  setContactTypeFilter(
-                    item.key as "all" | "personal" | "company",
-                  )
-                }
-                style={{ cursor: "pointer" }}
-              >
-                <span
-                  style={{
-                    letterSpacing: "0.5px",
-                    fontSize: 12,
-                    fontWeight: 500,
-                  }}
-                >
-                  {item.label}
-                </span>
-                <span className="o-sidebar-count">{item.count}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+        <Sidebar sections={contactSidebarSections} />
 
         <div className="form-shell">
           <div className="toolbar" style={{ marginBottom: 12 }}>
@@ -322,14 +363,20 @@ export default function ContactsPage() {
               <button
                 className={viewMode === "list" ? "tab active" : "tab"}
                 onClick={() => setViewMode("list")}
+                type="button"
+                title="List view"
+                aria-label="List view"
               >
-                List
+                <List size={16} aria-hidden="true" />
               </button>
               <button
                 className={viewMode === "kanban" ? "tab active" : "tab"}
                 onClick={() => setViewMode("kanban")}
+                type="button"
+                title="Kanban view"
+                aria-label="Kanban view"
               >
-                Kanban
+                <LayoutKanban size={16} aria-hidden="true" />
               </button>
               <button className="primary" onClick={startNew}>
                 New
