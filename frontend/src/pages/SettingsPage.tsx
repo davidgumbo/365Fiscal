@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ChevronDown,
+  Filter,
   Monitor,
   PencilLine,
   Search,
@@ -403,8 +404,10 @@ export default function SettingsPage() {
   const [portalAuditStatus, setPortalAuditStatus] = useState("");
   const [portalAuditUserId, setPortalAuditUserId] = useState<number | "">("");
   const [portalAuditActions, setPortalAuditActions] = useState<string[]>([]);
+  const [portalAuditFilterOpen, setPortalAuditFilterOpen] = useState(false);
   const [portalAuditPage, setPortalAuditPage] = useState(1);
   const [portalAuditPageSize, setPortalAuditPageSize] = useState(20);
+  const portalAuditFilterRef = useRef<HTMLDivElement | null>(null);
   const filteredPortalManagedUsers = useMemo(() => {
     const query = portalUserSearch.trim().toLowerCase();
     if (!query) return portalManagedUsers;
@@ -717,6 +720,20 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
         .catch(() => setPortalAuditActions([]));
     }
   }, [activeSection, isAdmin, isPortalSuperUser, portalAuditActions.length]);
+
+  useEffect(() => {
+    if (!portalAuditFilterOpen) return;
+    const handleClick = (event: MouseEvent) => {
+      if (
+        portalAuditFilterRef.current &&
+        !portalAuditFilterRef.current.contains(event.target as Node)
+      ) {
+        setPortalAuditFilterOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [portalAuditFilterOpen]);
 
   const loadTaxes = async (cid: number) => {
     const data = await apiFetch<TaxSetting[]>(
@@ -6181,63 +6198,96 @@ const [currencyRates, setCurrencyRates] = useState<CurrencyRateRead[]>([]);
                     ) : (
                       <>
                         <div
-                          style={{
-                            display: "grid",
-                            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-                            gap: 12,
-                            marginBottom: 16,
-                          }}
+                          className="settings-audit-search-wrap"
+                          style={{ marginBottom: 16 }}
+                          ref={portalAuditFilterRef}
                         >
-                          <label className="input">
-                            Search
+                          <div className="settings-search-input settings-search-input-with-filter">
+                            <Search size={16} />
                             <input
                               type="text"
-                              placeholder="Search by user, reference or summary..."
+                              placeholder="Search audit trail..."
                               value={portalAuditSearch}
                               onChange={(e) => setPortalAuditSearch(e.target.value)}
                             />
-                          </label>
-                          <label className="input">
-                            User
-                            <select
-                              value={portalAuditUserId === "" ? "" : String(portalAuditUserId)}
-                              onChange={(e) =>
-                                setPortalAuditUserId(e.target.value ? Number(e.target.value) : "")
-                              }
+                            <button
+                              type="button"
+                              className="settings-filter-toggle"
+                              aria-label="Open audit filters"
+                              onClick={() => setPortalAuditFilterOpen((prev) => !prev)}
                             >
-                              <option value="">All users</option>
-                              {portalAuditUsers.map((user) => (
-                                <option key={user.id} value={user.id}>
-                                  {user.label}
-                                </option>
-                              ))}
-                            </select>
-                          </label>
-                          <label className="input">
-                            Action
-                            <select
-                              value={portalAuditAction}
-                              onChange={(e) => setPortalAuditAction(e.target.value)}
-                            >
-                              <option value="">All actions</option>
-                              {portalAuditActions.map((action) => (
-                                <option key={action} value={action}>
-                                  {action.replace(/_/g, " ")}
-                                </option>
-                              ))}
-                            </select>
-                          </label>
-                          <label className="input">
-                            Status
-                            <select
-                              value={portalAuditStatus}
-                              onChange={(e) => setPortalAuditStatus(e.target.value)}
-                            >
-                              <option value="">All statuses</option>
-                              <option value="success">Success</option>
-                              <option value="error">Error</option>
-                            </select>
-                          </label>
+                              <Filter size={16} />
+                            </button>
+                          </div>
+                          {portalAuditFilterOpen && (
+                            <div className="settings-filter-dropdown">
+                              <div className="settings-filter-columns">
+                                <div className="settings-filter-column">
+                                  <div className="settings-filter-title">User</div>
+                                  <div className="settings-filter-items">
+                                    <button
+                                      type="button"
+                                      className={`settings-filter-chip ${portalAuditUserId === "" ? "settings-filter-chip-active" : ""}`}
+                                      onClick={() => setPortalAuditUserId("")}
+                                    >
+                                      All users
+                                    </button>
+                                    {portalAuditUsers.map((user) => (
+                                      <button
+                                        key={user.id}
+                                        type="button"
+                                        className={`settings-filter-chip ${portalAuditUserId === user.id ? "settings-filter-chip-active" : ""}`}
+                                        onClick={() => setPortalAuditUserId(user.id)}
+                                      >
+                                        {user.label}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                                <div className="settings-filter-column">
+                                  <div className="settings-filter-title">Action</div>
+                                  <div className="settings-filter-items">
+                                    <button
+                                      type="button"
+                                      className={`settings-filter-chip ${portalAuditAction === "" ? "settings-filter-chip-active" : ""}`}
+                                      onClick={() => setPortalAuditAction("")}
+                                    >
+                                      All actions
+                                    </button>
+                                    {portalAuditActions.map((action) => (
+                                      <button
+                                        key={action}
+                                        type="button"
+                                        className={`settings-filter-chip ${portalAuditAction === action ? "settings-filter-chip-active" : ""}`}
+                                        onClick={() => setPortalAuditAction(action)}
+                                      >
+                                        {action.replace(/_/g, " ")}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                                <div className="settings-filter-column">
+                                  <div className="settings-filter-title">Status</div>
+                                  <div className="settings-filter-items">
+                                    {[
+                                      { key: "", label: "All statuses" },
+                                      { key: "success", label: "Success" },
+                                      { key: "error", label: "Error" },
+                                    ].map((item) => (
+                                      <button
+                                        key={item.key || "all"}
+                                        type="button"
+                                        className={`settings-filter-chip ${portalAuditStatus === item.key ? "settings-filter-chip-active" : ""}`}
+                                        onClick={() => setPortalAuditStatus(item.key)}
+                                      >
+                                        {item.label}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
                         {portalAuditLoading ? (
                           <div className="page-sub">Loading audit trail...</div>
