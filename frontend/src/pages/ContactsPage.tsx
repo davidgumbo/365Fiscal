@@ -5,14 +5,7 @@ import { Sidebar } from "../components/Sidebar";
 import type { SidebarSection } from "../types/sidebar";
 import { useCompanies } from "../hooks/useCompanies";
 import { useMe } from "../hooks/useMe";
-import {
-  Briefcase,
-  LayoutGrid,
-  List,
-  User,
-  LayoutGrid,
-  Users,
-} from "lucide-react";
+import { Briefcase, LayoutGrid, List, User, Users } from "lucide-react";
 
 type Contact = {
   id: number;
