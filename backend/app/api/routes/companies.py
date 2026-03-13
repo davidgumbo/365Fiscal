@@ -397,21 +397,40 @@ def update_portal_user(
         CompanyUser.role == "portal",
     ).first()
 
+    def apply_portal_link(target_link: CompanyUser, target_user: User) -> None:
+        target_link.user_id = target_user.id
+        target_link.role = "portal"
+        target_link.is_active = True
+        target_link.is_company_admin = True
+        target_link.portal_apps = company.portal_apps or ""
+
     if link:
         # Update existing user
         user = db.query(User).filter(User.id == link.user_id).first()
-        if user:
+        existing_user = db.query(User).filter(User.email == email).first()
+        if existing_user and (not user or existing_user.id != user.id):
+            existing_company_link = db.query(CompanyUser).filter(
+                CompanyUser.company_id == company_id,
+                CompanyUser.user_id == existing_user.id,
+            ).first()
+            if existing_company_link and existing_company_link.id != link.id:
+                db.delete(link)
+                link = existing_company_link
+            user = existing_user
+            if password:
+                user.hashed_password = hash_password(password)
+            apply_portal_link(link, user)
+        elif user:
             user.email = email
             if password:
                 user.hashed_password = hash_password(password)
+            apply_portal_link(link, user)
         else:
             # Create new user and update link
             user = User(email=email, hashed_password=hash_password(password or "changeme"), is_admin=False)
             db.add(user)
             db.flush()
-            link.user_id = user.id
-        link.is_company_admin = True
-        link.portal_apps = company.portal_apps or ""
+            apply_portal_link(link, user)
     else:
         # Check if user with this email exists
         user = db.query(User).filter(User.email == email).first()
@@ -421,17 +440,24 @@ def update_portal_user(
             db.flush()
         elif password:
             user.hashed_password = hash_password(password)
-        # Create link
-        db.add(
-            CompanyUser(
-                company_id=company_id,
-                user_id=user.id,
-                role="portal",
-                is_active=True,
-                is_company_admin=True,
-                portal_apps=company.portal_apps or "",
+        existing_company_link = db.query(CompanyUser).filter(
+            CompanyUser.company_id == company_id,
+            CompanyUser.user_id == user.id,
+        ).first()
+        if existing_company_link:
+            apply_portal_link(existing_company_link, user)
+        else:
+            # Create link
+            db.add(
+                CompanyUser(
+                    company_id=company_id,
+                    user_id=user.id,
+                    role="portal",
+                    is_active=True,
+                    is_company_admin=True,
+                    portal_apps=company.portal_apps or "",
+                )
             )
-        )
 
     db.commit()
     return {"user_id": user.id, "email": user.email}
