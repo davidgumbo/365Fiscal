@@ -9371,6 +9371,15 @@ button.danger:not(.icon-btn):not(.device-icon-btn):disabled {
   margin-right: 4px;
 }
 
+.batch-master-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--blue-700);
+}
+
 .batch-btn {
   display: inline-flex;
   align-items: center;
@@ -9438,7 +9447,21 @@ button.danger:not(.icon-btn):not(.device-icon-btn):disabled {
   background: var(--blue-50);
 }
 
+.data-table tbody tr.row-selected,
+.o-list-table tbody tr.row-selected,
+.report-table tbody tr.row-selected,
+.dashboard-table tbody tr.row-selected {
+  background: var(--blue-50);
+}
+
 .table tbody tr.row-selected:hover {
+  background: var(--blue-100);
+}
+
+.data-table tbody tr.row-selected:hover,
+.o-list-table tbody tr.row-selected:hover,
+.report-table tbody tr.row-selected:hover,
+.dashboard-table tbody tr.row-selected:hover {
   background: var(--blue-100);
 }
 

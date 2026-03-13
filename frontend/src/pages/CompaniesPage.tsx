@@ -254,6 +254,9 @@ export default function CompaniesPage() {
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
   const [showActionMenu, setShowActionMenu] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [batchDeleting, setBatchDeleting] = useState(false);
+  const [batchExporting, setBatchExporting] = useState(false);
 
   const loadCompanies = async () => {
     const params = new URLSearchParams();
@@ -270,11 +273,13 @@ export default function CompaniesPage() {
           `/companies${query ? `?${query}` : ""}`,
         );
         setCompanies(data);
+        setSelectedIds(new Set());
       } else {
         const data = await apiFetch<Company[]>(
           `/companies/me${query ? `?${query}` : ""}`,
         );
         setCompanies(data);
+        setSelectedIds(new Set());
       }
     } catch (err: any) {
       setError(err.message || "Failed to load companies");
@@ -514,6 +519,12 @@ export default function CompaniesPage() {
   }, [pagedCompanies, state.groupBy]);
 
   const totalPages = Math.max(1, Math.ceil(filteredCompanies.length / pageSize));
+  const visibleCompanyIds = pagedCompanies.map((company) => company.id);
+  const allVisibleSelected =
+    visibleCompanyIds.length > 0 &&
+    visibleCompanyIds.every((id) => selectedIds.has(id));
+  const hasSelection = selectedIds.size > 0;
+  const selectedCompanies = companies.filter((company) => selectedIds.has(company.id));
 
   useEffect(() => {
     setPage((prev) => Math.min(prev, totalPages));
@@ -573,6 +584,101 @@ export default function CompaniesPage() {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Companies");
     XLSX.writeFile(workbook, "companies.xlsx");
+  };
+
+  const toggleSelect = (companyId: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(companyId)) next.delete(companyId);
+      else next.add(companyId);
+      return next;
+    });
+  };
+
+  const toggleSelectAllVisible = () => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (allVisibleSelected) {
+        visibleCompanyIds.forEach((id) => next.delete(id));
+      } else {
+        visibleCompanyIds.forEach((id) => next.add(id));
+      }
+      return next;
+    });
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const exportSelectedRows = useMemo(
+    () =>
+      selectedCompanies.map((company) => ({
+        "Company Name": company.name || "",
+        TIN: company.tin || "",
+        VAT: company.vat || "",
+        Phone: company.phone || "",
+        Email: company.email || "",
+        Address: company.address || "",
+        "Portal Apps": (company.portal_apps || []).join(", "),
+      })),
+    [selectedCompanies],
+  );
+
+  const handleExportSelectedCsv = () => {
+    if (!exportSelectedRows.length) return;
+    setBatchExporting(true);
+    try {
+      const headers = Object.keys(exportSelectedRows[0]);
+      const csv = [
+        headers.join(","),
+        ...exportSelectedRows.map((row) =>
+          headers
+            .map((header) =>
+              `"${String(row[header as keyof typeof row] ?? "").replace(/"/g, '""')}"`,
+            )
+            .join(","),
+        ),
+      ].join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "companies-selected.csv";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } finally {
+      setBatchExporting(false);
+    }
+  };
+
+  const handleBatchDelete = async () => {
+    if (!me?.is_admin || !selectedIds.size) return;
+    if (
+      !window.confirm(
+        `Delete ${selectedIds.size} selected compan${selectedIds.size === 1 ? "y" : "ies"}? This action cannot be undone.`,
+      )
+    ) {
+      return;
+    }
+
+    setBatchDeleting(true);
+    setError(null);
+    try {
+      await Promise.all(
+        Array.from(selectedIds).map((companyId) =>
+          apiFetch(`/companies/${companyId}`, { method: "DELETE" }),
+        ),
+      );
+      setStatus(
+        `${selectedIds.size} compan${selectedIds.size === 1 ? "y" : "ies"} deleted successfully`,
+      );
+      await loadCompanies();
+    } catch (err: any) {
+      setError(err.message || "Failed to delete selected companies");
+    } finally {
+      setBatchDeleting(false);
+    }
   };
 
   // Clear status message after 5 seconds
@@ -1147,6 +1253,41 @@ export default function CompaniesPage() {
 
       {/* Companies Table */}
       <div className="card">
+        {hasSelection && (
+          <div className="batch-actions-bar">
+            <label className="batch-master-toggle">
+              <input
+                type="checkbox"
+                checked={allVisibleSelected}
+                onChange={toggleSelectAllVisible}
+                className="batch-checkbox"
+              />
+              <span>Select all</span>
+            </label>
+            <span className="batch-count">{selectedIds.size} selected</span>
+            <button
+              className="batch-btn export-btn"
+              onClick={handleExportSelectedCsv}
+              disabled={batchExporting}
+            >
+              {batchExporting ? "Exporting..." : "Export Selected"}
+            </button>
+            {me?.is_admin && (
+              <button
+                className="batch-btn delete-btn"
+                onClick={handleBatchDelete}
+                disabled={batchDeleting}
+              >
+                {batchDeleting
+                  ? "Deleting..."
+                  : `Delete (${selectedIds.size})`}
+              </button>
+            )}
+            <button className="batch-btn clear-btn" onClick={clearSelection}>
+              Clear
+            </button>
+          </div>
+        )}
         {viewMode === "grid" ? (
           <>
             <div
@@ -1159,6 +1300,7 @@ export default function CompaniesPage() {
               {pagedCompanies.map((company) => (
                 <div
                   key={company.id}
+                  className={selectedIds.has(company.id) ? "card-selected" : ""}
                   style={{
                     border: "1px solid var(--stroke)",
                     borderRadius: "16px",
@@ -1167,8 +1309,25 @@ export default function CompaniesPage() {
                     boxShadow: "var(--shadow-soft)",
                     display: "grid",
                     gap: "14px",
+                    position: "relative",
                   }}
                 >
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "16px",
+                      left: "16px",
+                      zIndex: 1,
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(company.id)}
+                      onChange={() => toggleSelect(company.id)}
+                      className="batch-checkbox"
+                      aria-label={`Select ${company.name}`}
+                    />
+                  </div>
                   <div
                     style={{
                       display: "flex",
@@ -1195,6 +1354,7 @@ export default function CompaniesPage() {
                             display: "inline-flex",
                             alignItems: "center",
                             justifyContent: "center",
+                            marginLeft: "28px",
                           }}
                         >
                           <BuildingIcon />
@@ -1296,6 +1456,14 @@ export default function CompaniesPage() {
           <table className="data-table">
           <thead>
             <tr>
+              <th style={{ width: 40 }}>
+                <input
+                  type="checkbox"
+                  checked={allVisibleSelected}
+                  onChange={toggleSelectAllVisible}
+                  className="batch-checkbox"
+                />
+              </th>
               <th>Company Name</th>
               <th>TIN</th>
               <th>VAT</th>
@@ -1312,13 +1480,22 @@ export default function CompaniesPage() {
               <Fragment key={group.label || `group-${index}`}>
                 {group.label && (
                   <tr className="table-group">
-                    <td colSpan={me?.is_admin ? 7 : 5}>
+                    <td colSpan={me?.is_admin ? 8 : 6}>
                       <strong>{group.label}</strong> ({group.items.length})
                     </td>
                   </tr>
                 )}
                 {group.items.map((c) => (
-                  <tr key={c.id}>
+                  <tr key={c.id} className={selectedIds.has(c.id) ? "row-selected" : ""}>
+                    <td onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(c.id)}
+                        onChange={() => toggleSelect(c.id)}
+                        className="batch-checkbox"
+                        aria-label={`Select ${c.name}`}
+                      />
+                    </td>
                     <td>
                       <span className="company-name">{c.name}</span>
                     </td>
@@ -1377,7 +1554,7 @@ export default function CompaniesPage() {
             {!filteredCompanies.length && (
               <tr>
                 <td
-                  colSpan={me?.is_admin ? 7 : 5}
+                  colSpan={me?.is_admin ? 8 : 6}
                   style={{
                     textAlign: "center",
                     padding: "40px",
