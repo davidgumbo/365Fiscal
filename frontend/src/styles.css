@@ -9357,6 +9357,9 @@ button.danger:not(.icon-btn):not(.device-icon-btn):disabled {
   border: 1px solid var(--blue-200);
   border-radius: var(--radius-md);
   animation: slideDown 0.15s ease-out;
+  position: sticky;
+  top: 0;
+  z-index: 15;
 }
 
 @keyframes slideDown {
