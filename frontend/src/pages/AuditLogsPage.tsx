@@ -120,6 +120,8 @@ export default function AuditLogsPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [exportingSelected, setExportingSelected] = useState(false);
 
   // Available filter options
   const [actionTypes, setActionTypes] = useState<string[]>([]);
@@ -165,6 +167,7 @@ export default function AuditLogsPage() {
 
       setLogs(logsData);
       setSummary(summaryData);
+      setSelectedIds(new Set());
     } catch (err: any) {
       setError(err.message || "Failed to load audit logs");
     } finally {
@@ -184,6 +187,69 @@ export default function AuditLogsPage() {
     const start = (page - 1) * pageSize;
     return logs.slice(start, start + pageSize);
   }, [logs, page, pageSize]);
+  const visibleLogIds = pagedLogs.map((log) => log.id);
+  const allVisibleSelected =
+    visibleLogIds.length > 0 &&
+    visibleLogIds.every((id) => selectedIds.has(id));
+  const selectedLogs = logs.filter((log) => selectedIds.has(log.id));
+
+  const toggleSelect = (logId: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(logId)) next.delete(logId);
+      else next.add(logId);
+      return next;
+    });
+  };
+
+  const toggleSelectAllVisible = () => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (allVisibleSelected) {
+        visibleLogIds.forEach((id) => next.delete(id));
+      } else {
+        visibleLogIds.forEach((id) => next.add(id));
+      }
+      return next;
+    });
+  };
+
+  const handleExportSelected = () => {
+    if (!selectedLogs.length) return;
+    setExportingSelected(true);
+    try {
+      const rows = selectedLogs.map((log) => ({
+        Time: formatDate(log.action_at),
+        User: log.user_email || "System",
+        Action: formatAction(log.action),
+        Resource: log.resource_reference || `#${log.resource_id ?? ""}`,
+        Details: log.changes_summary || log.error_message || "",
+        Status: log.status,
+      }));
+      const headers = Object.keys(rows[0]);
+      const csv = [
+        headers.join(","),
+        ...rows.map((row) =>
+          headers
+            .map((header) =>
+              `"${String(row[header as keyof typeof row] ?? "").replace(/"/g, '""')}"`,
+            )
+            .join(","),
+        ),
+      ].join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "audit-logs-selected.csv";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } finally {
+      setExportingSelected(false);
+    }
+  };
 
   useEffect(() => {
     setPage((prev) => Math.min(prev, totalPages));
@@ -324,9 +390,44 @@ export default function AuditLogsPage() {
         </div>
       ) : (
         <div className="table-container">
+          {selectedIds.size > 0 && (
+            <div className="batch-action-bar">
+              <label className="batch-master-toggle">
+                <input
+                  type="checkbox"
+                  checked={allVisibleSelected}
+                  onChange={toggleSelectAllVisible}
+                  className="batch-checkbox"
+                />
+                <span>Select all</span>
+              </label>
+              <span className="batch-count">{selectedIds.size} selected</span>
+              <button
+                className="batch-btn export-btn"
+                onClick={handleExportSelected}
+                disabled={exportingSelected}
+              >
+                {exportingSelected ? "Exporting..." : "Export Selected"}
+              </button>
+              <button
+                className="batch-btn clear-btn"
+                onClick={() => setSelectedIds(new Set())}
+              >
+                Clear
+              </button>
+            </div>
+          )}
           <table className="data-table">
             <thead>
               <tr>
+                <th style={{ width: 40 }}>
+                  <input
+                    type="checkbox"
+                    checked={allVisibleSelected}
+                    onChange={toggleSelectAllVisible}
+                    className="batch-checkbox"
+                  />
+                </th>
                 <th>Time</th>
                 <th>User</th>
                 <th>Action</th>
@@ -338,13 +439,22 @@ export default function AuditLogsPage() {
             <tbody>
               {logs.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: "center", padding: 40, color: "var(--slate-500)" }}>
+                  <td colSpan={7} style={{ textAlign: "center", padding: 40, color: "var(--slate-500)" }}>
                     No audit logs found matching your filters
                   </td>
                 </tr>
               ) : (
                 pagedLogs.map((log) => (
-                  <tr key={log.id}>
+                  <tr key={log.id} className={selectedIds.has(log.id) ? "row-selected" : ""}>
+                    <td onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(log.id)}
+                        onChange={() => toggleSelect(log.id)}
+                        className="batch-checkbox"
+                        aria-label={`Select audit log ${log.id}`}
+                      />
+                    </td>
                     <td style={{ whiteSpace: "nowrap", fontSize: 12, color: "var(--slate-500)" }}>
                       {formatDate(log.action_at)}
                     </td>

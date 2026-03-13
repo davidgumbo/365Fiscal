@@ -86,6 +86,8 @@ export default function PaymentsPage() {
   const [searchFilter, setSearchFilter] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [exportingSelected, setExportingSelected] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -109,6 +111,7 @@ export default function PaymentsPage() {
 
       setPayments(paymentsData);
       setSummary(summaryData);
+      setSelectedIds(new Set());
     } catch (err: any) {
       setError(err.message || "Failed to load payments");
     } finally {
@@ -142,6 +145,71 @@ export default function PaymentsPage() {
     const start = (page - 1) * pageSize;
     return payments.slice(start, start + pageSize);
   }, [payments, page, pageSize]);
+  const visiblePaymentIds = pagedPayments.map((payment) => payment.id);
+  const allVisibleSelected =
+    visiblePaymentIds.length > 0 &&
+    visiblePaymentIds.every((id) => selectedIds.has(id));
+  const selectedPayments = payments.filter((payment) => selectedIds.has(payment.id));
+
+  const toggleSelect = (paymentId: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(paymentId)) next.delete(paymentId);
+      else next.add(paymentId);
+      return next;
+    });
+  };
+
+  const toggleSelectAllVisible = () => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (allVisibleSelected) {
+        visiblePaymentIds.forEach((id) => next.delete(id));
+      } else {
+        visiblePaymentIds.forEach((id) => next.add(id));
+      }
+      return next;
+    });
+  };
+
+  const handleExportSelected = () => {
+    if (!selectedPayments.length) return;
+    setExportingSelected(true);
+    try {
+      const rows = selectedPayments.map((payment) => ({
+        Date: formatDate(payment.payment_date),
+        Invoice: payment.invoice_reference || "",
+        Reference: payment.reference || "",
+        Method:
+          paymentMethods.find((m) => m.value === payment.payment_method)?.label ||
+          payment.payment_method,
+        Amount: formatCurrency(payment.amount, payment.currency),
+        Status: payment.is_reconciled ? "Reconciled" : "Pending",
+      }));
+      const headers = Object.keys(rows[0]);
+      const csv = [
+        headers.join(","),
+        ...rows.map((row) =>
+          headers
+            .map((header) =>
+              `"${String(row[header as keyof typeof row] ?? "").replace(/"/g, '""')}"`,
+            )
+            .join(","),
+        ),
+      ].join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "payments-selected.csv";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } finally {
+      setExportingSelected(false);
+    }
+  };
 
   useEffect(() => {
     setPage((prev) => Math.min(prev, totalPages));
@@ -236,9 +304,44 @@ export default function PaymentsPage() {
         </div>
       ) : (
         <div className="table-container">
+          {selectedIds.size > 0 && (
+            <div className="batch-action-bar">
+              <label className="batch-master-toggle">
+                <input
+                  type="checkbox"
+                  checked={allVisibleSelected}
+                  onChange={toggleSelectAllVisible}
+                  className="batch-checkbox"
+                />
+                <span>Select all</span>
+              </label>
+              <span className="batch-count">{selectedIds.size} selected</span>
+              <button
+                className="batch-btn export-btn"
+                onClick={handleExportSelected}
+                disabled={exportingSelected}
+              >
+                {exportingSelected ? "Exporting..." : "Export Selected"}
+              </button>
+              <button
+                className="batch-btn clear-btn"
+                onClick={() => setSelectedIds(new Set())}
+              >
+                Clear
+              </button>
+            </div>
+          )}
           <table className="data-table">
             <thead>
               <tr>
+                <th style={{ width: 40 }}>
+                  <input
+                    type="checkbox"
+                    checked={allVisibleSelected}
+                    onChange={toggleSelectAllVisible}
+                    className="batch-checkbox"
+                  />
+                </th>
                 <th>Date</th>
                 <th>Invoice</th>
                 <th>Reference</th>
@@ -251,13 +354,22 @@ export default function PaymentsPage() {
             <tbody>
               {payments.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: "center", padding: 40, color: "var(--slate-500)" }}>
+                  <td colSpan={8} style={{ textAlign: "center", padding: 40, color: "var(--slate-500)" }}>
                     No payments found
                   </td>
                 </tr>
               ) : (
                 pagedPayments.map((payment) => (
-                  <tr key={payment.id}>
+                  <tr key={payment.id} className={selectedIds.has(payment.id) ? "row-selected" : ""}>
+                    <td onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(payment.id)}
+                        onChange={() => toggleSelect(payment.id)}
+                        className="batch-checkbox"
+                        aria-label={`Select payment ${payment.reference || payment.invoice_reference}`}
+                      />
+                    </td>
                     <td style={{ fontSize: 13 }}>{formatDate(payment.payment_date)}</td>
                     <td>
                       <span style={{ fontWeight: 500 }}>{payment.invoice_reference}</span>
