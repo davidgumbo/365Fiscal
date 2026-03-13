@@ -28,6 +28,7 @@ import {
   ShoppingBasket,
   LayoutDashboard,
   Warehouse,
+  CirclePlus,
 } from "lucide-react";
 import ValidationAlert from "../components/ValidationAlert";
 import ValidatedField from "../components/ValidatedField";
