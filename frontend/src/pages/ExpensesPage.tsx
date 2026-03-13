@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -677,6 +677,14 @@ export default function ExpensesPage() {
       setExpenseFilterMenuOpen(false);
     }
   }, [mainView, subView]);
+
+  const handleTransactionsPageSizeChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const numeric = Number(event.target.value);
+    if (!Number.isFinite(numeric)) return;
+    const next = Math.max(1, Math.floor(numeric));
+    if (next === transactionsPageSize) return;
+    setTransactionsPageSize(next);
+  };
 
   const filteredCategories = useMemo(() => {
     if (!searchQuery.trim()) return categories;
@@ -1741,16 +1749,14 @@ export default function ExpensesPage() {
                   <div className="expense-pagination">
                     <label className="expense-pagination-size">
                       <span>Rows</span>
-                      <select
+                      <input
+                        type="number"
+                        min={1}
                         value={transactionsPageSize}
-                        onChange={(e) =>
-                          setTransactionsPageSize(Number(e.target.value))
-                        }
-                      >
-                        <option value={8}>8</option>
-                        <option value={12}>12</option>
-                        <option value={20}>20</option>
-                      </select>
+                        onChange={handleTransactionsPageSizeChange}
+                        style={{ width: 72 }}
+                        aria-label="Rows per page"
+                      />
                     </label>
                     <span>
                       Page{" "}

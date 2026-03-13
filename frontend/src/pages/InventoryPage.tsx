@@ -4208,7 +4208,7 @@ export default function InventoryPage() {
                       <>
                         <div className="inventory-products-toolbar-meta">
                           <div className="inventory-products-pager">
-                            <select
+                            {/* <select
                               value={productsPageSize}
                               onChange={(event) =>
                                 setProductsPageSize(Number(event.target.value))
@@ -4219,10 +4219,20 @@ export default function InventoryPage() {
                               <option value={20}>20</option>
                               <option value={50}>50</option>
                               <option value={100}>100</option>
-                            </select>
+                            </select> */}
                             <span className="inventory-products-pager-range">
-                              {productFromItem}-{productToItem} /{" "}
-                              {filteredProducts.length}
+                              {productFromItem}-
+                              <input
+                                type="number"
+                                value={productsPageSize}
+                                onChange={(event) =>
+                                  setProductsPageSize(
+                                    Number(event.target.value),
+                                  )
+                                }
+                                aria-label="Products per page"
+                              />{" "}
+                              / {filteredProducts.length}
                             </span>
                             <button
                               type="button"
@@ -4637,7 +4647,9 @@ export default function InventoryPage() {
                           onClick={deleteSelectedProducts}
                           disabled={saving}
                         >
-                          {saving ? "Deleting..." : `Delete (${selectedProductIds.size})`}
+                          {saving
+                            ? "Deleting..."
+                            : `Delete (${selectedProductIds.size})`}
                         </button>
                         <button
                           className="batch-btn clear-btn"
