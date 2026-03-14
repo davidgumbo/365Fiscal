@@ -59,6 +59,14 @@ type Category = {
   name: string;
 };
 
+type CategoryListRow = {
+  id: number;
+  name: string;
+  isDefault: boolean;
+  products: ProductWithStock[];
+  category: Category | null;
+};
+
 type Product = {
   id: number;
   company_id: number;
@@ -3520,11 +3528,42 @@ export default function InventoryPage() {
     return counts;
   }, [products]);
 
+  const uncategorizedProducts = useMemo(
+    () => products.filter((product) => product.category_id === null),
+    [products],
+  );
+
+  const categoryRows = useMemo<CategoryListRow[]>(() => {
+    const rows: CategoryListRow[] = categories.map((category) => ({
+      id: category.id,
+      name: category.name,
+      isDefault: false,
+      products: products.filter((product) => product.category_id === category.id),
+      category,
+    }));
+
+    rows.unshift({
+      id: 0,
+      name: "Uncategorized",
+      isDefault: true,
+      products: uncategorizedProducts,
+      category: null,
+    });
+
+    return rows;
+  }, [categories, products, uncategorizedProducts]);
+
   const filteredCategories = useMemo(() => {
-    if (!searchQuery) return categories;
+    if (!searchQuery) return categoryRows;
     const q = searchQuery.toLowerCase();
-    return categories.filter((c) => c.name.toLowerCase().includes(q));
-  }, [categories, searchQuery]);
+    return categoryRows.filter(
+      (category) =>
+        category.name.toLowerCase().includes(q) ||
+        category.products.some((product) =>
+          product.name.toLowerCase().includes(q),
+        ),
+    );
+  }, [categoryRows, searchQuery]);
 
   // Stats
   const stats = {
@@ -4778,7 +4817,7 @@ export default function InventoryPage() {
                               </td>
                               <td>{p.reference || "-"}</td>
                               <td>{productLocationById.get(p.id) || "-"}</td>
-                              <td>{category?.name || "-"}</td>
+                              <td>{category?.name || "Uncategorized"}</td>
                               <td>
                                 <span
                                   className={`o-tag o-tag-${p.product_type === "storable" ? "in" : p.product_type === "service" ? "internal" : "out"}`}
@@ -4877,40 +4916,75 @@ export default function InventoryPage() {
                       </thead>
                       <tbody>
                         {filteredCategories.map((c) => (
-                          <tr key={c.id}>
+                          <tr key={`${c.isDefault ? "default" : "category"}-${c.id}`}>
                             <td>
                               <div className="inventory-category-name-cell">
                                 <span className="inventory-category-name-icon">
                                   <LayoutGrid size={16} />
                                 </span>
-                                <span className="inventory-category-name-text">
-                                  {c.name}
-                                </span>
+                                <div>
+                                  <span className="inventory-category-name-text">
+                                    {c.name}
+                                  </span>
+                                  {c.isDefault && (
+                                    <div className="inventory-category-name-subtext">
+                                      Default category for products without an assigned category
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             </td>
                             <td>
-                              <span className="inventory-category-count-badge">
-                                {categoryProductCounts.get(c.id) ?? 0}
-                              </span>
+                              <div className="inventory-category-products-cell">
+                                <span className="inventory-category-count-badge">
+                                  {c.isDefault
+                                    ? uncategorizedProducts.length
+                                    : categoryProductCounts.get(c.id) ?? 0}
+                                </span>
+                                <div className="inventory-category-product-list">
+                                  {c.products.length ? (
+                                    c.products.map((product) => (
+                                      <button
+                                        key={product.id}
+                                        type="button"
+                                        className="inventory-category-product-pill"
+                                        onClick={() => openProduct(product)}
+                                      >
+                                        {product.name}
+                                      </button>
+                                    ))
+                                  ) : (
+                                    <span className="inventory-category-empty-products">
+                                      No products yet
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
                             </td>
                             <td className="inventory-category-actions-cell">
                               <div className="inventory-category-actions">
-                                <button
-                                  type="button"
-                                  className="inventory-category-action-btn"
-                                  aria-label={`Edit ${c.name}`}
-                                  onClick={() => openCategoryModal(c)}
-                                >
-                                  <PenLine size={15} />
-                                </button>
-                                <button
-                                  type="button"
-                                  className="inventory-category-action-btn inventory-category-action-btn-danger"
-                                  aria-label={`Delete ${c.name}`}
-                                  onClick={() => deleteCategory(c.id)}
-                                >
-                                  <Trash2 size={15} />
-                                </button>
+                                {!c.isDefault && (
+                                  <>
+                                    <button
+                                      type="button"
+                                      className="inventory-category-action-btn"
+                                      aria-label={`Edit ${c.name}`}
+                                      onClick={() =>
+                                        c.category && openCategoryModal(c.category)
+                                      }
+                                    >
+                                      <PenLine size={15} />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="inventory-category-action-btn inventory-category-action-btn-danger"
+                                      aria-label={`Delete ${c.name}`}
+                                      onClick={() => deleteCategory(c.id)}
+                                    >
+                                      <Trash2 size={15} />
+                                    </button>
+                                  </>
+                                )}
                               </div>
                             </td>
                           </tr>
@@ -5416,7 +5490,7 @@ export default function InventoryPage() {
                                       })
                                     }
                                   >
-                                    <option value="">No category</option>
+                                    <option value="">Uncategorized</option>
                                     {categories.map((c) => (
                                       <option key={c.id} value={c.id}>
                                         {c.name}
