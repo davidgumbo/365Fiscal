@@ -179,9 +179,12 @@ function POSWindowLauncher() {
 
   return (
     <div className="content" style={{ padding: "2rem", textAlign: "center" }}>
-      <
       {popupBlocked && (
-        <button className="btn btn-primary"  onClick={openPOSWindow}>
+        <button
+          className="btn btn-primary"
+          style={{ margin: "auto 0" }}
+          onClick={openPOSWindow}
+        >
           Open POS
         </button>
       )}
