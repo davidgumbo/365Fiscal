@@ -179,13 +179,10 @@ function POSWindowLauncher() {
 
   return (
     <div className="content" style={{ padding: "2rem", textAlign: "center" }}>
-      <h2 style={{ marginBottom: 12 }}>Opening POS</h2>
-      <p style={{ color: "var(--muted)", marginBottom: 16 }}>
-        Point of Sale opens in a new tab.
-      </p>
+      <
       {popupBlocked && (
-        <button className="btn btn-primary" onClick={openPOSWindow}>
-          Open POS Tab
+        <button className="btn btn-primary"  onClick={openPOSWindow}>
+          Open POS
         </button>
       )}
     </div>
