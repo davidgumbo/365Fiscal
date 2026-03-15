@@ -1,4 +1,5 @@
 import {
+  Fragment,
   useEffect,
   useState,
   useMemo,
@@ -16,6 +17,7 @@ import {
   ArrowUpRight,
   Boxes,
   Check,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Clock3,
@@ -437,6 +439,12 @@ export default function InventoryPage() {
   const [countedByQuantId, setCountedByQuantId] = useState<
     Record<number, string>
   >({});
+  const [expandedQuantGroupKeys, setExpandedQuantGroupKeys] = useState<
+    Set<string>
+  >(new Set());
+  const [quantGroupPages, setQuantGroupPages] = useState<Record<string, number>>(
+    {},
+  );
   const [showOnlyChangedAdjustments, setShowOnlyChangedAdjustments] =
     useState(false);
   const [applyingAdjustments, setApplyingAdjustments] = useState(false);
@@ -3564,6 +3572,117 @@ export default function InventoryPage() {
         ),
     );
   }, [categoryRows, searchQuery]);
+
+  const groupedStockOnHandRows = useMemo(() => {
+    const productById = new Map(products.map((product) => [product.id, product]));
+    const warehouseById = new Map(
+      warehouses.map((warehouse) => [warehouse.id, warehouse]),
+    );
+    const locationById = new Map(
+      locations.map((location) => [location.id, location]),
+    );
+    const query = searchQuery.trim().toLowerCase();
+    const groups = new Map<
+      string,
+      {
+        key: string;
+        warehouseId: number | null;
+        locationId: number | null;
+        locationLabel: string;
+        rowCount: number;
+        onHand: number;
+        reserved: number;
+        rows: Array<{
+          quant: StockQuant;
+          product: ProductWithStock | null;
+          warehouse: Warehouse | null;
+          location: Location | null;
+        }>;
+      }
+    >();
+
+    stockQuants.forEach((quant) => {
+      const product = productById.get(quant.product_id) ?? null;
+      const location = quant.location_id
+        ? (locationById.get(quant.location_id) ?? null)
+        : null;
+      const warehouse = quant.warehouse_id
+        ? (warehouseById.get(quant.warehouse_id) ?? null)
+        : location?.warehouse_id
+          ? (warehouseById.get(location.warehouse_id) ?? null)
+          : null;
+
+      const locationLabel = location
+        ? `${warehouse?.code || warehouse?.name || "WH"}/${location.name}`
+        : warehouse
+          ? `${warehouse.code || warehouse.name}/Stock`
+          : "Unassigned";
+
+      if (query) {
+        const searchable = [
+          locationLabel,
+          warehouse?.name || "",
+          location?.name || "",
+          product?.name || "",
+          product?.reference || "",
+        ]
+          .join(" ")
+          .toLowerCase();
+        if (!searchable.includes(query)) return;
+      }
+
+      const key = `${warehouse?.id ?? 0}-${location?.id ?? 0}`;
+      const existing = groups.get(key) ?? {
+        key,
+        warehouseId: warehouse?.id ?? null,
+        locationId: location?.id ?? null,
+        locationLabel,
+        rowCount: 0,
+        onHand: 0,
+        reserved: 0,
+        rows: [],
+      };
+
+      existing.rows.push({ quant, product, warehouse, location });
+      existing.rowCount += 1;
+      existing.onHand += Number.isFinite(quant.quantity) ? quant.quantity : 0;
+      existing.reserved += Number.isFinite(quant.reserved_quantity)
+        ? quant.reserved_quantity
+        : 0;
+      groups.set(key, existing);
+    });
+
+    return Array.from(groups.values())
+      .map((group) => ({
+        ...group,
+        rows: group.rows.sort((left, right) =>
+          (left.product?.name || "").localeCompare(right.product?.name || ""),
+        ),
+      }))
+      .sort((left, right) => left.locationLabel.localeCompare(right.locationLabel));
+  }, [stockQuants, products, warehouses, locations, searchQuery]);
+
+  const quantGroupPageSize = 20;
+
+  const toggleQuantGroup = (groupKey: string) => {
+    setExpandedQuantGroupKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(groupKey)) next.delete(groupKey);
+      else next.add(groupKey);
+      return next;
+    });
+    setQuantGroupPages((prev) => ({
+      ...prev,
+      [groupKey]: prev[groupKey] ?? 1,
+    }));
+  };
+
+  const changeQuantGroupPage = (groupKey: string, page: number) => {
+    setQuantGroupPages((prev) => ({
+      ...prev,
+      [groupKey]: page,
+    }));
+  };
 
   // Stats
   const stats = {
@@ -6807,80 +6926,195 @@ export default function InventoryPage() {
                       <table className="o-list-table">
                         <thead>
                           <tr>
-                            <th>Product</th>
-                            <th>Warehouse</th>
                             <th>Location</th>
-                            <th>On Hand</th>
-                            <th>Reserved</th>
-                            <th>Available</th>
-                            <th>Unit Cost</th>
-                            <th>Value</th>
+                            <th>Product</th>
+                            <th>Reference</th>
+                            <th>On Hand Qty</th>
+                            <th>Reserved Qty</th>
+                            <th>Unit</th>
+                            <th>Actions</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {stockQuants.map((q) => {
-                            const product = products.find(
-                              (p) => p.id === q.product_id,
+                          {groupedStockOnHandRows.map((group) => {
+                            const isExpanded = expandedQuantGroupKeys.has(
+                              group.key,
                             );
-                            const warehouse = warehouses.find(
-                              (w) => w.id === q.warehouse_id,
+                            const totalPages = Math.max(
+                              1,
+                              Math.ceil(group.rows.length / quantGroupPageSize),
                             );
-                            const location = locations.find(
-                              (l) => l.id === q.location_id,
+                            const currentPage = Math.min(
+                              quantGroupPages[group.key] ?? 1,
+                              totalPages,
                             );
+                            const fromItem =
+                              group.rows.length === 0
+                                ? 0
+                                : (currentPage - 1) * quantGroupPageSize + 1;
+                            const toItem = Math.min(
+                              group.rows.length,
+                              currentPage * quantGroupPageSize,
+                            );
+                            const visibleRows = group.rows.slice(
+                              (currentPage - 1) * quantGroupPageSize,
+                              currentPage * quantGroupPageSize,
+                            );
+
                             return (
-                              <tr key={q.id}>
-                                <td className="inventory-strong-cell">
-                                  {product?.name || "-"}
-                                </td>
-                                <td>{warehouse?.name || "-"}</td>
-                                <td>{location?.name || "-"}</td>
-                                <td>
-                                  {product ? (
+                              <Fragment key={`group-body-${group.key}`}>
+                                <tr
+                                  className="inventory-quant-group-row"
+                                >
+                                  <td>
                                     <button
                                       type="button"
-                                      className="o-btn o-btn-link inventory-qty-btn"
-                                      onClick={() =>
-                                        openOnHandAdjustment(
-                                          product,
-                                          q.warehouse_id,
-                                          q.location_id,
-                                        )
-                                      }
+                                      className="inventory-quant-group-toggle"
+                                      onClick={() => toggleQuantGroup(group.key)}
                                     >
-                                      {q.quantity}
+                                      <span
+                                        className={`inventory-quant-group-chevron ${isExpanded ? "is-open" : ""}`}
+                                      >
+                                        <ChevronDown size={14} />
+                                      </span>
+                                      <span className="inventory-strong-cell">
+                                        {group.locationLabel} ({group.rowCount})
+                                      </span>
                                     </button>
-                                  ) : (
-                                    <span className="inventory-strong-cell">
-                                      {q.quantity}
-                                    </span>
-                                  )}
-                                </td>
-                                <td
-                                  className={
-                                    q.reserved_quantity > 0
-                                      ? "inventory-reserved-value"
-                                      : ""
-                                  }
-                                >
-                                  {q.reserved_quantity}
-                                </td>
-                                <td className="inventory-positive inventory-strong-cell">
-                                  {q.available_quantity}
-                                </td>
-                                <td className="o-monetary">
-                                  ${q.unit_cost.toFixed(2)}
-                                </td>
-                                <td className="o-monetary inventory-strong-cell">
-                                  ${q.total_value.toFixed(2)}
-                                </td>
-                              </tr>
+                                  </td>
+                                  <td />
+                                  <td>
+                                    {group.rows.length > 0 && (
+                                      <div className="inventory-quant-group-pager">
+                                        <span>
+                                          {fromItem}-{toItem} / {group.rows.length}
+                                        </span>
+                                        <button
+                                          type="button"
+                                          className="inventory-quant-group-page-btn"
+                                          disabled={currentPage <= 1}
+                                          onClick={() =>
+                                            changeQuantGroupPage(
+                                              group.key,
+                                              currentPage - 1,
+                                            )
+                                          }
+                                        >
+                                          <ChevronLeft size={14} />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          className="inventory-quant-group-page-btn"
+                                          disabled={currentPage >= totalPages}
+                                          onClick={() =>
+                                            changeQuantGroupPage(
+                                              group.key,
+                                              currentPage + 1,
+                                            )
+                                          }
+                                        >
+                                          <ChevronRight size={14} />
+                                        </button>
+                                      </div>
+                                    )}
+                                  </td>
+                                  <td className="inventory-strong-cell">
+                                    {group.onHand.toFixed(2)}
+                                  </td>
+                                  <td
+                                    className={
+                                      group.reserved > 0
+                                        ? "inventory-reserved-value"
+                                        : ""
+                                    }
+                                  >
+                                    {group.reserved.toFixed(2)}
+                                  </td>
+                                  <td />
+                                  <td />
+                                </tr>
+                                {isExpanded &&
+                                  visibleRows.map((row) => {
+                                    const product = row.product;
+                                    return (
+                                      <tr
+                                        key={`quant-${row.quant.id}`}
+                                        className="inventory-quant-child-row"
+                                      >
+                                        <td>{group.locationLabel}</td>
+                                        <td className="inventory-strong-cell">
+                                          {product?.name || "-"}
+                                        </td>
+                                        <td>{product?.reference || "-"}</td>
+                                        <td>
+                                          {product ? (
+                                            <button
+                                              type="button"
+                                              className="o-btn o-btn-link inventory-qty-btn"
+                                              onClick={() =>
+                                                openOnHandAdjustment(
+                                                  product,
+                                                  row.quant.warehouse_id,
+                                                  row.quant.location_id,
+                                                )
+                                              }
+                                            >
+                                              {row.quant.quantity.toFixed(2)}
+                                            </button>
+                                          ) : (
+                                            <span className="inventory-strong-cell">
+                                              {row.quant.quantity.toFixed(2)}
+                                            </span>
+                                          )}
+                                        </td>
+                                        <td
+                                          className={
+                                            row.quant.reserved_quantity > 0
+                                              ? "inventory-reserved-value"
+                                              : ""
+                                          }
+                                        >
+                                          {row.quant.reserved_quantity.toFixed(2)}
+                                        </td>
+                                        <td>{product?.uom || "-"}</td>
+                                        <td>
+                                          <div className="inventory-quant-actions">
+                                            {product && (
+                                              <>
+                                                <button
+                                                  type="button"
+                                                  className="o-btn o-btn-link"
+                                                  onClick={() => openProduct(product)}
+                                                >
+                                                  History
+                                                </button>
+                                                <button
+                                                  type="button"
+                                                  className="o-btn o-btn-link"
+                                                  onClick={() =>
+                                                    openOnHandAdjustment(
+                                                      product,
+                                                      row.quant.warehouse_id,
+                                                      row.quant.location_id,
+                                                    )
+                                                  }
+                                                >
+                                                  Replenishment
+                                                </button>
+                                              </>
+                                            )}
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                              </Fragment>
                             );
                           })}
-                          {stockQuants.length === 0 && (
+                          {groupedStockOnHandRows.length === 0 && (
                             <tr>
                               <td
-                                colSpan={8}
+                                colSpan={7}
                                 className="inventory-empty-row inventory-muted-note"
                               >
                                 No stock on hand. Validate stock moves to update
