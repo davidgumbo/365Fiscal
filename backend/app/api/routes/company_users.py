@@ -137,7 +137,6 @@ def enforce_subscription_user_limit(
             status_code=400,
             detail=(
                 f"Portal user limit reached for this subscription. "
-                f"Maximum allowed users is {subscription.max_users}, including the portal super user."
             ),
         )
 
